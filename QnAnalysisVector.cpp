@@ -1,8 +1,5 @@
 #include "TString.h"
-#include "TAxis.h"
-#include "TObject.h"
 #include "QnAnalysisVector.h"
-#include "AliQnCorrectionsQnVector.h"
 #include <iostream>
 
 ClassImp(QnAnalysisVector)
@@ -70,12 +67,12 @@ void QnAnalysisVector::CalculateStride() {
   }
 }
 
-AliQnCorrectionsQnVector* QnAnalysisVector::GetQnVector(std::vector<Int_t> &bins, const char *corrstep)
+QnCorrectionsQnVector* QnAnalysisVector::GetQnVector(std::vector<Int_t> &bins, const char *corrstep)
 {
   return qnvectors_.at(GetBinLinearized(bins));
 }
 
-void QnAnalysisVector::AddQnVector(AliQnCorrectionsQnVector *qn, std::vector<Float_t> &vars, const char *corrstep)
+void QnAnalysisVector::AddQnVector(QnCorrectionsQnVector *qn, std::vector<Float_t> &vars, const char *corrstep)
 {
   std::vector<Int_t> index;
   Int_t axisindex = 0;

@@ -2,21 +2,22 @@
 #define QNANALYSISVECTOR_H
 
 #include <vector>
+#include "TAxis.h"
+#include "QnCorrectionsQnVector.h"
+#include "TObject.h"
 
-class TAxis;
-class AliQnCorrectionsQnVector;
 
 class QnAnalysisVector : public TObject {
   public:
     QnAnalysisVector();
     QnAnalysisVector(const char *name);
     ~QnAnalysisVector();
-    typedef std::vector<AliQnCorrectionsQnVector*>::const_iterator iterator;
+    typedef std::vector<QnCorrectionsQnVector*>::const_iterator iterator;
     iterator cbegin() {return qnvectors_.cbegin();}
     iterator cend() {return qnvectors_.cend();}
     void AddAxis(const char *name, Double_t *bins, Int_t nbins);
-    void AddQnVector(AliQnCorrectionsQnVector *qn, std::vector<Float_t> &vars, const char *corrstep = "latest");
-    AliQnCorrectionsQnVector* GetQnVector(std::vector<Int_t> &bins, const char *corrstep = "latest");
+    void AddQnVector(QnCorrectionsQnVector *qn, std::vector<Float_t> &vars, const char *corrstep = "latest");
+    QnCorrectionsQnVector* GetQnVector(std::vector<Int_t> &bins, const char *corrstep = "latest");
     TAxis* GetAxis(const char *name);
     std::vector<Long64_t> GetStride() const {return stride_;}
     std::vector<Int_t> GetIndex(Long64_t offset);
@@ -24,7 +25,7 @@ class QnAnalysisVector : public TObject {
   private:
     const char* name_;
     Int_t dimension_;
-    std::vector<AliQnCorrectionsQnVector*> qnvectors_;
+    std::vector<QnCorrectionsQnVector*> qnvectors_;
     std::vector<TAxis*> axis_;
     std::vector<Long64_t> stride_;
 
