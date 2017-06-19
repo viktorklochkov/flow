@@ -2,60 +2,52 @@
 #define QNDATACONTAINER_H
 
 #include <vector>
-#include <iostream>
-#include "TObject.h"
+#include <stdexcept>
+#include <memory>
 #include "TAxis.h"
-#include "AliQnCorrectionsQnVector.h"
+#include "QnCorrectionsQnVector.h"
 
-template <class T> class QnDataContainer : public TObject {
+template <class T> class QnDataContainer {
   public:
     typedef typename std::vector<T>::const_iterator iterator;
 
-    QnDataContainer() {}
-
-    QnDataContainer(const char *name) :
-      TObject(),
-      name_(),
-      dimension_(0),
-      data_(),
-      axis_(),
-      stride_() {
-        name_ = new TString(name);
+    QnDataContainer(std::string &name) :
+      name_(name),
+      dimension_(0)
+      {
       }
 
-    ~QnDataContainer() {}
+    ~QnDataContainer() = default;
 
     iterator cbegin() {return data_.cbegin();}
 
     iterator cend() {return data_.cend();}
 
-    void AddAxis(const char *name, Double_t *bins, Int_t nbins)
+    void AddAxis(const char *name, const std::vector<double> &bins, const int nbins)
     {
-      TAxis *axis = new TAxis(nbins,bins);
-      axis->SetName(name);
-      axis_.push_back(axis);
+      axis_.emplace_back(std::shared_ptr<TAxis>(new TAxis(nbins, &bins[0])));
+      axis_.back()->SetName(name);
       dimension_++;
-      Int_t totalbins = 1;
-      for (auto axis : axis_)
+      int totalbins = 1;
+      for (const auto &axis : axis_)
       {
         totalbins *= axis->GetNbins();
       }
-      std::cout << totalbins << std::endl;
       data_.resize(totalbins);
       stride_.resize(dimension_+1);
-      std::cout << "calculate stride" << std::endl;
       CalculateStride();
     }
 
-    void AddVector(T vect, std::vector<Float_t> &vars, const char *corrstep = "latest")
+    void AddVector(const T &vect, const std::vector<float> &vars, const char *corrstep = "latest")
     {
-      std::vector<Int_t> index;
-      Int_t axisindex = 0;
+      std::vector<int> index;
+      int axisindex = 0;
       for (auto axis : axis_)
       {
         Int_t bin = axis->FindBin(vars.at(axisindex));
         if (bin > axis->GetNbins() || bin == 0)
         {
+          throw std::out_of_range("bin out of specified range");
           return;
         }
         index.push_back(bin);
@@ -64,43 +56,43 @@ template <class T> class QnDataContainer : public TObject {
       data_.at(GetBinLinearized(index)) = vect;
     }
 
-    T GetVector(std::vector<Int_t> &bins, const char *corrstep = "latest")
+    T GetVector(const std::vector<int> &bins, const char *corrstep = "latest")
     {
       return data_.at(GetBinLinearized(bins));
     }
 
-    TAxis* GetAxis(const char *name)
+    std::shared_ptr<TAxis> GetAxis(const char *name)
     {
-      TString string(name);
+      std::string string(name);
       for (auto axis: axis_)
       {
-        if(string.EqualTo(axis->GetName())) return axis;
+        std::string axisname(axis->GetName());
+        if(string == axisname) return axis;
       }
-      return NULL;
+      return nullptr;
     }
-    std::vector<Long64_t> GetStride() const {return stride_;}
+    std::vector<long long> GetStride() const {return stride_;}
 
-    std::vector<Int_t> GetIndex(Long64_t offset)
+    std::vector<int> GetIndex(const long long offset)
     {
-      std::vector<Int_t> indices;
+      long long temp = offset;
+      std::vector<int> indices;
       indices.reserve(dimension_);
       for (Int_t i = 0; i < dimension_-1; ++i)
       {
         indices.push_back(offset % axis_[i]->GetNbins());
-        // std::cout << offset << " % " << axis_[i]->GetNbins() << " = " << offset << std::endl;
-        offset = offset / axis_[i]->GetNbins();
-        // std::cout << " / " << axis_[i]->GetNbins() << offset << std::endl;
+        temp = temp / axis_[i]->GetNbins();
       }
-      indices.push_back(offset);
+      indices.push_back(temp);
       return indices;
     }
 
   private:
-    TString *name_;
-    Int_t dimension_;
+    std::string name_;
+    int dimension_;
     std::vector<T> data_;
-    std::vector<TAxis*> axis_;
-    std::vector<Long64_t> stride_;
+    std::vector<std::shared_ptr<TAxis>> axis_;
+    std::vector<long long> stride_;
 
     void CalculateStride()
     {
@@ -109,27 +101,19 @@ template <class T> class QnDataContainer : public TObject {
       {
         stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axis_[dimension_ - i - 1]->GetNbins();
       }
-      // stride_.insert(stride_.begin() + i, product);
-      for (Int_t i = 0; i < dimension_; ++i) {
-        std::cout <<"stride "<< i << " : " << stride_[i] << std::endl;
-      }
     }
 
-    Long64_t GetBinLinearized(std::vector<Int_t> &index)
+    long long GetBinLinearized(const std::vector<int> &index)
     {
-      Long64_t offset = (index[dimension_-1] - 1);
+      long long offset = (index[dimension_-1] - 1);
       for (Int_t i = 0; i < dimension_-1; ++i)
       {
         offset += stride_[i+1] * (index[i] - 1);
       }
       return offset;
     }
-    // QnDataContainer(const QnDataContainer &);
-    // QnDataContainer& operator= (const QnDataContainer &);
-
-    ClassDef(QnDataContainer,1);
 };
 
-typedef QnDataContainer<AliQnCorrectionsQnVector*> QnDataContainerQn;
+typedef QnDataContainer<QnCorrectionsQnVector*> QnDataContainerQn;
 
 #endif

@@ -16,7 +16,7 @@ QnAnalysisVector::QnAnalysisVector() :
 
 QnAnalysisVector::QnAnalysisVector(const char *name) :
   TObject(),
-  name_(name),
+  name_(TString(name)),
   dimension_(0),
   qnvectors_(),
   axis_(),
@@ -31,24 +31,23 @@ QnAnalysisVector::~QnAnalysisVector()
 TAxis* QnAnalysisVector::GetAxis(const char *name)
 {
   TString string(name);
-  for (auto axis: axis_)
+  for (auto &axis: axis_)
   {
-    if(string.EqualTo(axis->GetName())) return axis;
+    if(string.EqualTo(axis.GetName())) return &axis;
   }
   return NULL;
 }
 
 void QnAnalysisVector::AddAxis(const char *name, Double_t *bins, Int_t nbins)
 {
-  TAxis *axis = new TAxis(nbins,bins);
-  axis->SetName(name);
+  TAxis axis(nbins,bins);
+  axis.SetName(name);
   axis_.push_back(axis);
   dimension_++;
   Int_t totalbins = 1;
-  for (auto axis : axis_)
+  for (auto &axis : axis_)
   {
-    totalbins *= axis->GetNbins();
-    std::cout << "totalbins " << totalbins << std::endl;
+    totalbins *= axis.GetNbins();
   }
   qnvectors_.resize(totalbins);
   stride_.resize(dimension_);
@@ -61,7 +60,7 @@ void QnAnalysisVector::CalculateStride() {
     Int_t product = 1;
     for (Int_t j = i+1; j < dimension_; ++j)
     {
-      product *= axis_[j]->GetNbins();
+      product *= axis_[j].GetNbins();
     }
     stride_.insert(stride_.begin() + i, product);
   }
@@ -76,10 +75,10 @@ void QnAnalysisVector::AddQnVector(QnCorrectionsQnVector *qn, std::vector<Float_
 {
   std::vector<Int_t> index;
   Int_t axisindex = 0;
-  for (auto axis : axis_)
+  for (auto &axis : axis_)
   {
-    Int_t bin = axis->FindBin(vars.at(axisindex));
-    if (bin > axis->GetNbins() || bin == 0)
+    Int_t bin = axis.FindBin(vars.at(axisindex));
+    if (bin > axis.GetNbins() || bin == 0)
     {
       printf("Qn in over or underflow bin! Not added");
       return;
@@ -98,8 +97,8 @@ std::vector<Int_t> QnAnalysisVector::GetIndex(Long64_t offset) {
   indices.reserve(dimension_);
   for (Int_t i = 0; i < dimension_; ++i)
   {
-    indices.push_back(offset % axis_[i]->GetNbins());
-    offset = offset / axis_[i]->GetNbins();
+    indices.push_back(offset % axis_[i].GetNbins());
+    offset = offset / axis_[i].GetNbins();
   }
   return indices;
 }

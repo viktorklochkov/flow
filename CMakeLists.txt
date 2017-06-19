@@ -2,14 +2,16 @@ cmake_minimum_required(VERSION 3.7)
 project(flow)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_BUILD_TYPE debug)
 set(SOURCE_FILES main.cpp
         Task.cpp
         Task.h
-        QnAnalysisVector.cpp
-        QnAnalysisVector.h
+        QnDataContainer.cpp
+        QnDataContainer.h
         LinkDef.h)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # You need to tell CMake where to find the ROOT installation. This can be done in a number of ways:
 #   - ROOT built with classic configure/make use the provided $ROOTSYS/etc/cmake/FindROOT.cmake
@@ -25,21 +27,21 @@ find_package(ROOT REQUIRED COMPONENTS MathCore RIO Hist Tree Net)
 include(${ROOT_USE_FILE})
 
 add_definitions(${ROOT_CXX_FLAGS})
-find_library(FLOWLIB    NAMES FlowVector HINTS "$ENV{FLOWVECTOR}/lib")
+find_library(FLOWLIB NAMES FlowVector HINTS "$ENV{FLOWVECTOR}/lib")
 find_path(FLOWINCLUDES QnCorrectionsQnVector.h)
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${FLOWINCLUDES})
 
 
-ROOT_GENERATE_DICTIONARY(G__Flow QnAnalysisVector.h LINKDEF LinkDef.h)
+ROOT_GENERATE_DICTIONARY(G__Flow QnAnalysisVector.h QnDataContainer.h LINKDEF LinkDef.h)
 #---Create a shared library with generated dictionary
-add_library(flowvector SHARED QnAnalysisVector.cpp G__Flow)
-target_include_directories(flowvector PUBLIC ${FLOWINCLUDES})
-target_link_libraries(flowvector ${ROOT_LIBRARIES} ${FLOWLIB})
-#---Create shared library containing task
-add_library(flow SHARED Task.cpp)
+add_library(flow SHARED QnAnalysisVector.cpp QnDataContainer.cpp G__Flow)
 target_include_directories(flow PUBLIC ${FLOWINCLUDES})
-target_link_libraries(flow ${FLOWLIB} ${ROOT_LIBRARIES} flowvector)
+target_link_libraries(flow ${ROOT_LIBRARIES} ${FLOWLIB})
+#---Create shared library containing task
+#add_library(flow SHARED Task.cpp)
+#target_include_directories(flow PUBLIC ${FLOWINCLUDES})
+#target_link_libraries(flow ${FLOWLIB} ${ROOT_LIBRARIES} flowvector)
 
 #---Create  a main program using the library
 add_executable(main main.cpp)
-target_link_libraries(main flowvector)
+target_link_libraries(main flow)

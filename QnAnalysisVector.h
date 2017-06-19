@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "TAxis.h"
+#include "TString.h"
 #include "QnCorrectionsQnVector.h"
 #include "TObject.h"
 
@@ -23,10 +24,10 @@ class QnAnalysisVector : public TObject {
     std::vector<Int_t> GetIndex(Long64_t offset);
 
   private:
-    const char* name_;
+    TString name_;
     Int_t dimension_;
     std::vector<QnCorrectionsQnVector*> qnvectors_;
-    std::vector<TAxis*> axis_;
+    std::vector<TAxis> axis_;
     std::vector<Long64_t> stride_;
 
     void CalculateStride();
