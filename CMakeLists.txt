@@ -32,9 +32,9 @@ find_path(FLOWINCLUDES QnCorrectionsQnVector.h)
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${FLOWINCLUDES})
 
 
-ROOT_GENERATE_DICTIONARY(G__Flow QnAnalysisVector.h QnDataContainer.h LINKDEF LinkDef.h)
+ROOT_GENERATE_DICTIONARY(G__Flow QnDataContainer.h LINKDEF LinkDef.h)
 #---Create a shared library with generated dictionary
-add_library(flow SHARED QnAnalysisVector.cpp QnDataContainer.cpp G__Flow)
+add_library(flow SHARED QnDataContainer.cpp G__Flow)
 target_include_directories(flow PUBLIC ${FLOWINCLUDES})
 target_link_libraries(flow ${ROOT_LIBRARIES} ${FLOWLIB})
 #---Create shared library containing task
