@@ -21,7 +21,7 @@ list(APPEND CMAKE_PREFIX_PATH "$ENV{FLOWVECTOR}/include")
 message("${CMAKE_PREFIX_PATH}")
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS MathCore RIO Hist Tree Net)
+find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
 
 #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
@@ -32,9 +32,9 @@ find_path(FLOWINCLUDES QnCorrectionsQnVector.h)
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${FLOWINCLUDES})
 
 
-ROOT_GENERATE_DICTIONARY(G__Flow QnDataContainer.h LINKDEF LinkDef.h)
+ROOT_GENERATE_DICTIONARY(G__Flow QnDataContainer.h QnAxis.h LINKDEF LinkDef.h)
 #---Create a shared library with generated dictionary
-add_library(flow SHARED QnDataContainer.cpp G__Flow)
+add_library(flow SHARED QnDataContainer.cpp G__Flow QnAxis.cpp QnAxis.h)
 target_include_directories(flow PUBLIC ${FLOWINCLUDES})
 target_link_libraries(flow ${ROOT_LIBRARIES} ${FLOWLIB})
 #---Create shared library containing task
@@ -44,4 +44,4 @@ target_link_libraries(flow ${ROOT_LIBRARIES} ${FLOWLIB})
 
 #---Create  a main program using the library
 add_executable(main main.cpp)
-target_link_libraries(main flow)
+target_link_libraries(main flow ${ROOT_LIBRARIES})

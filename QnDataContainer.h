@@ -6,8 +6,10 @@
 #define QNDATACONTAINER_H
 
 #include <vector>
+#include <string>
 #include <stdexcept>
 #include <memory>
+#include <QnAxis.h>
 #include "QnCorrectionsQnVector.h"
 /**
  * @brief      Template container class for Q-vectors and correlations
@@ -16,21 +18,12 @@
 template<class T>
 class QnDataContainer {
  public:
-  struct Axis {
-    Axis() = default;
-    Axis(const std::string axisname, const std::vector<float> &bins) : name(axisname), bin_edges(bins) {}
-    ~Axis() = default;
-    std::string name;
-    std::vector<float> bin_edges;
-  };
-
   typedef typename std::vector<T>::const_iterator iterator;
 
 /**
  * Constructor
  * @param name Name of data container.
  */
-
   QnDataContainer() = default;
   QnDataContainer(std::string &name) :
       name_(name),
@@ -49,13 +42,14 @@ class QnDataContainer {
  * @param bins  Vector of bin edges
  */
   void AddAxis(std::string name, const std::vector<float> &bins) {
-    if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.name == name; }) != axis_.end())
+    if (std::find_if(axis_.begin(), axis_.end(), [name](const QnAxis &axis) { return axis.Name() == name; })
+        != axis_.end())
       throw std::runtime_error("axis already defined in vector");
     axis_.emplace_back(name, bins);
     dimension_++;
-    u_int totalbins = 1;
+    int totalbins = 1;
     for (const auto &axis : axis_) {
-      totalbins *= axis.bin_edges.size() - 1;
+      totalbins *= axis.size() - 1;
     }
     data_.resize(totalbins);
     stride_.resize(dimension_ + 1);
@@ -72,9 +66,8 @@ class QnDataContainer {
     std::vector<int> index;
     int axisindex = 0;
     for (auto axis : axis_) {
-      int bin = (int) std::distance(axis.bin_edges.begin(),
-                                    std::lower_bound(axis.bin_edges.begin(), axis.bin_edges.end(), vars.at(axisindex)));
-      if (bin == axis.bin_edges.size() || bin == 0)
+      int bin = (int) axis.FindBin(vars.at(axisindex));
+      if (bin >= axis.size() || bin <= 0)
         throw std::out_of_range("bin out of specified range");
       index.push_back(bin);
       axisindex++;
@@ -86,18 +79,18 @@ class QnDataContainer {
  * @param bins Data vector of bin indices of the desired vector
  * @return     Data vector
  */
-  T GetVector(const std::vector<int> &bins) {
+  T const &GetVector(const std::vector<int> &bins) {
     return data_.at(GetLinearIndex(bins));
   }
 
 /**
- * Get axis with the given name. Throws exception when not found.
+ * Get vector of bin edges with the given name. Throws exception when not found.
  * @param name  Name of the desired axis
- * @return      axis
+ * @return      vector of bin edges
  */
-  std::vector<float> GetAxis(std::string name) {
+  QnAxis GetAxis(std::string name) {
     for (auto axis: axis_) {
-      if (name == axis.name) return axis;
+      if (name == axis.Name()) return axis;
     }
     throw std::out_of_range("axis not found aborting");
   }
@@ -111,19 +104,23 @@ class QnDataContainer {
     long temp = offset;
     std::vector<int> indices;
     indices.resize(dimension_);
-    for (Int_t i = 0; i < dimension_ - 1; ++i) {
-      indices[i] = (int) offset % axis_[i].bin_edges.size() - 1;
-      temp = temp / axis_[i].bin_edges.size() - 1;
+    for (int i = 0; i < dimension_ - 1; ++i) {
+      indices[i] = (int) offset % axis_[i].size() - 1;
+      temp = temp / axis_[i].size() - 1;
     }
     indices[dimension_ - 1] = (int) temp;
     return indices;
   }
 
+  void ClearData() {
+    data_.clear();
+  }
+
  private:
   std::string name_;  ///< name of data container
-  u_int dimension_; ///< dimension of data container
+  int dimension_; ///< dimension of data container
   std::vector<T> data_; ///< Vector of data vectors
-  std::vector<Axis> axis_; ///< Vector of axis
+  std::vector<QnAxis> axis_; ///< Vector of axis
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
 
 /**
@@ -131,8 +128,8 @@ class QnDataContainer {
  */
   void CalculateStride() {
     stride_[dimension_] = 1;
-    for (Int_t i = 0; i < dimension_; ++i) {
-      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axis_[dimension_ - i - 1].bin_edges.size() - 1;
+    for (int i = 0; i < dimension_; ++i) {
+      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axis_[dimension_ - i - 1].size() - 1;
     }
   }
 
@@ -143,7 +140,7 @@ class QnDataContainer {
  */
   long GetLinearIndex(const std::vector<int> &index) {
     long offset = (index[dimension_ - 1] - 1);
-    for (Int_t i = 0; i < dimension_ - 1; ++i) {
+    for (int i = 0; i < dimension_ - 1; ++i) {
       offset += stride_[i + 1] * (index[i] - 1);
     }
     return offset;
