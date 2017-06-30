@@ -24,11 +24,10 @@ class QnDataContainer {
    * @param name Name of data container.
    */
   QnDataContainer() = default;
-  QnDataContainer(std::string &name) :
+  QnDataContainer(std::string name) :
       name_(name),
       dimension_(0) {
   }
-
   ~QnDataContainer() = default;
 
   typedef typename std::vector<T>::const_iterator iterator;
