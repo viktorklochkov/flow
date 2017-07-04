@@ -11,19 +11,18 @@
 #include <memory>
 #include <QnAxis.h>
 #include "QnCorrectionsQnVector.h"
-/**
+/*
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
  */
 template<class T>
 class QnDataContainer {
  public:
-  typedef typename std::vector<T>::const_iterator iterator;
 
-/**
- * Constructor
- * @param name Name of data container.
- */
+  /*
+   * Constructor
+   * @param name Name of data container.
+   */
   QnDataContainer() = default;
   QnDataContainer(std::string &name) :
       name_(name),
@@ -32,15 +31,15 @@ class QnDataContainer {
 
   ~QnDataContainer() = default;
 
+  typedef typename std::vector<T>::const_iterator iterator;
   iterator cbegin() { return data_.cbegin(); } ///< iterator for external use
-
   iterator cend() { return data_.cend(); } ///< iterator for external use
 
-/**
- * Adds additional axis for storing the data.
- * @param name  Name of the axis
- * @param bins  Vector of bin edges
- */
+  /*
+   * Adds additional axis for storing the data.
+   * @param name  Name of the axis
+   * @param bins  Vector of bin edges
+   */
   void AddAxis(std::string name, const std::vector<float> &bins) {
     if (std::find_if(axis_.begin(), axis_.end(), [name](const QnAxis &axis) { return axis.Name() == name; })
         != axis_.end())
@@ -56,12 +55,12 @@ class QnDataContainer {
     CalculateStride();
   }
 
-/**
- * Adds a datavector by the variables
- * @param vect  Vector added into container
- * @param vars  Vector of Variables used to determine position in the container
- *              e.g. [p_t,eta] = [5 GeV, 0.5]
- */
+  /*
+   * Adds a datavector by the variables
+   * @param vect  Vector added into container
+   * @param vars  Vector of Variables used to determine position in the container
+   *              e.g. [p_t,eta] = [5 GeV, 0.5]
+   */
   void AddVector(T &vect, const std::vector<float> &vars) {
     std::vector<int> index;
     int axisindex = 0;
@@ -74,20 +73,20 @@ class QnDataContainer {
     }
     data_[GetLinearIndex(index)] = std::move(vect);
   }
-/**
- * Get Vector in the specified bins
- * @param bins Data vector of bin indices of the desired vector
- * @return     Data vector
- */
+  /*
+   * Get Vector in the specified bins
+   * @param bins Data vector of bin indices of the desired vector
+   * @return     Data vector
+   */
   T const &GetVector(const std::vector<int> &bins) {
     return data_.at(GetLinearIndex(bins));
   }
 
-/**
- * Get vector of bin edges with the given name. Throws exception when not found.
- * @param name  Name of the desired axis
- * @return      vector of bin edges
- */
+  /*
+   * Get vector of bin edges with the given name. Throws exception when not found.
+   * @param name  Name of the desired axis
+   * @return      vector of bin edges
+   */
   QnAxis GetAxis(std::string name) {
     for (auto axis: axis_) {
       if (name == axis.Name()) return axis;
@@ -95,7 +94,7 @@ class QnDataContainer {
     throw std::out_of_range("axis not found aborting");
   }
 
-  /**
+  /*
    * Calculates indices in multiple dimensions from linearized index
    * @param offset Index of linearized vector
    * @return       Vector of indices
@@ -111,7 +110,9 @@ class QnDataContainer {
     indices[dimension_ - 1] = (int) temp;
     return indices;
   }
-
+  /*
+   * Clears data to be filled. To be called after one event.
+   */
   void ClearData() {
     data_.clear();
   }
@@ -123,9 +124,9 @@ class QnDataContainer {
   std::vector<QnAxis> axis_; ///< Vector of axis
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
 
-/**
- * Calculates offset for transformation into one dimensional vector.
- */
+  /*
+   * Calculates offset for transformation into one dimensional vector.
+   */
   void CalculateStride() {
     stride_[dimension_] = 1;
     for (int i = 0; i < dimension_; ++i) {
@@ -133,11 +134,11 @@ class QnDataContainer {
     }
   }
 
-/**
- * Calculates one dimensional index from a vector of indices.
- * @param index vector of indices in multiple dimensions
- * @return      index in one dimension
- */
+  /*
+   * Calculates one dimensional index from a vector of indices.
+   * @param index vector of indices in multiple dimensions
+   * @return      index in one dimension
+   */
   long GetLinearIndex(const std::vector<int> &index) {
     long offset = (index[dimension_ - 1] - 1);
     for (int i = 0; i < dimension_ - 1; ++i) {
