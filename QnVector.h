@@ -5,13 +5,14 @@
 #ifndef FLOW_QNVECTOR_H
 #define FLOW_QNVECTOR_H
 
-#include <complex>
 #include <array>
 
 class QnVector {
  public:
   QnVector() = default;
   ~QnVector() = default;
+  const float qx(int n) const {return qx[n];}
+  const float qy(int n) const {return qy[n];}
  private:
   std::array<float,8> qx;
   std::array<float,8> qy;

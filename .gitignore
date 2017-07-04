@@ -3,3 +3,9 @@ build
 .idea
 .DS_STORE
 doxygen
+
+reducedevent/libReducedTree\.dylib
+
+reducedevent/libReducedTree\.rootmap
+
+reducedevent/libReducedTree_rdict\.pcm

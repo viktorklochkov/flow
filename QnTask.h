@@ -10,7 +10,7 @@
 #include <QnCorrectionsManager.h>
 #include "TTree.h"
 #include "QnDataContainer.h"
-#include "AliReducedEventInfo.h"
+#include "reducedevent/AliReducedEventInfo.h"
 
 class TTreeReader;
 
