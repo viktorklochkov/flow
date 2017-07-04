@@ -11,8 +11,9 @@ class QnVector {
  public:
   QnVector() = default;
   ~QnVector() = default;
-  const float qx(int n) const {return qx[n];}
-  const float qy(int n) const {return qy[n];}
+  inline const float Qx(int n) const {return qx[n];}
+  inline const float Qy(int n) const {return qy[n];}
+  inline const float Multiplicity() const {return multiplicity;}
  private:
   std::array<float,8> qx;
   std::array<float,8> qy;

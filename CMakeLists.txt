@@ -3,8 +3,7 @@ project(flow)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE debug)
-set(SOURCES main.cpp
-        QnTask.cpp
+set(SOURCES QnTask.cpp
         QnDataContainer.cpp
         QnAxis.cpp
         QnVector.cpp
@@ -21,13 +20,16 @@ list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 list(APPEND CMAKE_PREFIX_PATH "$ENV{FLOWVECTOR}/include")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/reducedevent")
 
+#---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
+find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
+
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 add_definitions(${ROOT_CXX_FLAGS})
 
 # Adding libraries and includes
 find_library(FLOWLIB NAMES FlowVector HINTS  "$ENV{FLOWVECTOR}/lib")
-find_library(REDUCEDEVENT NAMES ReducedEvent HINTS "${CMAKE_SOURCE_DIR}/reducedevent")
+find_library(REDUCEDEVENT NAMES ReducedTree)
 find_path(FLOWINCLUDES QnCorrectionsQnVector.h)
 find_path(REDUCEDINC AliReducedEventInfo.h)
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${FLOWINCLUDES} ${REDUCEDINC})

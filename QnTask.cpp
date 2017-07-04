@@ -8,7 +8,7 @@
 QnTask::QnTask(std::unique_ptr<TTree> tree) :
     tree_(std::move(tree)),
     tree_reader_(tree_.get()),
-    event_(tree_reader_, "event"),
+    event_(tree_reader_, "Event"),
     qn_manager_()
 {
 }
@@ -26,6 +26,7 @@ void QnTask::Run() {
 void QnTask::Initialize() {
   std::cout << "Initializing" << std::endl;
   std::cout << "------------" << std::endl;
+  tree_->SetImplicitMT(true);
   qn_manager_.SetShouldFillQAHistograms();
   qn_manager_.SetShouldFillOutputHistograms();
   qn_manager_.SetCurrentProcessListName("process");
@@ -33,7 +34,8 @@ void QnTask::Initialize() {
 }
 void QnTask::Process() {
   qn_manager_.ClearEvent();
-  qn_manager_.ProcessEvent();
+  auto event =event_.Get();
+//  qn_manager_.ProcessEvent();
 }
 void QnTask::Finalize() {
   std::cout<< "Finalizing" << std::endl;

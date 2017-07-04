@@ -6,10 +6,16 @@
 #include "TTreeReader.h"
 #include "TFile.h"
 #include "QnTask.h"
+#include "TROOT.h"
+
 
 int main() {
+//
+//  int nthreads = 4;
+//  ROOT::EnableImplicitMT(nthreads);
 
-  auto file = TFile::Open("test.root","RECREATE");
+  std::unique_ptr<TFile>  file(TFile::Open("~/phd/analysis/testfiles/dstTree.root", "READ"));
+
 
   std::vector<int> map = {1, 1};
   std::unique_ptr<QnCorrectionsQnVector> a(new QnCorrectionsQnVector("test", 2, &map[0]));
@@ -19,21 +25,23 @@ int main() {
   data->AddAxis("name", bins);
   data->AddAxis("names", bins);
 
-  std::unique_ptr<TTree> tree(new TTree("name","title"));
-  tree->Branch("event",&data);
-  for (int i = 0; i < 1; i++) {
-    std::vector<float> bins = {0, 1, 2};
-    std::vector<float> vars = {0.5,0.5};
-    data->AddVector(a, vars);
-    std::vector<float> vars2 = {1.5,1.5};
-    data->AddVector(a2, vars2);
-    tree->Fill();
-    data->ClearData();
-  }
+  std::unique_ptr<TTree> tree(static_cast<TTree*>(file->Get("DstTree")));
+
+//  std::unique_ptr<TTree> tree(new TTree("name","title"));
+//  tree->Branch("event",&data);
+//  for (int i = 0; i < 1; i++) {
+//    std::vector<float> bins = {0, 1, 2};
+//    std::vector<float> vars = {0.5,0.5};
+//    data->AddVector(a, vars);
+//    std::vector<float> vars2 = {1.5,1.5};
+//    data->AddVector(a2, vars2);
+//    tree->Fill();
+//    data->ClearData();
+//  }
 
   QnTask task(std::move(tree));
   task.Run();
 
-  file->Write();
+//  file->Write();
   return 0;
 }
