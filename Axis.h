@@ -8,12 +8,12 @@
 #include <vector>
 #include <string>
 
+namespace Qn {
 /**
  * @brief Parameter axis with variable bin widths
  *
  * Basic axis implementation
  */
-namespace Qn {
 class Axis {
  public:
 

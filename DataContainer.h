@@ -5,7 +5,6 @@
 #ifndef QNDATACONTAINER_H
 #define QNDATACONTAINER_H
 
-
 #include "Axis.h"
 
 #include "QnCorrectionsQnVector.h"
@@ -15,12 +14,14 @@
 #include <string>
 #include <stdexcept>
 #include <memory>
-
-/*
+/**
+ * QnCorrectionsframework
+ */
+namespace Qn {
+/**
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
  */
-namespace Qn {
 template<typename T>
 class DataContainer {
  public:
