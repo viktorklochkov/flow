@@ -5,31 +5,36 @@
 #ifndef QNDATACONTAINER_H
 #define QNDATACONTAINER_H
 
+
+#include "Axis.h"
+
+#include "QnCorrectionsQnVector.h"
+#include "Rtypes.h"
+
 #include <vector>
 #include <string>
 #include <stdexcept>
 #include <memory>
-#include <QnAxis.h>
-#include "Rtypes.h"
-#include "QnCorrectionsQnVector.h"
+
 /*
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
  */
-template<class T>
-class QnDataContainer {
+namespace Qn {
+template<typename T>
+class DataContainer {
  public:
 
   /*
    * Constructor
    * @param name Name of data container.
    */
-  QnDataContainer() = default;
-  QnDataContainer(std::string name) :
+  DataContainer() = default;
+  DataContainer(std::string name) :
       name_(name),
       dimension_(0) {
   }
-  ~QnDataContainer() = default;
+  ~DataContainer() = default;
 
   typedef typename std::vector<T>::const_iterator iterator;
   iterator cbegin() { return data_.cbegin(); } ///< iterator for external use
@@ -41,10 +46,25 @@ class QnDataContainer {
    * @param bins  Vector of bin edges
    */
   void AddAxis(std::string name, const std::vector<float> &bins) {
-    if (std::find_if(axis_.begin(), axis_.end(), [name](const QnAxis &axis) { return axis.Name() == name; })
+    if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.Name() == name; })
         != axis_.end())
       throw std::runtime_error("axis already defined in vector");
     axis_.emplace_back(name, bins);
+    dimension_++;
+    int totalbins = 1;
+    for (const auto &axis : axis_) {
+      totalbins *= axis.size() - 1;
+    }
+    data_.resize(totalbins);
+    stride_.resize(dimension_ + 1);
+    CalculateStride();
+  }
+
+  void AddAxis(std::string name, const int nbins, const float lowbin, const float upbin) {
+    if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.Name() == name; })
+        != axis_.end())
+      throw std::runtime_error("axis already defined in vector");
+    axis_.emplace_back(name, nbins, lowbin, upbin);
     dimension_++;
     int totalbins = 1;
     for (const auto &axis : axis_) {
@@ -61,11 +81,11 @@ class QnDataContainer {
    * @param vars  Vector of Variables used to determine position in the container
    *              e.g. [p_t,eta] = [5 GeV, 0.5]
    */
-  void AddVector(T &vect, const std::vector<float> &vars) {
+  void SetElement(T &vect, const std::vector<float> &values) {
     std::vector<int> index;
     int axisindex = 0;
     for (auto axis : axis_) {
-      int bin = (int) axis.FindBin(vars.at(axisindex));
+      int bin = (int) axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin <= 0)
         throw std::out_of_range("bin out of specified range");
       index.push_back(bin);
@@ -74,20 +94,40 @@ class QnDataContainer {
     data_[GetLinearIndex(index)] = std::move(vect);
   }
   /*
-   * Get Vector in the specified bins
-   * @param bins Data vector of bin indices of the desired vector
-   * @return     Data vector
+   * Get element in the specified bin
+   * @param bins Vector of bin indices of the desired element
+   * @return     Element
    */
-  T const &GetVector(const std::vector<int> &bins) {
+  T const &GetElement(const std::vector<int> &bins) {
     return data_.at(GetLinearIndex(bins));
   }
 
   /*
-   * Get vector of bin edges with the given name. Throws exception when not found.
+ * Get element with the specified value
+ * @param bins Vector of value to search for desired element
+ * @return     Element
+ */
+  T const &GetElement(const std::vector<float> &values) {
+    std::vector<int> index;
+    int axisindex = 0;
+    for (auto axis : axis_) {
+      int bin = (int) axis.FindBin(values.at(axisindex));
+      if (bin >= axis.size() || bin <= 0)
+        throw std::out_of_range("bin out of specified range");
+      index.push_back(bin);
+      axisindex++;
+    }
+    return data_.at(GetLinearIndex(index));
+  }
+
+  /*
+   * Get Axis with the given name.
+   *
+   * Throws exception when not found.
    * @param name  Name of the desired axis
-   * @return      vector of bin edges
+   * @return      Axis
    */
-  QnAxis GetAxis(std::string name) {
+  Axis GetAxis(std::string name) {
     for (auto axis: axis_) {
       if (name == axis.Name()) return axis;
     }
@@ -121,7 +161,7 @@ class QnDataContainer {
   std::string name_;  ///< name of data container
   int dimension_; ///< dimension of data container
   std::vector<T> data_; ///< Vector of data vectors
-  std::vector<QnAxis> axis_; ///< Vector of axis
+  std::vector<Axis> axis_; ///< Vector of axis
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
 
   /*
@@ -147,10 +187,10 @@ class QnDataContainer {
     return offset;
   }
   /// \cond CLASSIMP
-  ClassDef(QnDataContainer,1);
+ ClassDef(DataContainer, 1);
   /// \endcond
 };
 
-typedef QnDataContainer<std::unique_ptr<QnCorrectionsQnVector>> QnDataContainerQn;
-
+typedef DataContainer<std::unique_ptr<QnCorrectionsQnVector>> DataContainerQn;
+}
 #endif

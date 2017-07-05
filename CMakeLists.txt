@@ -1,16 +1,15 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.7.2)
 project(flow)
 set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE debug)
 set(SOURCES QnTask.cpp
-        QnDataContainer.cpp
-        QnAxis.cpp
+        DataContainer.cpp
+        Axis.cpp
         QnVector.cpp
-        )
+        EventInfo.cpp)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
-
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
