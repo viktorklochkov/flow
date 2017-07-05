@@ -6,9 +6,12 @@
 #define FLOW_QNTASK_H
 
 #include <vector>
-#include <TTreeReader.h>
-#include <QnCorrectionsManager.h>
+#include <array>
+#include "TFile.h"
 #include "TTree.h"
+#include "TTreeReader.h"
+
+#include "QnCorrectionsManager.h"
 #include "QnDataContainer.h"
 #include "reducedevent/AliReducedEventInfo.h"
 
@@ -17,7 +20,7 @@ class TTreeReader;
 class QnTask {
  public:
   QnTask() = default;
-  QnTask(std::unique_ptr<TTree> tree);
+  QnTask(std::array<std::unique_ptr<TFile>, 4> files);
   ~QnTask() = default;
   void Run();
  private:
@@ -35,9 +38,15 @@ class QnTask {
   void Finalize();
 
  private:
-  std::unique_ptr<TTree> tree_;
+  std::unique_ptr<TFile> in_file_;
+  std::unique_ptr<TFile> out_file_;
+  std::unique_ptr<TFile> in_calibration_file_;
+  std::unique_ptr<TFile> out_calibration_file_;
+  std::unique_ptr<TTree> in_tree_;
+  std::unique_ptr<TTree> out_tree_;
   TTreeReader tree_reader_;
   TTreeReaderValue<AliReducedEventInfo> event_;
+  std::unique_ptr<QnDataContainerQn> qn_data_;
   QnCorrectionsManager qn_manager_;
 };
 
