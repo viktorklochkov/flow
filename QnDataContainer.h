@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <memory>
 #include <QnAxis.h>
+#include "Rtypes.h"
 #include "QnCorrectionsQnVector.h"
 /*
  * @brief      Template container class for Q-vectors and correlations
@@ -145,6 +146,9 @@ class QnDataContainer {
     }
     return offset;
   }
+  /// \cond CLASSIMP
+  ClassDef(QnDataContainer,1);
+  /// \endcond
 };
 
 typedef QnDataContainer<std::unique_ptr<QnCorrectionsQnVector>> QnDataContainerQn;
