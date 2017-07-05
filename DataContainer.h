@@ -41,50 +41,56 @@ class DataContainer {
   iterator cbegin() { return data_.cbegin(); } ///< iterator for external use
   iterator cend() { return data_.cend(); } ///< iterator for external use
 
-  /*
-   * Adds additional axis for storing the data.
+  /**
+   * Adds additional axis for storing the data with variable binning
    * @param name  Name of the axis
    * @param bins  Vector of bin edges
    */
-  void AddAxis(std::string name, const std::vector<float> &bins) {
+  void AddAxis(const std::string name, const std::vector<float> &bins) {
     if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.Name() == name; })
         != axis_.end())
       throw std::runtime_error("axis already defined in vector");
     axis_.emplace_back(name, bins);
     dimension_++;
-    int totalbins = 1;
+    std::vector<float>::size_type totalbins = 1;
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
     data_.resize(totalbins);
-    stride_.resize(dimension_ + 1);
+    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
-
-  void AddAxis(std::string name, const int nbins, const float lowbin, const float upbin) {
+  /**
+   * Adds additional axis for storing the data with fixed binning.
+   * @param name Name of the axis
+   * @param nbins Number of bins
+   * @param lowbin
+   * @param upbin
+   */
+  void AddAxis(const std::string name, const int nbins, const float lowbin, const float upbin) {
     if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.Name() == name; })
         != axis_.end())
       throw std::runtime_error("axis already defined in vector");
     axis_.emplace_back(name, nbins, lowbin, upbin);
     dimension_++;
-    int totalbins = 1;
+    std::vector<float>::size_type totalbins = 1;
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
     data_.resize(totalbins);
-    stride_.resize(dimension_ + 1);
+    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
 
   /*
-   * Adds a datavector by the variables
-   * @param vect  Vector added into container
+   * Adds a element by the variables
+   * @param vect  element added into container
    * @param vars  Vector of Variables used to determine position in the container
    *              e.g. [p_t,eta] = [5 GeV, 0.5]
    */
   void SetElement(T &vect, const std::vector<float> &values) {
     std::vector<int> index;
-    int axisindex = 0;
+    std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {
       int bin = (int) axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin <= 0)
@@ -110,7 +116,7 @@ class DataContainer {
  */
   T const &GetElement(const std::vector<float> &values) {
     std::vector<int> index;
-    int axisindex = 0;
+    std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {
       int bin = (int) axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin <= 0)
@@ -143,9 +149,9 @@ class DataContainer {
   std::vector<int> GetIndex(const long offset) {
     long temp = offset;
     std::vector<int> indices;
-    indices.resize(dimension_);
+    indices.resize((std::vector<int>::size_type) dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[i] = (int) offset % axis_[i].size() - 1;
+      indices[i] = (int) (offset % axis_[i].size() - 1);
       temp = temp / axis_[i].size() - 1;
     }
     indices[dimension_ - 1] = (int) temp;
@@ -160,7 +166,7 @@ class DataContainer {
 
  private:
   std::string name_;  ///< name of data container
-  int dimension_; ///< dimension of data container
+  char dimension_; ///< dimension of data container
   std::vector<T> data_; ///< Vector of data vectors
   std::vector<Axis> axis_; ///< Vector of axis
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
