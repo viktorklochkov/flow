@@ -26,12 +26,19 @@ int main(int argc, char **argv) {
 //  return 0;
   int test[2] = {1,1};
   std::unique_ptr<QnCorrectionsQnVector> qn(new QnCorrectionsQnVector("name",2,test));
+  std::unique_ptr<QnCorrectionsQnVector> qn1(new QnCorrectionsQnVector("name",2,test));
+  std::unique_ptr<QnCorrectionsQnVector> qn2(new QnCorrectionsQnVector("name",2,test));
+  std::unique_ptr<QnCorrectionsQnVector> qn3(new QnCorrectionsQnVector("name",2,test));
   Qn::DataContainerQn datacontainer;
-  datacontainer.AddAxis("test",{1,2,3,4,5});
+  datacontainer.AddAxis("test",{0,1,2});
+  datacontainer.AddAxis("test2",{0,1,2});
   Qn::Axis axis = datacontainer.GetAxis("test");
-  datacontainer.SetElement(qn,{1});
-  std::vector<float> t = {4.1};
-  const auto & a = datacontainer.GetElement(t);
+  datacontainer.SetElement(qn,{3,3});
+//  datacontainer.SetElement(qn1,{1,1});
+//  datacontainer.SetElement(qn2,{0,1});
+//  datacontainer.SetElement(qn3,{1,0});
+//  std::vector<float> t = {1,1};
+//  const auto & a = datacontainer.GetElement(t);
 
   return 0;
 }
