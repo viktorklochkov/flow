@@ -52,11 +52,23 @@ class Axis {
   inline const std::string Name() const { return name_; }
   /**
    * Finds bin index for a given value
+   * if value is smaller than lowest bin return -1.
    * @param value for finding corresponding bin
    * @return bin index
    */
   inline const long FindBin(float value) {
-    return 1 + std::distance(bin_edges_.begin(), std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value));
+    long bin = 0;
+    if (value < *bin_edges_.begin()) {
+      bin = -1;
+    } else {
+      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
+      if (lb == bin_edges_.begin() || *lb == value)
+        bin = (lb - bin_edges_.begin());
+      else
+        bin = (lb - bin_edges_.begin()) - 1;
+    }
+    if (bin >= bin_edges_.size() - 1 || bin < 0) throw "value out of bin range";
+    return bin;
   }
   /**
    * Returns number of bins.

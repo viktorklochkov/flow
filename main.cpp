@@ -6,8 +6,8 @@
 #include "TTreeReader.h"
 #include "TFile.h"
 #include "QnTask.h"
-#include "EventInfo.h"
-#include "TROOT.h"
+#include "QnCorrections/QnCorrectionsQnVector.h"
+
 #include <map>
 
 int main(int argc, char **argv) {

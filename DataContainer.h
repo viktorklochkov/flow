@@ -93,8 +93,6 @@ class DataContainer {
     std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {
       int bin = (int) axis.FindBin(values.at(axisindex));
-      if (bin >= axis.size() || bin < 0)
-        throw std::out_of_range("bin out of specified range");
       index.push_back(bin);
       axisindex++;
     }
