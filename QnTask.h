@@ -11,10 +11,10 @@
 #include "TTree.h"
 #include "TTreeReader.h"
 
-#include "QnCorrectionsManager.h"
+#include "QnCorrections/QnCorrectionsManager.h"
 #include "DataContainer.h"
 #include "EventInfo.h"
-#include "reducedevent/AliReducedEventInfo.h"
+#include "ReducedEvent/AliReducedEventInfo.h"
 
 class TTreeReader;
 

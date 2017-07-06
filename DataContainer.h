@@ -7,7 +7,7 @@
 
 #include "Axis.h"
 
-#include "QnCorrectionsQnVector.h"
+#include "QnCorrections/QnCorrectionsQnVector.h"
 #include "Rtypes.h"
 
 #include <vector>
@@ -93,7 +93,7 @@ class DataContainer {
     std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {
       int bin = (int) axis.FindBin(values.at(axisindex));
-      if (bin >= axis.size() || bin <= 0)
+      if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
       index.push_back(bin);
       axisindex++;
@@ -119,7 +119,7 @@ class DataContainer {
     std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {
       int bin = (int) axis.FindBin(values.at(axisindex));
-      if (bin >= axis.size() || bin <= 0)
+      if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
       index.push_back(bin);
       axisindex++;
@@ -151,8 +151,8 @@ class DataContainer {
     std::vector<int> indices;
     indices.resize((std::vector<int>::size_type) dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[i] = (int) (offset % axis_[i].size() - 1);
-      temp = temp / axis_[i].size() - 1;
+      indices[i] = (int) (offset % axis_[i].size());
+      temp = temp / axis_[i].size();
     }
     indices[dimension_ - 1] = (int) temp;
     return indices;
@@ -187,9 +187,9 @@ class DataContainer {
    * @return      index in one dimension
    */
   long GetLinearIndex(const std::vector<int> &index) {
-    long offset = (index[dimension_ - 1] - 1);
+    long offset = (index[dimension_ - 1]);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      offset += stride_[i + 1] * (index[i] - 1);
+      offset += stride_[i + 1] * (index[i]);
     }
     return offset;
   }

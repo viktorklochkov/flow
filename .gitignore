@@ -9,3 +9,11 @@ reducedevent/libReducedTree\.dylib
 reducedevent/libReducedTree\.rootmap
 
 reducedevent/libReducedTree_rdict\.pcm
+
+*.dylib
+
+*.rootmap
+
+*.pcm
+
+QnCorrections/
