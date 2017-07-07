@@ -21,23 +21,23 @@ enum class Coord {
 
 namespace internal {
 template<typename T>
-inline Correlation correlate(int n, T last) {
-  const auto & element = *(std::get<0>(last).begin() + n);
+Correlation correlate(int n, T last) {
+  const auto &element = *(std::get<0>(last).begin() + n);
   int harmonic = std::get<1>(last);
   float qx = element->Qx(harmonic);
   float qy = element->Qy(harmonic);
-  std::array<float,2> tmp= {qx,qy};
+  std::array<float, 2> tmp = {qx, qy};
   Correlation b(tmp);
   return b;
 };
 
 template<typename T, typename... Args>
-inline Correlation correlate(int n, T first, Args ...args) {
-  const auto & element = *(std::get<0>(first).begin() + n);
+Correlation correlate(int n, T first, Args ...args) {
+  const auto &element = *(std::get<0>(first).begin() + n);
   int harmonic = std::get<1>(first);
   float qx = element->Qx(harmonic);
   float qy = element->Qy(harmonic);
-  std::array<float,2> tmp= {qx,qy};
+  std::array<float, 2> tmp = {qx, qy};
   Correlation b(tmp);
   return b * correlate(n, args...);
 };
@@ -49,7 +49,7 @@ void Correlate(DataContainerC &c, const T &x, Args ...args) {
   for (const auto &i : std::get<0>(x)) {
     auto result = internal::correlate(n, x, args...);
     std::unique_ptr<Correlation> a(new Correlation(result));
-    c.SetElement(a,n);
+    c.SetElement(a, n);
     n++;
   }
 }
