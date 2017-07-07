@@ -7,7 +7,9 @@ set(SOURCES QnTask.cpp
         DataContainer.cpp
         Axis.cpp
         QnVector.cpp
-        EventInfo.cpp)
+        EventInfo.cpp
+        Correlator.h
+        Correlation.cpp)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
@@ -34,7 +36,7 @@ include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${
 
 # Generate dictionary
 ROOT_GENERATE_DICTIONARY(G__Flow ${HEADERS} LINKDEF LinkDef.h)
-
+message("${HEADERS}")
 # Create a shared library with generated dictionary
 add_library(flow SHARED ${SOURCES}  G__Flow)
 target_include_directories(flow PUBLIC ${CMAKE_SOURCE_DIR} ${QNCORRECT_INC} ${REDUCEDINC})

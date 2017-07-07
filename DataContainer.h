@@ -8,6 +8,7 @@
 #include "Axis.h"
 
 #include "QnCorrections/QnCorrectionsQnVector.h"
+#include "Correlation.h"
 #include "Rtypes.h"
 
 #include <vector>
@@ -38,8 +39,10 @@ class DataContainer {
   ~DataContainer() = default;
 
   typedef typename std::vector<T>::const_iterator iterator;
-  iterator cbegin() { return data_.cbegin(); } ///< iterator for external use
-  iterator cend() { return data_.cend(); } ///< iterator for external use
+  iterator cbegin() const { return data_.cbegin(); } ///< iterator for external use
+  iterator cend() const { return data_.cend(); } ///< iterator for external use
+  iterator begin() const { return data_.begin(); } ///< iterator for external use
+  iterator end() const { return data_.end(); } ///< iterator for external use
 
   /**
    * Adds additional axis for storing the data with variable binning
@@ -56,7 +59,7 @@ class DataContainer {
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
-    data_.resize(totalbins);
+    data_.reserve(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
@@ -77,7 +80,7 @@ class DataContainer {
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
-    data_.resize(totalbins);
+    data_.reserve(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
@@ -96,7 +99,18 @@ class DataContainer {
       index.push_back(bin);
       axisindex++;
     }
-    data_[GetLinearIndex(index)] = std::move(vect);
+//    data_[GetLinearIndex(index)] = std::move(vect);
+    data_.insert(begin() + GetLinearIndex(index), std::move(vect));
+  }
+
+  /**
+  * Adds a element by the variables no bounds checking
+  * @param vect  element added into container
+  * @param index  linear index position
+  */
+  void SetElement(T &vect, const long index) {
+//    data_[index] = std::move(vect);
+    data_.insert(begin() + index, std::move(vect));
   }
   /*
    * Get element in the specified bin
@@ -197,5 +211,6 @@ class DataContainer {
 };
 
 typedef DataContainer<std::unique_ptr<QnCorrectionsQnVector>> DataContainerQn;
+typedef DataContainer<std::unique_ptr<Qn::Correlation>> DataContainerC;
 }
 #endif
