@@ -16,8 +16,6 @@
 #include "EventInfo.h"
 #include "ReducedEvent/AliReducedEventInfo.h"
 
-class TTreeReader;
-
 class QnTask {
  public:
   QnTask() = default;

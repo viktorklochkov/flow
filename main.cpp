@@ -26,11 +26,14 @@ int main(int argc, char **argv) {
   std::unique_ptr<QnCorrectionsQnVector> qn2(new QnCorrectionsQnVector("name", 2, test));
   qn->SetQx(2, 2.0);
   qn2->SetQx(2, 3.0);
+  qn->SetQy(2, 2.0);
+  qn2->SetQy(2, 3.0);
 
   Qn::DataContainerQn datacontainer;
-  datacontainer.AddAxis("test", {0, 1, 2});
-  std::vector<float> vec = {0.0};
-  std::vector<float> vec2 = {1.0};
+  Qn::Axis axis("const",{1.0,2.0,3.0});
+  datacontainer.AddAxis(axis);
+  std::vector<float> vec = {1.0};
+  std::vector<float> vec2 = {2.0};
   datacontainer.SetElement(qn, vec);
   datacontainer.SetElement(qn2, vec2);
 

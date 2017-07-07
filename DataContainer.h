@@ -43,7 +43,24 @@ class DataContainer {
   iterator cend() const { return data_.cend(); } ///< iterator for external use
   iterator begin() const { return data_.begin(); } ///< iterator for external use
   iterator end() const { return data_.end(); } ///< iterator for external use
-
+  /**
+   * Adds existing axis for storing the data with variable binning
+   * @param Axis
+   */
+  void AddAxis(const Axis &axis) {
+    if (std::find_if(axis_.begin(), axis_.end(), [axis](const Axis &axis_c) { return axis_c.Name() == axis.Name(); })
+        != axis_.end())
+      throw std::runtime_error("axis already defined in vector");
+    axis_.push_back(axis);
+    dimension_++;
+    std::vector<float>::size_type totalbins = 1;
+    for (const auto &axis : axis_) {
+      totalbins *= axis.size() - 1;
+    }
+    data_.reserve(totalbins);
+    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
+    CalculateStride();
+  }
   /**
    * Adds additional axis for storing the data with variable binning
    * @param name  Name of the axis
@@ -211,6 +228,6 @@ class DataContainer {
 };
 
 typedef DataContainer<std::unique_ptr<QnCorrectionsQnVector>> DataContainerQn;
-typedef DataContainer<std::unique_ptr<Qn::Correlation>> DataContainerC;
+typedef DataContainer<std::unique_ptr<Correlation>> DataContainerC;
 }
 #endif
