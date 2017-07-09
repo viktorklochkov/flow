@@ -56,7 +56,7 @@ class Axis {
    * @param value for finding corresponding bin
    * @return bin index
    */
-  inline const long FindBin(float value) {
+  inline const long FindBin(float value) const {
     long bin = 0;
     if (value < *bin_edges_.begin()) {
       bin = -1;

@@ -34,9 +34,8 @@ int main(int argc, char **argv) {
   datacontainer.AddAxis(axis);
   std::vector<float> vec = {1.0};
   std::vector<float> vec2 = {2.0};
-  datacontainer.SetElement(qn, vec);
-  datacontainer.SetElement(qn2, vec2);
-
+  datacontainer.SetElement(qn, (std::vector<float>){1.0});
+  datacontainer.SetElement(qn2,  (std::vector<float>){2.0});
   Qn::DataContainerC correlationcontainer;
   correlationcontainer.AddAxis("test", {0, 1, 2});
 

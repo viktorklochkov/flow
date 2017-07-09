@@ -46,7 +46,8 @@ class QnTask {
   TTreeReader tree_reader_;
   TTreeReaderValue<AliReducedEventInfo> event_;
   std::unique_ptr<Qn::DataContainerQn> qn_data_;
-  std::unique_ptr<Qn::EventInfoF> qn_eventinfo_;
+  std::unique_ptr<Qn::EventInfoF> qn_eventinfo_f_;
+  std::unique_ptr<Qn::EventInfoI> qn_eventinfo_i_;
   QnCorrectionsManager qn_manager_;
 };
 

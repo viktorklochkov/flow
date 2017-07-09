@@ -53,18 +53,6 @@ void Correlate(DataContainerC &c, const T &x, Args ...args) {
     n++;
   }
 }
-
-void Correlate(std::tuple<const DataContainerQn &, int> qn1, std::tuple<const DataContainerQn &, int> qn2) {
-  int n = 0;
-  for (const auto &i : std::get<0>(qn1)) {
-    const auto &ta = i;
-    const auto &tb = std::get<0>(qn2).begin() + n;
-    float qx1 = ta->Qx(std::get<1>(qn1));
-    float qx2 = ta->Qx(std::get<1>(qn1));
-    float qxx = qx1 * qx2;
-  }
-}
-
 }
 
 #endif //FLOW_CORRELATOR_H

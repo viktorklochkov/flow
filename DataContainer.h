@@ -57,7 +57,7 @@ class DataContainer {
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
-    data_.reserve(totalbins);
+    data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
@@ -76,7 +76,7 @@ class DataContainer {
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
-    data_.reserve(totalbins);
+    data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
@@ -97,7 +97,7 @@ class DataContainer {
     for (const auto &axis : axis_) {
       totalbins *= axis.size() - 1;
     }
-    data_.reserve(totalbins);
+    data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
@@ -111,13 +111,12 @@ class DataContainer {
   void SetElement(T &vect, const std::vector<float> &values) {
     std::vector<int> index;
     std::vector<int>::size_type axisindex = 0;
-    for (auto axis : axis_) {
+    for (const auto &axis : axis_) {
       int bin = (int) axis.FindBin(values.at(axisindex));
       index.push_back(bin);
       axisindex++;
     }
-//    data_[GetLinearIndex(index)] = std::move(vect);
-    data_.insert(begin() + GetLinearIndex(index), std::move(vect));
+    data_[GetLinearIndex(index)] = std::move(vect);
   }
 
   /**
@@ -126,8 +125,7 @@ class DataContainer {
   * @param index  linear index position
   */
   void SetElement(T &vect, const long index) {
-//    data_[index] = std::move(vect);
-    data_.insert(begin() + index, std::move(vect));
+    data_[index] = std::move(vect);
   }
   /*
    * Get element in the specified bin
@@ -190,7 +188,12 @@ class DataContainer {
    * Clears data to be filled. To be called after one event.
    */
   void ClearData() {
+//    for (auto &element : data_) {
+//      element.reset(nullptr);
+//    }
+    auto size = data_.size();
     data_.clear();
+    data_.resize(size);
   }
 
  private:
