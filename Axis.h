@@ -74,7 +74,7 @@ class Axis {
    * Returns number of bins.
    * @return number of bins.
    */
-  inline const long size() const { return bin_edges_.size(); }
+  inline const long size() const { return bin_edges_.size() - 1; }
   /**
    * Gets lower bin edge
    * @param bin Index of bin of interest

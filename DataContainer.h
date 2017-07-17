@@ -209,7 +209,7 @@ class DataContainer {
   void CalculateStride() {
     stride_[dimension_] = 1;
     for (int i = 0; i < dimension_; ++i) {
-      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axis_[dimension_ - i - 1].size() - 1;
+      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axis_[dimension_ - i - 1].size();
     }
   }
 
