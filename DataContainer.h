@@ -55,7 +55,7 @@ class DataContainer {
     dimension_++;
     std::vector<float>::size_type totalbins = 1;
     for (const auto &axis : axis_) {
-      totalbins *= axis.size() - 1;
+      totalbins *= axis.size();
     }
     data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
@@ -74,7 +74,7 @@ class DataContainer {
     dimension_++;
     std::vector<float>::size_type totalbins = 1;
     for (const auto &axis : axis_) {
-      totalbins *= axis.size() - 1;
+      totalbins *= axis.size();
     }
     data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
@@ -95,7 +95,7 @@ class DataContainer {
     dimension_++;
     std::vector<float>::size_type totalbins = 1;
     for (const auto &axis : axis_) {
-      totalbins *= axis.size() - 1;
+      totalbins *= axis.size();
     }
     data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
