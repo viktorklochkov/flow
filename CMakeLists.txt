@@ -3,13 +3,13 @@ project(flow)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE debug)
-set(SOURCES QnTask.cpp
+set(SOURCES Task.cpp
         DataContainer.cpp
         Axis.cpp
         QnVector.cpp
         EventInfo.cpp
         Correlator.h
-        Correlation.cpp)
+        Correlation.cpp CorrectionsInterface.cpp CorrectionsInterface.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
