@@ -13,6 +13,6 @@
 #pragma link C++ class Qn::EventInfo<float>+;
 #pragma link C++ typedef Qn::EventInfoF;
 #pragma link C++ typedef Qn::EventInfoI;
-#pragma link C++ class Qn::CorrectionsInterface;
+#pragma link C++ namespace Qn+;
 
 #endif

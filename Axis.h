@@ -49,14 +49,14 @@ class Axis {
    * Returns Name of axis.
    * @return name of axis
    */
-  inline const std::string Name() const { return name_; }
+  inline std::string Name() const { return name_; }
   /**
    * Finds bin index for a given value
    * if value is smaller than lowest bin return -1.
    * @param value for finding corresponding bin
    * @return bin index
    */
-  inline const long FindBin(float value) const {
+  inline long FindBin(float value) const {
     long bin = 0;
     if (value < *bin_edges_.begin()) {
       bin = -1;
@@ -67,26 +67,26 @@ class Axis {
       else
         bin = (lb - bin_edges_.begin()) - 1;
     }
-    if (bin >= bin_edges_.size() - 1 || bin < 0) throw "value out of bin range";
+    if (bin >= (long) bin_edges_.size() - 1 || bin < 0) throw "value out of bin range";
     return bin;
   }
   /**
    * Returns number of bins.
    * @return number of bins.
    */
-  inline const long size() const { return bin_edges_.size() - 1; }
+  inline long size() const { return bin_edges_.size() - 1; }
   /**
    * Gets lower bin edge
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline const float GetLowerBinEdge(int bin) const { return bin_edges_.at(bin); }
+  inline float GetLowerBinEdge(int bin) const { return bin_edges_.at(bin); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline const float GetUpperBinEdge(int bin) const { return bin_edges_.at(bin + 1); }
+  inline float GetUpperBinEdge(int bin) const { return bin_edges_.at(bin + 1); }
  private:
   std::string name_;
   std::vector<float> bin_edges_;
