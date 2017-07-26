@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <TSystem.h>
 #include "DataContainer.h"
 #include "TTree.h"
 #include "TTreeReader.h"
@@ -16,6 +17,7 @@ int main(int argc, char **argv) {
 //  std::shared_ptr<TFile> in_calibration_file(TFile::Open(argv[4], "READ"));
 //  std::array<std::shared_ptr<TFile>, 4> files= {in_file, out_file, out_calibration_file, in_calibration_file};
   // run task
+  gSystem->cd("/Users/lukas/phd/analysis/testfiles/");
   Qn::Task task("/Users/lukas/phd/analysis/testfiles/filenames.txt", "/Users/lukas/phd/analysis/testfiles/input.root");
   task.Run();
   return 0;
