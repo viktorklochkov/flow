@@ -44,6 +44,11 @@ class DataContainer {
   iterator begin() const { return data_.begin(); } ///< iterator for external use
   iterator end() const { return data_.end(); } ///< iterator for external use
   /**
+   * Size of data container
+   * @return number of entries in the container
+   */
+  std::vector<QnCorrectionsQnVector>::size_type size() const {return data_.size();}
+  /**
    * Adds existing axis for storing the data with variable binning
    * @param Axis
    */
@@ -153,7 +158,11 @@ class DataContainer {
     }
     return data_.at(GetLinearIndex(index));
   }
-
+  /**
+   * Get vector of axis
+   * @return Vector of axices
+   */
+  std::vector<Axis> GetAxices() const { return axis_;}
   /*
    * Get Axis with the given name.
    *
@@ -161,7 +170,7 @@ class DataContainer {
    * @param name  Name of the desired axis
    * @return      Axis
    */
-  Axis GetAxis(std::string name) {
+  Axis GetAxis(std::string name) const {
     for (auto axis: axis_) {
       if (name == axis.Name()) return axis;
     }
@@ -173,7 +182,7 @@ class DataContainer {
    * @param offset Index of linearized vector
    * @return       Vector of indices
    */
-  std::vector<int> GetIndex(const long offset) {
+  std::vector<int> GetIndex(const long offset) const {
     long temp = offset;
     std::vector<int> indices;
     indices.resize((std::vector<int>::size_type) dimension_);
@@ -230,7 +239,7 @@ class DataContainer {
   /// \endcond
 };
 
-typedef DataContainer<std::unique_ptr<QnCorrectionsQnVector>> DataContainerQn;
+typedef DataContainer<std::unique_ptr<const QnCorrectionsQnVector>> DataContainerQn;
 typedef DataContainer<std::unique_ptr<Correlation>> DataContainerC;
 }
 #endif

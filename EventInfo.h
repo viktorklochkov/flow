@@ -35,6 +35,10 @@ class EventInfo {
     map_.emplace(key, a);
   }
 
+  void Clear() {
+    map_.clear();
+  }
+
  private:
   std::map<std::string, T> map_; ///< stores key value pair for event parameters
 };

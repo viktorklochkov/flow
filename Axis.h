@@ -80,13 +80,13 @@ class Axis {
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline const float GetLowerBinEdge(int bin) { return bin_edges_.at(bin); }
+  inline const float GetLowerBinEdge(int bin) const { return bin_edges_.at(bin); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline const float GetUpperBinEdge(int bin) { return bin_edges_.at(bin + 1); }
+  inline const float GetUpperBinEdge(int bin) const { return bin_edges_.at(bin + 1); }
  private:
   std::string name_;
   std::vector<float> bin_edges_;

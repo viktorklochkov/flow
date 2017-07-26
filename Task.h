@@ -29,6 +29,7 @@
 #include "ReducedEvent/AliReducedVarManager.h"
 #include "ReducedEvent/AliReducedTrackInfo.h"
 #include "ReducedEvent/AliReducedBaseTrack.h"
+#include "CorrectionsInterface.h"
 
 #define VAR AliReducedVarManager
 
@@ -68,32 +69,32 @@ class Task {
   QnCorrectionsManager qn_manager_;
 
   void AddTPC(QnCorrectionsManager &manager) {
-    const Int_t nTPCdim = 2;
-    QnCorrectionsEventClassVariablesSet *CorrEventClasses = new QnCorrectionsEventClassVariablesSet(nTPCdim);
-    Double_t VtxZbinning[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
-    Double_t Ctbinning[][2] = {{0.0, 2}, {100.0, 100}};
-    CorrEventClasses->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, VAR::GetVarName(VAR::kVtxZ), VtxZbinning));
-    CorrEventClasses->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO,
-                                                              Form("Centrality (%s)",
-                                                                   VAR::GetVarName(VAR::kCentVZERO).Data()),
-                                                              Ctbinning));
+//    const Int_t nTPCdim = 2;
+//    QnCorrectionsEventClassVariablesSet *CorrEventClasses = new QnCorrectionsEventClassVariablesSet(nTPCdim);
+//    Double_t VtxZbinning[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
+//    Double_t Ctbinning[][2] = {{0.0, 2}, {100.0, 100}};
+//    CorrEventClasses->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, VAR::GetVarName(VAR::kVtxZ), VtxZbinning));
+//    CorrEventClasses->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO,
+//                                                              Form("Centrality (%s)",
+//                                                                   VAR::GetVarName(VAR::kCentVZERO).Data()),
+//                                                              Ctbinning));
     ////////// end of binning
-    QnCorrectionsDetector *TPC = new QnCorrectionsDetector("TPC", VAR::kTPC);
-    QnCorrectionsDetectorConfigurationTracks
-        *TPCconf = new QnCorrectionsDetectorConfigurationTracks("TPC", CorrEventClasses, 4);
-    TPCconf->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
-    TPCconf->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
-    QnCorrectionsQnVectorTwistAndRescale *twScale = new QnCorrectionsQnVectorTwistAndRescale();
-    twScale->SetApplyTwist(kTRUE);
-    twScale->SetApplyRescale(kFALSE);
-    twScale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_doubleHarmonic);
-    TPCconf->AddCorrectionOnQnVector(dynamic_cast<QnCorrectionsCorrectionOnQvector *>(twScale));
-    QnCorrectionsCutsSet *cutsTPC = new QnCorrectionsCutsSet();
-    cutsTPC->Add(new QnCorrectionsCutWithin(VAR::kEta, -0.8, 0.8));
-    cutsTPC->Add(new QnCorrectionsCutWithin(VAR::kPt, 0.2, 5.));
-    TPCconf->SetCuts(cutsTPC);
-    TPC->AddDetectorConfiguration(TPCconf);
-    manager.AddDetector(TPC);
+//    QnCorrectionsDetectorConfigurationTracks
+//        *TPCconf = new QnCorrectionsDetectorConfigurationTracks("TPC", CorrEventClasses, 4);
+//    TPCconf->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+//    TPCconf->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+//    QnCorrectionsQnVectorTwistAndRescale *twScale = new QnCorrectionsQnVectorTwistAndRescale();
+//    twScale->SetApplyTwist(kTRUE);
+//    twScale->SetApplyRescale(kFALSE);
+//    twScale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_doubleHarmonic);
+//    TPCconf->AddCorrectionOnQnVector(dynamic_cast<QnCorrectionsCorrectionOnQvector *>(twScale));
+//    QnCorrectionsCutsSet *cutsTPC = new QnCorrectionsCutsSet();
+//    cutsTPC->Add(new QnCorrectionsCutWithin(VAR::kEta, -0.8, 0.8));
+//    cutsTPC->Add(new QnCorrectionsCutWithin(VAR::kPt, 0.2, 5.));
+//    TPCconf->SetCuts(cutsTPC);
+//    TPC->AddDetectorConfiguration(TPCconf);
+//    manager.AddDetector(TPC);
+//    return TPCconf;
   }
 
   void AddVZERO(QnCorrectionsManager &manager) {

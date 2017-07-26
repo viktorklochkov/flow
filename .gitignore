@@ -25,3 +25,7 @@ html/
 latex/
 
 Doxyfile
+
+analysis_C\.d
+
+analysis_C\.so
