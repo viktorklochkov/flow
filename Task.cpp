@@ -8,33 +8,36 @@
 namespace Qn {
 
 Task::Task(std::string filelist, std::string incalib) :
-    out_file_(new TFile("output.root", "RECREATE")),
     out_calibration_file_(new TFile("qn.root", "RECREATE")),
     in_calibration_file_(TFile::Open(incalib.data())),
     in_tree_(std::move(this->MakeChain(filelist))),
-    out_tree_(new TTree("qn_tree", "qn_tree")),
     tree_reader_(in_tree_.get()),
     event_(tree_reader_, "Event"),
-    qn_data_(new Qn::DataContainerQn("data")),
+    out_file_(new TFile("output.root", "RECREATE")),
+    out_tree_(nullptr),
+    qn_data_(new Qn::DataContainerQn()),
     qn_eventinfo_f_(new Qn::EventInfoF()),
     qn_eventinfo_i_(new Qn::EventInfoI()),
     qn_manager_() {
+  out_file_->cd();
+  std::unique_ptr<TTree> tree(new TTree("tree","tree"));
+  out_tree_ = std::move(tree);
 }
 
-Task::Task(std::array<std::shared_ptr<TFile>, 4> files) :
-    in_file_(files[0]),
-    out_file_(files[1]),
-    out_calibration_file_(files[2]),
-    in_calibration_file_(files[3]),
-    in_tree_(std::move(static_cast<TTree *>(in_file_->Get("DstTree")))),
-    out_tree_(new TTree("qn_tree", "qn_tree")),
-    tree_reader_(in_tree_.get()),
-    event_(tree_reader_, "Event"),
-    qn_data_(new Qn::DataContainerQn("data")),
-    qn_eventinfo_f_(new Qn::EventInfoF()),
-    qn_eventinfo_i_(new Qn::EventInfoI()),
-    qn_manager_() {
-}
+//Task::Task(std::array<std::shared_ptr<TFile>, 4> files) :
+//    in_file_(files[0]),
+//    out_file_(files[1]),
+//    out_calibration_file_(files[2]),
+//    in_calibration_file_(files[3]),
+//    in_tree_(std::move(static_cast<TTree *>(in_file_->Get("DstTree")))),
+//    out_tree_(new TTree("qn_tree", "qn_tree")),
+//    tree_reader_(in_tree_.get()),
+//    event_(tree_reader_, "Event"),
+//    qn_data_(new Qn::DataContainerQn("data")),
+//    qn_eventinfo_f_(new Qn::EventInfoF()),
+//    qn_eventinfo_i_(new Qn::EventInfoI()),
+//    qn_manager_() {
+//}
 
 void Task::Run() {
   Initialize();
@@ -64,16 +67,17 @@ void Task::Initialize() {
 
 void Task::Process() {
   qn_manager_.ClearEvent();
+  qn_data_->ClearData();
+  qn_eventinfo_f_->Clear();
   if (event_->IsA() != AliReducedEventInfo::Class()) return;
   if (event_->NTracks() == 0) return;
   qn_eventinfo_f_->SetVariable("CentVZERO", event_->CentralityVZERO());
+//  std::cout << qn_eventinfo_f_->GetVariable("CentVZERO") << std::endl;
   Qn::FillData(qn_manager_, *event_);
   qn_manager_.ProcessEvent();
   Qn::FillTree(qn_manager_, qn_data_, DetectorId::TPC);
   std::cout << event_->CentralityVZERO() << std::endl;
   out_tree_->Fill();
-  qn_data_->ClearData();
-  qn_eventinfo_f_->Clear();
 }
 
 void Task::Finalize() {
@@ -82,7 +86,7 @@ void Task::Finalize() {
   qn_manager_.GetOutputHistogramsList()->Write(qn_manager_.GetOutputHistogramsList()->GetName(), TObject::kSingleKey);
   qn_manager_.GetQAHistogramsList()->Write(qn_manager_.GetQAHistogramsList()->GetName(), TObject::kSingleKey);
   out_file_->cd();
-  out_tree_->Write();
+  out_file_->Write();
 }
 
 std::unique_ptr<TChain> Task::MakeChain(std::string filename) {

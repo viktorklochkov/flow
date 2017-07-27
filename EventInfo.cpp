@@ -3,3 +3,5 @@
 //
 
 #include "EventInfo.h"
+
+templateClassImp(Qn::EventInfo)

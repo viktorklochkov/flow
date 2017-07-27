@@ -7,6 +7,7 @@
 
 #include <string>
 #include <map>
+#include "Rtypes.h"
 
 namespace Qn {
 /**
@@ -41,6 +42,10 @@ class EventInfo {
 
  private:
   std::map<std::string, T> map_; ///< stores key value pair for event parameters
+
+  /// \cond CLASSIMP
+ ClassDef(EventInfo, 1);
+  /// \endcond
 };
 
 typedef EventInfo<int> EventInfoI; ///< Typedef for integer parameters

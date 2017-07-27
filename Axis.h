@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include "Rtypes.h"
 
 namespace Qn {
 /**
@@ -90,6 +91,10 @@ class Axis {
  private:
   std::string name_;
   std::vector<float> bin_edges_;
+
+  /// \cond CLASSIMP
+ ClassDef(Axis, 1);
+  /// \endcond
 };
 }
 #endif //FLOW_QNAXIS_H

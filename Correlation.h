@@ -20,7 +20,6 @@ class Correlation {
   }
  private:
   std::array<float, 2> correlation_;
-
 };
 }
 

@@ -20,5 +20,15 @@ int main(int argc, char **argv) {
   gSystem->cd("/Users/lukas/phd/analysis/testfiles/");
   Qn::Task task("/Users/lukas/phd/analysis/testfiles/filenames.txt", "/Users/lukas/phd/analysis/testfiles/input.root");
   task.Run();
+
+  TFile file("test.root","RECREATE");
+  TTree tree;
+  auto data = new Qn::DataContainerQn();
+  tree.Branch("Test", data);
+  tree.Fill();
+  tree.Write();
+  file.Close();
+
+
   return 0;
 }

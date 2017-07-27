@@ -33,7 +33,7 @@ class DataContainer {
    */
   DataContainer() = default;
   DataContainer(std::string name) :
-      name_(name),
+//      name_(name),
       dimension_(0) {
   }
   ~DataContainer() = default;
@@ -59,8 +59,8 @@ class DataContainer {
     axis_.push_back(axis);
     dimension_++;
     std::vector<float>::size_type totalbins = 1;
-    for (const auto &axis : axis_) {
-      totalbins *= axis.size();
+    for (const auto &iaxis : axis_) {
+      totalbins *= iaxis.size();
     }
     data_.resize(totalbins);
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
@@ -206,7 +206,7 @@ class DataContainer {
   }
 
  private:
-  std::string name_;  ///< name of data container
+//  std::string name_;  ///< name of data container
   char dimension_; ///< dimension of data container
   std::vector<T> data_; ///< Vector of data vectors
   std::vector<Axis> axis_; ///< Vector of axis

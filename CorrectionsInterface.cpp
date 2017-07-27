@@ -132,10 +132,8 @@ void FillTree(QnCorrectionsManager &manager, std::unique_ptr<DataContainerQn> co
   auto size = data->size();
   for (long index = 0; index < size; ++index) {
     auto vector = manager.GetDetectorQnVector(std::to_string(index).data());
-    if (!vector) return;
-    auto vectorcopy = new QnCorrectionsQnVector(*vector);
-//      if (vector != nullptr) std::cout << "success" << std::endl;
-    std::unique_ptr<const QnCorrectionsQnVector> element(std::move(vectorcopy));
+    if(!vector) continue;
+    std::unique_ptr<const QnCorrectionsQnVector> element(new QnCorrectionsQnVector(*vector));
     data->SetElement(element, index);
   }
 }
