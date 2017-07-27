@@ -53,7 +53,7 @@ void Task::Initialize() {
   Qn::SetVariables({VAR::kP, VAR::kPt, VAR::kPhi, VAR::kEta, VAR::kRap, VAR::kCentVZERO,
                                           VAR::kVtxZ});
   Qn::ConfigureBins(qn_manager_, qn_data_, Qn::DetectorId::TPC);
-//  in_tree_->SetImplicitMT(true);
+  in_tree_->SetImplicitMT(true);
   if (in_calibration_file_) qn_manager_.SetCalibrationHistogramsList(in_calibration_file_.get());
   qn_manager_.SetShouldFillQAHistograms();
   qn_manager_.SetShouldFillOutputHistograms();
@@ -76,7 +76,6 @@ void Task::Process() {
   Qn::FillData(qn_manager_, *event_);
   qn_manager_.ProcessEvent();
   Qn::FillTree(qn_manager_, qn_data_, DetectorId::TPC);
-  std::cout << event_->CentralityVZERO() << std::endl;
   out_tree_->Fill();
 }
 
