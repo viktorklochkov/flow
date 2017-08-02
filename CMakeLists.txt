@@ -8,8 +8,9 @@ set(SOURCES Task.cpp
         Axis.cpp
         QnVector.cpp
         EventInfo.cpp
-        Correlator.h
-        Correlation.cpp CorrectionsInterface.cpp CorrectionsInterface.h)
+        Correlation.cpp
+        CorrectionsInterface.cpp
+        )
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
@@ -29,14 +30,13 @@ add_definitions(${ROOT_CXX_FLAGS})
 
 # Adding libraries and includes
 find_library(QNCORRECT_LIB NAMES FlowVector)
-find_library(REDUCEDEVENT_LIB NAMES ReducedEvent)
+find_library(REDUCEDEVENT_LIB NAMES ReducedTree)
 find_path(QNCORRECT_INC QnCorrectionsQnVector.h HINTS "${CMAKE_SOURCE_DIR}/QnCorrections")
 find_path(REDUCED_INC AliReducedEventInfo.h HINTS "${CMAKE_SOURCE_DIR}/ReducedEvent")
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${REDUCED_INC})
 
 # Generate dictionary
 ROOT_GENERATE_DICTIONARY(G__Flow ${HEADERS} LINKDEF LinkDef.h)
-message("${HEADERS}")
 # Create a shared library with generated dictionary
 add_library(flow SHARED ${SOURCES}  G__Flow)
 target_include_directories(flow PUBLIC ${CMAKE_SOURCE_DIR} ${QNCORRECT_INC} ${REDUCEDINC})

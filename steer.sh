@@ -4,7 +4,6 @@ runs=`cat $1`
 inputDir=$2
 outputDir=$3
 nworkers=$4
-task=$5
 mkdir -p $outputDir
 for i in `seq 1 $nworkers`; do
    > $outputDir/runList.$i.txt

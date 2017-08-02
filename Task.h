@@ -34,6 +34,10 @@
 #define VAR AliReducedVarManager
 
 namespace Qn {
+/**
+ * Qn vector analysis task. It is to be configured by the user.
+ * @brief Task for analysing qn vectors
+ */
 class Task {
  public:
   Task() = default;
@@ -62,8 +66,7 @@ class Task {
    */
   std::unique_ptr<TChain> MakeChain(std::string filename);
 
-
-  std::shared_ptr<TFile> in_file_;
+  bool write_tree_;
   std::shared_ptr<TFile> out_file_;
   std::shared_ptr<TFile> in_calibration_file_;
   std::shared_ptr<TFile> out_calibration_file_;

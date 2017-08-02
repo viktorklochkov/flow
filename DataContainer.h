@@ -38,7 +38,7 @@ class DataContainer {
   }
   ~DataContainer() = default;
 
-  typedef typename std::vector<T>::const_iterator iterator;
+  using iterator = typename std::vector<T>::const_iterator;
   iterator cbegin() const { return data_.cbegin(); } ///< iterator for external use
   iterator cend() const { return data_.cend(); } ///< iterator for external use
   iterator begin() const { return data_.begin(); } ///< iterator for external use

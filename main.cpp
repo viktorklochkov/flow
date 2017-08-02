@@ -10,16 +10,7 @@
 #include "TList.h"
 
 int main(int argc, char **argv) {
-  // open files
-//  std::shared_ptr<TFile> in_file(TFile::Open(argv[1], "READ"));
-//  std::shared_ptr<TFile> out_file(TFile::Open(argv[2], "RECREATE"));
-//  std::shared_ptr<TFile> out_calibration_file(TFile::Open(argv[3], "RECREATE"));
-//  std::shared_ptr<TFile> in_calibration_file(TFile::Open(argv[4], "READ"));
-//  std::array<std::shared_ptr<TFile>, 4> files= {in_file, out_file, out_calibration_file, in_calibration_file};
-  // run task
-//  gSystem->cd(argv[0]);
   Qn::Task task(argv[1], argv[2]);
   task.Run();
-
   return 0;
 }
