@@ -10,7 +10,7 @@ set(SOURCES Task.cpp
         EventInfo.cpp
         Correlation.cpp
         CorrectionsInterface.cpp
-        )
+        DetectorGenerator.cpp DetectorGenerator.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

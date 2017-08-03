@@ -7,7 +7,9 @@
 #pragma link C++ class Qn::Axis+;
 #pragma link C++ class Qn::Correlation+;
 #pragma link C++ class Qn::DataContainer<std::unique_ptr<const QnCorrectionsQnVector> >+;
+#pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector>+;
 #pragma link C++ class Qn::DataContainer<std::unique_ptr<Qn::Correlation> >+;
+#pragma link C++ typedef Qn::DataContainerTest;
 #pragma link C++ typedef Qn::DataContainerQn;
 #pragma link C++ typedef Qn::DataContainerC;
 #pragma link C++ class Qn::EventInfoValue<float>+;

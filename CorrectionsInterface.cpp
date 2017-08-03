@@ -8,11 +8,11 @@ namespace Qn {
 
 namespace Internal {
 QnCorrectionsDetectorConfigurationTracks *SetDetectorConfiguration(std::string name) {
-  const int dimension = 2;
+  const int dimension = 1;
   QnCorrectionsEventClassVariablesSet *correventclass = new QnCorrectionsEventClassVariablesSet(dimension);
-  double vtxzbins[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
+//  double vtxzbins[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
   double centbins[][2] = {{0.0, 2}, {100.0, 100}};
-  correventclass->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, VAR::GetVarName(VAR::kVtxZ), vtxzbins));
+//  correventclass->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, VAR::GetVarName(VAR::kVtxZ), vtxzbins));
   correventclass->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO,
                                                           Form("Centrality (%s)",
                                                                VAR::GetVarName(VAR::kCentVZERO).Data()),
@@ -98,13 +98,13 @@ void FillVZERO(QnCorrectionsManager &manager, AliReducedEventInfo &event) {
 }
 
 void ConfigureBins(QnCorrectionsManager &manager,
-                   std::unique_ptr<DataContainerQn> const &data,
+                   DataContainerTest &data,
                    DetectorId id, std::string name, std::vector<int> cutvariables) {
   auto detector = new QnCorrectionsDetector(name.data(), (int) id);
-  auto size = data->size();
-  const auto &axices = data->GetAxices();
+  auto size = data.size();
+  const auto &axices = data.GetAxices();
   for (int index = 0; index < size; ++index) {
-    auto indices = data->GetIndex(index);
+    auto indices = data.GetIndex(index);
     auto configuration = Internal::SetDetectorConfiguration(std::to_string(index).data());
     int i = 0;
     auto bincuts = new QnCorrectionsCutsSet();
@@ -120,15 +120,16 @@ void ConfigureBins(QnCorrectionsManager &manager,
   manager.AddDetector(detector);
 }
 
-void FillTree(QnCorrectionsManager &manager, std::unique_ptr<DataContainerQn> const &data,
+void FillTree(QnCorrectionsManager &manager, DataContainerTest &data,
               DetectorId id) {
   auto detector = manager.FindDetector((int) id);
-  auto size = data->size();
+  auto size = data.size();
   for (long index = 0; index < size; ++index) {
-    auto vector = manager.GetDetectorQnVector(std::to_string(index).data());
+    auto vector = manager.GetDetectorQnVector(std::to_string(index).data(),"latest","latest");
     if(!vector) continue;
-    std::unique_ptr<const QnCorrectionsQnVector> element(new QnCorrectionsQnVector(*vector));
-    if (element->IsGoodQuality()) data->SetElement(element, index);
+    QnCorrectionsQnVector element;
+    element = *vector;
+    if (element.IsGoodQuality()) data.SetElement(element,index);
   }
 }
 

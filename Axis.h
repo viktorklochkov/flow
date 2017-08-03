@@ -25,7 +25,7 @@ class Axis {
    * @param name name of axis.
    * @param bin_edges vector of bin edges. starting with lowest bin edge and ending with uppermost bin edge.
    */
-  Axis(const std::string name, const std::vector<float> &bin_edges) : name_(name), bin_edges_(bin_edges) {}
+  Axis(std::string name, std::vector<float> bin_edges) : name_(std::move(name)), bin_edges_(std::move(bin_edges)) {}
 
   /**
    * Constructor for fixed bin width. Calculates bin width automatically and sets bin edges.
@@ -34,7 +34,7 @@ class Axis {
    * @param lowbin lowest bin edge
    * @param upbin uppermost bin edge
    */
-  Axis(const std::string name, const int nbins, const float lowbin, const float upbin) : name_(name) {
+  Axis(std::string name, const int nbins, const float lowbin, const float upbin) : name_(std::move(name)) {
     for (int i = 0; i < nbins + 1; ++i) {
       float bin_width = (upbin - lowbin) / (float) nbins;
       bin_edges_.push_back(lowbin + i * bin_width);
@@ -81,16 +81,18 @@ class Axis {
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline float GetLowerBinEdge(int bin) const { return bin_edges_.at(bin); }
+  inline float GetLowerBinEdge(long bin) const { return bin_edges_.at(bin); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline float GetUpperBinEdge(int bin) const { return bin_edges_.at(bin + 1); }
+  inline float GetUpperBinEdge(long bin) const { return bin_edges_.at(bin + 1); }
  private:
   std::string name_;
   std::vector<float> bin_edges_;
+
+  
 
   /// \cond CLASSIMP
  ClassDef(Axis, 1);

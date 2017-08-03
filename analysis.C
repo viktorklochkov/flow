@@ -6,10 +6,10 @@
 #include "DataContainer.h"
 
 void analysis() {
-  auto file = TFile::Open("../testfiles/test3.root");
+  auto file = TFile::Open("output.root");
   auto tree = (TTree*) file->Get("qn_tree");
   TTreeReader reader(tree);
-  TTreeReaderValue<Qn::DataContainerQn> data(reader, "TPC");
+  TTreeReaderValue<Qn::DataContainerTest> data(reader, "TPC");
 
   while(reader.Next()) {
     data->GetElement((std::vector<float>){0.0,0.0});

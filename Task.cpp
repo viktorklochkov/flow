@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <QnCorrections/QnCorrectionsLog.h>
 #include "Task.h"
 
 namespace Qn {
@@ -16,7 +17,7 @@ Task::Task(std::string filelist, std::string incalib) :
     event_(tree_reader_, "Event"),
     out_file_(new TFile("output.root", "RECREATE")),
     out_tree_(nullptr),
-    qn_data_(new Qn::DataContainerQn()),
+    qn_data_(new Qn::DataContainerTest()),
     qn_eventinfo_f_(new Qn::EventInfoF()),
     qn_eventinfo_i_(new Qn::EventInfoI()),
     qn_manager_() {
@@ -27,6 +28,7 @@ Task::Task(std::string filelist, std::string incalib) :
 
 void Task::Run() {
   Initialize();
+  QnCorrectionsSetTracingLevel(kError);
   std::cout << "Processing..." << std::endl;
   while (tree_reader_.Next()) {
     Process();
@@ -35,11 +37,11 @@ void Task::Run() {
 }
 
 void Task::Initialize() {
-  qn_data_->AddAxis("Pt", {0.0, 1.0, 3.0});
-  qn_data_->AddAxis("Eta", {-0.9, 0.5, 0.0, 0.5, 0.9});
+  qn_data_->AddAxis("Pt", {0.0, 3.0});
+  qn_data_->AddAxis("Eta", {-0.9, 0.9});
   Qn::SetVariables({VAR::kP, VAR::kPt, VAR::kPhi, VAR::kEta, VAR::kRap, VAR::kCentVZERO,
                                           VAR::kVtxZ});
-  Qn::ConfigureBins(qn_manager_, qn_data_, Qn::DetectorId::TPC, "TPC", {VAR::kPt, VAR::kEta});
+  Qn::ConfigureBins(qn_manager_, *qn_data_, Qn::DetectorId::TPC, "TPC", {VAR::kPt, VAR::kEta});
   in_tree_->SetImplicitMT(true);
   qn_manager_.SetCalibrationHistogramsList(in_calibration_file_.get());
   qn_manager_.SetShouldFillQAHistograms();
@@ -47,6 +49,7 @@ void Task::Initialize() {
   qn_manager_.InitializeQnCorrectionsFramework();
   qn_manager_.SetCurrentProcessListName("test");
   qn_eventinfo_f_->AddVariable("Centrality");
+  qn_eventinfo_f_->AddVariable("VtxZ");
   qn_eventinfo_f_->SetOutputTree(*out_tree_);
 //  out_tree_->Branch("test",&centrality,"F");
   out_tree_->Branch("TPC", qn_data_.get());
@@ -62,9 +65,12 @@ void Task::Process() {
   if (event_->IsA() != AliReducedEventInfo::Class()) return;
   if (event_->NTracks() == 0) return;
   qn_eventinfo_f_->SetVariable("Centrality", event_->CentralityVZERO());
+  qn_eventinfo_f_->SetVariable("VtxZ", event_->Vertex(2));
+  if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
+  if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
   Qn::FillData(qn_manager_, *event_);
   qn_manager_.ProcessEvent();
-  Qn::FillTree(qn_manager_, qn_data_, DetectorId::TPC);
+  Qn::FillTree(qn_manager_, *qn_data_, DetectorId::TPC);
   out_tree_->Fill();
 }
 

@@ -68,7 +68,7 @@ class EventInfo {
 
   void SetOutputTree(TTree &tree) {
     for (auto &element : map_) {
-        tree.Branch(element.first.data(), &element.second.GetAddress(), "F");
+        tree.Branch(element.first.data(), &element.second.GetAddress());
         std::cout << (element.second.Get()) << std::endl;
     }
   }

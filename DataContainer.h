@@ -114,11 +114,10 @@ class DataContainer {
    *              e.g. [p_t,eta] = [5 GeV, 0.5]
    */
   void SetElement(T &vect, const std::vector<float> &values) {
-    std::vector<int> index;
+    std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
     for (const auto &axis : axis_) {
-      int bin = (int) axis.FindBin(values.at(axisindex));
-      index.push_back(bin);
+      index.push_back(axis.FindBin(values.at(axisindex)));
       axisindex++;
     }
     data_[GetLinearIndex(index)] = std::move(vect);
@@ -129,7 +128,7 @@ class DataContainer {
   * @param vect  element added into container
   * @param index  linear index position
   */
-  void SetElement(T &vect, const long index) {
+  void SetElement(T vect, const long index) {
     data_[index] = std::move(vect);
   }
   /*
@@ -137,7 +136,7 @@ class DataContainer {
    * @param bins Vector of bin indices of the desired element
    * @return     Element
    */
-  T const &GetElement(const std::vector<int> &bins) {
+  T const &GetElement(const std::vector<long> &bins) {
     return data_.at(GetLinearIndex(bins));
   }
 
@@ -147,10 +146,10 @@ class DataContainer {
  * @return     Element
  */
   T const &GetElement(const std::vector<float> &values) {
-    std::vector<int> index;
+    std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {
-      int bin = (int) axis.FindBin(values.at(axisindex));
+      auto bin = axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
       index.push_back(bin);
@@ -206,9 +205,8 @@ class DataContainer {
   }
 
  private:
-//  std::string name_;  ///< name of data container
-  char dimension_; ///< dimension of data container
-  std::vector<T> data_; ///< Vector of data vectors
+  char dimension_; ///< dimensionality of data
+  std::vector<T> data_; ///< linearized vector of data
   std::vector<Axis> axis_; ///< Vector of axis
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
 
@@ -227,7 +225,7 @@ class DataContainer {
    * @param index vector of indices in multiple dimensions
    * @return      index in one dimension
    */
-  long GetLinearIndex(const std::vector<int> &index) {
+  long GetLinearIndex(const std::vector<long> &index) {
     long offset = (index[dimension_ - 1]);
     for (int i = 0; i < dimension_ - 1; ++i) {
       offset += stride_[i + 1] * (index[i]);
@@ -239,7 +237,8 @@ class DataContainer {
   /// \endcond
 };
 
-typedef DataContainer<std::unique_ptr<const QnCorrectionsQnVector>> DataContainerQn;
-typedef DataContainer<std::unique_ptr<Correlation>> DataContainerC;
+//typedef DataContainer<std::unique_ptr<const QnCorrectionsQnVector>> DataContainerQn;
+typedef DataContainer<QnCorrectionsQnVector> DataContainerTest;
+//typedef DataContainer<std::unique_ptr<Correlation>> DataContainerC;
 }
 #endif

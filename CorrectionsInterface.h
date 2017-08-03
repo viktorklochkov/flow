@@ -90,7 +90,7 @@ void FillVZERO(QnCorrectionsManager &manager, AliReducedEventInfo &event);
  * @param cutvariables variables used for the definition of a data bin
  */
 void ConfigureBins(QnCorrectionsManager &manager,
-                   std::unique_ptr<DataContainerQn> const &data,
+                   DataContainerTest &data,
                    DetectorId id, std::string name, std::vector<int> cutvariables);
 /**
  * Fills corrected qn vectors of a given detector to the corresponding bins in the data container. Only fills good qn.
@@ -98,7 +98,7 @@ void ConfigureBins(QnCorrectionsManager &manager,
  * @param data Datacontainer which saves the data
  * @param id Id of detector
  */
-void FillTree(QnCorrectionsManager &manager, std::unique_ptr<DataContainerQn> const &data,
+void FillTree(QnCorrectionsManager &manager, DataContainerTest &data,
               DetectorId id);
 /**
  * Fills data for the used detectors to the QnCorrectionsManager
