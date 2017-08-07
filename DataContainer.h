@@ -10,6 +10,7 @@
 #include "QnCorrections/QnCorrectionsQnVector.h"
 #include "Correlation.h"
 #include "Rtypes.h"
+#include "DataVector.h"
 
 #include <vector>
 #include <string>
@@ -32,17 +33,14 @@ class DataContainer {
    * @param name Name of data container.
    */
   DataContainer() = default;
-  DataContainer(std::string name) :
-//      name_(name),
-      dimension_(0) {
-  }
   ~DataContainer() = default;
 
-  using iterator = typename std::vector<T>::const_iterator;
-  iterator cbegin() const { return data_.cbegin(); } ///< iterator for external use
-  iterator cend() const { return data_.cend(); } ///< iterator for external use
-  iterator begin() const { return data_.begin(); } ///< iterator for external use
-  iterator end() const { return data_.end(); } ///< iterator for external use
+  using iterator = typename std::vector<T>::iterator;
+  using const_iterator = typename std::vector<T>::const_iterator;
+  const_iterator cbegin() const { return data_.cbegin(); } ///< iterator for external use
+  const_iterator cend() const { return data_.cend(); } ///< iterator for external use
+  iterator begin() { return data_.begin(); } ///< iterator for external use
+  iterator end() { return data_.end(); } ///< iterator for external use
   /**
    * Size of data container
    * @return number of entries in the container
@@ -205,7 +203,7 @@ class DataContainer {
   }
 
  private:
-  char dimension_; ///< dimensionality of data
+  int dimension_ = 0; ///< dimensionality of data
   std::vector<T> data_; ///< linearized vector of data
   std::vector<Axis> axis_; ///< Vector of axis
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
@@ -238,7 +236,8 @@ class DataContainer {
 };
 
 //typedef DataContainer<std::unique_ptr<const QnCorrectionsQnVector>> DataContainerQn;
-typedef DataContainer<QnCorrectionsQnVector> DataContainerTest;
+typedef DataContainer<QnCorrectionsQnVector> DataContainerQn;
+typedef DataContainer<std::vector<DataVector>> DataContainerDataVector;
 //typedef DataContainer<std::unique_ptr<Correlation>> DataContainerC;
 }
 #endif

@@ -17,7 +17,7 @@ Task::Task(std::string filelist, std::string incalib) :
     event_(tree_reader_, "Event"),
     out_file_(new TFile("output.root", "RECREATE")),
     out_tree_(nullptr),
-    qn_data_(new Qn::DataContainerTest()),
+    qn_data_(new Qn::DataContainerQn()),
     qn_eventinfo_f_(new Qn::EventInfoF()),
     qn_eventinfo_i_(new Qn::EventInfoI()),
     qn_manager_() {
@@ -50,7 +50,7 @@ void Task::Initialize() {
   qn_manager_.SetCurrentProcessListName("test");
   qn_eventinfo_f_->AddVariable("Centrality");
   qn_eventinfo_f_->AddVariable("VtxZ");
-  qn_eventinfo_f_->SetOutputTree(*out_tree_);
+//  qn_eventinfo_f_->SetOutputTree(*out_tree_);
 //  out_tree_->Branch("test",&centrality,"F");
   out_tree_->Branch("TPC", qn_data_.get());
 //  out_tree_->Branch("EventInfoF", qn_eventinfo_f_.get());

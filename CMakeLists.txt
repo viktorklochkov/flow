@@ -10,7 +10,7 @@ set(SOURCES Task.cpp
         EventInfo.cpp
         Correlation.cpp
         CorrectionsInterface.cpp
-        DetectorGenerator.cpp DetectorGenerator.h)
+        DetectorGenerator.cpp DetectorGenerator.h DataVector.cpp DataVector.h CorrectionInterface.cpp CorrectionInterface.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
@@ -34,6 +34,13 @@ find_library(REDUCEDEVENT_LIB NAMES ReducedTree)
 find_path(QNCORRECT_INC QnCorrectionsQnVector.h HINTS "${CMAKE_SOURCE_DIR}/QnCorrections")
 find_path(REDUCED_INC AliReducedEventInfo.h HINTS "${CMAKE_SOURCE_DIR}/ReducedEvent")
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${REDUCED_INC})
+
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    message("found")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
 
 # Generate dictionary
 ROOT_GENERATE_DICTIONARY(G__Flow ${HEADERS} LINKDEF LinkDef.h)

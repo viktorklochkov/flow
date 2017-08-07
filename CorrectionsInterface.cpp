@@ -98,7 +98,7 @@ void FillVZERO(QnCorrectionsManager &manager, AliReducedEventInfo &event) {
 }
 
 void ConfigureBins(QnCorrectionsManager &manager,
-                   DataContainerTest &data,
+                   DataContainerQn &data,
                    DetectorId id, std::string name, std::vector<int> cutvariables) {
   auto detector = new QnCorrectionsDetector(name.data(), (int) id);
   auto size = data.size();
@@ -120,7 +120,7 @@ void ConfigureBins(QnCorrectionsManager &manager,
   manager.AddDetector(detector);
 }
 
-void FillTree(QnCorrectionsManager &manager, DataContainerTest &data,
+void FillTree(QnCorrectionsManager &manager, DataContainerQn &data,
               DetectorId id) {
   auto detector = manager.FindDetector((int) id);
   auto size = data.size();

@@ -8,17 +8,21 @@
 #include <QnCorrections/QnCorrectionsDetector.h>
 
 namespace Qn {
+enum class DetectorType {
+  Track,
+  Channel
+};
 class DetectorGenerator {
-  enum class DetectorType {
-    Track,
-    Channel
-  };
  public:
-  DetectorGenerator() = default;
-  ~DetectorGenerator() = default;
-  QnCorrectionsDetector *GenerateDetector(DetectorType type);
+//  DetectorGenerator() = default;
+//  ~DetectorGenerator() = default;
+  QnCorrectionsDetector *GenerateDetector(int id, DetectorType type);
+  void SetEventVariables(QnCorrectionsEventClassVariablesSet *set) { event_variables_ = set;}
  private:
-  QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(DetectorType type);
+  int n_harmonics_ = 4;
+  int harmonics_[4] = {1,1,1,1};
+  QnCorrectionsEventClassVariablesSet *event_variables_ = nullptr;
+  QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(DetectorType type, std::string name);
 };
 }
 
