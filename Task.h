@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <array>
+#include <random>
 #include "QnCorrections/QnCorrectionsProfile3DCorrelations.h"
 #include "QnCorrections/QnCorrectionsProfileCorrelationComponents.h"
 #include "QnCorrections/QnCorrectionsDetectorConfigurationChannels.h"
@@ -74,10 +75,12 @@ class Task {
   std::unique_ptr<TTree> out_tree_;
   TTreeReader tree_reader_;
   TTreeReaderValue<AliReducedEventInfo> event_;
-  std::unique_ptr<Qn::DataContainerQn> qn_data_;
+  std::map<int,std::unique_ptr<Qn::DataContainerDataVector>> raw_data_;
+  std::map<int,std::unique_ptr<Qn::DataContainerQn>> qn_data_;
   std::unique_ptr<Qn::EventInfoF> qn_eventinfo_f_;
-  std::unique_ptr<Qn::EventInfoI> qn_eventinfo_i_;
   QnCorrectionsManager qn_manager_;
+  std::mt19937 eng;
+  std::uniform_real_distribution<float> rnd;
 
 void AddVZERO(QnCorrectionsManager &manager) {
   Bool_t VZEROchannels[4][64];

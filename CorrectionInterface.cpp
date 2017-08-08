@@ -3,16 +3,17 @@
 //
 
 #include "CorrectionInterface.h"
+#include "EventInfo.h"
 namespace Qn {
 namespace Internal {
 
-void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, Qn::DataContainerDataVector> &pairs) {
+void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs) {
   int tempid = 0;
-  for (auto pair : pairs) {
+  for (auto &pair : pairs) {
     int ibin = 0;
-    auto detector = pair.second;
-    auto nbins = detector.size();
-    for (auto bin : detector) {
+    auto &detector = pair.second;
+    auto nbins = detector->size();
+    for (auto bin : *detector) {
       auto detectorid = nbins * tempid + ibin;
       ++ibin;
       for (auto data : bin) {
@@ -24,20 +25,17 @@ void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, Qn::DataCo
 }
 void AddDetectorToFramework(QnCorrectionsManager &manager,
                             DetectorType type,
-                            std::map<int, Qn::DataContainerDataVector> &pairs) {
+                            std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs, QnCorrectionsEventClassVariablesSet &set, int nchannels) {
   int tempid = 0;
-  for (auto pair : pairs) {
-    auto detectorbinning = pair.second;
+  for (auto &pair : pairs) {
+    auto &detectorbinning = pair.second;
     DetectorGenerator generator;
-    auto *a = new QnCorrectionsEventClassVariablesSet(1);
-    double centbins[][2] = {{0.0, 2}, {100.0, 100}};
-    a->Add(new QnCorrectionsEventClassVariable(1, "centrality", centbins));
-    generator.SetEventVariables(a);
+    generator.SetEventVariables(&set);
     int ibin = 0;
-    for (const auto &bin : detectorbinning) {
-      auto detectorid = detectorbinning.size() * tempid + ibin;
+    for (const auto &bin : *detectorbinning) {
+      auto detectorid = detectorbinning->size() * tempid + ibin;
       ++ibin;
-      auto frameworkdetector = generator.GenerateDetector(detectorid, type);
+      auto frameworkdetector = generator.GenerateDetector(detectorid, type, nchannels);
       manager.AddDetector(frameworkdetector);
     }
     ++tempid;
@@ -65,6 +63,20 @@ void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQn>>
  for (auto &pair : pairs) {
    tree.Branch(std::to_string(pair.first).data(),pair.second.get());
  }
+}
+
+void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs) {
+  for (auto &pair : pairs) {
+    tree.Branch(std::to_string(pair.first).data(),pair.second.get());
+  }
+}
+
+/**
+ * Attaches input tree to event information object for reading.
+ * @param tree input tree which contains the  event information in branches
+ */
+void SaveToTree(TTree &tree, std::unique_ptr<Qn::EventInfo<float>> &eventinfo) {
+  eventinfo->SetToTree(tree);
 }
 
 }
