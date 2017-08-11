@@ -66,7 +66,7 @@ void Task::Initialize() {
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(1);
   double centbins[][2] = {{0.0, 2}, {100.0, 100}};
-  eventset->Add(new QnCorrectionsEventClassVariable(1, "Centrality", centbins));
+  eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
 
   Qn::Internal::AddDetectorToFramework(qn_manager_, Qn::DetectorType::Track, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
@@ -96,7 +96,8 @@ void Task::Process() {
   if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
   if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
   Qn::Interface::FillTpc(raw_data_[0], *event_);
-
+  auto vars = qn_manager_.GetDataContainer();
+  VAR::FillEventInfo(&*event_, vars);
   Qn::Internal::FillDataToFramework(qn_manager_, raw_data_);
   qn_manager_.ProcessEvent();
   Qn::Internal::GetQnFromFramework(qn_manager_, qn_data_);

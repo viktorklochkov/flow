@@ -22,7 +22,7 @@ void Qn::Interface::FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &dataco
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
     auto axices = datacontainer->GetAxices();
-    std::vector<float> trackparams;\
+    std::vector<float> trackparams;
     trackparams.reserve(axices.size());
     for (const auto &axis : axices) {
       trackparams.push_back(values[axis.Id()]);
