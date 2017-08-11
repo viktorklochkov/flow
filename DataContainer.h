@@ -6,7 +6,6 @@
 #define QNDATACONTAINER_H
 
 #include "Axis.h"
-
 #include "QnCorrections/QnCorrectionsQnVector.h"
 #include "Correlation.h"
 #include "Rtypes.h"
@@ -16,6 +15,7 @@
 #include <string>
 #include <stdexcept>
 #include <memory>
+
 /**
  * QnCorrectionsframework
  */
@@ -41,6 +41,7 @@ class DataContainer {
   const_iterator cend() const { return data_.cend(); } ///< iterator for external use
   iterator begin() { return data_.begin(); } ///< iterator for external use
   iterator end() { return data_.end(); } ///< iterator for external use
+
   /**
    * Size of data container
    * @return number of entries in the container
@@ -51,7 +52,7 @@ class DataContainer {
    * @param Axis
    */
   void AddAxis(const Axis &axis) {
-    if (std::find_if(axis_.begin(), axis_.end(), [axis](const Axis &axis_c) { return axis_c.Name() == axis.Name(); })
+    if (std::find_if(axis_.begin(), axis_.end(), [axis](const Axis &axisc) { return axisc.Name() == axis.Name(); })
         != axis_.end())
       throw std::runtime_error("axis already defined in vector");
     axis_.push_back(axis);
@@ -64,46 +65,53 @@ class DataContainer {
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
-  /**
-   * Adds additional axis for storing the data with variable binning
-   * @param name  Name of the axis
-   * @param bins  Vector of bin edges
-   */
-  void AddAxis(const std::string name, const std::vector<float> &bins) {
-    if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.Name() == name; })
-        != axis_.end())
-      throw std::runtime_error("axis already defined in vector");
-    axis_.emplace_back(name, bins);
-    dimension_++;
-    std::vector<float>::size_type totalbins = 1;
-    for (const auto &axis : axis_) {
-      totalbins *= axis.size();
-    }
-    data_.resize(totalbins);
-    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
-    CalculateStride();
-  }
-  /**
-   * Adds additional axis for storing the data with fixed binning.
-   * @param name Name of the axis
-   * @param nbins Number of bins
-   * @param lowbin
-   * @param upbin
-   */
-  void AddAxis(const std::string name, const int nbins, const float lowbin, const float upbin) {
-    if (std::find_if(axis_.begin(), axis_.end(), [name](const Axis &axis) { return axis.Name() == name; })
-        != axis_.end())
-      throw std::runtime_error("axis already defined in vector");
-    axis_.emplace_back(name, nbins, lowbin, upbin);
-    dimension_++;
-    std::vector<float>::size_type totalbins = 1;
-    for (const auto &axis : axis_) {
-      totalbins *= axis.size();
-    }
-    data_.resize(totalbins);
-    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
-    CalculateStride();
-  }
+//  /**
+//   * Adds additional axis for storing the data with variable binning
+//   * @param name  Name of the axis
+//   * @param bins  Vector of bin edges
+//   */
+//  void AddAxis(const std::string name, const std::vector<float> &bins, int id) {
+//    if (std::find_if(axis_.begin(), axis_.end(), [name](const std::pair<int,Axis> &axis) { return axis.second.Name() == name; })
+//        != axis_.end())
+//      throw std::runtime_error("axis already defined in vector");
+//    axis_.insert(std::make_pair(id, Axis(name, bins)));
+//    dimension_++;
+//    std::vector<float>::size_type totalbins = 1;
+//    for (const auto &axis : axis_) {
+//      totalbins *= axis.second.size();
+//    }
+//    data_.resize(totalbins);
+//    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
+//    CalculateStride();
+//  }
+//  /**
+//   * Adds additional axis for storing the data with fixed binning.
+//   * @param name Name of the axis
+//   * @param nbins Number of bins
+//   * @param lowbin
+//   * @param upbin
+//   */
+//  void AddAxis(const std::string name, const int nbins, const float lowbin, const float upbin, int id) {
+//    std::cout << "axices-1 " << axis_.size() << std::endl;
+//    if (std::find_if(axis_.begin(), axis_.end(), [name](const std::pair<int,Axis> &axis) { return axis.second.Name() == name; })
+//        != axis_.end())
+//      throw std::runtime_error("axis already defined in vector");
+//    std::cout << "axices0 " << axis_.size() << std::endl;
+//    axis_.insert(std::make_pair(id,Axis(name, nbins, lowbin, upbin)));
+//    dimension_++;
+//    std::vector<float>::size_type totalbins = 1;
+//    std::cout << "axices1 " << axis_.size() << std::endl;
+//    for (const auto &axis : axis_) {
+//      std::cout << axis.second.Name() << " " << axis.second.size() << std::endl;
+//      totalbins *= axis.second.size();
+//    }
+//    std::cout << "axices2 " << axis_.size() << std::endl;
+//    data_.resize(totalbins);
+//    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
+//    CalculateStride();
+//    std::cout << "axices3 " << axis_.size() << std::endl;
+
+//  }
 
   /*
    * Adds a element by the variables
@@ -134,7 +142,7 @@ class DataContainer {
    * @param bins Vector of bin indices of the desired element
    * @return     Element
    */
-  T const &GetElement(const std::vector<long> &bins) {
+  T &GetElement(const std::vector<long> &bins) {
     return data_.at(GetLinearIndex(bins));
   }
 
@@ -144,6 +152,23 @@ class DataContainer {
  * @return     Element
  */
   T const &GetElement(const std::vector<float> &values) {
+    std::vector<long> index;
+    std::vector<int>::size_type axisindex = 0;
+    for (auto axis : axis_) {
+      auto bin = axis.FindBin(values.at(axisindex));
+      if (bin >= axis.size() || bin < 0)
+        throw std::out_of_range("bin out of specified range");
+      index.push_back(bin);
+      axisindex++;
+    }
+    return data_.at(GetLinearIndex(index));
+  }
+  /*
+* Get element with the specified value to be able to modify it.
+* @param bins Vector of value to search for desired element
+* @return     Element
+*/
+  T &ModifyElement(const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
     for (auto axis : axis_) {

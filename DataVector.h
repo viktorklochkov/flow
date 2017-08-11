@@ -8,11 +8,14 @@
 #include "Rtypes.h"
 #include <math.h>
 namespace Qn {
+/**
+ * simple struct containing information of the raw data for the use in the DataContainer.
+ */
 struct DataVector {
   DataVector() : phi(NAN), weight(NAN) {}
   DataVector(float phi, float weight) : phi(phi), weight(weight) {}
-  float phi;
-  float weight;
+  float phi; ///< Azimuthal angle of signal
+  float weight; ///< weight of signal
 
   /// \cond CLASSIMP
  ClassDef(DataVector, 1);

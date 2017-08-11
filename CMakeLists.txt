@@ -9,8 +9,10 @@ set(SOURCES Task.cpp
         QnVector.cpp
         EventInfo.cpp
         Correlation.cpp
-        CorrectionsInterface.cpp
-        DetectorGenerator.cpp DetectorGenerator.h DataVector.cpp DataVector.h CorrectionInterface.cpp CorrectionInterface.h DetectorFactory.cpp DetectorFactory.h)
+        DetectorGenerator.cpp
+        DataVector.cpp
+        CorrectionInterface.cpp
+        DataInterface.cpp)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

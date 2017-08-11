@@ -30,7 +30,7 @@
 #include "ReducedEvent/AliReducedVarManager.h"
 #include "ReducedEvent/AliReducedTrackInfo.h"
 #include "ReducedEvent/AliReducedBaseTrack.h"
-#include "CorrectionsInterface.h"
+#include "CorrectionInterface.h"
 
 #define VAR AliReducedVarManager
 

@@ -22,10 +22,10 @@ QnCorrectionsDetectorConfigurationBase *DetectorGenerator::CreateDetectorConfigu
   QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
   if (type == DetectorType::Channel)
     configuration = new QnCorrectionsDetectorConfigurationChannels(name.data(), event_variables_, nchannels,
-                                                                   n_harmonics_, harmonics_);
+                                                                   n_harmonics_);
   if (type == DetectorType::Track)
     configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), event_variables_,
-                                                                 n_harmonics_, harmonics_);
+                                                                 n_harmonics_);
   return configuration;
 }
 

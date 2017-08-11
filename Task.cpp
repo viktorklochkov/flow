@@ -6,7 +6,7 @@
 #include <QnCorrections/QnCorrectionsLog.h>
 #include <random>
 #include "Task.h"
-#include "CorrectionInterface.h"
+#include "DataInterface.h"
 
 namespace Qn {
 
@@ -39,16 +39,30 @@ void Task::Run() {
 }
 
 void Task::Initialize() {
+
+//  std::vector<VAR::Variables> vars = {VAR::Variables::kPt, VAR::Variables::kEta,VAR::Variables::kP, VAR::Variables::kPhi};
+  Qn::Interface::SetVariables({VAR::Variables::kPt, VAR::Variables::kEta,VAR::Variables::kP, VAR::Variables::kPhi});
+//  std::cout << AliReducedVarManager::GetUsedVar(AliReducedVarManager::Variables::kPhi) << std::endl;
   std::unique_ptr<Qn::DataContainerDataVector> data(new DataContainerDataVector());
-  data->AddAxis("Pt", 1, 0, 3);
-  data->AddAxis("Eta", 1, -0.8, 0.8);
+  Axis ptaxis("Pt", 1, 0, 3, VAR::kPt);
+  Axis etaaxis("Eta", 1, -0.8, 0.8, VAR::kEta);
+  data->AddAxis(ptaxis);
+  data->AddAxis(etaaxis);
+
+  std::unique_ptr<Qn::DataContainerDataVector> data1(new DataContainerDataVector());
+  data1->AddAxis(ptaxis);
+  data1->AddAxis(etaaxis);
+
   raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(0, std::move(data)));
-  int size = raw_data_[0]->size();
+  raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(1, std::move(data1)));
 
   std::unique_ptr<Qn::DataContainerQn> qndata(new DataContainerQn);
-  qndata->AddAxis("Pt", 1, 0, 3);
-  qndata->AddAxis("Eta", 1, -0.8, 0.8);
+  qndata->AddAxis(ptaxis);
+  qndata->AddAxis(etaaxis);
+  std::unique_ptr<Qn::DataContainerQn> tpc(new DataContainerQn);
+
   qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(0, std::move(qndata)));
+  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(1, std::move(tpc)));
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(1);
   double centbins[][2] = {{0.0, 2}, {100.0, 100}};
@@ -81,22 +95,9 @@ void Task::Process() {
   qn_eventinfo_f_->SetVariable("VtxZ", event_->Vertex(2));
   if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
   if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
-  int ii = 0;
-  for (auto &pair : raw_data_) {
-    auto &data = pair.second;
-    for (auto &element : *data) {
-      std::vector<Qn::DataVector> datavectors;
-      for (int j = 0; j < 100; ++j) {
-        Qn::DataVector a(rnd(eng), 1);
-        datavectors.push_back(a);
-      }
-      element = datavectors;
-    }
-  }
-  auto container = qn_manager_.GetDataContainer();
-  container[1] = (qn_eventinfo_f_->GetVariable("Centrality")).first;
-  Qn::Internal::FillDataToFramework(qn_manager_, raw_data_);
+  Qn::Interface::FillTpc(raw_data_[0], *event_);
 
+  Qn::Internal::FillDataToFramework(qn_manager_, raw_data_);
   qn_manager_.ProcessEvent();
   Qn::Internal::GetQnFromFramework(qn_manager_, qn_data_);
   out_tree_->Fill();
@@ -119,7 +120,6 @@ std::unique_ptr<TChain> Task::MakeChain(std::string filename) {
   std::ifstream in;
   in.open(filename);
   std::string line;
-  //loop over file
   std::cout << "Adding files to chain:" << std::endl;
   while ((in >> line).good()) {
     if (!line.empty()) {

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 #include "Rtypes.h"
 
 namespace Qn {
@@ -15,6 +16,7 @@ namespace Qn {
  *
  * Basic axis implementation
  */
+
 class Axis {
  public:
 
@@ -25,7 +27,8 @@ class Axis {
    * @param name name of axis.
    * @param bin_edges vector of bin edges. starting with lowest bin edge and ending with uppermost bin edge.
    */
-  Axis(std::string name, std::vector<float> bin_edges) : name_(std::move(name)), bin_edges_(std::move(bin_edges)) {}
+  Axis(std::string name, std::vector<float> bin_edges, int id)
+      : name_(std::move(name)), bin_edges_(std::move(bin_edges)), id_(id) {}
 
   /**
    * Constructor for fixed bin width. Calculates bin width automatically and sets bin edges.
@@ -34,7 +37,8 @@ class Axis {
    * @param lowbin lowest bin edge
    * @param upbin uppermost bin edge
    */
-  Axis(std::string name, const int nbins, const float lowbin, const float upbin) : name_(std::move(name)) {
+  Axis(std::string name, const int nbins, const float lowbin, const float upbin, int id)
+      : name_(std::move(name)), id_(id) {
     for (int i = 0; i < nbins + 1; ++i) {
       float bin_width = (upbin - lowbin) / (float) nbins;
       bin_edges_.push_back(lowbin + i * bin_width);
@@ -68,7 +72,8 @@ class Axis {
       else
         bin = (lb - bin_edges_.begin()) - 1;
     }
-    if (bin >= (long) bin_edges_.size() - 1 || bin < 0) throw "value out of bin range";
+    if (bin >= (long) bin_edges_.size() - 1 || bin < 0)
+      throw std::exception();
     return bin;
   }
   /**
@@ -88,11 +93,17 @@ class Axis {
    * @return upper edge of bin of interest
    */
   inline float GetUpperBinEdge(long bin) const { return bin_edges_.at(bin + 1); }
+  /**
+   * Get id of axis used for the data interface
+   * @return id
+   */
+  inline int Id() const {return id_;}
  private:
+  int id_;
   std::string name_;
   std::vector<float> bin_edges_;
 
-  
+
 
   /// \cond CLASSIMP
  ClassDef(Axis, 1);
