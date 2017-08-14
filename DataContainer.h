@@ -260,9 +260,7 @@ class DataContainer {
   /// \endcond
 };
 
-//typedef DataContainer<std::unique_ptr<const QnCorrectionsQnVector>> DataContainerQn;
 typedef DataContainer<QnCorrectionsQnVector> DataContainerQn;
 typedef DataContainer<std::vector<DataVector>> DataContainerDataVector;
-//typedef DataContainer<std::unique_ptr<Correlation>> DataContainerC;
 }
 #endif

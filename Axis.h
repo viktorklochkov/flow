@@ -104,7 +104,6 @@ class Axis {
   std::vector<float> bin_edges_;
 
 
-
   /// \cond CLASSIMP
  ClassDef(Axis, 1);
   /// \endcond

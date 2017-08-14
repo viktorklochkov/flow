@@ -3,3 +3,4 @@
 //
 
 #include "Axis.h"
+ClassImp(Qn::Axis);

@@ -9,6 +9,7 @@ namespace Internal {
 
 void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs) {
   int tempid = 0;
+#pragma omp for
   for (auto &pair : pairs) {
     int ibin = 0;
     auto &detector = pair.second;
@@ -16,6 +17,7 @@ void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::uniqu
     for (auto bin : *detector) {
       auto detectorid = nbins * tempid + ibin;
       ++ibin;
+#pragma open
       for (auto data : bin) {
         manager.AddDataVector(detectorid, data.phi, data.weight);
       }

@@ -3,3 +3,4 @@
 //
 
 #include "DataVector.h"
+ClassImp(Qn::DataVector);

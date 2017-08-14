@@ -1,3 +1,3 @@
 #include "DataContainer.h"
 
-templateClassImp(Qn::DataContainer)
+templateClassImp(Qn::DataContainer);

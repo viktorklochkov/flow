@@ -1,9 +1,9 @@
 //
 // Created by Lukas Kreis on 12.06.17.
 //
-#ifdef __MAKECINT__
+#ifdef __CINT__
 
-//#pragma link C++ namespace Qn;
+#pragma link C++ namespace Qn;
 #pragma link C++ class Qn::Axis+;
 #pragma link C++ class Qn::Correlation+;
 #pragma link C++ class Qn::DataVector+;
