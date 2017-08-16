@@ -8,7 +8,6 @@ set(SOURCES Task.cpp
         Axis.cpp
         QnVector.cpp
         EventInfo.cpp
-        Correlation.cpp
         DetectorGenerator.cpp
         DataVector.cpp
         CorrectionInterface.cpp

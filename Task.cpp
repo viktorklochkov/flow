@@ -40,26 +40,24 @@ void Task::Run() {
 
 void Task::Initialize() {
 
-//  std::vector<VAR::Variables> vars = {VAR::Variables::kPt, VAR::Variables::kEta,VAR::Variables::kP, VAR::Variables::kPhi};
   Qn::Interface::SetVariables({VAR::Variables::kPt, VAR::Variables::kEta,VAR::Variables::kP, VAR::Variables::kPhi});
-//  std::cout << AliReducedVarManager::GetUsedVar(AliReducedVarManager::Variables::kPhi) << std::endl;
-  std::unique_ptr<Qn::DataContainerDataVector> data(new DataContainerDataVector());
-  Axis ptaxis("Pt", 1, 0, 3, VAR::kPt);
-  Axis etaaxis("Eta", 1, -0.8, 0.8, VAR::kEta);
+  std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
+  Axis ptaxis("Pt", 5, 0, 3, VAR::kPt);
+  Axis etaaxis("Eta", 5, -0.8, 0.8, VAR::kEta);
   data->AddAxis(ptaxis);
   data->AddAxis(etaaxis);
 
-  std::unique_ptr<Qn::DataContainerDataVector> data1(new DataContainerDataVector());
+  std::unique_ptr<Qn::DataContainerDataVector> data1(new Qn::DataContainerDataVector());
   data1->AddAxis(ptaxis);
   data1->AddAxis(etaaxis);
 
   raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(0, std::move(data)));
   raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(1, std::move(data1)));
 
-  std::unique_ptr<Qn::DataContainerQn> qndata(new DataContainerQn);
+  std::unique_ptr<Qn::DataContainerQn> qndata(new DataContainerQn());
   qndata->AddAxis(ptaxis);
   qndata->AddAxis(etaaxis);
-  std::unique_ptr<Qn::DataContainerQn> tpc(new DataContainerQn);
+  std::unique_ptr<Qn::DataContainerQn> tpc(new DataContainerQn());
 
   qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(0, std::move(qndata)));
   qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(1, std::move(tpc)));

@@ -25,7 +25,7 @@ namespace Qn {
  * @param T    Type of object inside of container
  */
 template<typename T>
-class DataContainer {
+class DataContainer : public TObject {
  public:
 
   /*
@@ -46,7 +46,8 @@ class DataContainer {
    * Size of data container
    * @return number of entries in the container
    */
-  std::vector<QnCorrectionsQnVector>::size_type size() const {return data_.size();}
+  std::vector<QnCorrectionsQnVector>::size_type size() const { return data_.size(); }
+
   /**
    * Adds existing axis for storing the data with variable binning
    * @param Axis
@@ -65,53 +66,6 @@ class DataContainer {
     stride_.resize((std::vector<long>::size_type) dimension_ + 1);
     CalculateStride();
   }
-//  /**
-//   * Adds additional axis for storing the data with variable binning
-//   * @param name  Name of the axis
-//   * @param bins  Vector of bin edges
-//   */
-//  void AddAxis(const std::string name, const std::vector<float> &bins, int id) {
-//    if (std::find_if(axis_.begin(), axis_.end(), [name](const std::pair<int,Axis> &axis) { return axis.second.Name() == name; })
-//        != axis_.end())
-//      throw std::runtime_error("axis already defined in vector");
-//    axis_.insert(std::make_pair(id, Axis(name, bins)));
-//    dimension_++;
-//    std::vector<float>::size_type totalbins = 1;
-//    for (const auto &axis : axis_) {
-//      totalbins *= axis.second.size();
-//    }
-//    data_.resize(totalbins);
-//    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
-//    CalculateStride();
-//  }
-//  /**
-//   * Adds additional axis for storing the data with fixed binning.
-//   * @param name Name of the axis
-//   * @param nbins Number of bins
-//   * @param lowbin
-//   * @param upbin
-//   */
-//  void AddAxis(const std::string name, const int nbins, const float lowbin, const float upbin, int id) {
-//    std::cout << "axices-1 " << axis_.size() << std::endl;
-//    if (std::find_if(axis_.begin(), axis_.end(), [name](const std::pair<int,Axis> &axis) { return axis.second.Name() == name; })
-//        != axis_.end())
-//      throw std::runtime_error("axis already defined in vector");
-//    std::cout << "axices0 " << axis_.size() << std::endl;
-//    axis_.insert(std::make_pair(id,Axis(name, nbins, lowbin, upbin)));
-//    dimension_++;
-//    std::vector<float>::size_type totalbins = 1;
-//    std::cout << "axices1 " << axis_.size() << std::endl;
-//    for (const auto &axis : axis_) {
-//      std::cout << axis.second.Name() << " " << axis.second.size() << std::endl;
-//      totalbins *= axis.second.size();
-//    }
-//    std::cout << "axices2 " << axis_.size() << std::endl;
-//    data_.resize(totalbins);
-//    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
-//    CalculateStride();
-//    std::cout << "axices3 " << axis_.size() << std::endl;
-
-//  }
 
   /*
    * Adds a element by the variables
@@ -142,7 +96,7 @@ class DataContainer {
    * @param bins Vector of bin indices of the desired element
    * @return     Element
    */
-  T &GetElement(const std::vector<long> &bins) {
+  T &GetElement(const std::vector<long> &bins) const {
     return data_.at(GetLinearIndex(bins));
   }
 
@@ -184,7 +138,7 @@ class DataContainer {
    * Get vector of axis
    * @return Vector of axices
    */
-  std::vector<Axis> GetAxices() const { return axis_;}
+  inline std::vector<Axis> const &GetAxices() const { return axis_; }
   /*
    * Get Axis with the given name.
    *
@@ -248,7 +202,7 @@ class DataContainer {
    * @param index vector of indices in multiple dimensions
    * @return      index in one dimension
    */
-  long GetLinearIndex(const std::vector<long> &index) {
+  long GetLinearIndex(const std::vector<long> &index) const {
     long offset = (index[dimension_ - 1]);
     for (int i = 0; i < dimension_ - 1; ++i) {
       offset += stride_[i + 1] * (index[i]);
@@ -260,7 +214,7 @@ class DataContainer {
   /// \endcond
 };
 
-typedef DataContainer<QnCorrectionsQnVector> DataContainerQn;
-typedef DataContainer<std::vector<DataVector>> DataContainerDataVector;
+using DataContainerQn = DataContainer<QnCorrectionsQnVector>;
+using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 }
 #endif
