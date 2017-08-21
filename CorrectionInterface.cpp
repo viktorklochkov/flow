@@ -14,7 +14,6 @@ void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::uniqu
     auto &detector = pair.second;
     for (auto bin : *detector) {
       auto detectorid = nbinsrunning + ibin;
-      std::cout << detectorid << std::endl;
       ++ibin;
       int idata = 0;
       for (auto data : bin) {

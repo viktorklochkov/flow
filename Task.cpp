@@ -25,7 +25,7 @@ Task::Task(std::string filelist, std::string incalib) :
     rnd(0, 2 * M_PI),
     eng(42) {
   out_file_->cd();
-  std::unique_ptr<TTree> treeraw(new TTree("datatree","datatree"));
+  std::unique_ptr<TTree> treeraw(new TTree("datatree", "datatree"));
   std::unique_ptr<TTree> tree(new TTree("tree", "tree"));
   out_tree_ = std::move(tree);
   out_tree_raw = std::move(treeraw);
@@ -43,14 +43,15 @@ void Task::Run() {
 
 void Task::Initialize() {
 
-  Qn::Interface::SetVariables({VAR::Variables::kPt, VAR::Variables::kEta,VAR::Variables::kP, VAR::Variables::kPhi});
+  Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
+                               VAR::Variables::kPhi});
   std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
   Axis ptaxis("Pt", 5, 0, 3, VAR::kPt);
   Axis etaaxis("Eta", 5, -0.8, 0.8, VAR::kEta);
   data->AddAxis(ptaxis);
   data->AddAxis(etaaxis);
 
-  Axis IntegratedAxis("none",1,0,1, VAR::kNVars);
+  Axis IntegratedAxis("none", 1, 0, 1, VAR::kNVars);
   std::unique_ptr<Qn::DataContainerDataVector> dataVZERO(new Qn::DataContainerDataVector());
   dataVZERO->AddAxis(IntegratedAxis);
 
@@ -66,11 +67,17 @@ void Task::Initialize() {
   qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(0, std::move(tpc)));
   qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(1, std::move(vzero)));
 
-  auto eventset = new QnCorrectionsEventClassVariablesSet(1);
+  auto eventset = new QnCorrectionsEventClassVariablesSet(2);
   double centbins[][2] = {{0.0, 2}, {100.0, 100}};
-  eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
+  double vtxbins[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
 
-  Qn::Internal::AddDetectorToFramework(qn_manager_, {Qn::DetectorType::Track, Qn::DetectorType::Channel}, raw_data_, *eventset);
+  eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
+  eventset->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, "z vertex", vtxbins));
+
+  Qn::Internal::AddDetectorToFramework(qn_manager_,
+                                       {Qn::DetectorType::Track, Qn::DetectorType::Channel},
+                                       raw_data_,
+                                       *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
   Qn::Internal::SaveToTree(*out_tree_raw, raw_data_);
   qn_eventinfo_f_->AddVariable("Centrality");
