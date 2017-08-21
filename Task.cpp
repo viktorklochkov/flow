@@ -19,13 +19,16 @@ Task::Task(std::string filelist, std::string incalib) :
     event_(tree_reader_, "Event"),
     out_file_(new TFile("output.root", "RECREATE")),
     out_tree_(nullptr),
+    out_tree_raw(nullptr),
     qn_eventinfo_f_(new Qn::EventInfoF()),
     qn_manager_(),
     rnd(0, 2 * M_PI),
     eng(42) {
   out_file_->cd();
+  std::unique_ptr<TTree> treeraw(new TTree("datatree","datatree"));
   std::unique_ptr<TTree> tree(new TTree("tree", "tree"));
   out_tree_ = std::move(tree);
+  out_tree_raw = std::move(treeraw);
 }
 
 void Task::Run() {
@@ -47,28 +50,29 @@ void Task::Initialize() {
   data->AddAxis(ptaxis);
   data->AddAxis(etaaxis);
 
-  std::unique_ptr<Qn::DataContainerDataVector> data1(new Qn::DataContainerDataVector());
-  data1->AddAxis(ptaxis);
-  data1->AddAxis(etaaxis);
+  Axis IntegratedAxis("none",1,0,1, VAR::kNVars);
+  std::unique_ptr<Qn::DataContainerDataVector> dataVZERO(new Qn::DataContainerDataVector());
+  dataVZERO->AddAxis(IntegratedAxis);
 
   raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(0, std::move(data)));
-  raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(1, std::move(data1)));
+  raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(1, std::move(dataVZERO)));
 
-  std::unique_ptr<Qn::DataContainerQn> qndata(new DataContainerQn());
-  qndata->AddAxis(ptaxis);
-  qndata->AddAxis(etaaxis);
   std::unique_ptr<Qn::DataContainerQn> tpc(new DataContainerQn());
+  tpc->AddAxis(ptaxis);
+  tpc->AddAxis(etaaxis);
+  std::unique_ptr<Qn::DataContainerQn> vzero(new DataContainerQn());
+  vzero->AddAxis(IntegratedAxis);
 
-  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(0, std::move(qndata)));
-  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(1, std::move(tpc)));
+  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(0, std::move(tpc)));
+  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(1, std::move(vzero)));
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(1);
   double centbins[][2] = {{0.0, 2}, {100.0, 100}};
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
 
-  Qn::Internal::AddDetectorToFramework(qn_manager_, Qn::DetectorType::Track, raw_data_, *eventset);
+  Qn::Internal::AddDetectorToFramework(qn_manager_, {Qn::DetectorType::Track, Qn::DetectorType::Channel}, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
-//  Qn::Internal::SaveToTree(*out_tree_, raw_data_);
+  Qn::Internal::SaveToTree(*out_tree_raw, raw_data_);
   qn_eventinfo_f_->AddVariable("Centrality");
   qn_eventinfo_f_->AddVariable("VtxZ");
   Qn::Internal::SaveToTree(*out_tree_, qn_eventinfo_f_);
@@ -84,7 +88,9 @@ void Task::Process() {
 
   qn_manager_.ClearEvent();
   qn_data_[0]->ClearData();
+  qn_data_[1]->ClearData();
   raw_data_[0]->ClearData();
+  raw_data_[1]->ClearData();
   qn_eventinfo_f_->Reset();
 
   if (event_->IsA() != AliReducedEventInfo::Class()) return;
@@ -94,12 +100,14 @@ void Task::Process() {
   if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
   if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
   Qn::Interface::FillTpc(raw_data_[0], *event_);
+  Qn::Interface::FillVZERO(raw_data_[1], *event_);
   auto vars = qn_manager_.GetDataContainer();
   VAR::FillEventInfo(&*event_, vars);
   Qn::Internal::FillDataToFramework(qn_manager_, raw_data_);
   qn_manager_.ProcessEvent();
   Qn::Internal::GetQnFromFramework(qn_manager_, qn_data_);
   out_tree_->Fill();
+  out_tree_raw->Fill();
 }
 
 void Task::Finalize() {

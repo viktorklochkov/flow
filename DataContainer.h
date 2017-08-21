@@ -42,13 +42,13 @@ class DataContainer : public TObject {
   iterator begin() { return data_.begin(); } ///< iterator for external use
   iterator end() { return data_.end(); } ///< iterator for external use
 
-  /**
+  /*
    * Size of data container
    * @return number of entries in the container
    */
   std::vector<QnCorrectionsQnVector>::size_type size() const { return data_.size(); }
 
-  /**
+  /*
    * Adds existing axis for storing the data with variable binning
    * @param Axis
    */
@@ -83,7 +83,7 @@ class DataContainer : public TObject {
     data_[GetLinearIndex(index)] = std::move(vect);
   }
 
-  /**
+  /*
   * Adds a element by the variables no bounds checking
   * @param vect  element added into container
   * @param index  linear index position
@@ -91,7 +91,7 @@ class DataContainer : public TObject {
   void SetElement(T vect, const long index) {
     data_[index] = std::move(vect);
   }
-  /*
+  /**
    * Get element in the specified bin
    * @param bins Vector of bin indices of the desired element
    * @return     Element
@@ -100,7 +100,7 @@ class DataContainer : public TObject {
     return data_.at(GetLinearIndex(bins));
   }
 
-  /*
+ /*
  * Get element with the specified value
  * @param bins Vector of value to search for desired element
  * @return     Element
@@ -117,7 +117,7 @@ class DataContainer : public TObject {
     }
     return data_.at(GetLinearIndex(index));
   }
-  /*
+/*
 * Get element with the specified value to be able to modify it.
 * @param bins Vector of value to search for desired element
 * @return     Element
@@ -134,7 +134,7 @@ class DataContainer : public TObject {
     }
     return data_.at(GetLinearIndex(index));
   }
-  /**
+  /*
    * Get vector of axis
    * @return Vector of axices
    */

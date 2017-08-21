@@ -73,6 +73,7 @@ class Task {
   std::shared_ptr<TFile> out_calibration_file_;
   std::unique_ptr<TTree> in_tree_;
   std::unique_ptr<TTree> out_tree_;
+  std::unique_ptr<TTree> out_tree_raw;
   TTreeReader tree_reader_;
   TTreeReaderValue<AliReducedEventInfo> event_;
   std::map<int,std::unique_ptr<Qn::DataContainerDataVector>> raw_data_;

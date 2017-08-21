@@ -30,6 +30,8 @@ void SetVariables(std::vector<VAR::Variables> vars);
  */
 void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
 
+void FillVZERO(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
+
 }
 }
 

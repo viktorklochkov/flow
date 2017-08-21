@@ -29,7 +29,7 @@ void Qn::Interface::FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &dataco
     }
     try {
       auto &element = datacontainer->ModifyElement(trackparams);
-      element.emplace_back(values[VAR::kPhi], 1);
+      element.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
     }
     catch (std::exception&) {
     }
@@ -37,3 +37,19 @@ void Qn::Interface::FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &dataco
   delete [] values;
   trackList->Clear();
 }
+
+void Qn::Interface::FillVZERO(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+  const std::array<double, 8 > kX = {0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388};
+  const std::array<double, 8 > kY = {0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268};
+  for (int ich = 0; ich < 64; ich++) {
+    double weight = event.MultChannelVZERO(ich);
+    if (weight < 0.01) weight = 0.0;
+    auto axices = datacontainer->GetAxices();
+    for (auto &element : *datacontainer) {
+      element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+    }
+//    manager.AddDataVector((int) DetectorId::VZERO, std::atan2(kY[ich % 8], kX[ich % 8]), weight, ich);
+  }
+}
+
+

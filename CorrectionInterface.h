@@ -14,7 +14,7 @@ namespace Qn {
 namespace Internal {
 void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs);
 void AddDetectorToFramework(QnCorrectionsManager &manager,
-                            DetectorType type,
+                            std::vector<DetectorType> type,
                             std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs, QnCorrectionsEventClassVariablesSet &set, int nchannels = 0);
 void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &pairs);
 void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &pairs);

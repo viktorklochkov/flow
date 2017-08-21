@@ -8,54 +8,57 @@ namespace Qn {
 namespace Internal {
 
 void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs) {
-  int tempid = 0;
+  int nbinsrunning = 0;
   for (auto &pair : pairs) {
     int ibin = 0;
     auto &detector = pair.second;
-    auto nbins = detector->size();
     for (auto bin : *detector) {
-      auto detectorid = nbins * tempid + ibin;
+      auto detectorid = nbinsrunning + ibin;
+      std::cout << detectorid << std::endl;
       ++ibin;
+      int idata = 0;
       for (auto data : bin) {
-        manager.AddDataVector(detectorid, data.phi, data.weight);
+        manager.AddDataVector(detectorid, data.phi, data.weight,idata);
+        ++idata;
       }
     }
-    ++tempid;
+    nbinsrunning += detector->size();
   }
 }
 void AddDetectorToFramework(QnCorrectionsManager &manager,
-                            DetectorType type,
+                            std::vector<DetectorType> type,
                             std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs, QnCorrectionsEventClassVariablesSet &set, int nchannels) {
-  int tempid = 0;
+  int nbinsrunning = 0;
+  int in = 0;
   for (auto &pair : pairs) {
-    auto &detectorbinning = pair.second;
+    auto &detector = pair.second;
     DetectorGenerator generator;
     generator.SetEventVariables(&set);
     int ibin = 0;
-    for (const auto &bin : *detectorbinning) {
-      auto detectorid = detectorbinning->size() * tempid + ibin;
-      ++ibin;
-      auto frameworkdetector = generator.GenerateDetector(detectorid, type, nchannels);
+    for (const auto &bin : *detector) {
+      auto detectorid = nbinsrunning + ibin;
+      auto frameworkdetector = generator.GenerateDetector(detectorid, type.at(in), nchannels);
       manager.AddDetector(frameworkdetector);
+      ++ibin;
     }
-    ++tempid;
+    nbinsrunning += detector->size();
   }
 }
 
 void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &pairs) {
-  int id = 0;
+  int nbinsrunning = 0;
   for (auto &pair : pairs) {
     auto &detector = pair.second;
     auto ibin = 0;
     for (auto &bin : *detector) {
-      auto detectorid = detector->size() * id + ibin;
+      auto detectorid = nbinsrunning + ibin;
       ++ibin;
       auto vector = manager.GetDetectorQnVector(std::to_string(detectorid).data(), "latest", "latest");
       if ((!vector)) continue;
       QnCorrectionsQnVector element;
       bin = *vector;
     }
-    ++id;
+    nbinsrunning += detector->size();
   }
 }
 
