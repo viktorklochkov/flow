@@ -1,42 +1,56 @@
 //
 // Created by Lukas Kreis on 03.08.17.
 //
-
+//
 #include "CorrectionInterface.h"
-#include "EventInfo.h"
 namespace Qn {
 namespace Internal {
 
-void FillDataToFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs) {
+std::map<int, std::unique_ptr<Qn::DataContainerQn>> MakeQnDataContainer(const DetectorMap &map) {
+  std::map<int, std::unique_ptr<Qn::DataContainerQn>> outmap;
+  for (const auto &detector : map) {
+    auto axes = std::get<1>(detector.second)->GetAxes();
+    std::unique_ptr<Qn::DataContainerQn> datacontainer(new Qn::DataContainerQn());
+    for (auto axis : axes) {
+      datacontainer->AddAxis(axis);
+    }
+    outmap.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(detector.first, std::move(datacontainer)));
+  }
+  return outmap;
+};
+
+void FillDataToFramework(QnCorrectionsManager &manager,
+                         DetectorMap &map) {
   int nbinsrunning = 0;
-  for (auto &pair : pairs) {
+  for (auto &pair : map) {
     int ibin = 0;
-    auto &detector = pair.second;
+    auto &detector = std::get<1>(pair.second);
     for (auto bin : *detector) {
       auto detectorid = nbinsrunning + ibin;
       ++ibin;
       int idata = 0;
       for (auto data : bin) {
-        manager.AddDataVector(detectorid, data.phi, data.weight,idata);
+        manager.AddDataVector(detectorid, data.phi, data.weight, idata);
         ++idata;
       }
     }
     nbinsrunning += detector->size();
   }
 }
-void AddDetectorToFramework(QnCorrectionsManager &manager,
-                            std::vector<DetectorType> type,
-                            std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs, QnCorrectionsEventClassVariablesSet &set, int nchannels) {
+void AddDetectorsToFramework(QnCorrectionsManager &manager,
+                             DetectorMap &map,
+                             QnCorrectionsEventClassVariablesSet &set) {
   int nbinsrunning = 0;
-  int in = 0;
-  for (auto &pair : pairs) {
-    auto &detector = pair.second;
+  for (auto &pair : map) {
+    auto &detectortuple = pair.second;
+    auto &detector = std::get<1>(pair.second);
+    auto detectorid = pair.first;
     DetectorGenerator generator;
     generator.SetEventVariables(&set);
     int ibin = 0;
     for (const auto &bin : *detector) {
-      auto detectorid = nbinsrunning + ibin;
-      auto frameworkdetector = generator.GenerateDetector(detectorid, type.at(in), nchannels);
+      auto globalid = nbinsrunning + ibin;
+      auto frameworkdetector = generator.GenerateDetector(globalid, detectorid, ibin, detectortuple);
       manager.AddDetector(frameworkdetector);
       ++ibin;
     }
@@ -44,15 +58,19 @@ void AddDetectorToFramework(QnCorrectionsManager &manager,
   }
 }
 
-void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &pairs) {
+void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map) {
   int nbinsrunning = 0;
-  for (auto &pair : pairs) {
+  for (auto &pair : map) {
     auto &detector = pair.second;
     auto ibin = 0;
     for (auto &bin : *detector) {
       auto detectorid = nbinsrunning + ibin;
       ++ibin;
-      auto vector = manager.GetDetectorQnVector(std::to_string(detectorid).data(), "latest", "latest");
+      auto name = (std::string(Configuration::DetectorNames[pair.first]) + std::to_string(detectorid)).data();
+//      auto detectorname = std::string(Configuration::DetectorNames[pair.first]);
+//      auto binname = detector->GetBinDescription(ibin);
+//      auto name = (detectorname + binname).c_str();
+      auto vector = manager.GetDetectorQnVector(name, "latest", "latest");
       if ((!vector)) continue;
       QnCorrectionsQnVector element;
       bin = *vector;
@@ -61,15 +79,15 @@ void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique
   }
 }
 
-void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &pairs) {
- for (auto &pair : pairs) {
-   tree.Branch(std::to_string(pair.first).data(),pair.second.get());
- }
+void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map) {
+  for (auto &pair : map) {
+    tree.Branch(Configuration::DetectorNames[pair.first], pair.second.get());
+  }
 }
 
-void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &pairs) {
-  for (auto &pair : pairs) {
-    tree.Branch(std::to_string(pair.first).data(),pair.second.get());
+void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &map) {
+  for (auto &pair : map) {
+    tree.Branch(Configuration::DetectorNames[pair.first], pair.second.get());
   }
 }
 

@@ -57,7 +57,7 @@ class EventInfo {
 
  public:
 /**
- * Gets value and valididty of event parameter.
+ * Gets value and validity of event parameter.
  * @param key identifier of event parameter
  * @return pair of value of event parameter and its validity.
  */

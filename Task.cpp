@@ -6,7 +6,8 @@
 #include <QnCorrections/QnCorrectionsLog.h>
 #include <random>
 #include "Task.h"
-#include "DataInterface.h"
+#include "CorrectionInterface.h"
+#include "DetectorMap.h"
 
 namespace Qn {
 
@@ -42,44 +43,65 @@ void Task::Run() {
 }
 
 void Task::Initialize() {
-
+  using Axes = std::vector<Qn::Axis>;
   Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
                                VAR::Variables::kPhi});
-  std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
+
   Axis ptaxis("Pt", 5, 0, 3, VAR::kPt);
   Axis etaaxis("Eta", 5, -0.8, 0.8, VAR::kEta);
-  data->AddAxis(ptaxis);
-  data->AddAxis(etaaxis);
+  Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
+  Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
+  Axis vzeroringsC("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7}, VAR::kEta);
 
-  Axis IntegratedAxis("none", 1, 0, 1, VAR::kNVars);
-  std::unique_ptr<Qn::DataContainerDataVector> dataVZERO(new Qn::DataContainerDataVector());
-  dataVZERO->AddAxis(IntegratedAxis);
+  Axes tpcaxes = {ptaxis, etaaxis};
+  Axes vzeroaxes = {vzerorings};
+  Axes vzeroaxesA = {vzeroringsA};
+  Axes vzeroaxesC = {vzeroringsC};
 
-  raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(0, std::move(data)));
-  raw_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerDataVector>>(1, std::move(dataVZERO)));
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::TPC_reference,
+                                 new Configuration::TPC(),
+                                 Configuration::DetectorType::Track
+  );
+//  Qn::Internal::AddDetectorToMap(raw_data_,
+//                                 Configuration::DetectorId::TPC,
+//                                 new Configuration::TPC(),
+//                                 Configuration::DetectorType::Track,
+//                                 tpcaxes
+//                                 );
+//  Qn::Internal::AddDetectorToMap(raw_data_,
+//                                 Configuration::DetectorId::VZEROA,
+//                                 new Configuration::VZEROA(),
+//                                 Configuration::DetectorType::Channel,
+//                                 vzeroaxesA,
+//                                 64);
+//  Qn::Internal::AddDetectorToMap(raw_data_,
+//                                 Configuration::DetectorId::VZEROC,
+//                                 new Configuration::VZEROC(),
+//                                 Configuration::DetectorType::Channel,
+//                                 vzeroaxesC,
+//                                 64);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::VZEROA_reference,
+                                 new Configuration::VZEROA_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 64);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::VZEROC_reference,
+                                 new Configuration::VZEROC_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 64);
 
-  std::unique_ptr<Qn::DataContainerQn> tpc(new DataContainerQn());
-  tpc->AddAxis(ptaxis);
-  tpc->AddAxis(etaaxis);
-  std::unique_ptr<Qn::DataContainerQn> vzero(new DataContainerQn());
-  vzero->AddAxis(IntegratedAxis);
-
-  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(0, std::move(tpc)));
-  qn_data_.insert(std::pair<int, std::unique_ptr<Qn::DataContainerQn>>(1, std::move(vzero)));
+  qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(2);
   double centbins[][2] = {{0.0, 2}, {100.0, 100}};
   double vtxbins[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
-
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, "z vertex", vtxbins));
 
-  Qn::Internal::AddDetectorToFramework(qn_manager_,
-                                       {Qn::DetectorType::Track, Qn::DetectorType::Channel},
-                                       raw_data_,
-                                       *eventset);
+  Qn::Internal::AddDetectorsToFramework(qn_manager_, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
-  Qn::Internal::SaveToTree(*out_tree_raw, raw_data_);
   qn_eventinfo_f_->AddVariable("Centrality");
   qn_eventinfo_f_->AddVariable("VtxZ");
   Qn::Internal::SaveToTree(*out_tree_, qn_eventinfo_f_);
@@ -94,10 +116,8 @@ void Task::Initialize() {
 void Task::Process() {
 
   qn_manager_.ClearEvent();
-  qn_data_[0]->ClearData();
-  qn_data_[1]->ClearData();
-  raw_data_[0]->ClearData();
-  raw_data_[1]->ClearData();
+  Qn::Internal::ClearDataInMap(qn_data_);
+  Qn::Internal::ClearDataInMap(raw_data_);
   qn_eventinfo_f_->Reset();
 
   if (event_->IsA() != AliReducedEventInfo::Class()) return;
@@ -106,10 +126,8 @@ void Task::Process() {
   qn_eventinfo_f_->SetVariable("VtxZ", event_->Vertex(2));
   if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
   if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
-  Qn::Interface::FillTpc(raw_data_[0], *event_);
-  Qn::Interface::FillVZERO(raw_data_[1], *event_);
-  auto vars = qn_manager_.GetDataContainer();
-  VAR::FillEventInfo(&*event_, vars);
+  Qn::Interface::FillDetectors(raw_data_, *event_);
+  VAR::FillEventInfo(&*event_, qn_manager_.GetDataContainer());
   Qn::Internal::FillDataToFramework(qn_manager_, raw_data_);
   qn_manager_.ProcessEvent();
   Qn::Internal::GetQnFromFramework(qn_manager_, qn_data_);

@@ -12,11 +12,16 @@
 #include <ReducedEvent/AliReducedVarManager.h>
 
 #include "QnCorrections/QnCorrectionsManager.h"
+//#include "CorrectionInterface.h"
 #include "DataContainer.h"
+#include "DetectorMap.h"
 
 #define VAR AliReducedVarManager
 
 namespace Qn {
+/**
+ * Function used to interface to the user data files.
+ */
 namespace Interface {
 /**
  * Set variables used in the ALICE reduced tree interface
@@ -29,9 +34,12 @@ void SetVariables(std::vector<VAR::Variables> vars);
  * @param event ALICE event data
  */
 void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
+//
+void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
 
-void FillVZERO(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-
+void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
+//
+void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event);
 }
 }
 

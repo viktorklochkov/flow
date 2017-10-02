@@ -7,10 +7,10 @@
 
 #include "Axis.h"
 #include "QnCorrections/QnCorrectionsQnVector.h"
-#include "Correlation.h"
 #include "Rtypes.h"
 #include "DataVector.h"
 
+#include <map>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -53,13 +53,13 @@ class DataContainer : public TObject {
    * @param Axis
    */
   void AddAxis(const Axis &axis) {
-    if (std::find_if(axis_.begin(), axis_.end(), [axis](const Axis &axisc) { return axisc.Name() == axis.Name(); })
-        != axis_.end())
+    if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name() == axis.Name(); })
+        != axes_.end())
       throw std::runtime_error("axis already defined in vector");
-    axis_.push_back(axis);
+    axes_.push_back(axis);
     dimension_++;
     std::vector<float>::size_type totalbins = 1;
-    for (const auto &iaxis : axis_) {
+    for (const auto &iaxis : axes_) {
       totalbins *= iaxis.size();
     }
     data_.resize(totalbins);
@@ -76,7 +76,7 @@ class DataContainer : public TObject {
   void SetElement(T &vect, const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
-    for (const auto &axis : axis_) {
+    for (const auto &axis : axes_) {
       index.push_back(axis.FindBin(values.at(axisindex)));
       axisindex++;
     }
@@ -100,15 +100,15 @@ class DataContainer : public TObject {
     return data_.at(GetLinearIndex(bins));
   }
 
- /*
- * Get element with the specified value
- * @param bins Vector of value to search for desired element
- * @return     Element
- */
+  /*
+  * Get element with the specified value
+  * @param bins Vector of value to search for desired element
+  * @return     Element
+  */
   T const &GetElement(const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
-    for (auto axis : axis_) {
+    for (auto axis : axes_) {
       auto bin = axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
@@ -125,7 +125,7 @@ class DataContainer : public TObject {
   T &ModifyElement(const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
-    for (auto axis : axis_) {
+    for (auto axis : axes_) {
       auto bin = axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
@@ -134,12 +134,12 @@ class DataContainer : public TObject {
     }
     return data_.at(GetLinearIndex(index));
   }
-  /*
-   * Get vector of axis
-   * @return Vector of axices
+  /**
+   * Get vector of axes
+   * @return Vector of axes
    */
-  inline std::vector<Axis> const &GetAxices() const { return axis_; }
-  /*
+  inline std::vector<Axis> const &GetAxes() const { return axes_; }
+  /**
    * Get Axis with the given name.
    *
    * Throws exception when not found.
@@ -147,35 +147,48 @@ class DataContainer : public TObject {
    * @return      Axis
    */
   Axis GetAxis(std::string name) const {
-    for (auto axis: axis_) {
+    for (auto axis: axes_) {
       if (name == axis.Name()) return axis;
     }
     throw std::out_of_range("axis not found aborting");
   }
 
-  /*
+  /**
    * Calculates indices in multiple dimensions from linearized index
    * @param offset Index of linearized vector
-   * @return       Vector of indices
+   * @return       Vector of indices. Empty for invalid offset.
    */
   std::vector<int> GetIndex(const long offset) const {
     long temp = offset;
-    std::vector<int> indices;
+    std::vector<int> indices = {};
+    if (offset >= data_.size()) return indices;
     indices.resize((std::vector<int>::size_type) dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[i] = (int) (offset % axis_[i].size());
-      temp = temp / axis_[i].size();
+      indices[i] = (int) (offset % axes_[i].size());
+      temp = temp / axes_[i].size();
     }
     indices[dimension_ - 1] = (int) temp;
     return indices;
+  }
+  std::string GetBinDescription(const long offset) const {
+    auto indices = GetIndex(offset);
+    if (indices.empty()) return "invalid offset";
+    std::string outstring;
+    int i = 0;
+    for (auto it = axes_.cbegin(); it != axes_.cend(); ++it) {
+      const auto &axis = *it;
+      outstring += axis.Name();
+      outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
+          + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
+      if (it + 1 != axes_.cend()) outstring += "; ";
+      ++i;
+    }
+    return outstring;
   }
   /*
    * Clears data to be filled. To be called after one event.
    */
   void ClearData() {
-//    for (auto &element : data_) {
-//      element.reset(nullptr);
-//    }
     auto size = data_.size();
     data_.clear();
     data_.resize(size);
@@ -184,7 +197,7 @@ class DataContainer : public TObject {
  private:
   int dimension_ = 0; ///< dimensionality of data
   std::vector<T> data_; ///< linearized vector of data
-  std::vector<Axis> axis_; ///< Vector of axis
+  std::vector<Axis> axes_; ///< Vector of axes
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
 
   /*
@@ -193,7 +206,7 @@ class DataContainer : public TObject {
   void CalculateStride() {
     stride_[dimension_] = 1;
     for (int i = 0; i < dimension_; ++i) {
-      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axis_[dimension_ - i - 1].size();
+      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axes_[dimension_ - i - 1].size();
     }
   }
 
@@ -217,4 +230,5 @@ class DataContainer : public TObject {
 using DataContainerQn = DataContainer<QnCorrectionsQnVector>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 }
+
 #endif

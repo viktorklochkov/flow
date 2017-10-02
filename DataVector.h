@@ -17,6 +17,10 @@ struct DataVector {
   float phi; ///< Azimuthal angle of signal
   float weight; ///< weight of signal
 
+  void test() {
+//    Qn::Internal::DetectorMap map;
+//    int a = (int) Qn::Interface::DetectorId::TPC;
+  }
   /// \cond CLASSIMP
  ClassDef(DataVector, 1);
   /// \endcond

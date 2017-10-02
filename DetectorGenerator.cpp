@@ -4,26 +4,36 @@
 
 #include <QnCorrections/QnCorrectionsDetectorConfigurationTracks.h>
 #include <QnCorrections/QnCorrectionsDetectorConfigurationChannels.h>
-#include <QnCorrections/QnCorrectionsQnVectorRecentering.h>
+#include <iostream>
 #include "DetectorGenerator.h"
 namespace Qn {
 
-QnCorrectionsDetector *DetectorGenerator::GenerateDetector(int id, DetectorType type, int nchannels = 0) {
-  auto detector = new QnCorrectionsDetector(std::to_string(id).data(), id);
-  auto configuration = CreateDetectorConfiguration(type, std::to_string(id), nchannels);
-  configuration->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering);
+QnCorrectionsDetector *DetectorGenerator::GenerateDetector(int globalid, int detid, int binid, DetectorTuple &tuple) {
+  auto type = std::get<0>(tuple);
+  auto config  = std::get<3>(tuple);
+  auto nchannels = std::get<2>(tuple);
+  auto& datacontainer = std::get<1>(tuple);
+  auto detectorname = std::string(Configuration::DetectorNames[detid]);
+  auto binname = datacontainer->GetBinDescription(binid);
+//  auto name = (detectorname + binname).c_str();
+  auto name  = (detectorname + std::to_string(globalid)).c_str();
+  std::cout << name << std::endl;
+  auto detector = new QnCorrectionsDetector(name, globalid);
+  auto configuration = CreateDetectorConfiguration(type, name, nchannels);
+  (*config)(configuration);
   detector->AddDetectorConfiguration(configuration);
   return detector;
 }
-
-QnCorrectionsDetectorConfigurationBase *DetectorGenerator::CreateDetectorConfiguration(DetectorType type,
+QnCorrectionsDetectorConfigurationBase *DetectorGenerator::CreateDetectorConfiguration(Configuration::DetectorType type,
                                                                                        std::string name,
                                                                                        int nchannels = 0) {
   QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
-  if (type == DetectorType::Channel)
+  if (type == Configuration::DetectorType::Channel) {
     configuration = new QnCorrectionsDetectorConfigurationChannels(name.data(), event_variables_, nchannels,
                                                                    n_harmonics_);
-  if (type == DetectorType::Track)
+    ((QnCorrectionsDetectorConfigurationChannels *) configuration)->SetChannelsScheme(nullptr, nullptr, nullptr);
+  }
+  if (type == Configuration::DetectorType::Track)
     configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), event_variables_,
                                                                  n_harmonics_);
   return configuration;

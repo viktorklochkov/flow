@@ -1,0 +1,147 @@
+//
+// Created by Lukas Kreis on 24.08.17.
+//
+
+#ifndef FLOW_DETECTORCONFIG_H
+#define FLOW_DETECTORCONFIG_H
+#include <QnCorrections/QnCorrectionsProfile3DCorrelations.h>
+#include <QnCorrections/QnCorrectionsProfileCorrelationComponents.h>
+#include <QnCorrections/QnCorrectionsDetectorConfigurationTracks.h>
+#include <QnCorrections/QnCorrectionsDetectorConfigurationChannels.h>
+#include <QnCorrections/QnCorrectionsQnVectorRecentering.h>
+#include <QnCorrections/QnCorrectionsQnVectorAlignment.h>
+#include <QnCorrections/QnCorrectionsQnVectorTwistAndRescale.h>
+#include <QnCorrections/QnCorrectionsDetector.h>
+#include <map>
+
+namespace Qn {
+namespace Configuration {
+enum class DetectorId : int {
+  TPC,
+  TPC_reference,
+  VZEROA_reference,
+  VZEROC_reference,
+  VZEROA,
+  VZEROC,
+  FMD_reference,
+  ZDC_reference,
+};
+static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC"},
+                                                    {(int) DetectorId::TPC_reference, "TPC_reference"},
+                                                    {(int) DetectorId::VZEROA_reference, "VZEROA_reference"},
+                                                    {(int) DetectorId::VZEROC_reference, "VZEROC_reference"},
+                                                    {(int) DetectorId::VZEROA, "VZEROA"},
+                                                    {(int) DetectorId::VZEROC, "VZEROC"},
+                                                    {(int) DetectorId::FMD_reference, "FMD"},
+                                                    {(int) DetectorId::ZDC_reference, "ZDC"}};
+
+enum class DetectorType {
+  Track,
+  Channel
+};
+
+class DetectorConfig {
+ public:
+  DetectorConfig() = default;
+  virtual ~DetectorConfig() = default;
+  virtual void operator()(QnCorrectionsDetectorConfigurationBase *config) {};
+};
+
+class TPC : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(true);
+    rescale->SetApplyRescale(false);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_doubleHarmonic);
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
+class VZEROA : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto alignment = new QnCorrectionsQnVectorAlignment();
+    alignment->SetReferenceConfigurationForAlignment("TPC_reference0");
+    alignment->SetHarmonicNumberForAlignment(2);
+    config->AddCorrectionOnQnVector(alignment);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(true);
+    rescale->SetApplyRescale(true);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC");
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
+class VZEROC : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto alignment = new QnCorrectionsQnVectorAlignment();
+    alignment->SetReferenceConfigurationForAlignment("TPC_reference0");
+    alignment->SetHarmonicNumberForAlignment(2);
+    config->AddCorrectionOnQnVector(alignment);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(true);
+    rescale->SetApplyRescale(true);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA");
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
+class VZEROA_reference : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto alignment = new QnCorrectionsQnVectorAlignment();
+    alignment->SetReferenceConfigurationForAlignment("TPC_reference0");
+    alignment->SetHarmonicNumberForAlignment(2);
+    config->AddCorrectionOnQnVector(alignment);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(true);
+    rescale->SetApplyRescale(true);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC_reference2");
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
+class VZEROC_reference : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto alignment = new QnCorrectionsQnVectorAlignment();
+    alignment->SetReferenceConfigurationForAlignment("TPC_reference0");
+    alignment->SetHarmonicNumberForAlignment(2);
+    config->AddCorrectionOnQnVector(alignment);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(true);
+    rescale->SetApplyRescale(true);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA_reference1");
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
+class FMD : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+//    config.AddCorrectionOnQnVector(new QnCorrectionsQnVectorAlignment);
+//    config.AddCorrectionOnQnVector(new QnCorrectionsQnVectorTwistAndRescale);
+
+  }
+};
+
+}
+}
+
+#endif //FLOW_DETECTORCONFIG_H

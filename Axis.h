@@ -98,8 +98,10 @@ class Axis {
    * @return id
    */
   inline int Id() const {return id_;}
+
+  inline bool IsIntegrated() const {return id_==-999;}
  private:
-  int id_;
+  int id_; ///< Id of Axis -999 is reserved by the framework for an integrated \f$Q_n\f$ container.
   std::string name_;
   std::vector<float> bin_edges_;
 

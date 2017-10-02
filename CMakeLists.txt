@@ -3,15 +3,15 @@ project(flow)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE debug)
-set(SOURCES Task.cpp
+set(SOURCES
+        Task.cpp
         DataContainer.cpp
         Axis.cpp
-        QnVector.cpp
         EventInfo.cpp
         DetectorGenerator.cpp
         DataVector.cpp
         CorrectionInterface.cpp
-        DataInterface.cpp)
+        DataInterface.cpp DetectorMap.h DetectorConfig.cpp DetectorConfig.h DetectorMap.cpp)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
