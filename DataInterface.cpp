@@ -21,6 +21,7 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
   AliReducedTrackInfo *track = nullptr;
   auto trackList = event.GetTracks();
   TIter next(trackList);
+  next.Reset();
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
@@ -38,7 +39,6 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
     }
   }
   delete[] values;
-  trackList->Clear();
 }
 
 void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
@@ -92,10 +92,10 @@ void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
 }
 
 void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event) {
-  if (map.find((int) Configuration::DetectorId::TPC_reference) != map.end())
-    FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC_reference]), event);
   if (map.find((int) Configuration::DetectorId::TPC) != map.end())
     FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC]), event);
+  if (map.find((int) Configuration::DetectorId::TPC_reference) != map.end())
+    FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC_reference]), event);
   if (map.find((int) Configuration::DetectorId::VZEROA_reference) != map.end())
     FillVZEROA(std::get<1>(map[(int) Configuration::DetectorId::VZEROA_reference]), event);
   if (map.find((int) Configuration::DetectorId::VZEROC_reference) != map.end())

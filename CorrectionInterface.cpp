@@ -65,8 +65,8 @@ void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique
     auto ibin = 0;
     for (auto &bin : *detector) {
       auto detectorid = nbinsrunning + ibin;
+      auto name = (std::string(Configuration::DetectorNames[pair.first]) + std::to_string(ibin)).data();
       ++ibin;
-      auto name = (std::string(Configuration::DetectorNames[pair.first]) + std::to_string(detectorid)).data();
 //      auto detectorname = std::string(Configuration::DetectorNames[pair.first]);
 //      auto binname = detector->GetBinDescription(ibin);
 //      auto name = (detectorname + binname).c_str();

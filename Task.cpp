@@ -63,24 +63,24 @@ void Task::Initialize() {
                                  new Configuration::TPC(),
                                  Configuration::DetectorType::Track
   );
-//  Qn::Internal::AddDetectorToMap(raw_data_,
-//                                 Configuration::DetectorId::TPC,
-//                                 new Configuration::TPC(),
-//                                 Configuration::DetectorType::Track,
-//                                 tpcaxes
-//                                 );
-//  Qn::Internal::AddDetectorToMap(raw_data_,
-//                                 Configuration::DetectorId::VZEROA,
-//                                 new Configuration::VZEROA(),
-//                                 Configuration::DetectorType::Channel,
-//                                 vzeroaxesA,
-//                                 64);
-//  Qn::Internal::AddDetectorToMap(raw_data_,
-//                                 Configuration::DetectorId::VZEROC,
-//                                 new Configuration::VZEROC(),
-//                                 Configuration::DetectorType::Channel,
-//                                 vzeroaxesC,
-//                                 64);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::TPC,
+                                 new Configuration::TPC(),
+                                 Configuration::DetectorType::Track,
+                                 tpcaxes
+                                 );
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::VZEROA,
+                                 new Configuration::VZEROA(),
+                                 Configuration::DetectorType::Channel,
+                                 vzeroaxesA,
+                                 64);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::VZEROC,
+                                 new Configuration::VZEROC(),
+                                 Configuration::DetectorType::Channel,
+                                 vzeroaxesC,
+                                 64);
   Qn::Internal::AddDetectorToMap(raw_data_,
                                  Configuration::DetectorId::VZEROA_reference,
                                  new Configuration::VZEROA_reference(),

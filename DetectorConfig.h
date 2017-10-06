@@ -73,7 +73,7 @@ class VZEROA : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -91,7 +91,7 @@ class VZEROC : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -109,7 +109,7 @@ class VZEROA_reference : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC_reference2");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -126,7 +126,7 @@ class VZEROC_reference : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA_reference1");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
