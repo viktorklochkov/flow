@@ -5,6 +5,7 @@
 #include <iostream>
 #include "DataInterface.h"
 #include <array>
+#include <ReducedEvent/AliReducedFMDInfo.h>
 
 #define VAR AliReducedVarManager
 
@@ -25,10 +26,10 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
-    auto axices = datacontainer->GetAxes();
+    auto axes = datacontainer->GetAxes();
     std::vector<float> trackparams;
-    trackparams.reserve(axices.size());
-    for (const auto &axis : axices) {
+    trackparams.reserve(axes.size());
+    for (const auto &axis : axes) {
       trackparams.push_back(values[axis.Id()]);
     }
     try {
@@ -91,7 +92,56 @@ void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
   }
 }
 
+void FillFMDA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+  AliReducedFMDInfo *fmd = nullptr;
+  auto fmdList = event.GetFMD();
+  TIter next(fmdList);
+  next.Reset();
+  auto axes = datacontainer->GetAxes();
+  while ((fmd = (AliReducedFMDInfo *) next()) != nullptr) {
+    if (fmd->Id() < 1000) continue;
+    for (const auto &axis : axes) {
+      if (axis.IsIntegrated()) {
+        auto &element = datacontainer->ModifyElement({0.5});
+        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+      } else {
+        std::vector<float> eta = {fmd->Eta()};
+        auto &element = datacontainer->ModifyElement(eta);
+        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+      }
+    }
+  }
+}
+
+
+void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+  AliReducedFMDInfo *fmd = nullptr;
+  TClonesArray *fmdList = event.GetFMD();
+  TIter next(fmdList);
+  next.Reset();
+  auto axes = datacontainer->GetAxes();
+  while ((fmd = (AliReducedFMDInfo *) next()) != nullptr) {
+    if (fmd->Id() > 1000 ) continue;
+    for (const auto &axis : axes) {
+      if (axis.IsIntegrated()) {
+        auto &element = datacontainer->ModifyElement({0.5});
+        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+      } else {
+        std::vector<float> eta = {fmd->Eta()};
+        auto &element = datacontainer->ModifyElement(eta);
+        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+      }
+    }
+  }
+}
+
+
+
 void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event) {
+  if (map.find((int) Configuration::DetectorId::FMDA_reference) != map.end())
+    FillFMDA(std::get<1>(map[(int) Configuration::DetectorId::FMDA_reference]), event);
+  if (map.find((int) Configuration::DetectorId::FMDC_reference) != map.end())
+    FillFMDC(std::get<1>(map[(int) Configuration::DetectorId::FMDC_reference]), event);
   if (map.find((int) Configuration::DetectorId::TPC) != map.end())
     FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC]), event);
   if (map.find((int) Configuration::DetectorId::TPC_reference) != map.end())

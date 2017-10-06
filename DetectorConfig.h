@@ -23,7 +23,8 @@ enum class DetectorId : int {
   VZEROC_reference,
   VZEROA,
   VZEROC,
-  FMD_reference,
+  FMDA_reference,
+  FMDC_reference,
   ZDC_reference,
 };
 static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC"},
@@ -32,7 +33,8 @@ static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC
                                                     {(int) DetectorId::VZEROC_reference, "VZEROC_reference"},
                                                     {(int) DetectorId::VZEROA, "VZEROA"},
                                                     {(int) DetectorId::VZEROC, "VZEROC"},
-                                                    {(int) DetectorId::FMD_reference, "FMD"},
+                                                    {(int) DetectorId::FMDA_reference, "FMDA_reference"},
+                                                    {(int) DetectorId::FMDC_reference, "FMDC_reference"},
                                                     {(int) DetectorId::ZDC_reference, "ZDC"}};
 
 enum class DetectorType {
@@ -131,13 +133,40 @@ class VZEROC_reference : public DetectorConfig {
   }
 };
 
-class FMD : public DetectorConfig {
+class FMDA_reference : public DetectorConfig {
  public:
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
-    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
-//    config.AddCorrectionOnQnVector(new QnCorrectionsQnVectorAlignment);
-//    config.AddCorrectionOnQnVector(new QnCorrectionsQnVectorTwistAndRescale);
+      config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+      config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+      auto align = new QnCorrectionsQnVectorAlignment();
+      align->SetHarmonicNumberForAlignment(2);
+      align->SetReferenceConfigurationForAlignment("TPC_reference0");
+      config->AddCorrectionOnQnVector(align);
+      auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+      rescale->SetApplyTwist(kTRUE);
+      rescale->SetApplyRescale(kTRUE);
+      rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+      rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","FMDC_reference0");
+      config->AddCorrectionOnQnVector(rescale);
+  }
+};
 
+
+class FMDC_reference : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+      config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+      config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+      auto align = new QnCorrectionsQnVectorAlignment();
+      align->SetHarmonicNumberForAlignment(2);
+      align->SetReferenceConfigurationForAlignment("TPC_reference0");
+      config->AddCorrectionOnQnVector(align);
+      auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+      rescale->SetApplyTwist(kTRUE);
+      rescale->SetApplyRescale(kTRUE);
+      rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+      rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","FMDA_reference0");
+      config->AddCorrectionOnQnVector(rescale);
   }
 };
 

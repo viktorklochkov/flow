@@ -36,9 +36,12 @@ void Task::Run() {
   Initialize();
   QnCorrectionsSetTracingLevel(kError);
   std::cout << "Processing..." << std::endl;
+  int i = 0;
   while (tree_reader_.Next()) {
     Process();
+    ++i;
   }
+  std::cout << i << std::endl;
   Finalize();
 }
 
@@ -91,6 +94,16 @@ void Task::Initialize() {
                                  new Configuration::VZEROC_reference(),
                                  Configuration::DetectorType::Channel,
                                  64);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::FMDC_reference,
+                                 new Configuration::FMDC_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 20);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::FMDA_reference,
+                                 new Configuration::FMDA_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 20);
 
   qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
 

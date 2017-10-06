@@ -38,7 +38,12 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
 void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
 
 void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-//
+
+void FillFMDA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
+
+void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
+
+
 void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event);
 }
 }
