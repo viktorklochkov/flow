@@ -75,7 +75,7 @@ class VZEROA : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC_reference0");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "VZEROC_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -93,7 +93,7 @@ class VZEROC : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA_reference0");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "VZEROA_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -111,7 +111,7 @@ class VZEROA_reference : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROC_reference0");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "VZEROC_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -128,7 +128,7 @@ class VZEROC_reference : public DetectorConfig {
     rescale->SetApplyTwist(true);
     rescale->SetApplyRescale(true);
     rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","VZEROA_reference0");
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "VZEROA_reference0");
     config->AddCorrectionOnQnVector(rescale);
   }
 };
@@ -136,37 +136,36 @@ class VZEROC_reference : public DetectorConfig {
 class FMDA_reference : public DetectorConfig {
  public:
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
-      config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
-      config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
-      auto align = new QnCorrectionsQnVectorAlignment();
-      align->SetHarmonicNumberForAlignment(2);
-      align->SetReferenceConfigurationForAlignment("TPC_reference0");
-      config->AddCorrectionOnQnVector(align);
-      auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
-      rescale->SetApplyTwist(kTRUE);
-      rescale->SetApplyRescale(kTRUE);
-      rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-      rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","FMDC_reference0");
-      config->AddCorrectionOnQnVector(rescale);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto align = new QnCorrectionsQnVectorAlignment();
+    align->SetHarmonicNumberForAlignment(2);
+    align->SetReferenceConfigurationForAlignment("TPC_reference0");
+    config->AddCorrectionOnQnVector(align);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(kTRUE);
+    rescale->SetApplyRescale(kTRUE);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "FMDC_reference0");
+    config->AddCorrectionOnQnVector(rescale);
   }
 };
-
 
 class FMDC_reference : public DetectorConfig {
  public:
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
-      config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
-      config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
-      auto align = new QnCorrectionsQnVectorAlignment();
-      align->SetHarmonicNumberForAlignment(2);
-      align->SetReferenceConfigurationForAlignment("TPC_reference0");
-      config->AddCorrectionOnQnVector(align);
-      auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
-      rescale->SetApplyTwist(kTRUE);
-      rescale->SetApplyRescale(kTRUE);
-      rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-      rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0","FMDA_reference0");
-      config->AddCorrectionOnQnVector(rescale);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto align = new QnCorrectionsQnVectorAlignment();
+    align->SetHarmonicNumberForAlignment(2);
+    align->SetReferenceConfigurationForAlignment("TPC_reference0");
+    config->AddCorrectionOnQnVector(align);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(kTRUE);
+    rescale->SetApplyRescale(kTRUE);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "FMDA_reference0");
+    config->AddCorrectionOnQnVector(rescale);
   }
 };
 
