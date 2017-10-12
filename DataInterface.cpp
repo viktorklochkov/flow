@@ -23,10 +23,8 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
   auto trackList = event.GetTracks();
   TIter next(trackList);
   next.Reset();
-  int number_of_tracks = 0;
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
-    number_of_tracks++;
     VAR::FillTrackInfo(track, values);
     values[-1] = 0;
     auto axes = datacontainer->GetAxes();
@@ -38,13 +36,11 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
     try {
       auto &element = datacontainer->ModifyElement(trackparams);
       element.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
-//      std::cout << "phi pt: " << values[VAR::kPhi] << " " << values[VAR::kPt] << std::endl;
     }
     catch (std::exception &) {
       continue;
     }
   }
-  std::cout << "Number of tracks: " << number_of_tracks << std::endl;
   delete[] values;
 }
 

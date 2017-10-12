@@ -104,16 +104,16 @@ void Task::Initialize() {
                                  new Configuration::FMDA_reference(),
                                  Configuration::DetectorType::Channel,
                                  2000);
-//  Qn::Internal::AddDetectorToMap(raw_data_,
-//                                 Configuration::DetectorId::ZDCA_reference,
-//                                 new Configuration::ZDCA_reference(),
-//                                 Configuration::DetectorType::Channel,
-//                                 5);
-//  Qn::Internal::AddDetectorToMap(raw_data_,
-//                                 Configuration::DetectorId::ZDCC_reference,
-//                                 new Configuration::ZDCC_reference(),
-//                                 Configuration::DetectorType::Channel,
-//                                 5);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::ZDCA_reference,
+                                 new Configuration::ZDCA_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 5);
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::ZDCC_reference,
+                                 new Configuration::ZDCC_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 5);
 
   qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
 

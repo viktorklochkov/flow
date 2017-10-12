@@ -15,7 +15,6 @@ QnCorrectionsDetector *DetectorGenerator::GenerateDetector(int globalid, int det
   auto& datacontainer = std::get<1>(tuple);
   auto detectorname = std::string(Configuration::DetectorNames[detid]);
   auto binname = datacontainer->GetBinDescription(binid);
-//  auto name = (detectorname + binname).c_str();
   auto name  = (detectorname + std::to_string(binid)).c_str();
   std::cout << name << std::endl;
   auto detector = new QnCorrectionsDetector(name, globalid);
