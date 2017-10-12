@@ -23,9 +23,12 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
   auto trackList = event.GetTracks();
   TIter next(trackList);
   next.Reset();
+  int number_of_tracks = 0;
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
+    number_of_tracks++;
     VAR::FillTrackInfo(track, values);
+    values[-1] = 0;
     auto axes = datacontainer->GetAxes();
     std::vector<float> trackparams;
     trackparams.reserve(axes.size());
@@ -35,10 +38,13 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
     try {
       auto &element = datacontainer->ModifyElement(trackparams);
       element.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
+//      std::cout << "phi pt: " << values[VAR::kPhi] << " " << values[VAR::kPt] << std::endl;
     }
     catch (std::exception &) {
+      continue;
     }
   }
+  std::cout << "Number of tracks: " << number_of_tracks << std::endl;
   delete[] values;
 }
 
@@ -83,7 +89,7 @@ void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
         auto &element = datacontainer->ModifyElement({0.5});
         element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
       } else {
-        etavalue = etaborders[(ich-32) / 8];
+        etavalue = etaborders[(ich - 32) / 8];
         eta.push_back(etavalue);
         auto &element = datacontainer->ModifyElement(eta);
         element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
@@ -113,7 +119,6 @@ void FillFMDA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
   }
 }
 
-
 void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
   AliReducedFMDInfo *fmd = nullptr;
   TClonesArray *fmdList = event.GetFMD();
@@ -121,7 +126,7 @@ void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
   next.Reset();
   auto axes = datacontainer->GetAxes();
   while ((fmd = (AliReducedFMDInfo *) next()) != nullptr) {
-    if (fmd->Id() > 1000 ) continue;
+    if (fmd->Id() > 1000) continue;
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
         auto &element = datacontainer->ModifyElement({0.5});
@@ -135,9 +140,43 @@ void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
   }
 }
 
+void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+  const std::array<double, 10> X = { /* Cside */ 0.0, -1.75, 1.75, -1.75, 1.75, /* Aside */  0.0, 1.75, -1.75, 1.75, -1.75};
+  const std::array<double, 10> Y = { /* Cside */ 0.0, -1.75, -1.75, 1.75, 1.75, /* Aside */  0.0, -1.75, -1.75, 1.75, 1.75};
+  auto axes = datacontainer->GetAxes();
+  for (Int_t ich = 5; ich < 10; ich++) {
+    for (const auto &axis : axes) {
+      if (axis.IsIntegrated()) {
+        auto &element = datacontainer->ModifyElement({0.5});
+        double weight = event.EnergyZDCnTree(ich);
+        if (weight < 0.01) weight = 0.;
+        element.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+      }
+    }
+  }
+}
 
+void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+  const std::array<double, 10> X = { /* Cside */ 0.0, -1.75, 1.75, -1.75, 1.75, /* Aside */  0.0, 1.75, -1.75, 1.75, -1.75};
+  const std::array<double, 10> Y = { /* Cside */ 0.0, -1.75, -1.75, 1.75, 1.75, /* Aside */  0.0, -1.75, -1.75, 1.75, 1.75};
+  auto axes = datacontainer->GetAxes();
+  for (Int_t ich = 0; ich < 5; ich++) {
+    for (const auto &axis : axes) {
+      if (axis.IsIntegrated()) {
+        auto &element = datacontainer->ModifyElement({0.5});
+        double weight = event.EnergyZDCnTree(ich);
+        if (weight < 0.01) weight = 0.;
+        element.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+      }
+    }
+  }
+}
 
 void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event) {
+  if (map.find((int) Configuration::DetectorId::ZDCA_reference) != map.end())
+    FillZDCA(std::get<1>(map[(int) Configuration::DetectorId::ZDCA_reference]), event);
+  if (map.find((int) Configuration::DetectorId::ZDCC_reference) != map.end())
+    FillZDCC(std::get<1>(map[(int) Configuration::DetectorId::ZDCC_reference]), event);
   if (map.find((int) Configuration::DetectorId::FMDA_reference) != map.end())
     FillFMDA(std::get<1>(map[(int) Configuration::DetectorId::FMDA_reference]), event);
   if (map.find((int) Configuration::DetectorId::FMDC_reference) != map.end())
@@ -155,7 +194,6 @@ void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event) {
   if (map.find((int) Configuration::DetectorId::VZEROC) != map.end())
     FillVZEROC(std::get<1>(map[(int) Configuration::DetectorId::VZEROC]), event);
 }
-
 
 }
 }

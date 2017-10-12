@@ -50,8 +50,8 @@ void Task::Initialize() {
   Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
                                VAR::Variables::kPhi});
 
-  Axis ptaxis("Pt", 5, 0, 3, VAR::kPt);
-  Axis etaaxis("Eta", 5, -0.8, 0.8, VAR::kEta);
+  Axis ptaxis("Pt", 1, 0, 3, VAR::kPt);
+  Axis etaaxis("Eta", 1, -0.8, 0.8, VAR::kEta);
   Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsC("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7}, VAR::kEta);
@@ -98,12 +98,22 @@ void Task::Initialize() {
                                  Configuration::DetectorId::FMDC_reference,
                                  new Configuration::FMDC_reference(),
                                  Configuration::DetectorType::Channel,
-                                 20);
+                                 2000);
   Qn::Internal::AddDetectorToMap(raw_data_,
                                  Configuration::DetectorId::FMDA_reference,
                                  new Configuration::FMDA_reference(),
                                  Configuration::DetectorType::Channel,
-                                 20);
+                                 2000);
+//  Qn::Internal::AddDetectorToMap(raw_data_,
+//                                 Configuration::DetectorId::ZDCA_reference,
+//                                 new Configuration::ZDCA_reference(),
+//                                 Configuration::DetectorType::Channel,
+//                                 5);
+//  Qn::Internal::AddDetectorToMap(raw_data_,
+//                                 Configuration::DetectorId::ZDCC_reference,
+//                                 new Configuration::ZDCC_reference(),
+//                                 Configuration::DetectorType::Channel,
+//                                 5);
 
   qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
 

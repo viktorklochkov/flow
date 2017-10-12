@@ -25,7 +25,8 @@ enum class DetectorId : int {
   VZEROC,
   FMDA_reference,
   FMDC_reference,
-  ZDC_reference,
+  ZDCA_reference,
+  ZDCC_reference,
 };
 static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC"},
                                                     {(int) DetectorId::TPC_reference, "TPC_reference"},
@@ -35,7 +36,8 @@ static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC
                                                     {(int) DetectorId::VZEROC, "VZEROC"},
                                                     {(int) DetectorId::FMDA_reference, "FMDA_reference"},
                                                     {(int) DetectorId::FMDC_reference, "FMDC_reference"},
-                                                    {(int) DetectorId::ZDC_reference, "ZDC"}};
+                                                    {(int) DetectorId::ZDCA_reference, "ZDCA_reference"},
+                                                    {(int) DetectorId::ZDCC_reference, "ZDCC_reference"}};
 
 enum class DetectorType {
   Track,
@@ -119,6 +121,7 @@ class VZEROA_reference : public DetectorConfig {
 class VZEROC_reference : public DetectorConfig {
  public:
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
     auto alignment = new QnCorrectionsQnVectorAlignment();
     alignment->SetReferenceConfigurationForAlignment("TPC_reference0");
@@ -136,7 +139,7 @@ class VZEROC_reference : public DetectorConfig {
 class FMDA_reference : public DetectorConfig {
  public:
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
-    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+//    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
     auto align = new QnCorrectionsQnVectorAlignment();
     align->SetHarmonicNumberForAlignment(2);
@@ -168,6 +171,43 @@ class FMDC_reference : public DetectorConfig {
     config->AddCorrectionOnQnVector(rescale);
   }
 };
+
+class ZDCA_reference : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto align = new QnCorrectionsQnVectorAlignment();
+    align->SetHarmonicNumberForAlignment(2);
+    align->SetReferenceConfigurationForAlignment("TPC_reference0");
+    config->AddCorrectionOnQnVector(align);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(kTRUE);
+    rescale->SetApplyRescale(kTRUE);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "ZDCC_reference0");
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
+class ZDCC_reference : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+    auto align = new QnCorrectionsQnVectorAlignment();
+    align->SetHarmonicNumberForAlignment(2);
+    align->SetReferenceConfigurationForAlignment("TPC_reference0");
+    config->AddCorrectionOnQnVector(align);
+    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
+    rescale->SetApplyTwist(kTRUE);
+    rescale->SetApplyRescale(kTRUE);
+    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
+    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "ZDCA_reference0");
+    config->AddCorrectionOnQnVector(rescale);
+  }
+};
+
 
 }
 }

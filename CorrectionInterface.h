@@ -77,8 +77,9 @@ void AddDetectorsToFramework(QnCorrectionsManager &manager,
  * Gets corrected \f$Q_n\f$ vectors from the QnCorrectionsFramework.
  * @param[in,out] manager Corrections manager used for the correction of the \f$Q_n\f$ vectors.
  * @param[out] map Data container in which the \f$Q_n\f$ vectors are inserted into.
+ * @param step correction step of the requested \f$Q_n\f$ vector.
  */
-void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map);
+void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map, std::string step = "latest");
 
 void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map);
 

@@ -29,7 +29,7 @@ void AddDetectorToMap(DetectorMap &map,
                       Configuration::DetectorType type,
                       int channels) {
   std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
-  Qn::Axis integrated("integrated", 1, 0, 1, -999);
+  Qn::Axis integrated("integrated", 1, 0, 1, -1);
   data->AddAxis(integrated);
   std::tuple<Configuration::DetectorType,
              std::unique_ptr<Qn::DataContainerDataVector>,

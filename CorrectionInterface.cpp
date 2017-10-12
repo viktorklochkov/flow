@@ -25,14 +25,18 @@ void FillDataToFramework(QnCorrectionsManager &manager,
   for (auto &pair : map) {
     int ibin = 0;
     auto &detector = std::get<1>(pair.second);
-    for (auto bin : *detector) {
+    for (const std::vector<DataVector> &bin : *detector) {
       auto detectorid = nbinsrunning + ibin;
+      std::cout << "id " << detectorid << std::endl;
       ++ibin;
       int idata = 0;
-      for (auto data : bin) {
+      std::cout << "size " << bin.size() << std::endl;
+      for (const auto &data : bin) {
+//        std::cout << data.phi << " " << data.weight << std::endl;
         manager.AddDataVector(detectorid, data.phi, data.weight, idata);
         ++idata;
       }
+      std::cout << "looped: " << idata << std::endl;
     }
     nbinsrunning += detector->size();
   }
@@ -58,8 +62,11 @@ void AddDetectorsToFramework(QnCorrectionsManager &manager,
   }
 }
 
-void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map) {
+void GetQnFromFramework(QnCorrectionsManager &manager,
+                        std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map,
+                        std::string step) {
   int nbinsrunning = 0;
+  int i = 0;
   for (auto &pair : map) {
     auto &detector = pair.second;
     auto ibin = 0;
@@ -70,10 +77,17 @@ void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique
 //      auto detectorname = std::string(Configuration::DetectorNames[pair.first]);
 //      auto binname = detector->GetBinDescription(ibin);
 //      auto name = (detectorname + binname).c_str();
-      auto vector = manager.GetDetectorQnVector(name, "latest", "latest");
-      if ((!vector)) continue;
-      QnCorrectionsQnVector element;
+      auto vector = manager.GetDetectorQnVector(name, step.c_str(), step.c_str());
+      if ((!vector)) {
+        std::cout << name << std::endl;
+        continue;
+      }
+      if (!vector->IsGoodQuality() && !strcmp(name, "TPC_reference0")) {
+        std::cout << name << "bad quality" << std::endl;
+      }
+//      if (vector->GetN() == 0) std::cout << name << " no entries" << std::endl;
       bin = *vector;
+
     }
     nbinsrunning += detector->size();
   }
