@@ -99,7 +99,14 @@ class DataContainer : public TObject {
   T &GetElement(const std::vector<long> &bins) const {
     return data_.at(GetLinearIndex(bins));
   }
-
+  /**
+ * Get element in the specified bin
+ * @param linear_index index of element
+ * @return     Element
+ */
+  T const &GetElement(int linear_index) const {
+    return data_.at(linear_index);
+  }
   /*
   * Get element with the specified value
   * @param bins Vector of value to search for desired element

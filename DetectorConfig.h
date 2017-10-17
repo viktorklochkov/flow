@@ -177,16 +177,6 @@ class ZDCA_reference : public DetectorConfig {
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
-    auto align = new QnCorrectionsQnVectorAlignment();
-    align->SetHarmonicNumberForAlignment(2);
-    align->SetReferenceConfigurationForAlignment("TPC_reference0");
-    config->AddCorrectionOnQnVector(align);
-    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
-    rescale->SetApplyTwist(kTRUE);
-    rescale->SetApplyRescale(kTRUE);
-    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "ZDCC_reference0");
-    config->AddCorrectionOnQnVector(rescale);
   }
 };
 
@@ -195,19 +185,8 @@ class ZDCC_reference : public DetectorConfig {
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
-    auto align = new QnCorrectionsQnVectorAlignment();
-    align->SetHarmonicNumberForAlignment(2);
-    align->SetReferenceConfigurationForAlignment("TPC_reference0");
-    config->AddCorrectionOnQnVector(align);
-    auto rescale = new QnCorrectionsQnVectorTwistAndRescale();
-    rescale->SetApplyTwist(kTRUE);
-    rescale->SetApplyRescale(kTRUE);
-    rescale->SetTwistAndRescaleMethod(QnCorrectionsQnVectorTwistAndRescale::TWRESCALE_correlations);
-    rescale->SetReferenceConfigurationsForTwistAndRescale("TPC_reference0", "ZDCA_reference0");
-    config->AddCorrectionOnQnVector(rescale);
   }
 };
-
 
 }
 }

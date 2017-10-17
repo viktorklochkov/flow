@@ -11,11 +11,11 @@
 
 namespace Qn {
 
-Task::Task(std::string filelist, std::string incalib) :
+Task::Task(std::string filelist, std::string incalib, std::string treename) :
     write_tree_(true),
     out_calibration_file_(new TFile("qn.root", "RECREATE")),
     in_calibration_file_(new TFile(incalib.data(), "READ")),
-    in_tree_(std::move(this->MakeChain(filelist))),
+    in_tree_(std::move(this->MakeChain(filelist, treename))),
     tree_reader_(in_tree_.get()),
     event_(tree_reader_, "Event"),
     out_file_(new TFile("output.root", "RECREATE")),
@@ -123,6 +123,7 @@ void Task::Initialize() {
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, "z vertex", vtxbins));
 
+
   Qn::Internal::AddDetectorsToFramework(qn_manager_, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
   qn_eventinfo_f_->AddVariable("Centrality");
@@ -170,8 +171,8 @@ void Task::Finalize() {
   }
 }
 
-std::unique_ptr<TChain> Task::MakeChain(std::string filename) {
-  std::unique_ptr<TChain> chain(new TChain("DstTree"));
+std::unique_ptr<TChain> Task::MakeChain(std::string filename, std::string treename) {
+  std::unique_ptr<TChain> chain(new TChain(treename.data()));
   std::ifstream in;
   in.open(filename);
   std::string line;

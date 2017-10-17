@@ -104,6 +104,14 @@ class EventInfo {
       } else throw std::invalid_argument("EventInfo was not saved to tree");
     }
   }
+  std::vector<T> GetVector() {
+    std::vector<T> vector;
+    auto addtovector = [&vector] (std::pair<std::string, EventInfoValue<T>> pair) {
+      T value = pair.second.Get();
+      vector.emplace_back(value);};
+    std::for_each(map_.begin(),map_.end(),addtovector);
+    return vector;
+  }
 /**
  * Clears information store in the event information.
  */

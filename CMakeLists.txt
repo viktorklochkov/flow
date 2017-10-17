@@ -9,9 +9,8 @@ set(SOURCES
         Axis.cpp
         EventInfo.cpp
         DetectorGenerator.cpp
-        DataVector.cpp
         CorrectionInterface.cpp
-        DataInterface.cpp DetectorMap.h DetectorConfig.cpp DetectorConfig.h DetectorMap.cpp)
+        DataInterface.cpp DetectorMap.h DetectorConfig.cpp DetectorConfig.h DetectorMap.cpp QuickTask.cpp QuickTask.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
@@ -36,12 +35,6 @@ find_path(QNCORRECT_INC QnCorrectionsQnVector.h HINTS "${CMAKE_SOURCE_DIR}/QnCor
 find_path(REDUCED_INC AliReducedEventInfo.h HINTS "${CMAKE_SOURCE_DIR}/ReducedEvent")
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${REDUCED_INC})
 
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    message("found")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
 
 # Generate dictionary
 ROOT_GENERATE_DICTIONARY(G__Flow ${HEADERS} LINKDEF LinkDef.h)

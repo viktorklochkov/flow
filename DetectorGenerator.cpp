@@ -23,6 +23,7 @@ QnCorrectionsDetector *DetectorGenerator::GenerateDetector(int globalid, int det
   detector->AddDetectorConfiguration(configuration);
   return detector;
 }
+
 QnCorrectionsDetectorConfigurationBase *DetectorGenerator::CreateDetectorConfiguration(Configuration::DetectorType type,
                                                                                        std::string name,
                                                                                        int nchannels = 0) {
