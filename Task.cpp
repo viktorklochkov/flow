@@ -12,19 +12,19 @@
 namespace Qn {
 
 Task::Task(std::string filelist, std::string incalib, std::string treename) :
-    write_tree_(true),
-    out_calibration_file_(new TFile("qn.root", "RECREATE")),
-    in_calibration_file_(new TFile(incalib.data(), "READ")),
-    in_tree_(std::move(this->MakeChain(filelist, treename))),
-    tree_reader_(in_tree_.get()),
-    event_(tree_reader_, "Event"),
     out_file_(new TFile("output.root", "RECREATE")),
+    in_calibration_file_(new TFile(incalib.data(), "READ")),
+    out_calibration_file_(new TFile("qn.root", "RECREATE")),
+    in_tree_(this->MakeChain(filelist, treename)),
     out_tree_(nullptr),
     out_tree_raw(nullptr),
+    tree_reader_(in_tree_.get()),
+    event_(tree_reader_, "Event"),
     qn_eventinfo_f_(new Qn::EventInfoF()),
     qn_manager_(),
+    eng(42),
     rnd(0, 2 * M_PI),
-    eng(42) {
+    write_tree_(true) {
   out_file_->cd();
   std::unique_ptr<TTree> treeraw(new TTree("datatree", "datatree"));
   std::unique_ptr<TTree> tree(new TTree("tree", "tree"));

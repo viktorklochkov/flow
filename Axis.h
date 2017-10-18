@@ -21,6 +21,7 @@ class Axis {
  public:
 
   Axis() = default; ///< default constructor
+  virtual ~Axis() = default; ///< default destructor
 
   /**
    * Constructor for variable or fixed bin width.
@@ -44,8 +45,6 @@ class Axis {
       bin_edges_.push_back(lowbin + i * bin_width);
     }
   }
-
-  ~Axis() = default; ///< default destructor
 
   typedef typename std::vector<float>::const_iterator iterator;
   iterator cbegin() { return bin_edges_.cbegin(); } ///< iterator for external use
@@ -101,9 +100,10 @@ class Axis {
 
   inline bool IsIntegrated() const {return id_==-1;}
  private:
-  int id_; ///< Id of Axis -1 is reserved by the framework for an integrated \f$Q_n\f$ container.
   std::string name_;
   std::vector<float> bin_edges_;
+  int id_; ///< Id of Axis -1 is reserved by the framework for an integrated \f$Q_n\f$ container.
+
 
 
   /// \cond CLASSIMP

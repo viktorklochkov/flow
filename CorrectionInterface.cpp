@@ -62,7 +62,6 @@ void GetQnFromFramework(QnCorrectionsManager &manager,
                         std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map,
                         std::string step) {
   int nbinsrunning = 0;
-  int i = 0;
   for (auto &pair : map) {
     auto &detector = pair.second;
     auto ibin = 0;

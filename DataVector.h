@@ -14,6 +14,7 @@ namespace Qn {
 struct DataVector {
   DataVector() : phi(NAN), weight(NAN) {}
   DataVector(float phi, float weight) : phi(phi), weight(weight) {}
+  virtual ~DataVector() = default;
   float phi; ///< Azimuthal angle of signal
   float weight; ///< weight of signal
 

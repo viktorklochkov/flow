@@ -45,9 +45,9 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRed
 }
 
 void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 8> kX = {0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388};
-  const std::array<double, 8> kY = {0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268};
-  const std::array<float, 4> etaborders = {4.8, 4.2, 3.65, 3.1};
+  const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
+  const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
+  const std::array<float, 4> etaborders = {{4.8, 4.2, 3.65, 3.1}};
   for (int ich = 0; ich < 32; ich++) {
     double weight = event.MultChannelVZERO(ich);
     if (weight < 0.01) weight = 0.0;
@@ -70,9 +70,9 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
 }
 
 void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 8> kX = {0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388};
-  const std::array<double, 8> kY = {0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268};
-  const std::array<float, 4> etaborders = {-3.45, -2.95, -2.45, -1.95};
+  const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
+  const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
+  const std::array<float, 4> etaborders = {{-3.45, -2.95, -2.45, -1.95}};
   for (int ich = 32; ich < 64; ich++) {
     double weight = event.MultChannelVZERO(ich);
     if (weight < 0.01) weight = 0.0;
@@ -137,8 +137,8 @@ void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
 }
 
 void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 10> X = { /* Cside */ 0.0, -1.75, 1.75, -1.75, 1.75, /* Aside */  0.0, 1.75, -1.75, 1.75, -1.75};
-  const std::array<double, 10> Y = { /* Cside */ 0.0, -1.75, -1.75, 1.75, 1.75, /* Aside */  0.0, -1.75, -1.75, 1.75, 1.75};
+  const std::array<double, 10> X = {{0.0, -1.75, 1.75, -1.75, 1.75, 0.0, 1.75, -1.75, 1.75, -1.75}};
+  const std::array<double, 10> Y = {{0.0, -1.75, -1.75, 1.75, 1.75, 0.0, -1.75, -1.75, 1.75, 1.75}};
   auto axes = datacontainer->GetAxes();
   for (Int_t ich = 5; ich < 10; ich++) {
     for (const auto &axis : axes) {
@@ -153,8 +153,8 @@ void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
 }
 
 void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 10> X = { /* Cside */ 0.0, -1.75, 1.75, -1.75, 1.75, /* Aside */  0.0, 1.75, -1.75, 1.75, -1.75};
-  const std::array<double, 10> Y = { /* Cside */ 0.0, -1.75, -1.75, 1.75, 1.75, /* Aside */  0.0, -1.75, -1.75, 1.75, 1.75};
+  const std::array<double, 10> X = {{/* C*/ 0.0, -1.75, 1.75, -1.75, 1.75, /* A */0.0, 1.75, -1.75, 1.75, -1.75}};
+  const std::array<double, 10> Y = {{/* C*/ 0.0, -1.75, -1.75, 1.75, 1.75, /*A*/0.0, -1.75, -1.75, 1.75, 1.75}};
   auto axes = datacontainer->GetAxes();
   for (Int_t ich = 0; ich < 5; ich++) {
     for (const auto &axis : axes) {
