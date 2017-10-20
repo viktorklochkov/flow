@@ -74,6 +74,7 @@ class Task {
   std::unique_ptr<TTree> in_tree_;
   std::unique_ptr<TTree> out_tree_;
   std::unique_ptr<TTree> out_tree_raw;
+  std::unique_ptr<TList> histograms_;
   TTreeReader tree_reader_;
   TTreeReaderValue<AliReducedEventInfo> event_;
   Qn::Internal::DetectorMap raw_data_;

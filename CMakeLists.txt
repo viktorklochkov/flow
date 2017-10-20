@@ -14,7 +14,7 @@ set(SOURCES
         DataInterface.cpp
         DetectorConfig.cpp
         DetectorMap.cpp
-        QuickTask.cpp)
+        QuickTask.cpp Resolution.cpp Resolution.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

@@ -7,7 +7,6 @@
 #include <random>
 #include "Task.h"
 #include "CorrectionInterface.h"
-#include "DetectorMap.h"
 
 namespace Qn {
 
@@ -18,6 +17,7 @@ Task::Task(std::string filelist, std::string incalib, std::string treename) :
     in_tree_(this->MakeChain(filelist, treename)),
     out_tree_(nullptr),
     out_tree_raw(nullptr),
+    histograms_(nullptr),
     tree_reader_(in_tree_.get()),
     event_(tree_reader_, "Event"),
     qn_eventinfo_f_(new Qn::EventInfoF()),
@@ -26,6 +26,7 @@ Task::Task(std::string filelist, std::string incalib, std::string treename) :
     rnd(0, 2 * M_PI),
     write_tree_(true) {
   out_file_->cd();
+  histograms_.reset(new TList());
   std::unique_ptr<TTree> treeraw(new TTree("datatree", "datatree"));
   std::unique_ptr<TTree> tree(new TTree("tree", "tree"));
   out_tree_ = std::move(tree);
@@ -48,10 +49,10 @@ void Task::Run() {
 void Task::Initialize() {
   using Axes = std::vector<Qn::Axis>;
   Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
-                               VAR::Variables::kPhi});
+                               VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY});
 
-  Axis ptaxis("Pt", 1, 0, 3, VAR::kPt);
-  Axis etaaxis("Eta", 1, -0.8, 0.8, VAR::kEta);
+  Axis ptaxis("Pt", {0.2,0.4,0.6,1.0,2.0,5.0}, VAR::kPt);
+  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
   Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsC("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7}, VAR::kEta);
@@ -123,6 +124,16 @@ void Task::Initialize() {
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, "z vertex", vtxbins));
 
+  auto *h_phi_ncls = new TH2F("tpc_phi_ncls","tpc_phi_ncls",100,0,2*TMath::Pi(),170,0,170);
+  auto *h_pt_eta = new TH2F("tpc_pt_eta","tpc_pt_eta",100,0,10,100,-0.9,0.9);
+  auto *h_phi_vtxz = new TH2F("tpc_phi_vtxz","tpc_phi_vtxz",100,0,2*TMath::Pi(),100,-10,10);
+  auto *h_phi_dca = new TH2F("tpc_phi_dca","tpc_phi_dca",100,0,2*TMath::Pi(),100,0,2.4);
+
+  histograms_->Add(h_pt_eta);
+  histograms_->Add(h_phi_ncls);
+  histograms_->Add(h_phi_vtxz);
+  histograms_->Add(h_phi_dca);
+
 
   Qn::Internal::AddDetectorsToFramework(qn_manager_, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
@@ -150,7 +161,7 @@ void Task::Process() {
   qn_eventinfo_f_->SetVariable("VtxZ", event_->Vertex(2));
   if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
   if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
-  Qn::Interface::FillDetectors(raw_data_, *event_);
+  Qn::Interface::FillDetectors(raw_data_, *event_, *histograms_);
   VAR::FillEventInfo(&*event_, qn_manager_.GetDataContainer());
   Qn::Internal::FillDataToFramework(qn_manager_, raw_data_);
   qn_manager_.ProcessEvent();

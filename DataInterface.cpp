@@ -17,15 +17,26 @@ void SetVariables(std::vector<VAR::Variables> vars) {
   }
 }
 
-void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event, TList &histograms, Fill fillhistograms) {
   auto values = new float[AliReducedVarManager::Variables::kNVars];
   AliReducedTrackInfo *track = nullptr;
   auto trackList = event.GetTracks();
   TIter next(trackList);
   next.Reset();
+  auto *h_pt_eta = (TH2F*) histograms.FindObject("tpc_pt_eta");
+  auto *h_phi_ncls = (TH2F*) histograms.FindObject("tpc_phi_ncls");
+  auto *h_phi_vtxz = (TH2F*) histograms.FindObject("tpc_phi_vtxz");
+  auto *h_phi_dca = (TH2F*) histograms.FindObject("tpc_phi_dca");
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
+    if (values[VAR::kEta] > 0.9 || values[VAR::kEta] < -0.9) continue;
+    if (fillhistograms == Fill::QA) {
+      if (h_pt_eta) h_pt_eta->Fill(values[VAR::kPt], values[VAR::kEta]);
+      if (h_phi_ncls) h_phi_ncls->Fill(values[VAR::kPhi], values[VAR::kTPCncls]);
+      if (h_phi_vtxz) h_phi_vtxz->Fill(values[VAR::kPhi], event.Vertex(2));
+      if (h_phi_dca) h_phi_dca->Fill(values[VAR::kPhi], values[VAR::kDcaXY]);
+    }
     values[-1] = 0;
     auto axes = datacontainer->GetAxes();
     std::vector<float> trackparams;
@@ -48,6 +59,31 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
   const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
   const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
   const std::array<float, 4> etaborders = {{4.8, 4.2, 3.65, 3.1}};
+  for (int ich = 32; ich < 64; ich++) {
+    double weight = event.MultChannelVZERO(ich);
+    if (weight < 0.01) weight = 0.0;
+    auto axes = datacontainer->GetAxes();
+    std::vector<float> eta;
+    eta.reserve(axes.size());
+    for (const auto &axis : axes) {
+      float etavalue = 0;
+      if (axis.IsIntegrated()) {
+        auto &element = datacontainer->ModifyElement({0.5});
+        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+      } else {
+        etavalue = etaborders[(ich-32) / 8];
+        eta.push_back(etavalue);
+        auto &element = datacontainer->ModifyElement(eta);
+        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+      }
+    }
+  }
+}
+
+void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
+  const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
+  const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
+  const std::array<float, 4> etaborders = {{-3.45, -2.95, -2.45, -1.95}};
   for (int ich = 0; ich < 32; ich++) {
     double weight = event.MultChannelVZERO(ich);
     if (weight < 0.01) weight = 0.0;
@@ -61,31 +97,6 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
         element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
       } else {
         etavalue = etaborders[ich / 8];
-        eta.push_back(etavalue);
-        auto &element = datacontainer->ModifyElement(eta);
-        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
-      }
-    }
-  }
-}
-
-void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
-  const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
-  const std::array<float, 4> etaborders = {{-3.45, -2.95, -2.45, -1.95}};
-  for (int ich = 32; ich < 64; ich++) {
-    double weight = event.MultChannelVZERO(ich);
-    if (weight < 0.01) weight = 0.0;
-    auto axes = datacontainer->GetAxes();
-    std::vector<float> eta;
-    eta.reserve(axes.size());
-    for (const auto &axis : axes) {
-      float etavalue = 0;
-      if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
-        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
-      } else {
-        etavalue = etaborders[(ich - 32) / 8];
         eta.push_back(etavalue);
         auto &element = datacontainer->ModifyElement(eta);
         element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
@@ -168,25 +179,34 @@ void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
   }
 }
 
-void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event) {
+void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event, TList &histograms) {
   if (map.find((int) Configuration::DetectorId::ZDCA_reference) != map.end())
     FillZDCA(std::get<1>(map[(int) Configuration::DetectorId::ZDCA_reference]), event);
+
   if (map.find((int) Configuration::DetectorId::ZDCC_reference) != map.end())
     FillZDCC(std::get<1>(map[(int) Configuration::DetectorId::ZDCC_reference]), event);
+
   if (map.find((int) Configuration::DetectorId::FMDA_reference) != map.end())
     FillFMDA(std::get<1>(map[(int) Configuration::DetectorId::FMDA_reference]), event);
+
   if (map.find((int) Configuration::DetectorId::FMDC_reference) != map.end())
     FillFMDC(std::get<1>(map[(int) Configuration::DetectorId::FMDC_reference]), event);
+
   if (map.find((int) Configuration::DetectorId::TPC) != map.end())
-    FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC]), event);
+    FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC]), event, histograms, Fill::NO);
+
   if (map.find((int) Configuration::DetectorId::TPC_reference) != map.end())
-    FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC_reference]), event);
+    FillTpc(std::get<1>(map[(int) Configuration::DetectorId::TPC_reference]), event, histograms, Fill::QA);
+
   if (map.find((int) Configuration::DetectorId::VZEROA_reference) != map.end())
     FillVZEROA(std::get<1>(map[(int) Configuration::DetectorId::VZEROA_reference]), event);
+
   if (map.find((int) Configuration::DetectorId::VZEROC_reference) != map.end())
     FillVZEROC(std::get<1>(map[(int) Configuration::DetectorId::VZEROC_reference]), event);
+
   if (map.find((int) Configuration::DetectorId::VZEROA) != map.end())
     FillVZEROA(std::get<1>(map[(int) Configuration::DetectorId::VZEROA]), event);
+
   if (map.find((int) Configuration::DetectorId::VZEROC) != map.end())
     FillVZEROC(std::get<1>(map[(int) Configuration::DetectorId::VZEROC]), event);
 }
