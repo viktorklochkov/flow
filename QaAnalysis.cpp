@@ -34,6 +34,7 @@ void QaAnalysis::TrackQa() {
     trackhistograms_->At(i - 1)->Draw("COLZ");
 
   }
+  c1->SaveAs((name_+"track"+".pdf").data());
 }
 void QaAnalysis::EventQa() {
   TTree *tree = nullptr;
@@ -96,4 +97,6 @@ void QaAnalysis::EventQa() {
     eventhistograms_->At(i - 1)->Draw("COLZ");
 
   }
+  c1->SaveAs((name_+"event"+".pdf").data());
+
 }

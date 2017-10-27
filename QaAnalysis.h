@@ -9,13 +9,14 @@
 #include "DataContainer.h"
 class QaAnalysis {
  public:
-  QaAnalysis(TFile *file) :
+  QaAnalysis(TFile *file, std::string name_) :
       file_(file),
       trackhistograms_(new TList()),
       eventhistograms_(new TList()) {}
   void TrackQa();
   void EventQa();
  private:
+  std::string name_;
   TFile *file_;
   std::unique_ptr<TList> trackhistograms_;
   std::unique_ptr<TList> eventhistograms_;
