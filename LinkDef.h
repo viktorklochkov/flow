@@ -8,15 +8,15 @@
 #pragma link off all functions;
 #pragma link off all classes;
 
-#pragma link C++ class std::vector+;
+//#pragma link C++ class std::vector+;
 #pragma link C++ class Qn::Axis+;
 #pragma link C++ class Qn::DataVector+;
-#pragma link C++ class std::vector<Qn::DataVector>>+;
-//#pragma link C++ class std::vector<std::vector<Qn::DataVector>>>+;
-#pragma link C++ class std::vector<QnCorrectionsQnVector>>+;
-#pragma link C++ class std::vector<Qn::Axis>+;
-#pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector>+;
-#pragma link C++ class Qn::DataContainer<std::vector<Qn::DataVector>>+;
+#pragma link C++ class vector<Qn::DataVector >+;
+#pragma link C++ class vector<vector <Qn::DataVector> >+;
+#pragma link C++ class vector<QnCorrectionsQnVector >+;
+#pragma link C++ class vector<Qn::Axis >+;
+#pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector >+;
+#pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
 #pragma link C++ typedef Qn::DataContainerQn;
 #pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ class Qn::Resolution+;

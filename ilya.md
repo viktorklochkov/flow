@@ -12,10 +12,9 @@ R_A[B,C] under different B and C
 ##comparison to published
 rewrite macros to produce nice plots
 
-##run-by-run corrections
-* rewrite scripts to correct all runs individually.
-* This should keep track of correction files and merge outputs accordingly.
-* Run-wise QA is important.
+##Qvectors arithmetic
+* adding two qvectors
+* projection of datacontainer qn
 
 #DONE
 
@@ -32,3 +31,8 @@ rewrite macros to produce nice plots
 * vtx
 * centrality [VZERO, SPD tracklets, ZDC]
 * signals [TPC, VO, FMD, SPD, ZDC]
+
+##run-by-run corrections
+* rewrite scripts to correct all runs individually.
+* This should keep track of correction files and merge outputs accordingly.
+* Run-wise QA is important.

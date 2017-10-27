@@ -131,7 +131,7 @@ void Task::Initialize() {
   double minbin[ndim] = {0, -0.9, 0, 0, -4, 0, -1, 0};
   double maxbin[ndim] = {8, 0.9, 2 * TMath::Pi(), 2.5, 4, 1500, 2, 5};
   auto *h_track_params =
-      new THnSparseF("trackqa", "tracks;pT;eta;phi;dcaxy;dcaz;dEdx;charge;chi2/ndf", ndim, bins, minbin, maxbin);
+      new THnSparseF("trackqa", "tracks;pT;eta;phi;dcaxy;dcaz;dEdx;charge;chi2/ndf;", ndim, bins, minbin, maxbin);
 
   histograms_->Add(h_track_params);
 
