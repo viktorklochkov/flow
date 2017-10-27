@@ -9,7 +9,8 @@
 #include "DataContainer.h"
 class QaAnalysis {
  public:
-  QaAnalysis(TFile *file, std::string name_) :
+  QaAnalysis(TFile *file, std::string name) :
+      name_(name),
       file_(file),
       trackhistograms_(new TList()),
       eventhistograms_(new TList()) {}
