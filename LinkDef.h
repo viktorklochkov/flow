@@ -21,6 +21,8 @@
 #pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ class Qn::Resolution+;
 #pragma link C++ class Qn::ResolutionDetector+;
+#pragma link C++ class QaAnalysis+;
+
 
 // Not needed
 //#pragma link C++ class Qn::EventInfoValue<float>+;

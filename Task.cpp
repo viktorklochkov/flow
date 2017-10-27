@@ -5,6 +5,7 @@
 #include <iostream>
 #include <QnCorrections/QnCorrectionsLog.h>
 #include <random>
+#include <THnSparse.h>
 #include "Task.h"
 #include "CorrectionInterface.h"
 
@@ -49,9 +50,10 @@ void Task::Run() {
 void Task::Initialize() {
   using Axes = std::vector<Qn::Axis>;
   Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
-                               VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY});
+                               VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY, VAR::Variables::kDcaZ,
+                              VAR::Variables::kTPCsignal, VAR::Variables::kTPCchi2, VAR::Variables::kCharge});
 
-  Axis ptaxis("Pt", {0.2,0.4,0.6,1.0,2.0,5.0}, VAR::kPt);
+  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0}, VAR::kPt);
   Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
   Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
@@ -72,7 +74,7 @@ void Task::Initialize() {
                                  new Configuration::TPC(),
                                  Configuration::DetectorType::Track,
                                  tpcaxes
-                                 );
+  );
   Qn::Internal::AddDetectorToMap(raw_data_,
                                  Configuration::DetectorId::VZEROA,
                                  new Configuration::VZEROA(),
@@ -119,25 +121,26 @@ void Task::Initialize() {
   qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(2);
-  double centbins[][2] = {{0.0, 2}, {100.0, 100}};
+  double centbins[][2] = {{0.0, 2}, {100.0, 20}};
   double vtxbins[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, "z vertex", vtxbins));
 
-  auto *h_phi_ncls = new TH2F("tpc_phi_ncls","tpc_phi_ncls",100,0,2*TMath::Pi(),170,0,170);
-  auto *h_pt_eta = new TH2F("tpc_pt_eta","tpc_pt_eta",100,0,10,100,-0.9,0.9);
-  auto *h_phi_vtxz = new TH2F("tpc_phi_vtxz","tpc_phi_vtxz",100,0,2*TMath::Pi(),100,-10,10);
-  auto *h_phi_dca = new TH2F("tpc_phi_dca","tpc_phi_dca",100,0,2*TMath::Pi(),100,0,2.4);
+  const int ndim = 8;
+  int bins[ndim] = {40, 40, 40, 40, 40, 50, 3, 20};
+  double minbin[ndim] = {0, -0.9, 0, 0, -4, 0, -1, 0};
+  double maxbin[ndim] = {8, 0.9, 2 * TMath::Pi(), 2.5, 4, 1500, 2, 5};
+  auto *h_track_params =
+      new THnSparseF("trackqa", "tracks;pT;eta;phi;dcaxy;dcaz;dEdx;charge;chi2/ndf", ndim, bins, minbin, maxbin);
 
-  histograms_->Add(h_pt_eta);
-  histograms_->Add(h_phi_ncls);
-  histograms_->Add(h_phi_vtxz);
-  histograms_->Add(h_phi_dca);
-
+  histograms_->Add(h_track_params);
 
   Qn::Internal::AddDetectorsToFramework(qn_manager_, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
-  qn_eventinfo_f_->AddVariable("Centrality");
+  qn_eventinfo_f_->AddVariable("CentralityVZERO");
+  qn_eventinfo_f_->AddVariable("CentralityZEMvsZDC");
+  qn_eventinfo_f_->AddVariable("CentralityTPC");
+  qn_eventinfo_f_->AddVariable("CentralitySPD");
   qn_eventinfo_f_->AddVariable("VtxZ");
   Qn::Internal::SaveToTree(*out_tree_, qn_eventinfo_f_);
   in_tree_->SetImplicitMT(true);
@@ -157,7 +160,10 @@ void Task::Process() {
 
   if (event_->IsA() != AliReducedEventInfo::Class()) return;
   if (event_->NTracks() == 0) return;
-  qn_eventinfo_f_->SetVariable("Centrality", event_->CentralityVZERO());
+  qn_eventinfo_f_->SetVariable("CentralityVZERO", event_->CentralityVZERO());
+  qn_eventinfo_f_->SetVariable("CentralityZEMvsZDC", event_->CentralityZEMvsZDC());
+  qn_eventinfo_f_->SetVariable("CentralityTPC", event_->CentralityTPC());
+  qn_eventinfo_f_->SetVariable("CentralitySPD", event_->CentralitySPD());
   qn_eventinfo_f_->SetVariable("VtxZ", event_->Vertex(2));
   if (event_->Vertex(2) < -10 || event_->Vertex(2) > 10) return;
   if (event_->CentralityVZERO() <= 0 || event_->CentralityVZERO() >= 100) return;
@@ -176,6 +182,7 @@ void Task::Finalize() {
   qn_manager_.GetOutputHistogramsList()->Write(qn_manager_.GetOutputHistogramsList()->GetName(), TObject::kSingleKey);
   qn_manager_.GetQAHistogramsList()->Write(qn_manager_.GetQAHistogramsList()->GetName(), TObject::kSingleKey);
   out_file_->cd();
+  histograms_->Write("histograms",TObject::kSingleKey);
   if (write_tree_) {
     out_file_->Write();
     std::cout << "Output file written." << std::endl;

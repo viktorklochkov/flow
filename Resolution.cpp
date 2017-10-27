@@ -7,7 +7,7 @@
 
 namespace Qn {
 
-void Resolution::AddDetector(const std::string a, const std::string b, const std::string c, RESAXIS axis) {
+void Resolution::AddDetector(const std::string a, const std::string b, const std::string c, Qn::Axis axis) {
 
 
 
@@ -32,16 +32,16 @@ void Resolution::PostProcess() {
   }
 }
 
-ResolutionDetector::ResolutionDetector(Resolution &res, std::string a, std::string b, std::string c, RESAXIS axis) :
-    name_(a + b + c + std::get<0>(axis)),
+ResolutionDetector::ResolutionDetector(Resolution &res, std::string a, std::string b, std::string c, Qn::Axis axis) :
+    name_(a + b + c + axis.Name()),
     aqn_(*res.Reader(), a.data()),
     bqn_(*res.Reader(), b.data()),
     cqn_(*res.Reader(), c.data()),
-    axisqn_(*res.Reader(), std::get<0>(axis).data()) {
-  std::string axisname = std::get<0>(axis);
-  int nbins = std::get<1>(axis);
-  int min = std::get<2>(axis);
-  int max = std::get<3>(axis);
+    axisqn_(*res.Reader(), axis.Name().data()) {
+  std::string axisname = axis.Name();
+  int nbins = (int) axis.size();
+  float min = axis.GetLowerBinEdge(0);
+  float max = axis.GetUpperBinEdge(nbins-1);
   std::string nameac = "psi" + a + c + "-" + b;
   std::string nameab = "psi" + a + b + "-" + c;
   std::string namebc = "psi" + b + c + "-" + a;

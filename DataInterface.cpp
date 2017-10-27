@@ -6,6 +6,7 @@
 #include "DataInterface.h"
 #include <array>
 #include <ReducedEvent/AliReducedFMDInfo.h>
+#include <THnSparse.h>
 
 #define VAR AliReducedVarManager
 
@@ -17,25 +18,28 @@ void SetVariables(std::vector<VAR::Variables> vars) {
   }
 }
 
-void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event, TList &histograms, Fill fillhistograms) {
+void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
+             AliReducedEventInfo &event,
+             TList &histograms,
+             Fill fillhistograms) {
   auto values = new float[AliReducedVarManager::Variables::kNVars];
   AliReducedTrackInfo *track = nullptr;
   auto trackList = event.GetTracks();
   TIter next(trackList);
   next.Reset();
-  auto *h_pt_eta = (TH2F*) histograms.FindObject("tpc_pt_eta");
-  auto *h_phi_ncls = (TH2F*) histograms.FindObject("tpc_phi_ncls");
-  auto *h_phi_vtxz = (TH2F*) histograms.FindObject("tpc_phi_vtxz");
-  auto *h_phi_dca = (TH2F*) histograms.FindObject("tpc_phi_dca");
+  auto *h_track_qa = (THnSparseF *) histograms.FindObject("trackqa");
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
     if (values[VAR::kEta] > 0.9 || values[VAR::kEta] < -0.9) continue;
     if (fillhistograms == Fill::QA) {
-      if (h_pt_eta) h_pt_eta->Fill(values[VAR::kPt], values[VAR::kEta]);
-      if (h_phi_ncls) h_phi_ncls->Fill(values[VAR::kPhi], values[VAR::kTPCncls]);
-      if (h_phi_vtxz) h_phi_vtxz->Fill(values[VAR::kPhi], event.Vertex(2));
-      if (h_phi_dca) h_phi_dca->Fill(values[VAR::kPhi], values[VAR::kDcaXY]);
+      if (h_track_qa) {
+        const int ndims = 9;
+        double trackparams[ndims] =
+            {values[VAR::kPt], values[VAR::kEta], values[VAR::kPhi], values[VAR::kDcaXY], values[VAR::kDcaZ],
+             values[VAR::kTPCsignal], values[VAR::kCharge], values[VAR::kTPCchi2]};
+        h_track_qa->Fill(trackparams);
+      }
     }
     values[-1] = 0;
     auto axes = datacontainer->GetAxes();
@@ -71,7 +75,7 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
         auto &element = datacontainer->ModifyElement({0.5});
         element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
       } else {
-        etavalue = etaborders[(ich-32) / 8];
+        etavalue = etaborders[(ich - 32) / 8];
         eta.push_back(etavalue);
         auto &element = datacontainer->ModifyElement(eta);
         element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
