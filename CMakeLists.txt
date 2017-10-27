@@ -34,7 +34,7 @@ add_definitions(${ROOT_CXX_FLAGS})
 
 # Adding libraries and includes
 find_library(QNCORRECT_LIB NAMES FlowVector)
-find_library(REDUCEDEVENT_LIB NAMES ReducedTree)
+find_library(REDUCEDEVENT_LIB NAMES ReducedEvent)
 find_path(QNCORRECT_INC QnCorrectionsQnVector.h HINTS "${CMAKE_SOURCE_DIR}/QnCorrections")
 find_path(REDUCED_INC AliReducedEventInfo.h HINTS "${CMAKE_SOURCE_DIR}/ReducedEvent")
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${REDUCED_INC})
