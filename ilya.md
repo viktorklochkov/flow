@@ -12,7 +12,7 @@ R_A[B,C] under different B and C
 ##comparison to published
 rewrite macros to produce nice plots
 
-##Qvectors arithmetic
+##Q Vectors arithmetic
 * adding two qvectors
 * projection of datacontainer qn
 
