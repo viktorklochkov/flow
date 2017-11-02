@@ -17,8 +17,10 @@
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector >+;
 #pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
+#pragma link C++ class Qn::DataContainer<double >+;
 #pragma link C++ typedef Qn::DataContainerQn;
 #pragma link C++ typedef Qn::DataContainerDataVector;
+#pragma link C++ typedef Qn::DataContainerD;
 #pragma link C++ class Qn::Resolution+;
 #pragma link C++ class Qn::ResolutionDetector+;
 #pragma link C++ class QaAnalysis+;
