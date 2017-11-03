@@ -212,7 +212,6 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Projection(std::vector<Axis> axes, Function &&lambda) const {
     DataContainer<T> projection;
-    projection.AddAxes(axes);
     int linearindex = 0;
     std::vector<bool> isprojected;
     auto originalaxes = this->GetAxes();
@@ -221,10 +220,16 @@ class DataContainer : public TObject {
         isprojected.push_back(originalaxis.Name() == axis.Name() == 0);
       }
     }
+    if (axes.empty()) {
+      Qn::Axis integrated("integrated", 1, 0, 1, -999);
+      projection.AddAxis(integrated);
+    } else {
+      projection.AddAxes(axes);
+    }
     for (const auto &bin : data_) {
       auto indices = this->GetIndex(linearindex);
       for (auto index = indices.begin(); index < indices.end(); ++index) {
-        if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        if (isprojected.at(std::distance(indices.begin(), index))) indices.erase(index);
       }
       projection.AddElement(indices, lambda, bin);
       ++linearindex;
