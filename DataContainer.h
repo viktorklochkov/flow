@@ -171,7 +171,7 @@ class DataContainer : public TObject {
     if (offset >= data_.size()) return indices;
     indices.resize((std::vector<int>::size_type) dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[i] = (int) (offset % axes_[i].size());
+      indices[i] = (int) (temp % axes_[i].size());
       temp = temp / axes_[i].size();
     }
     indices[dimension_ - 1] = (int) temp;
