@@ -210,7 +210,7 @@ class DataContainer : public TObject {
    * @return
    */
   template<typename Function>
-  DataContainer<T> Projection(std::vector<Axis> axes, Function lambda) const {
+  DataContainer<T> Projection(std::vector<Axis> axes, Function &&lambda) const {
     DataContainer<T> projection;
     projection.AddAxes(axes);
     int linearindex = 0;
@@ -224,7 +224,7 @@ class DataContainer : public TObject {
     for (const auto &bin : data_) {
       auto indices = this->GetIndex(linearindex);
       for (auto index = indices.begin(); index < indices.end(); ++index) {
-        if (std::distance(indices.begin(), index)) indices.erase(index);
+        if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
       }
       projection.AddElement(indices, lambda, bin);
       ++linearindex;
@@ -233,13 +233,13 @@ class DataContainer : public TObject {
   }
 
   template<typename Function>
-  DataContainer<T> Projection(Function lambda) const {
+  DataContainer<T> Projection(Function &&lambda) const {
     DataContainer<T> projection;
-    Qn::Axis integrated("integrated",1,0,1,-999);
+    Qn::Axis integrated("integrated", 1, 0, 1, -999);
     projection.AddAxis(integrated);
     for (const auto &bin : data_) {
       long index = 0;
-      projection.AddElement( index, lambda, bin);
+      projection.AddElement(index, lambda, bin);
     }
     return projection;
   }
