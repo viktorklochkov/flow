@@ -8,38 +8,51 @@
 #include "TTreeReader.h"
 #include "Task.h"
 #include "CorrectionInterface.h"
+#include "Correlation.h"
 int main(int argc, char **argv) {
   ROOT::EnableImplicitMT(2);
-  Qn::Task task(argv[1], argv[2],"DstTree");
-  task.Run();
+//  Qn::Task task(argv[1], argv[2],"DstTree");
+//  task.Run();
 
-  std::vector<Qn::Axis> axes;
-  axes.emplace_back("one",2,0,2,1);
-  axes.emplace_back("two",2,0,2,2);
-  axes.emplace_back("three",2,0,2,3);
-  std::vector<Qn::Axis> axesprojected;
-  axesprojected.emplace_back("one",2,0,1,1);
+  auto set = [](float &element){element = 1;};
+  auto add = []( float a, float b) {return a + b;};
+  auto multiply = [](float a, float b ){return a * b;};
 
-  auto set = [](double &element){element = 1;};
+  std::vector<Qn::Axis> axesa;
+  axesa.emplace_back("one",2,0,2,1);
+  axesa.emplace_back("two",2,0,2,2);
 
+  std::vector<Qn::Axis> axesb;
+  axesb.emplace_back("one",2,0,2,1);
+  axesb.emplace_back("two",2,0,2,2);
 
-  Qn::DataContainer<double> data;
-  data.AddAxes(axes);
-  data.CallOnElement((std::vector<long>){0,0,1},set);
-  data.CallOnElement((std::vector<long>){0,1,1},set);
-  data.CallOnElement((std::vector<long>){1,1,1},set);
-  data.CallOnElement((std::vector<long>){1,0,0},set);
-  data.CallOnElement((std::vector<long>){1,1,0},set);
-  data.CallOnElement((std::vector<long>){1,0,1},set);
-  data.CallOnElement((std::vector<long>){0,1,0},set);
-  data.CallOnElement((std::vector<long>){0,0,0},set);
+  std::vector<Qn::Axis> proj;
+  proj.emplace_back("one",2,0,2,1);
 
-  auto add = [](double &element, double& elementa){element += elementa;};
+  std::vector<Qn::Axis> projb;
 
-//  data.AddElement({1,1},add,1.0);
-  auto projection = data.Projection(axesprojected,add);
-  auto integration = data.Projection(add);
+  std::vector<Qn::Axis> cent;
+  cent.emplace_back("cent",2,0,2,1);
 
+  Qn::DataContainerF data;
+  data.AddAxes(axesa);
+  data.CallOnElement((std::vector<long>){0,0},set);
+  data.CallOnElement((std::vector<long>){0,1},set);
+  data.CallOnElement((std::vector<long>){1,1},set);
+  data.CallOnElement((std::vector<long>){1,0},set);
+
+  std::vector<long> eventindex = {1};
+  std::vector<float> centvarsb = {0};
+
+  auto test = data.Add(data, add);
+  auto test2 = test.Map([](float a){return sqrt(a);});
+
+  auto correlation = Qn::CreateCorrelation(data,data,proj,proj,add,cent);
+  auto projdata = data.Projection(proj,add);
+  auto projdatab = data.Projection(projb,add);
+  Qn::FillCorrelation(correlation,projdata,projdata,multiply,eventindex);
+  eventindex = {0};
+  Qn::FillCorrelation(correlation,projdata,projdata,multiply,eventindex);
 
   return 0;
 }

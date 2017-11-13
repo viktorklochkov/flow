@@ -12,9 +12,6 @@ R_A[B,C] under different B and C
 ##comparison to published
 rewrite macros to produce nice plots
 
-##Q Vectors arithmetic
-* adding two qvectors
-* projection of datacontainer qn
 
 #DONE
 
@@ -36,3 +33,7 @@ rewrite macros to produce nice plots
 * rewrite scripts to correct all runs individually.
 * This should keep track of correction files and merge outputs accordingly.
 * Run-wise QA is important.
+
+##Q Vectors arithmetic
+* projection of datacontainer qn
+* adding two qvectors

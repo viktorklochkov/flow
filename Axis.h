@@ -46,9 +46,17 @@ class Axis {
     }
   }
 
-  typedef typename std::vector<float>::const_iterator iterator;
-  iterator cbegin() { return bin_edges_.cbegin(); } ///< iterator for external use
-  iterator cend() { return bin_edges_.cend(); } ///< iterator for external use
+  typedef typename std::vector<float>::const_iterator citerator;
+  typedef typename std::vector<float>::iterator iterator;
+  citerator cbegin() { return bin_edges_.cbegin(); } ///< iterator for external use
+  citerator cend() { return bin_edges_.cend(); } ///< iterator for external use
+  iterator begin() { return bin_edges_.begin(); } ///< iterator for external use
+  iterator end() { return bin_edges_.end(); } ///< iterator for external use
+  /**
+ * Set Name of axis.
+ * @param name name of axis
+ */
+  inline void SetName(std::string name) { name_ = name; }
   /**
    * Returns Name of axis.
    * @return name of axis
