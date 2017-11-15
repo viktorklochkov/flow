@@ -17,6 +17,8 @@ rewrite macros to produce nice plots
 * support for setting normalization
 * do not use abs q normalization - does not work right now
 
+## Statistics
+* fix variance calculation naive version is not stable
 
 #DONE
 

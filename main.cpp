@@ -11,6 +11,7 @@
 #include "CorrectionInterface.h"
 #include "Correlation.h"
 #include "SimpleTask.h"
+#include "statistics.h"
 int main(int argc, char **argv) {
   ROOT::EnableImplicitMT(2);
 //  Qn::Task task(argv[1], argv[2],"DstTree");
@@ -52,14 +53,16 @@ int main(int argc, char **argv) {
   auto correlation = Qn::CreateCorrelation(data, data, proj, proj, [](float a, float b) { return a + b; }, cent);
   auto projdata = data.Projection(proj, add);
   auto projdatab = data.Projection(projb, add);
-  Qn::FillCorrelation(std::get<0>(correlation), projdata, projdata, multiply, eventindex);
+  Qn::FillCorrelation(correlation, projdata, projdata, multiply, eventindex);
   eventindex = {0};
-  Qn::FillCorrelation(std::get<0>(correlation), projdata, projdata, multiply, eventindex);
+  Qn::FillCorrelation(correlation, projdata, projdata, multiply, eventindex);
 
   SimpleTask st("/Users/lukas/phd/analysis/flow/cmake-build-debug/outlist", "tree");
-  st.AddEventVariable("CentralityVZERO");
-  st.AddDataContainer("TPC_reference");
   st.Run();
+
+  std::vector<float> makemean= {1.0,2};
+  auto mean = Qn::Stats::Mean(makemean);
+  auto rms = Qn::Stats::Error(makemean);
 
   return 0;
 
