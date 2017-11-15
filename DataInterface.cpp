@@ -31,7 +31,8 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
-    if (values[VAR::kEta] > 0.9 || values[VAR::kEta] < -0.9) continue;
+    if (values[VAR::kEta] > 0.8 || values[VAR::kEta] < -0.8) continue;
+    if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 5.0) continue;
     if (fillhistograms == Fill::QA) {
       if (h_track_qa) {
         const int ndims = 9;

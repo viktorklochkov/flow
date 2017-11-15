@@ -13,24 +13,30 @@ namespace Qn {
 using CORR = DataContainer<std::vector<float>>;
 using AXES = std::vector<Qn::Axis>;
 
-template <typename T, typename Function>
-DataContainerVF CreateCorrelation(const DataContainer<T> &a, const DataContainer<T> &b, AXES axesa, AXES axesb, Function &&lambda, AXES eventaxes) {
-  a.Projection(axesa,lambda);
+template<typename T, typename Function>
+std::tuple<DataContainerVF, DataContainer<T>, DataContainer<T>>
+CreateCorrelation(const DataContainer <T> &a,
+                  const DataContainer <T> &b,
+                  AXES axesa,
+                  AXES axesb,
+                  Function &&lambda,
+                  AXES eventaxes) {
+  a.Projection(axesa, lambda);
   b.Projection(axesb, lambda);
   DataContainerVF container;
   for (auto &aa : axesa) {
-    aa.SetName(aa.Name()+"a");
+    aa.SetName(aa.Name() + "a");
   }
   container.AddAxes(axesa);
   for (auto &bb : axesb) {
-    bb.SetName(bb.Name()+"b");
+    bb.SetName(bb.Name() + "b");
   }
   container.AddAxes(axesb);
   container.AddAxes(eventaxes);
-  return container;
+  return std::tie(container, a, b);
 }
 
-inline std::vector<long> CalculateEventBin( AXES &eventaxes, std::vector<float> eventvars) {
+inline std::vector<long> CalculateEventBin(AXES &eventaxes, std::vector<float> eventvars) {
   std::vector<long> index;
   int ie = 0;
   for (const auto &ae : eventaxes) {
@@ -50,8 +56,12 @@ inline std::vector<long> CalculateEventBin( AXES &eventaxes, std::vector<float> 
  * @param lambda function which correlates
  * @param eventindex multidimensional index calculated by CalculateEventBin used to determine the bin in the Event variables.
  */
-template <typename T, typename Function>
-void FillCorrelation(DataContainerVF &c, DataContainer<T> &a, DataContainer<T> &b, Function &&lambda, std::vector<long> &eventindex) {
+template<typename T, typename Function>
+void FillCorrelation(DataContainerVF &c,
+                     DataContainer <T> &a,
+                     DataContainer <T> &b,
+                     Function &&lambda,
+                     std::vector<float> &eventindex) {
   int ia = 0;
   for (const auto &bina : a) {
     int ib = 0;
@@ -59,20 +69,19 @@ void FillCorrelation(DataContainerVF &c, DataContainer<T> &a, DataContainer<T> &
       std::vector<long> index;
       auto indexa = a.GetIndex(ia);
       auto indexb = b.GetIndex(ib);
-      index.insert(std::end(index), std::begin(indexa), std::end(indexa));
-      index.insert(std::end(index), std::begin(indexb), std::end(indexb));
+      if (a.size() != 1) index.insert(std::end(index), std::begin(indexa), std::end(indexa));
+      if (a.size() != 1) index.insert(std::end(index), std::begin(indexb), std::end(indexb));
       index.insert(std::end(index), std::begin(eventindex), std::end(eventindex));
-      c.CallOnElement(index, [lambda, bina, binb](std::vector<float> &element) {element.push_back(lambda(bina, binb)); return element;});
+      c.CallOnElement(index, [lambda, bina, binb](std::vector<float> &element) {
+        element.push_back(lambda(bina, binb));
+        return element;
+      });
       ++ib;
     }
     ++ia;
   }
 }
 
-
-
 }
-
-
 
 #endif //FLOW_CORRELATION_H

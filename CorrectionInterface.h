@@ -49,12 +49,25 @@ inline void ClearDataInMap(std::map<int, std::unique_ptr<Qn::DataContainerQn>> &
   }
 }
 
+inline void ClearDataInMap(std::map<int, std::unique_ptr<Qn::DataContainerQVector>> &map) {
+  for (const auto &pair : map) {
+    pair.second->ClearData();
+  }
+}
+
 /**
  * Creates DataContainerQn containing \f$Q_n\f$ Vectors from a DataContainerDataVector.
  * @param map Detector map containing raw data \f$(\phi,w)\f$ with the specified binning.
  * @return DataContainer with the same configuration as the raw data container.
  */
 std::map<int, std::unique_ptr<Qn::DataContainerQn>> MakeQnDataContainer(const DetectorMap &map);
+
+/**
+ * Creates DataContainerQn containing \f$Q_n\f$ Vectors from a DataContainerDataVector.
+ * @param map Detector map containing raw data \f$(\phi,w)\f$ with the specified binning.
+ * @return DataContainer with the same configuration as the raw data container.
+ */
+std::map<int, std::unique_ptr<Qn::DataContainerQVector>> MakeQVectorDataContainer(const DetectorMap &map);
 
 /**
  * Fills data to framework for the correction
@@ -81,12 +94,38 @@ void AddDetectorsToFramework(QnCorrectionsManager &manager,
  */
 void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map, std::string step = "latest");
 
+/**
+ * Gets corrected \f$Q_n\f$ vectors from the QnCorrectionsFramework.
+ * @param[in,out] manager Corrections manager used for the correction of the \f$Q_n\f$ vectors.
+ * @param[out] map Data container in which the \f$Q_n\f$ vectors are inserted into.
+ * @param step correction step of the requested \f$Q_n\f$ vector.
+ */
+void GetQnFromFramework(QnCorrectionsManager &manager, std::map<int, std::unique_ptr<Qn::DataContainerQVector>> &map, std::string step = "latest");
+
+
 void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQn>> &map);
+
+void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerQVector>> &map);
 
 void SaveToTree(TTree &tree, std::map<int, std::unique_ptr<Qn::DataContainerDataVector>> &map);
 
 void SaveToTree(TTree &tree, std::unique_ptr<Qn::EventInfoF> &eventinfo);
 }
+
+namespace Internal {
+inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_noCalibration)
+    return Qn::QVector::Normalization::NOCALIB;
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverM)
+    return Qn::QVector::Normalization::QOVERM;
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverSqrtM)
+    return Qn::QVector::Normalization::QOVERSQRTM;
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverQlength)
+    return Qn::QVector::Normalization::QOVERNORMQ;
+  return Qn::QVector::Normalization::NOCALIB;
+}
+}
+
 }
 
 #endif //FLOW_CORRECTIONINTERFACE_H

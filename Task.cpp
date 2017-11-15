@@ -118,7 +118,8 @@ void Task::Initialize() {
                                  Configuration::DetectorType::Channel,
                                  5);
 
-  qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
+//  qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
+  qn_data_ = Qn::Internal::MakeQVectorDataContainer(raw_data_);
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(2);
   double centbins[][2] = {{0.0, 2}, {100.0, 20}};

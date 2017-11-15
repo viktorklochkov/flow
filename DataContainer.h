@@ -9,6 +9,7 @@
 #include "QnCorrections/QnCorrectionsQnVector.h"
 #include "Rtypes.h"
 #include "DataVector.h"
+#include "QVector.h"
 
 #include <map>
 #include <vector>
@@ -437,6 +438,7 @@ using DataContainerQn = DataContainer<QnCorrectionsQnVector>;
 using DataContainerF = DataContainer<float>;
 using DataContainerVF = DataContainer<std::vector<float>>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
+using DataContainerQVector = DataContainer<Qn::QVector>;
 }
 
 #endif

@@ -12,6 +12,11 @@ R_A[B,C] under different B and C
 ##comparison to published
 rewrite macros to produce nice plots
 
+##Q Vectors arithmetic
+* support for adding two qvectors
+* support for setting normalization
+* do not use abs q normalization - does not work right now
+
 
 #DONE
 
