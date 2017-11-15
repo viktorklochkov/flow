@@ -19,10 +19,6 @@ QVector operator+(const QVector a, const QVector b) {
   c.sum_weights_ = a.sum_weights_ + b.sum_weights_;
   return c;
 }
-float Qn::operator*(QVector a, QVector b) {
-  return a.q_*;
-}
-
 
 //QVector operator+(const QVector a, const QVector b) {
 //  QVector c;

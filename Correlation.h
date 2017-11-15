@@ -6,6 +6,7 @@
 #define FLOW_CORRELATION_H
 
 #include <iostream>
+#include <TGraphErrors.h>
 #include "DataContainer.h"
 
 namespace Qn {
@@ -14,13 +15,13 @@ using CORR = DataContainer<std::vector<float>>;
 using AXES = std::vector<Qn::Axis>;
 
 template<typename T, typename Function>
-std::tuple<DataContainerVF, DataContainer<T>, DataContainer<T>>
+DataContainerVF
 CreateCorrelation(const DataContainer <T> &a,
                   const DataContainer <T> &b,
                   AXES axesa,
                   AXES axesb,
                   Function &&lambda,
-                  AXES eventaxes) {
+                  const AXES eventaxes) {
   a.Projection(axesa, lambda);
   b.Projection(axesb, lambda);
   DataContainerVF container;
@@ -33,7 +34,7 @@ CreateCorrelation(const DataContainer <T> &a,
   }
   container.AddAxes(axesb);
   container.AddAxes(eventaxes);
-  return std::tie(container, a, b);
+  return container;
 }
 
 inline std::vector<long> CalculateEventBin(AXES &eventaxes, std::vector<float> eventvars) {
@@ -61,7 +62,7 @@ void FillCorrelation(DataContainerVF &c,
                      DataContainer <T> &a,
                      DataContainer <T> &b,
                      Function &&lambda,
-                     std::vector<float> &eventindex) {
+                     std::vector<long> &eventindex) {
   int ia = 0;
   for (const auto &bina : a) {
     int ib = 0;

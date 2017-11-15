@@ -43,7 +43,6 @@ class QVector {
   float y(int i) const { return q_[i].imag(); }
 
   friend QVector operator+(QVector a, QVector b);
-  friend float operator*(QVector a, QVector b);
 
   QVector Normal(Normalization norm) {
     QVector c(*this);
