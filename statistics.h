@@ -7,12 +7,13 @@
 
 #include <iterator>
 #include <algorithm>
+#include <utility>
 #include <TMathBase.h>
 #include <TMath.h>
 namespace Qn {
 namespace Stats {
 
-inline std::tuple<float,float,float,int> Mean(std::vector<float> vector) {
+inline std::tuple<float,float,float,int> Mean(const std::vector<float> &vector) {
   float sum = 0;
   float sum2 = 0;
   int entries = 0;
@@ -21,25 +22,25 @@ inline std::tuple<float,float,float,int> Mean(std::vector<float> vector) {
     sum2 += q*q;
     ++entries;
   });
-  float mean = sum / entries;
+  if (entries == 0) return std::make_tuple(0.0,0.0,0.0,0);
+  auto mean = sum / entries;
   return std::make_tuple(mean,sum,sum2,entries);
-
 }
 
-inline float Sigma(float mean, float sum2, int n) {
+inline float Sigma(const float mean, const float sum2, const int n) {
   float variance = TMath::Abs(sum2 / (float) n - mean * mean);
-  return TMath::Sqrt(variance) / sqrt((float) n);
+  return sqrt(variance) / sqrt((float) n);
 }
 
 
-inline float Error(std::vector<float> vector) {
+inline float Error(const std::vector<float> &vector) {
   auto stats = Mean(vector);
   float mean = std::get<0>(stats);
   float sum2 = std::get<2>(stats);
   int n = std::get<3>(stats);
   return Sigma(mean,sum2,n);
-
 }
+
 }
 }
 
