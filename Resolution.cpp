@@ -51,9 +51,9 @@ ResolutionDetector::ResolutionDetector(Resolution &res, std::string a, std::stri
 
 }
 void ResolutionDetector::Fill(const int abin, const int bbin, const int cbin) {
-  double psia = PsiN(harm_,aqn_->GetElement(abin).Qx(harm_),aqn_->GetElement(abin).Qy(harm_));
-  double psib = PsiN(harm_,bqn_->GetElement(bbin).Qx(harm_),bqn_->GetElement(bbin).Qy(harm_));
-  double psic = PsiN(harm_,cqn_->GetElement(cbin).Qx(harm_),cqn_->GetElement(cbin).Qy(harm_));
+  double psia = PsiN(harm_,aqn_->GetElement(abin).x(harm_),aqn_->GetElement(abin).y(harm_));
+  double psib = PsiN(harm_,bqn_->GetElement(bbin).x(harm_),bqn_->GetElement(bbin).y(harm_));
+  double psic = PsiN(harm_,cqn_->GetElement(cbin).x(harm_),cqn_->GetElement(cbin).y(harm_));
   psiac_->Fill(*axisqn_,CosN(harm_,psia,psic));
   psiab_->Fill(*axisqn_,CosN(harm_,psia,psib));
   psibc_->Fill(*axisqn_,CosN(harm_,psib,psic));

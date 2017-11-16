@@ -8,6 +8,8 @@
 #include <TTreeReader.h>
 #include <TList.h>
 #include "DataContainer.h"
+#include "TH1D.h"
+#include "TProfile.h"
 namespace Qn {
 
 class ResolutionDetector;
@@ -51,14 +53,14 @@ class ResolutionDetector {
   double PsiN(const double n, const double qx, const double qy) const { return 1 / n * TMath::ATan2(qy, qx); }
   double CosN(const int n, const double a, const double b) const { return TMath::Cos(n * (a - b)); }
   void SqrtHist(TH1D &hist) {
-    for (int i = 0; i < hist.GetNbinsX(); ++i) {
+    for (int i = 1; i <= hist.GetNbinsX(); ++i) {
       hist.SetBinContent(i, TMath::Sign(1, hist.GetBinContent(i)) * TMath::Sqrt(TMath::Abs(hist.GetBinContent(i))));
     }
   }
   std::string name_;
-  TTreeReaderValue<Qn::DataContainerQn> aqn_;
-  TTreeReaderValue<Qn::DataContainerQn> bqn_;
-  TTreeReaderValue<Qn::DataContainerQn> cqn_;
+  TTreeReaderValue<Qn::DataContainerQVector> aqn_;
+  TTreeReaderValue<Qn::DataContainerQVector> bqn_;
+  TTreeReaderValue<Qn::DataContainerQVector> cqn_;
   TTreeReaderValue<float> axisqn_;
   TProfile *psiab_ = nullptr;
   TProfile *psiac_ = nullptr;

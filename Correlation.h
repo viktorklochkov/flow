@@ -15,15 +15,14 @@ using CORR = DataContainer<std::vector<float>>;
 using AXES = std::vector<Qn::Axis>;
 
 template<typename T, typename Function>
-DataContainerVF
-CreateCorrelation(const DataContainer <T> &a,
+DataContainerVF CreateCorrelation(const DataContainer <T> &a,
                   const DataContainer <T> &b,
                   AXES axesa,
                   AXES axesb,
                   Function &&lambda,
                   const AXES eventaxes) {
-  a.Projection(axesa, lambda);
-  b.Projection(axesb, lambda);
+  auto at = a.Projection(axesa, lambda);
+  auto bt = b.Projection(axesb, lambda);
   DataContainerVF container;
   for (auto &aa : axesa) {
     aa.SetName(aa.Name() + "a");
@@ -73,10 +72,10 @@ void FillCorrelation(DataContainerVF &c,
       if (a.size() != 1) index.insert(std::end(index), std::begin(indexa), std::end(indexa));
       if (a.size() != 1) index.insert(std::end(index), std::begin(indexb), std::end(indexb));
       index.insert(std::end(index), std::begin(eventindex), std::end(eventindex));
-      c.CallOnElement(index, [lambda, bina, binb](std::vector<float> &element) {
-        element.push_back(lambda(bina, binb));
-        return element;
-      });
+      c.CallOnElement(index,
+                      [lambda, bina, binb](std::vector<float> &element) {
+                        element.push_back(lambda(bina, binb));
+                      });
       ++ib;
     }
     ++ia;

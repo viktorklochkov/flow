@@ -339,8 +339,7 @@ class DataContainer : public TObject {
  */
   template<typename Function>
   DataContainer<T> Map(Function &&lambda) {
-    DataContainer<T> result;
-    result.AddAxes(axes_);
+    DataContainer<T> result(*this);
     std::transform(data_.begin(),data_.end(),result.begin(),[lambda](T &element) {return lambda(element);});
     return result;
   }
@@ -440,5 +439,7 @@ using DataContainerVF = DataContainer<std::vector<float>>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 }
+
+
 
 #endif
