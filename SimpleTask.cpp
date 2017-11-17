@@ -147,11 +147,6 @@ void SimpleTask::Process() {
   auto comp1projected = (**values_.at("TPC")).Projection([](Qn::QVector &a, Qn::QVector &b) {return a +b;});
   auto comp1normalized = comp1.Map([](Qn::QVector &a){return a.Normal(Qn::QVector::Normalization::QOVERM);});
   auto comp2 = (**values_.at("TPC_reference")).Map([](Qn::QVector &a){return a.DeNormal();});;
-  int sum = 0;
-  for (auto &bin : comp1) {
-    sum +=bin.n();
-  }
-  if (sum == comp1projected.GetElement(0).n()) std::cout << "yes" << std::endl;
 
   std::vector<float> eventparameters;
   eventparameters.push_back(*eventvalues_.at("CentralityVZERO"));

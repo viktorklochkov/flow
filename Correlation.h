@@ -6,21 +6,80 @@
 #define FLOW_CORRELATION_H
 
 #include <iostream>
+#include <utility>
 #include <TGraphErrors.h>
 #include "DataContainer.h"
+#include "TTreeReaderValue.h"
 
 namespace Qn {
 
 using CORR = DataContainer<std::vector<float>>;
 using AXES = std::vector<Qn::Axis>;
 
+template<typename Proj, typename Corr>
+class Correlation {
+  using INPUT = std::pair<std::shared_ptr<TTreeReaderValue<DataContainerQVector>>, AXES>;
+ public:
+  Correlation() = default;
+  Correlation(std::vector<INPUT> &inputs, AXES &event, Proj project, Corr correlate) :
+      inputs_(inputs),
+      axes_event_(event),
+      project_(project),
+      correlate_(correlate) {
+    CreateCorrelationContainer();
+  }
+ private:
+  DataContainerVF data_correlation_;
+  std::vector<INPUT> inputs_;
+  AXES axes_event_;
+  Proj project_;
+  Corr correlate_;
+
+  void CreateCorrelationContainer() {
+    int i = 0;
+    for (auto &input : inputs_) {
+      auto axes = input.second;
+      for (auto axis : axes) {
+        axis.SetName(axis.Name() + i);
+      }
+      data_correlation_.AddAxes(axes);
+      ++i;
+    }
+    data_correlation_.AddAxes(axes_event_);
+  }
+
+  void FillCorrelation(std::vector<long> eventindex, std::vector<long> index, int iteration) {
+    if (iteration == inputs_.size()-1) {
+      auto i = inputs_.begin()+iteration;
+      int ibin = 0;
+      for (auto & bin : (**i->first)) {
+        auto binindex = (**i->first).GetIndex(ibin);
+        if ((**i->first).size() != 1) index.insert(std::end(index), std::begin(binindex), std::end(binindex));
+        index.insert(std::end(index), std::begin(eventindex), std::end(eventindex));
+        for (auto ii : index) {
+          std::cout << ii << " " ;
+        }
+        std::endl;
+      }
+    }
+    for (auto i = inputs_.begin()+iteration; i < inputs_.end(); ++i) {
+      int ibin = 0;
+      for (auto & bin : (**i->first)) {
+        auto binindex = (**i->first).GetIndex(ibin);
+        if ((**i->first).size() != 1) index.insert(std::end(index), std::begin(binindex), std::end(binindex));
+        FillCorrelation(eventindex, index, iteration+1);
+      }
+    }
+  }
+};
+
 template<typename T, typename Function>
 DataContainerVF CreateCorrelation(const DataContainer <T> &a,
-                  const DataContainer <T> &b,
-                  AXES axesa,
-                  AXES axesb,
-                  Function &&lambda,
-                  const AXES eventaxes) {
+                                  const DataContainer <T> &b,
+                                  AXES axesa,
+                                  AXES axesb,
+                                  Function &&lambda,
+                                  const AXES &eventaxes) {
   auto at = a.Projection(axesa, lambda);
   auto bt = b.Projection(axesb, lambda);
   DataContainerVF container;
