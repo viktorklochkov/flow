@@ -8,6 +8,8 @@
 #include <TChain.h>
 #include <TTreeReader.h>
 #include "DataContainer.h"
+#include "Correlation.h"
+
 class SimpleTask {
  public:
   SimpleTask() = default;
@@ -22,14 +24,9 @@ class SimpleTask {
   void Process();
   std::unique_ptr<TTree> in_tree_;
   TTreeReader reader_;
-  std::map<std::string, std::shared_ptr<TTreeReaderValue<Qn::DataContainerQVector>>> values_;
+  std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> values_;
   std::map<std::string, TTreeReaderValue<float>> eventvalues_;
-  std::map<std::string,
-           std::tuple<Qn::DataContainerVF,
-                      std::shared_ptr<TTreeReaderValue<Qn::DataContainerQVector>>,
-                      std::shared_ptr<TTreeReaderValue<Qn::DataContainerQVector>>
-           >
-  > correlations_;
+  std::map<std::string, Qn::Correlation> correlations_;
   std::vector<Qn::Axis> eventaxes_;
   /**
    * Make TChain from file list

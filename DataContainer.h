@@ -275,7 +275,8 @@ class DataContainer : public TObject {
    */
   template<typename Function>
   void CallOnElement(const std::vector<long> &indices, Function &&lambda) {
-    auto &element = data_.at(GetLinearIndex(indices));
+    long a = GetLinearIndex(indices);
+    auto &element = data_.at(a);
     lambda(element);
   }
 
@@ -393,6 +394,8 @@ class DataContainer : public TObject {
     }
     return offset;
   }
+
+  bool IsIntegrated() const { return axes_.at(0).Name() == "integrated" ? true : false;}
 
  private:
   int dimension_ = 0; ///< dimensionality of data

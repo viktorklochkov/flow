@@ -64,20 +64,34 @@ int main(int argc, char **argv) {
 //  auto mean = Qn::Stats::Mean(makemean);
 //  auto rms = Qn::Stats::Error(makemean);
 
-  Qn::QVector a(Qn::QVector::Normalization::NOCALIB,2,2,{{{1,1},{1,1},{1,1},{1,1}}});
-  a = a.Normal(Qn::QVector::Normalization::QOVERM);
-  Qn::DataContainerQVector data;
-  std::vector<Qn::Axis> axes;
-  axes.emplace_back("axis1",2,0,1,1);
-  axes.emplace_back("axis2",2,0,1,1);
-  data.AddAxes(axes);
-  for (auto &bin : data) {
-    bin = a;
-  }
-  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
+//  Qn::QVector a(Qn::QVector::Normalization::NOCALIB,2,2,{{{1,1}}});
+//  Qn::DataContainerQVector data;
+//  std::vector<Qn::Axis> axes;
+//  std::vector<Qn::Axis> noaxes;
+//  axes.emplace_back("axis1",2,0,1,1);
+//  axes.emplace_back("axis2",2,0,1,1);
+//  data.AddAxes(axes);
+//
+//  std::vector<Qn::Axis> eventaxes;
+//  eventaxes.emplace_back("eventaxes",2,0,1,1);
+//
+//  for (auto &bin : data) {
+//    bin = a;
+//  }
+//
+//  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
+//
+//  std::vector<Qn::DataContainerQVector> inputs;
+//  inputs.emplace_back(projection);
+//  inputs.emplace_back(projection);
+//
+//  Qn::Correlation correlation(inputs, eventaxes);
+//  std::vector<long> eventindex = {1};
+//  correlation.Fill(eventindex,[](std::vector<Qn::QVector> vec){
+//    return vec.at(0).x(0) * vec.at(0).y(0);
+//  });
 
-
-
+//  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
 
   return 0;
 

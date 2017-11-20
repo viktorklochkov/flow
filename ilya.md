@@ -44,3 +44,5 @@ rewrite macros to produce nice plots
 ##Q Vectors arithmetic
 * projection of datacontainer qn
 * adding two qvectors
+* correlation of N data containers with lambda function.
+
