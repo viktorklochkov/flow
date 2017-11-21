@@ -314,7 +314,7 @@ class DataContainer : public TObject {
   template<typename Function>
   void AddElement(const std::vector<long> &indices, Function &&lambda, T element) {
     auto &oelement = data_.at(GetLinearIndex(indices));
-    auto add = [lambda](T &e1, T &e2) {e1 = lambda(e1,e2);};
+    auto add = [lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
     add(oelement, element);
   }
 
@@ -328,7 +328,7 @@ class DataContainer : public TObject {
   template<typename Function>
   void AddElement(const long &index, Function &&lambda, T element) {
     auto &oelement = data_.at(index);
-    auto add = [lambda](T &e1, T &e2) {e1 = lambda(e1,e2);};
+    auto add = [lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
     add(oelement, element);
   }
 
@@ -341,7 +341,7 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Map(Function &&lambda) {
     DataContainer<T> result(*this);
-    std::transform(data_.begin(),data_.end(),result.begin(),[lambda](T &element) {return lambda(element);});
+    std::transform(data_.begin(), data_.end(), result.begin(), [lambda](T &element) { return lambda(element); });
     return result;
   }
 
@@ -366,12 +366,67 @@ class DataContainer : public TObject {
     result.AddAxes(axes_);
     for (auto &bina : data_) {
       auto binb = data.GetElement(index);
-      result.CallOnElement(index,[lambda, bina, binb](T &element) {element = lambda(bina,binb);});
+      result.CallOnElement(index, [lambda, bina, binb](T &element) { element = lambda(bina, binb); });
       ++index;
     }
     return result;
   }
 
+  template<typename Function>
+  DataContainer<T> Rebin(Function &&lambda, Qn::Axis &rebinaxis) const {
+    DataContainer<T> rebinned;
+    long axisposition = -1;
+    bool axisfound = false;
+    /**
+     * Check if axis to be rebinned is found in the datacontainer.
+     */
+    for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
+      if ( axis->Name() == rebinaxis.Name()) {
+        rebinned.AddAxis(rebinaxis);
+        axisposition = std::distance(axes_.begin(), axis);
+        axisfound = true;
+      } else {
+        rebinned.AddAxis(*axis);
+      }
+    }
+    if (!axisfound) {
+      std::string errormsg = "Datacontainer does not have axis of name " + rebinaxis.Name();
+      throw std::logic_error(errormsg);
+    }
+    /*
+     * Check if there is no overlap in the bin edges.
+     */
+    bool rebin_ok = true;
+    for (auto rebinedge : rebinaxis) {
+      bool found = false;
+      for (const auto binedge : (Axis) axes_.at(axisposition)) {
+        if (binedge > rebinedge) break;
+        if (rebinedge == binedge)  {
+          found = rebin_ok;
+          break;
+        }
+      }
+      rebin_ok = rebin_ok && found;
+    }
+    if (!rebin_ok) {
+      std::string errormsg = "Rebinned axis has overlapping bins." + rebinaxis.Name();
+      throw std::logic_error(errormsg);
+    }
+
+    long ibin = 0;
+    for (const auto &bin : data_) {
+      auto indices = GetIndex(ibin);
+      auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
+      auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
+      auto binmid = binlow + (binhigh - binlow) / 2;
+      auto rebinnedindex = rebinaxis.FindBin(binmid);
+      indices[axisposition] = rebinnedindex;
+      rebinned.AddElement(indices, lambda, bin);
+      ++ibin;
+    }
+
+    return rebinned;
+  }
 
   /*
    * Clears data to be filled. To be called after one event.
@@ -395,7 +450,7 @@ class DataContainer : public TObject {
     return offset;
   }
 
-  bool IsIntegrated() const { return axes_.at(0).Name() == "integrated" ? true : false;}
+  bool IsIntegrated() const { return axes_.at(0).Name() == "integrated" ? true : false; }
 
  private:
   int dimension_ = 0; ///< dimensionality of data
@@ -442,7 +497,5 @@ using DataContainerVF = DataContainer<std::vector<float>>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 }
-
-
 
 #endif

@@ -83,6 +83,28 @@ class Axis {
       throw std::exception();
     return bin;
   }
+
+  /**
+ * Finds bin iterator for a given value
+ * if value is smaller than lowest bin returns end().
+ * @param value for finding corresponding bin
+ * @return bin index
+ */
+  inline citerator FindBinIter(float value) {
+    citerator bin;
+    if (value < *bin_edges_.begin()) {
+      bin = end();
+    } else {
+      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
+      if (lb == bin_edges_.begin() || *lb == value)
+        bin = lb;
+      else
+        bin = lb - 1;
+    }
+    if (*bin >= (long) bin_edges_.size() - 1 || *bin < 0) bin = end();
+    return bin;
+  }
+
   /**
    * Returns number of bins.
    * @return number of bins.
@@ -104,9 +126,9 @@ class Axis {
    * Get id of axis used for the data interface
    * @return id
    */
-  inline int Id() const {return id_;}
+  inline int Id() const { return id_; }
 
-  inline bool IsIntegrated() const {return id_==-1;}
+  inline bool IsIntegrated() const { return id_ == -1; }
  private:
   std::string name_;
   std::vector<float> bin_edges_;

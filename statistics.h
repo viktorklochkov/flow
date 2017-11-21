@@ -10,6 +10,8 @@
 #include <utility>
 #include <TMathBase.h>
 #include <TMath.h>
+#include <array>
+
 namespace Qn {
 namespace Stats {
 
@@ -40,6 +42,10 @@ inline float Error(const std::vector<float> &vector) {
   int n = std::get<3>(stats);
   return Sigma(mean,sum2,n);
 }
+
+inline std::array<float,2> MeanAndError(const std::vector<float> &vector) {
+  return {{std::get<0>(Mean(vector)),Error(vector)}};
+};
 
 }
 }

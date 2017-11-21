@@ -57,27 +57,30 @@ int main(int argc, char **argv) {
 //  eventindex = {0};
 //  Qn::FillCorrelation(correlation, projdata, projdata, multiply, eventindex);
 
-  SimpleTask st("/Users/lukas/phd/analysis/flow/cmake-build-debug/outlist", "tree");
-  st.Run();
+//  SimpleTask st("/Users/lukas/phd/analysis/flow/cmake-build-debug/outlist", "tree");
+//  st.Run();
 //
 //  std::vector<float> makemean= {1.0,2};
 //  auto mean = Qn::Stats::Mean(makemean);
 //  auto rms = Qn::Stats::Error(makemean);
 
 //  Qn::QVector a(Qn::QVector::Normalization::NOCALIB,2,2,{{{1,1}}});
-//  Qn::DataContainerQVector data;
-//  std::vector<Qn::Axis> axes;
+  Qn::DataContainerF data;
+  std::vector<Qn::Axis> axes;
 //  std::vector<Qn::Axis> noaxes;
-//  axes.emplace_back("axis1",2,0,1,1);
-//  axes.emplace_back("axis2",2,0,1,1);
-//  data.AddAxes(axes);
+  axes.emplace_back("axis1",4,0,1,1);
+  axes.emplace_back("axis2",2,0,1,1);
+  data.AddAxes(axes);
 //
 //  std::vector<Qn::Axis> eventaxes;
 //  eventaxes.emplace_back("eventaxes",2,0,1,1);
 //
-//  for (auto &bin : data) {
-//    bin = a;
-//  }
+  for (auto &bin : data) {
+    bin = 1.0;
+  }
+  Qn::Axis rebin("axis1",3,0,1,1);
+  data.Rebin([](float &a, float &b){return a + b;},rebin);
+
 //
 //  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
 //

@@ -7,13 +7,14 @@
 #include "SimpleTask.h"
 #include "statistics.h"
 #include "Resolution.h"
+#include "DataContainerHelper.h"
 SimpleTask::SimpleTask(std::string filelist, std::string treename) :
     in_tree_(this->MakeChain(filelist, treename)),
     reader_(in_tree_.get()) {}
 
 void SimpleTask::Initialize() {
   std::vector<Qn::Axis> noaxes;
-  eventaxes_.emplace_back("CentralityVZERO", 9, 0, 100, 1);
+  eventaxes_.emplace_back("CentralityVZERO", 5, 0, 100, 1);
 
   auto tpcr = *values_.at("TPC_reference");
   auto vc = *values_.at("VZEROC_reference");
@@ -52,7 +53,7 @@ void SimpleTask::Run() {
     return vec;
   };
 
-//  Qn::DataContainerVF prod = tpcva.Add(tpcvc, mult);
+//  Qn::DataContainerVF prod = tpcvc.Add(tpcvc, mult);
 //  Qn::DataContainerVF resolution = prod.Add(vavc, divide);
 
   auto square = [](std::vector<float> a) {
@@ -64,33 +65,12 @@ void SimpleTask::Run() {
 
 //  auto squared = resolution.Map(square);
 
-  auto *testgraph = new TGraph(9);
-  int ibin = 0;
-  for (auto &bin : tpcvc) {
-    float y = bin.at(0);
-    float xhi = tpcvc.GetAxes().front().GetUpperBinEdge(ibin);
-    float xlo = tpcvc.GetAxes().front().GetLowerBinEdge(ibin);
-    float x = xlo + ((xhi - xlo) / 2);
-    testgraph->SetPoint(ibin, x, y);
-    ibin++;
-  }
-//  auto *testgraph2 = new TGraph(9);
-//  int ibin2 = 0;
-//  for (auto &bin : tpcvct) {
-//    float y = bin.at(0);
-//    float xhi = tpcvct.GetAxes().front().GetUpperBinEdge(ibin2);
-//    float xlo = tpcvct.GetAxes().front().GetLowerBinEdge(ibin2);
-//    float x = xlo + ((xhi - xlo) / 2);
-//    testgraph2->SetPoint(ibin2,x,y);
-//    ibin2++;
-//  }
+  auto testgraph2 = Qn::DataToProfileGraph(tpcvc);
+
 //
   auto *c1 = new TCanvas("c1", "c1", 800, 600);
   c1->cd(1);
-  testgraph->SetMarkerStyle(kCircle);
-  testgraph->SetMarkerStyle(kOpenSquare);
-  testgraph->Draw("AP");
-//  testgraph2->Draw("P");
+  testgraph2.Draw("AP");
   c1->SaveAs("test.pdf");
 
 }
