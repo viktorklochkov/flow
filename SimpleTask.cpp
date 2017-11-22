@@ -39,31 +39,7 @@ void SimpleTask::Run() {
 
   auto tpcvc = correlations_.at("tpcvc").GetCorrelation();
 
-  auto mult = [](std::vector<float> a, std::vector<float> b) {
-    auto mean_a = std::get<0>(Qn::Stats::Mean(a));
-    auto mean_b = std::get<0>(Qn::Stats::Mean(b));
-    std::vector<float> vec = {mean_a * mean_b};
-    return vec;
-  };
-
-  auto divide = [](std::vector<float> a, std::vector<float> b) {
-    auto mean_a = std::get<0>(Qn::Stats::Mean(a));
-    auto mean_b = std::get<0>(Qn::Stats::Mean(b));
-    std::vector<float> vec = {mean_a / mean_b};
-    return vec;
-  };
-
-//  Qn::DataContainerVF prod = tpcvc.Add(tpcvc, mult);
-//  Qn::DataContainerVF resolution = prod.Add(vavc, divide);
-
-  auto square = [](std::vector<float> a) {
-
-    std::cout << abs(a.at(0)) << " " << sqrt(abs(a.at(0))) << std::endl;
-    std::vector<float> vec = {static_cast<float>(TMath::Sign(1, a.at(0)) * sqrt(abs(a.at(0))))};
-    return vec;
-  };
-
-//  auto squared = resolution.Map(square);
+  
 
   auto testgraph2 = Qn::DataToProfileGraph(tpcvc);
 
