@@ -64,14 +64,14 @@ class Correlation {
     std::vector<std::vector<long>> index;
     std::vector<QVector> contents;
     inputs_ = std::move(input);
-    int iteration = 0;
+    u_int iteration = 0;
     FillCorrelation(eventindex, index, contents, iteration, lambda);
   }
   template<typename Function>
   void FillCorrelation(std::vector<long> &eventindex,
                        std::vector<std::vector<long>> &index,
                        std::vector<QVector> &contents,
-                       int iteration,
+                       u_int iteration,
                        Function &&lambda) {
 
     if (iteration + 1 == inputs_.size()) {

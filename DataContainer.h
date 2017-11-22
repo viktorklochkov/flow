@@ -180,7 +180,7 @@ class DataContainer : public TObject {
   std::vector<long> GetIndex(const long offset) const {
     long temp = offset;
     std::vector<long> indices = {};
-    if (offset >= data_.size()) return indices;
+    if ((u_long) offset >= data_.size()) return indices;
     indices.resize((std::vector<int>::size_type) dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
       indices[i] = (int) (temp % axes_[i].size());
