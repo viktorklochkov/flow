@@ -13,14 +13,15 @@
 namespace Qn {
 
 struct QVec {
-  QVec() : x(0),y(0) {}
+  QVec() = default;
   QVec(float x, float y) : x(x), y(y) {}
-  float x;
-  float y;
+  float x{0};
+  float y{0};
   friend QVec operator+(QVec a, QVec b);
   friend QVec operator-(QVec a, QVec b);
   friend QVec operator/(QVec a, float s);
   friend QVec operator*(QVec a, float s);
+
   friend float norm(QVec a);
 };
 
@@ -29,6 +30,7 @@ inline QVec operator-(QVec a, QVec b) { return {a.x - b.x, a.y - b.y}; }
 inline QVec operator/(QVec a, float s) { return {a.x / s, a.y / s}; }
 inline QVec operator*(QVec a, float s) { return {a.x * s, a.y * s}; }
 inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
+
 
 class QVector {
  public:
@@ -134,6 +136,29 @@ class QVector {
   std::array<QVec, 4> q_;
 
 };
+
+inline std::vector<float> Mult(std::vector<float> temp, QVector vec, std::vector<int> harmonics) {
+  std::vector<float> result;
+  for (auto &value : temp) {
+    result.push_back(value * vec.x(2));
+    result.push_back(value * vec.y(2));
+  }
+  return result;
+}
+
+
+inline std::vector<float> Multiply(std::vector<QVector> vectors, std::vector<int> harmonics) {
+  std::vector<float> result;
+  // case for iteration = 0
+  result.push_back(vectors[0].x(harmonics[0]) * vectors[1].x(harmonics[1]));
+  result.push_back(vectors[0].x(harmonics[0]) * vectors[1].y(harmonics[1]));
+  result.push_back(vectors[0].y(harmonics[0]) * vectors[1].x(harmonics[1]));
+  result.push_back(vectors[0].y(harmonics[0]) * vectors[1].y(harmonics[1]));
+  for (auto vec = vectors.begin()+2; vec < vectors.end(); ++vec) {
+    result = Mult(result, *vec, harmonics);
+  }
+  return result;
+}
 
 }
 

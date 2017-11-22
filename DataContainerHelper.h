@@ -9,7 +9,7 @@
 #include <TGraphErrors.h>
 #include <iostream>
 #include "DataContainer.h"
-#include "statistics.h"
+#include "Stats.h"
 
 namespace Qn {
 
@@ -18,7 +18,7 @@ namespace Qn {
  * @param data Datacontainer with one Axis to plot as a TGraphErrors.
  * @return A graph with errors corresponding to the standard error of the mean.
  */
-inline TGraphErrors DataToProfileGraph(Qn::DataContainerVF data) {
+inline TGraphErrors DataToProfileGraph(Qn::DataContainerStat data) {
   if (data.GetAxes().size() > 1) {
     std::cout << "Data container has more than one dimension. " << std::endl;
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
@@ -26,12 +26,11 @@ inline TGraphErrors DataToProfileGraph(Qn::DataContainerVF data) {
   TGraphErrors graph((int) data.size());
   int ibin = 0;
   for (auto &bin : data) {
-    std::array<float,2> mean_error = Qn::Stats::MeanAndError(bin);
     float xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
     float xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
     float x = xlo + ((xhi - xlo) / 2);
-    graph.SetPoint(ibin, x, mean_error[0]);
-    graph.SetPointError(ibin, (xhi - xlo) / 2, mean_error[1]);
+    graph.SetPoint(ibin, x, bin.Mean());
+    graph.SetPointError(ibin, (xhi - xlo) / 2, bin.Error());
     ibin++;
   }
   return graph;
@@ -58,6 +57,7 @@ inline TGraphErrors DataToGraph(Qn::DataContainerVF data) {
     graph.SetPoint(ibin, x, bin[0]);
     graph.SetPointError(ibin, (xhi - xlo) / 2, bin[1]);
     ibin++;
+//    graph.GetXaxis()->
   }
   return graph;
 };

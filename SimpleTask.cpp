@@ -5,7 +5,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include "SimpleTask.h"
-#include "statistics.h"
+#include "Stats.h"
 #include "Resolution.h"
 #include "DataContainerHelper.h"
 SimpleTask::SimpleTask(std::string filelist, std::string treename) :

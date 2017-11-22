@@ -14,7 +14,7 @@ set(SOURCES
         DataInterface.cpp
         DetectorConfig.cpp
         DetectorMap.cpp
-        QuickTask.cpp Resolution.cpp Resolution.h QaAnalysis.cpp QaAnalysis.h PlotCompare.cpp PlotCompare.h Correlation.cpp Correlation.h SimpleTask.cpp SimpleTask.h QVector.cpp QVector.h statistics.cpp statistics.h DataContainerHelper.cpp DataContainerHelper.h)
+        QuickTask.cpp Resolution.cpp Resolution.h QaAnalysis.cpp QaAnalysis.h PlotCompare.cpp PlotCompare.h Correlation.cpp Correlation.h SimpleTask.cpp SimpleTask.h QVector.cpp QVector.h Stats.cpp Stats.h DataContainerHelper.cpp DataContainerHelper.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

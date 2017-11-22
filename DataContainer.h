@@ -10,6 +10,7 @@
 #include "Rtypes.h"
 #include "DataVector.h"
 #include "QVector.h"
+#include "Stats.h"
 
 #include <map>
 #include <vector>
@@ -353,7 +354,7 @@ class DataContainer : public TObject {
    * @return copy of datacontainer after applying function.
    */
   template<typename Function>
-  DataContainer<T> Add(const DataContainer<T> &data, Function &&lambda) const {
+  DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
     long iaxis = 0;
     for (const auto &axis : axes_) {
       if (axis.Name() != data.GetAxes()[iaxis].Name()) {
@@ -494,6 +495,7 @@ class DataContainer : public TObject {
 using DataContainerQn = DataContainer<QnCorrectionsQnVector>;
 using DataContainerF = DataContainer<float>;
 using DataContainerVF = DataContainer<std::vector<float>>;
+using DataContainerStat = DataContainer<Qn::Statistics>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 }

@@ -19,4 +19,5 @@ QVector operator+(const QVector a, const QVector b) {
   return c;
 }
 
+
 }

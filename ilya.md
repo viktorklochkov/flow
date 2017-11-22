@@ -6,19 +6,16 @@
 
 
 ##stability checks
-
-R_A[B,C] under different B and C
+* R_A[B,C] under different B and C
 
 ##comparison to published
-rewrite macros to produce nice plots
+* rewrite macros to produce nice plots
 
 ##Q Vectors arithmetic
-* support for adding two qvectors
-* support for setting normalization
-* do not use abs q normalization - does not work right now
+* do not use abs q normalization. it is not possible to revert the normalization right now.  
 
 ## Statistics
-* fix variance calculation naive version is not stable
+* fix variance calculation; naive version is not stable.
 
 #DONE
 
@@ -45,4 +42,5 @@ rewrite macros to produce nice plots
 * projection of datacontainer qn
 * adding two qvectors
 * correlation of N data containers with lambda function.
-
+* support for adding two qvectors  
+* support for setting normalization  

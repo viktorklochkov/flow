@@ -13,6 +13,7 @@
 #include <array>
 
 namespace Qn {
+
 namespace Stats {
 
 inline std::tuple<float,float,float,int> Mean(const std::vector<float> &vector) {
@@ -48,6 +49,29 @@ inline std::array<float,2> MeanAndError(const std::vector<float> &vector) {
 };
 
 }
+
+class Statistics {
+ public:
+  Statistics() = default;
+  inline void Update(float value) {
+    mean_ = (mean_ * entries_ + value) / (entries_+1);
+    sum_ = sum_ + value;
+    sum2_ = sum2_ + value*value;
+    error_ = Qn::Stats::Sigma(mean_,sum2_,entries_);
+    ++entries_;
+  };
+  inline float Mean() const {return mean_;}
+  inline float Sum() const {return sum_;}
+  inline float Sum2() const {return sum2_;}
+  inline float Error() const {return error_;}
+  inline float Entries() const {return entries_;}
+ private:
+  float mean_ = 0;
+  float sum_ = 0;
+  float sum2_ = 0;
+  int entries_ = 0;
+  float error_ = 0;
+};
 }
 
 

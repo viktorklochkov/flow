@@ -13,7 +13,7 @@
 
 namespace Qn {
 
-using CORR = DataContainer<std::vector<float>>;
+using CORR = DataContainer<Qn::Statistics>;
 using AXES = std::vector<Qn::Axis>;
 
 class Correlation {
@@ -25,9 +25,9 @@ class Correlation {
       axes_event_(event) {
     CreateCorrelationContainer();
   }
-  DataContainerVF GetCorrelation() const { return data_correlation_; }
+  DataContainerStat GetCorrelation() const { return data_correlation_; }
  private:
-  DataContainerVF data_correlation_;
+  DataContainerStat data_correlation_;
   std::vector<CONTAINERS> inputs_;
   AXES axes_event_;
 
@@ -87,7 +87,7 @@ class Correlation {
         });
         contents.push_back(bin);
         data_correlation_.CallOnElement(cindex,
-                                        [lambda, &contents](std::vector<float> &a) { a.push_back(lambda(contents)); });
+                                        [lambda, &contents](Qn::Statistics &a) { a.Update(lambda(contents)); });
         if (datacontainer.size() != 1) index.erase(index.end() - 2);
         index.erase(index.end() - 1);
         contents.erase(contents.end() - 1);
