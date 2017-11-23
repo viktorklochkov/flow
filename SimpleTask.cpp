@@ -20,7 +20,11 @@ void SimpleTask::Initialize() {
   auto vc = *values_.at("VZEROC_reference");
   auto va = *values_.at("VZEROA_reference");
   Qn::Correlation TpcVc({tpcr, vc}, eventaxes_);
+  Qn::Correlation TpcVa({tpcr, va}, eventaxes_);
+  Qn::Correlation VcVa({vc, va}, eventaxes_);
   correlations_.insert({"tpcvc", TpcVc});
+  correlations_.insert({"tpcva", TpcVa});
+  correlations_.insert({"vcva", VcVa});
 
 }
 
@@ -38,15 +42,37 @@ void SimpleTask::Run() {
   }
 
   auto tpcvc = correlations_.at("tpcvc").GetCorrelation();
+  auto tpcva = correlations_.at("tpcva").GetCorrelation();
+  auto vcva = correlations_.at("vcva").GetCorrelation();
 
 
+  auto multiply = [] (Qn::Statistics a, Qn::Statistics b) {
+    return a * b;
+  };
 
-  auto testgraph2 = Qn::DataToProfileGraph(tpcvc);
+  auto divide = [] (Qn::Statistics a, Qn::Statistics b) {
+    return a / b;
+  };
+
+  auto sqrt = [] (Qn::Statistics a) {
+    return a.Sqrt();
+  };
+
+  auto resolution = tpcvc.Apply(tpcva,multiply).Apply(vcva,divide).Map(sqrt);
+
+  auto gresolution = Qn::DataToProfileGraph(resolution);
+//  auto gtpcva = Qn::DataToProfileGraph(tpcva);
+//  gtpcva.SetLineColor(kBlue);
+//  auto gvcva = Qn::DataToProfileGraph(vcva);
+//  gvcva.SetLineColor(kRed);
 
 //
   auto *c1 = new TCanvas("c1", "c1", 800, 600);
   c1->cd(1);
-  testgraph2.Draw("AP");
+  gresolution.Draw("AP");
+//  gtpcvc.Draw("AP");
+//  gtpcva.Draw("P");
+//  gvcva.Draw("AP");
   c1->SaveAs("test.pdf");
 
 }
@@ -75,6 +101,8 @@ void SimpleTask::Process() {
   };
 
   correlations_.at("tpcvc").Fill({tpcr, vc}, eventbin, correlate);
+  correlations_.at("tpcva").Fill({tpcr, va}, eventbin, correlate);
+  correlations_.at("vcva").Fill({va, vc}, eventbin, correlate);
 
 }
 
