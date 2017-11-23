@@ -39,7 +39,7 @@ void SimpleTask::Run() {
 
   auto tpcvc = correlations_.at("tpcvc").GetCorrelation();
 
-  
+
 
   auto testgraph2 = Qn::DataToProfileGraph(tpcvc);
 

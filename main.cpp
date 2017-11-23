@@ -14,12 +14,16 @@
 #include "Stats.h"
 int main(int argc, char **argv) {
   ROOT::EnableImplicitMT(2);
-//  Qn::Task task(argv[1], argv[2],"DstTree");
-//  task.Run();
-
-
-  SimpleTask st("/Users/lukas/phd/analysis/flow/cmake-build-debug/outlist", "tree");
-  st.Run();
+  if (strcmp(argv[3],"correct")==0) {
+    Qn::Task task(argv[1], argv[2], "DstTree");
+    task.Run();
+  }
+  if (strcmp(argv[3],"analysis")==0) {
+    SimpleTask st(argv[1], "tree");
+    st.Run();
+  } else {
+    std::cout << "doing nothing" << std::endl;
+  }
 //
 //  std::vector<float> makemean= {1.0,2};
 //  auto mean = Qn::Stats::Mean(makemean);
@@ -56,15 +60,15 @@ int main(int argc, char **argv) {
 //  });
 
 //  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
-
-  Qn::QVec q(2.0,2.0);
-  std::vector<Qn::QVector> vectors;
-  std::array<Qn::QVec,4> qvecs = {{q,q,q,q,}};
-  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
-  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
-  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
-
-  auto result = Qn::Multiply(vectors,{2,2,2});
+//
+//  Qn::QVec q(2.0,2.0);
+//  std::vector<Qn::QVector> vectors;
+//  std::array<Qn::QVec,4> qvecs = {{q,q,q,q,}};
+//  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
+//  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
+//  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
+//
+//  auto result = Qn::Multiply(vectors,{2,2,2});
 
   return 0;
 
