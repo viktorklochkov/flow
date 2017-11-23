@@ -47,10 +47,10 @@ class Statistics {
   inline int Entries() const { return entries_; }
 
   inline Statistics Sqrt() {
-    mean_ = std::sqrt(mean_);
-    sum_ = std::sqrt(sum_);
-    sum2_ = std::sqrt(sum2_);
-    error_ = std::sqrt(error_);
+    mean_ = std::sqrt(std::abs(mean_));
+    sum_ = std::sqrt(std::abs(sum_));
+    sum2_ = std::sqrt(std::abs(sum2_));
+    error_ = std::sqrt(std::abs(error_));
     return *this;
   }
 
@@ -81,26 +81,31 @@ inline Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b) {
   float nsum2 = a.Mean() * a.Mean() * a.Error() * a.Error() + b.Mean() * b.Mean() * b.Error() * b.Error();
   float nerror = std::sqrt(nsum2);
   float nsum = 0;
-  return Qn::Statistics{nmean,nsum,nsum2,nerror,nentries};
+  Qn::Statistics c(nmean,nsum,nsum2,nerror,nentries);
+  return c;
 
 }
 
 inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
   float nmean;
   float nsum2;
+  float nerror;
   if (b.Mean() != 0) {
     nmean = a.Mean() / b.Mean();
     nsum2 = a.Mean() * a.Mean() * a.Error() * a.Error() + b.Mean() * b.Mean() * b.Error() * b.Error() /
         (b.Mean() * b.Mean() * b.Mean() * b.Mean());
+    nerror = std::sqrt(nsum2);
+
   } else {
     nmean = 0;
     nsum2 = 0;
+    nerror = 0;
 
   }
   int nentries = a.Entries() + b.Entries();
-  float nerror = std::sqrt(nsum2);
   float nsum = 0;
-  return Qn::Statistics{nmean,nsum,nsum2,nerror,nentries};
+  Qn::Statistics c(nmean,nsum,nsum2,nerror,nentries);
+  return c;
 }
 }
 

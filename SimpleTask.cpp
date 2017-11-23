@@ -73,7 +73,7 @@ void SimpleTask::Run() {
 //  gtpcvc.Draw("AP");
 //  gtpcva.Draw("P");
 //  gvcva.Draw("AP");
-  c1->SaveAs("test.pdf");
+  c1->SaveAs("test.root");
 
 }
 
