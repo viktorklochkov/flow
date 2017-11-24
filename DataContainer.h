@@ -401,8 +401,8 @@ class DataContainer : public TObject {
     for (auto rebinedge : rebinaxis) {
       bool found = false;
       for (const auto binedge : (Axis) axes_.at(axisposition)) {
-        if (binedge > rebinedge) break;
-        if (rebinedge == binedge)  {
+        float test = TMath::Abs(rebinedge-binedge);
+        if (test < 10e-4)  {
           found = rebin_ok;
           break;
         }

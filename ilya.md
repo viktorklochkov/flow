@@ -17,6 +17,8 @@
 ## Statistics
 * fix variance calculation; naive version is not stable.
 
+##Find invalid bins
+
 #DONE
 
 ##Add missing QA histograms

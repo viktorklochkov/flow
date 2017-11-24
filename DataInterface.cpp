@@ -50,12 +50,9 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
       trackparams.push_back(values[axis.Id()]);
     }
     try {
-      auto &element = datacontainer->ModifyElement(trackparams);
-      element.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
       datacontainer->CallOnElement(trackparams, [values](std::vector<DataVector> &vector) {
         vector.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
       });
-
     }
     catch (std::exception &) {
       continue;
@@ -79,14 +76,14 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
       if (axis.IsIntegrated()) {
         datacontainer->CallOnElement(std::vector<float>{0.5},
                                      [ich, Y, X, weight](std::vector<DataVector> &vector) {
-                                       vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+                                       vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
                                      });
       } else {
         etavalue = etaborders[(ich - 32) / 8];
         eta.push_back(etavalue);
         datacontainer->CallOnElement(eta,
                                      [ich, Y, X, weight](std::vector<DataVector> &vector) {
-                                       vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+                                       vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
                                      });
       }
     }
@@ -108,14 +105,14 @@ void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
       if (axis.IsIntegrated()) {
         datacontainer->CallOnElement(std::vector<float>{0.5},
                                      [ich, Y, X, weight](std::vector<DataVector> &vector) {
-                                       vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+                                       vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
                                      });
       } else {
         etavalue = etaborders[ich / 8];
         eta.push_back(etavalue);
         datacontainer->CallOnElement(eta,
                                      [ich, Y, X, weight](std::vector<DataVector> &vector) {
-                                       vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+                                       vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
                                      });
       }
     }

@@ -9,6 +9,10 @@
 #include <TTreeReader.h>
 #include "DataContainer.h"
 #include "Correlation.h"
+#include "Resolution.h"
+
+#define VAR AliReducedVarManager
+
 
 class SimpleTask {
  public:
@@ -28,6 +32,15 @@ class SimpleTask {
   std::map<std::string, TTreeReaderValue<float>> eventvalues_;
   std::map<std::string, Qn::Correlation> correlations_;
   std::vector<Qn::Axis> eventaxes_;
+  TProfile *ab;
+  TProfile *ac;
+  TProfile *bc;
+  void SqrtHist(TH1D &hist) {
+    for (int i = 1; i <= hist.GetNbinsX(); ++i) {
+      hist.SetBinContent(i, TMath::Sign(1, hist.GetBinContent(i)) * TMath::Sqrt(TMath::Abs(hist.GetBinContent(i))));
+    }
+  }
+
   /**
    * Make TChain from file list
    * @param filename name of file containing paths to root files containing the input trees

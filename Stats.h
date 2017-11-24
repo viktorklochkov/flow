@@ -5,6 +5,7 @@
 #ifndef FLOW_STATISTICS_H
 #define FLOW_STATISTICS_H
 
+#include <iostream>
 #include <iterator>
 #include <algorithm>
 #include <utility>
@@ -48,9 +49,6 @@ class Statistics {
 
   inline Statistics Sqrt() {
     mean_ = std::sqrt(std::abs(mean_));
-    sum_ = std::sqrt(std::abs(sum_));
-    sum2_ = std::sqrt(std::abs(sum2_));
-    error_ = std::sqrt(std::abs(error_));
     return *this;
   }
 
@@ -78,10 +76,12 @@ inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
 inline Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b) {
   float nmean = a.Mean() * b.Mean();
   int nentries = a.Entries() + b.Entries();
-  float nsum2 = a.Mean() * a.Mean() * a.Error() * a.Error() + b.Mean() * b.Mean() * b.Error() * b.Error();
+  std::cout << a.error_ << " " << b.error_ << "\n";
+  std::cout << a.mean_ << " " << b.mean_ << "\n";
+  float nsum2 = a.Mean() * a.Mean() * b.Error() * b.Error() + a.Mean() * a.Mean() * b.Error() * b.Error();
   float nerror = std::sqrt(nsum2);
   float nsum = 0;
-  Qn::Statistics c(nmean,nsum,nsum2,nerror,nentries);
+  Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 
 }
@@ -90,10 +90,10 @@ inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
   float nmean;
   float nsum2;
   float nerror;
-  if (b.Mean() != 0) {
+  if (std::abs(b.Mean()- 0) > 10e-4) {
     nmean = a.Mean() / b.Mean();
-    nsum2 = a.Mean() * a.Mean() * a.Error() * a.Error() + b.Mean() * b.Mean() * b.Error() * b.Error() /
-        (b.Mean() * b.Mean() * b.Mean() * b.Mean());
+    nsum2 = a.Mean() * a.Mean() * b.Error() * b.Error()
+        + a.Mean() * a.Mean() * a.Error() * a.Error() / (b.Mean() * b.Mean() * b.Mean() * b.Mean());
     nerror = std::sqrt(nsum2);
 
   } else {
@@ -104,7 +104,7 @@ inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
   }
   int nentries = a.Entries() + b.Entries();
   float nsum = 0;
-  Qn::Statistics c(nmean,nsum,nsum2,nerror,nentries);
+  Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
 }

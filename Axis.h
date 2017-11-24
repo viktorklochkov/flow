@@ -80,7 +80,7 @@ class Axis {
         bin = (lb - bin_edges_.begin()) - 1;
     }
     if (bin >= (long) bin_edges_.size() - 1 || bin < 0)
-      throw std::exception();
+      bin = -1;
     return bin;
   }
 
