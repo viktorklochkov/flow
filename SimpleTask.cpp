@@ -32,6 +32,8 @@ void SimpleTask::Initialize() {
   correlations_.insert({"rtpczc", {{tpc, zc}, eventaxes_}});
   correlations_.insert({"rtpcza", {{tpc, za}, eventaxes_}});
   correlations_.insert({"rzcza", {{zc, za}, eventaxes_}});
+  correlations_.insert({"v2tpcvaxx", {{tpc, va}, eventaxes_}});
+  correlations_.insert({"v2tpcvayy", {{tpc, va}, eventaxes_}});
 }
 
 void SimpleTask::Run() {
@@ -64,6 +66,8 @@ void SimpleTask::Run() {
   auto rtpczc = correlations_.at("rtpczc").GetCorrelation();
   auto rtpcza = correlations_.at("rtpcza").GetCorrelation();
   auto rzcza = correlations_.at("rzcza").GetCorrelation();
+  auto v2tpcvaxx = correlations_.at("v2tpcvaxx").GetCorrelation();
+  auto v2tpcvayy = correlations_.at("v2tpcvayy").GetCorrelation();
 
   auto multiply = [](Qn::Statistics a, Qn::Statistics b) {
     return a * b;
@@ -87,6 +91,8 @@ void SimpleTask::Run() {
   auto rfatpcfc = rtpcfc.Apply(rfcfa,multiply).Apply(rtpcfa,divide).Map(sqrt);
   auto rzctpcza = rtpcfa.Apply(rfcfa,multiply).Apply(rtpcfc,divide).Map(sqrt);
   auto rzatpczc = rtpczc.Apply(rzcza,multiply).Apply(rtpczc,divide).Map(sqrt);
+  v2tpcvaxx = v2tpcvaxx.Apply(rvatpcvc,divide);
+  v2tpcvayy = v2tpcvayy.Apply(rvatpcvc,divide);
 
 
   auto grtpcvcva = Qn::DataToProfileGraph(rtpcvcva);
@@ -98,7 +104,8 @@ void SimpleTask::Run() {
   auto grfatpcfc = Qn::DataToProfileGraph(rfatpcfc);
   auto grzctpcza = Qn::DataToProfileGraph(rzctpcza);
   auto grzatpczc = Qn::DataToProfileGraph(rzatpczc);
-  auto gzazc = Qn::DataToProfileGraph(rzcza);
+  auto gv2tpcvaxx = Qn::DataToProfileGraph(v2tpcvaxx);
+  auto gv2tpcvayy = Qn::DataToProfileGraph(v2tpcvayy);
 
 //
   auto *c1 = new TCanvas("c1", "c1", 1200, 600);
@@ -125,6 +132,11 @@ void SimpleTask::Run() {
   grfatpcfc.Draw("P");
   grfctpcfa.SetMarkerStyle(kOpenSquare);
   grfctpcfa.Draw("P");
+  auto *c2 = new TCanvas("c2", "c2", 1200, 600);
+  c2->cd();
+  gv2tpcvaxx.SetTitle("v2");
+  gv2tpcvaxx.Draw("ALP");
+  gv2tpcvayy.Draw("LP");
 //  grzatpczc.SetLineColor(kViolet);
 //  grzatpczc.SetMarkerColor(kViolet);
 //  grzatpczc.SetMarkerStyle(kCircle);
@@ -137,6 +149,7 @@ void SimpleTask::Run() {
 
   c1->SaveAs("test.root");
   c1->SaveAs("test.pdf");
+  c2->SaveAs("test2.pdf");
 
 }
 
@@ -163,10 +176,18 @@ void SimpleTask::Process() {
     return cos(2 * (Qn::Resolution::PsiN(a.at(0), 2) - Qn::Resolution::PsiN(a.at(1), 2)));
   };
 
-  auto zdccorrelation = [] (std::vector<Qn::QVector> a) {
-    return a.at(0).y(1) * a.at(1).x(1);
+  auto xx = [] (std::vector<Qn::QVector> a) {
+    return a.at(0).x(2) * a.at(1).Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2);
   };
-
+  auto xy = [] (std::vector<Qn::QVector> a) {
+    return a.at(0).x(2) * a.at(1).y(2);
+  };
+  auto yx = [] (std::vector<Qn::QVector> a) {
+    return a.at(0).y(2) * a.at(1).x(2);
+  };
+  auto yy = [] (std::vector<Qn::QVector> a) {
+    return a.at(0).y(2) * a.at(1).Normal(Qn::QVector::Normalization::QOVERNORMQ).y(2);
+  };
 //
   correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
   correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, resolution);
@@ -174,6 +195,8 @@ void SimpleTask::Process() {
   correlations_.at("rtpcfa").Fill({tpc, fa}, eventbin, resolution);
   correlations_.at("rtpcfc").Fill({tpc, fc}, eventbin, resolution);
   correlations_.at("rfcfa").Fill({fa, fc}, eventbin, resolution);
+  correlations_.at("v2tpcvaxx").Fill({tpc, va}, eventbin, xx);
+  correlations_.at("v2tpcvayy").Fill({tpc, va}, eventbin, yy);
 //  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, resolution);
 //  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, resolution);
 //  correlations_.at("rzcza").Fill({za, zc}, eventbin, zdccorrelation);
