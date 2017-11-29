@@ -76,8 +76,6 @@ inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
 inline Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b) {
   float nmean = a.Mean() * b.Mean();
   int nentries = a.Entries() + b.Entries();
-  std::cout << a.error_ << " " << b.error_ << "\n";
-  std::cout << a.mean_ << " " << b.mean_ << "\n";
   float nsum2 = a.Mean() * a.Mean() * b.Error() * b.Error() + a.Mean() * a.Mean() * b.Error() * b.Error();
   float nerror = std::sqrt(nsum2);
   float nsum = 0;

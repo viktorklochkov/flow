@@ -13,63 +13,26 @@
 #include "SimpleTask.h"
 #include "Stats.h"
 int main(int argc, char **argv) {
+  auto start = std::chrono::system_clock::now();
+  auto start_c = std::chrono::system_clock::to_time_t(start);
+  std::cout << "begin timestamp: " << std::put_time(std::localtime(&start_c), "%c") << "\n";
+
   ROOT::EnableImplicitMT(2);
-  if (strcmp(argv[3],"correct")==0) {
+  if (strcmp(argv[3], "correct") == 0) {
     Qn::Task task(argv[1], argv[2], "DstTree");
     task.Run();
   }
-  if (strcmp(argv[3],"analysis")==0) {
+  if (strcmp(argv[3], "analysis") == 0) {
     SimpleTask st(argv[1], "tree");
     st.Run();
   } else {
-    std::cout << "doing nothing" << std::endl;
+    std::cout << "doing nothing" << "\n";
   }
-//
-//  std::vector<float> makemean= {1.0,2};
-//  auto mean = Qn::Stats::Mean(makemean);
-//  auto rms = Qn::Stats::Error(makemean);
 
-//  Qn::QVector a(Qn::QVector::Normalization::NOCALIB,2,2,{{{1,1}}});
-//  Qn::DataContaine rF data;
-  std::vector<Qn::Axis> axes;
-//  std::vector<Qn::Axis> noaxes;
-//  axes.emplace_back("axis1",4,0,1,1);
-//  axes.emplace_back("axis2",2,0,1,1);
-//  data.AddAxes(axes);
-//
-//  std::vector<Qn::Axis> eventaxes;
-//  eventaxes.emplace_back("eventaxes",2,0,1,1);
-//
-//  for (auto &bin : data) {
-//    bin = 1.0;
-//  }
-//  Qn::Axis rebin("one",4,0,1,1);
-//  data.Rebin([](float &a, float &b){return a + b;},rebin);
-
-//
-//  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
-//
-//  std::vector<Qn::DataContainerQVector> inputs;
-//  inputs.emplace_back(projection);
-//  inputs.emplace_back(projection);
-//
-//  Qn::Correlation correlation(inputs, eventaxes);
-//  std::vector<long> eventindex = {1};
-//  correlation.Fill(eventindex,[](std::vector<Qn::QVector> vec){
-//    return vec.at(0).x(0) * vec.at(0).y(0);
-//  });
-
-//  auto projection = data.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;});
-//
-//  Qn::QVec q(2.0,2.0);
-//  std::vector<Qn::QVector> vectors;
-//  std::array<Qn::QVec,4> qvecs = {{q,q,q,q,}};
-//  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
-//  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
-//  vectors.emplace_back(Qn::QVector::Normalization::NOCALIB,2,2,qvecs);
-//
-//  auto result = Qn::Multiply(vectors,{2,2,2});
-
+  auto end = std::chrono::system_clock::now();
+  auto end_c = std::chrono::system_clock::to_time_t(end);
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  std::cout << "end timestamp: " << std::put_time(std::localtime(&end_c), "%c") << "\n";
+  std::cout << "elapsed time: " << elapsed_seconds.count() << " s\n";
   return 0;
-
 }

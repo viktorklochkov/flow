@@ -57,7 +57,6 @@ inline TGraphErrors DataToGraph(Qn::DataContainerVF data) {
     graph.SetPoint(ibin, x, bin[0]);
     graph.SetPointError(ibin, (xhi - xlo) / 2, bin[1]);
     ibin++;
-//    graph.GetXaxis()->
   }
   return graph;
 };

@@ -53,7 +53,7 @@ void SimpleTask::Run() {
     events++;
     Process();
   }
-  std::cout << events << std::endl;
+  std::cout << "number of events: " << events << std::endl;
 
   auto rtpcvc = correlations_.at("rtpcvc").GetCorrelation();
   auto rtpcva = correlations_.at("rtpcva").GetCorrelation();
@@ -81,19 +81,61 @@ void SimpleTask::Run() {
   auto rtpcvcva = rtpcvc.Apply(rtpcva,multiply).Apply(rvcva,divide).Map(sqrt);
   auto rtpcfcfa = rtpcfc.Apply(rtpcfa,multiply).Apply(rfcfa,divide).Map(sqrt);
   auto rtpczcza = rtpczc.Apply(rtpcza,multiply).Apply(rzcza,divide).Map(sqrt);
+  auto rvctpcva = rtpcvc.Apply(rvcva,multiply).Apply(rtpcva,divide).Map(sqrt);
+  auto rvatpcvc = rtpcva.Apply(rvcva,multiply).Apply(rtpcvc,divide).Map(sqrt);
+  auto rfctpcfa = rtpcfa.Apply(rfcfa,multiply).Apply(rtpcfc,divide).Map(sqrt);
+  auto rfatpcfc = rtpcfc.Apply(rfcfa,multiply).Apply(rtpcfa,divide).Map(sqrt);
+  auto rzctpcza = rtpcfa.Apply(rfcfa,multiply).Apply(rtpcfc,divide).Map(sqrt);
+  auto rzatpczc = rtpczc.Apply(rzcza,multiply).Apply(rtpczc,divide).Map(sqrt);
 
 
   auto grtpcvcva = Qn::DataToProfileGraph(rtpcvcva);
   auto grtpcfcfa = Qn::DataToProfileGraph(rtpcfcfa);
   auto grtpczcza = Qn::DataToProfileGraph(rtpczcza);
+  auto grvctpcva = Qn::DataToProfileGraph(rvctpcva);
+  auto grvatpcvc = Qn::DataToProfileGraph(rvatpcvc);
+  auto grfctpcfa = Qn::DataToProfileGraph(rfctpcfa);
+  auto grfatpcfc = Qn::DataToProfileGraph(rfatpcfc);
+  auto grzctpcza = Qn::DataToProfileGraph(rzctpcza);
+  auto grzatpczc = Qn::DataToProfileGraph(rzatpczc);
+  auto gzazc = Qn::DataToProfileGraph(rzcza);
 
 //
   auto *c1 = new TCanvas("c1", "c1", 1200, 600);
   c1->cd(1);
+  grtpcfcfa.SetTitle("Resolution");
   grtpcfcfa.Draw("AP");
+  grtpcfcfa.SetLineColor(kRed);
+  grtpcfcfa.SetMarkerColor(kRed);
+  grtpcfcfa.SetMarkerStyle(kOpenSquare);
   grtpcvcva.Draw("P");
+  grtpcvcva.SetLineColor(kRed);
+  grtpcvcva.SetMarkerColor(kRed);
+  grtpcvcva.SetMarkerStyle(kCircle);
   grtpczcza.Draw("P");
+  grvatpcvc.SetLineColor(kBlue);
+  grvatpcvc.SetMarkerColor(kBlue);
+  grvatpcvc.SetMarkerStyle(kCircle);
+  grvatpcvc.Draw("P");
+  grvctpcva.SetLineColor(kBlue);
+  grvctpcva.SetMarkerColor(kBlue);
+  grvctpcva.SetMarkerStyle(kOpenSquare);
+  grvctpcva.Draw("P");
+  grfatpcfc.SetMarkerStyle(kCircle);
+  grfatpcfc.Draw("P");
+  grfctpcfa.SetMarkerStyle(kOpenSquare);
+  grfctpcfa.Draw("P");
+//  grzatpczc.SetLineColor(kViolet);
+//  grzatpczc.SetMarkerColor(kViolet);
+//  grzatpczc.SetMarkerStyle(kCircle);
+//  grzatpczc.Draw("P");
+//  grzctpcza.SetLineColor(kViolet);
+//  grzctpcza.SetMarkerColor(kViolet);
+//  grzctpcza.SetMarkerStyle(kOpenSquare);
+//  gzazc.SetMarkerStyle(kStar);
+//  gzazc.Draw("P");
 
+  c1->SaveAs("test.root");
   c1->SaveAs("test.pdf");
 
 }
@@ -120,16 +162,21 @@ void SimpleTask::Process() {
   auto resolution = [] (std::vector<Qn::QVector> a) {
     return cos(2 * (Qn::Resolution::PsiN(a.at(0), 2) - Qn::Resolution::PsiN(a.at(1), 2)));
   };
+
+  auto zdccorrelation = [] (std::vector<Qn::QVector> a) {
+    return a.at(0).y(1) * a.at(1).x(1);
+  };
+
 //
-//  correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
-//  correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, resolution);
-//  correlations_.at("rvcva").Fill({va, vc}, eventbin, resolution);
-//  correlations_.at("rtpcfa").Fill({tpc, fa}, eventbin, resolution);
-//  correlations_.at("rtpcfc").Fill({tpc, fc}, eventbin, resolution);
-//  correlations_.at("rfcfa").Fill({fa, fc}, eventbin, resolution);
+  correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
+  correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, resolution);
+  correlations_.at("rvcva").Fill({va, vc}, eventbin, resolution);
+  correlations_.at("rtpcfa").Fill({tpc, fa}, eventbin, resolution);
+  correlations_.at("rtpcfc").Fill({tpc, fc}, eventbin, resolution);
+  correlations_.at("rfcfa").Fill({fa, fc}, eventbin, resolution);
 //  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, resolution);
 //  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, resolution);
-//  correlations_.at("rzcza").Fill({za, zc}, eventbin, resolution);
+//  correlations_.at("rzcza").Fill({za, zc}, eventbin, zdccorrelation);
 }
 
 std::unique_ptr<TChain> SimpleTask::MakeChain(std::string filename, std::string treename) {
@@ -137,7 +184,7 @@ std::unique_ptr<TChain> SimpleTask::MakeChain(std::string filename, std::string 
   std::ifstream in;
   in.open(filename);
   std::string line;
-  std::cout << "Adding files to chain:" << std::endl;
+  std::cout << "files in TChain:" << "\n";
   while ((in >> line).good()) {
     if (!line.empty()) {
       chain->AddFile(line.data());

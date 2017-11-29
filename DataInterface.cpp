@@ -188,7 +188,7 @@ void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
 }
 
 void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 10> X = {{/* C*/ 0.0, -1.75, 1.75, -1.75, 1.75, /* A */0.0, 1.75, -1.75, 1.75, -1.75}};
+  const std::array<double, 10> X = {{0.0, -1.75, 1.75, -1.75, 1.75, 0.0, 1.75, -1.75, 1.75, -1.75}};
   const std::array<double, 10> Y = {{/* C*/ 0.0, -1.75, -1.75, 1.75, 1.75, /*A*/0.0, -1.75, -1.75, 1.75, 1.75}};
   auto axes = datacontainer->GetAxes();
   for (u_short ich = 0; ich < 5; ich++) {
