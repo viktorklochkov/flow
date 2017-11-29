@@ -117,27 +117,19 @@ void SimpleTask::Process() {
     if (bin == -1) return;
   }
 
-  auto psi_n = [](Qn::QVector a, int n) {
-    return 1 / (float) n * TMath::ATan2(a.y(n), a.x(n));
+  auto resolution = [] (std::vector<Qn::QVector> a) {
+    return cos(2 * (Qn::Resolution::PsiN(a.at(0), 2) - Qn::Resolution::PsiN(a.at(1), 2)));
   };
-
-  auto cos_n = [](int n, float a, float b) {
-    return TMath::Cos((float) n * (a - b));
-  };
-
-  auto correlate = [psi_n, cos_n](std::vector<Qn::QVector> a) {
-    return cos_n(2, psi_n(a.at(0), 2), psi_n(a.at(1), 2));
-  };
-
-  correlations_.at("rtpcva").Fill({tpc, va}, eventbin, correlate);
-  correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, correlate);
-  correlations_.at("rvcva").Fill({va, vc}, eventbin, correlate);
-  correlations_.at("rtpcfa").Fill({tpc, fa}, eventbin, correlate);
-  correlations_.at("rtpcfc").Fill({tpc, fc}, eventbin, correlate);
-  correlations_.at("rfcfa").Fill({fa, fc}, eventbin, correlate);
-  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, correlate);
-  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, correlate);
-  correlations_.at("rzcza").Fill({za, zc}, eventbin, correlate);
+//
+//  correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
+//  correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, resolution);
+//  correlations_.at("rvcva").Fill({va, vc}, eventbin, resolution);
+//  correlations_.at("rtpcfa").Fill({tpc, fa}, eventbin, resolution);
+//  correlations_.at("rtpcfc").Fill({tpc, fc}, eventbin, resolution);
+//  correlations_.at("rfcfa").Fill({fa, fc}, eventbin, resolution);
+//  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, resolution);
+//  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, resolution);
+//  correlations_.at("rzcza").Fill({za, zc}, eventbin, resolution);
 }
 
 std::unique_ptr<TChain> SimpleTask::MakeChain(std::string filename, std::string treename) {
