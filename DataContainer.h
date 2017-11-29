@@ -347,6 +347,40 @@ class DataContainer : public TObject {
   }
 
   /**
+   * Selects subrange of axis of datacontainer
+   * @tparam Function type of function
+   * @param data input data container
+   * @param axis subrange of axis to perform selection
+   * @return
+   */
+  DataContainer<T> Select(const DataContainer<T> &data, Qn::Axis &axis) const {
+    DataContainer<T>selected;
+    long axisposition = 0;
+    for (const auto &a : axes_) {
+      axisposition++;
+      if (a.Name() == axis.Name()) {
+        selected.AddAxis(axis);
+        break;
+      } else {
+        selected.AddAxis(a);
+      }
+    }
+    long index = 0;
+    for (const auto &bin : data) {
+      ++index;
+      auto indices = data.GetIndex(index);
+      auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
+      auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
+      auto binmid = binlow + (binhigh - binlow) / 2;
+      auto rebinnedindex = axis.FindBin(binmid);
+      if (rebinnedindex != -1) {
+        indices[axisposition] = rebinnedindex;
+        selected.CallOnElement(indices, [bin](T &element){element = bin;});
+      }
+    }
+  }
+
+  /**
    * Apply binary function on two datacontainers. Axes must be equal.
    * @tparam Function type of function
    * @param data second Datacontainer
@@ -382,7 +416,7 @@ class DataContainer : public TObject {
      * Check if axis to be rebinned is found in the datacontainer.
      */
     for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
-      if ( axis->Name() == rebinaxis.Name()) {
+      if (axis->Name() == rebinaxis.Name()) {
         rebinned.AddAxis(rebinaxis);
         axisposition = std::distance(axes_.begin(), axis);
         axisfound = true;
@@ -401,8 +435,8 @@ class DataContainer : public TObject {
     for (auto rebinedge : rebinaxis) {
       bool found = false;
       for (const auto binedge : (Axis) axes_.at(axisposition)) {
-        float test = TMath::Abs(rebinedge-binedge);
-        if (test < 10e-4)  {
+        float test = TMath::Abs(rebinedge - binedge);
+        if (test < 10e-4) {
           found = rebin_ok;
           break;
         }
@@ -488,7 +522,7 @@ class DataContainer : public TObject {
   }
 
   /// \cond CLASSIMP
- ClassDef(DataContainer, 2);
+ ClassDef(DataContainer, 3);
   /// \endcond
 };
 

@@ -13,36 +13,38 @@ SimpleTask::SimpleTask(std::string filelist, std::string treename) :
 
 void SimpleTask::Initialize() {
   std::vector<Qn::Axis> noaxes;
-  eventaxes_.emplace_back("CentralityVZERO", 8, 0, 100, 1);
+  eventaxes_.emplace_back("CentralityVZERO", 8, 0, 80, 1);
 
   auto tpc = *values_.at("TPC_reference");
   auto vc = *values_.at("VZEROC_reference");
   auto va = *values_.at("VZEROA_reference");
-  Qn::Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
-  Qn::Axis rebinetaaxis("Eta", 2, -0.8, 0.8, VAR::kEta);
-  auto addqvec = [](Qn::QVector a, Qn::QVector b) {return a + b;};
-//  auto tpceta = tpc.Projection({etaaxis},addqvec);
-//  tpceta = tpceta.Rebin(addqvec,{rebinetaaxis});
-  Qn::Correlation TpcVc({tpc, va}, eventaxes_);
-  Qn::Correlation TpcVa({tpc, va}, eventaxes_);
-  Qn::Correlation VcVa({vc, va}, eventaxes_);
-  correlations_.insert({"tpcvc", TpcVc});
-  correlations_.insert({"tpcva", TpcVa});
-  correlations_.insert({"vcva", VcVa});
+  auto fc = *values_.at("FMDC_reference");
+  auto fa = *values_.at("FMDA_reference");
+  auto zc = *values_.at("ZDCC_reference");
+  auto za = *values_.at("ZDCA_reference");
 
-  ab = new TProfile("ab","ab",5,0,100);
-  ac = new TProfile("ac","ac",5,0,100);
-  bc = new TProfile("bc","bc",5,0,100);
+  correlations_.insert({"rtpcvc", {{tpc, vc}, eventaxes_}});
+  correlations_.insert({"rtpcva", {{tpc, va}, eventaxes_}});
+  correlations_.insert({"rvcva", {{vc, va}, eventaxes_}});
+  correlations_.insert({"rtpcfc", {{tpc, fc}, eventaxes_}});
+  correlations_.insert({"rtpcfa", {{tpc, fa}, eventaxes_}});
+  correlations_.insert({"rfcfa", {{fc, fa}, eventaxes_}});
+  correlations_.insert({"rtpczc", {{tpc, zc}, eventaxes_}});
+  correlations_.insert({"rtpcza", {{tpc, za}, eventaxes_}});
+  correlations_.insert({"rzcza", {{zc, za}, eventaxes_}});
 }
 
 void SimpleTask::Run() {
   AddEventVariable("CentralityVZERO");
   AddDataContainer("TPC_reference");
   AddDataContainer("TPC");
-  AddDataContainer("VZEROC_reference");
-  AddDataContainer("FMDC_reference");
-  AddDataContainer("FMDA_reference");
   AddDataContainer("VZEROA_reference");
+  AddDataContainer("VZEROC_reference");
+  AddDataContainer("FMDA_reference");
+  AddDataContainer("FMDC_reference");
+  AddDataContainer("ZDCA_reference");
+  AddDataContainer("ZDCC_reference");
+
   int events = 1;
   reader_.SetEntry(0);
   Initialize();
@@ -53,10 +55,15 @@ void SimpleTask::Run() {
   }
   std::cout << events << std::endl;
 
-  auto tpcvc = correlations_.at("tpcvc").GetCorrelation();
-  auto tpcva = correlations_.at("tpcva").GetCorrelation();
-  auto vcva = correlations_.at("vcva").GetCorrelation();
-
+  auto rtpcvc = correlations_.at("rtpcvc").GetCorrelation();
+  auto rtpcva = correlations_.at("rtpcva").GetCorrelation();
+  auto rvcva = correlations_.at("rvcva").GetCorrelation();
+  auto rtpcfc = correlations_.at("rtpcfc").GetCorrelation();
+  auto rtpcfa = correlations_.at("rtpcfa").GetCorrelation();
+  auto rfcfa = correlations_.at("rfcfa").GetCorrelation();
+  auto rtpczc = correlations_.at("rtpczc").GetCorrelation();
+  auto rtpcza = correlations_.at("rtpcza").GetCorrelation();
+  auto rzcza = correlations_.at("rzcza").GetCorrelation();
 
   auto multiply = [](Qn::Statistics a, Qn::Statistics b) {
     return a * b;
@@ -70,49 +77,23 @@ void SimpleTask::Run() {
     return a.Sqrt();
   };
 
-  auto pac = ac->ProjectionX();
-  auto pab = ab->ProjectionX();
-  auto pbc = bc->ProjectionX();
 
-  auto ra = (TH1D *) pab->Clone("test2");
-  ra->Multiply(pac);
-  ra->Divide(pbc);
-//  SqrtHist(*ra);
+  auto rtpcvcva = rtpcvc.Apply(rtpcva,multiply).Apply(rvcva,divide).Map(sqrt);
+  auto rtpcfcfa = rtpcfc.Apply(rtpcfa,multiply).Apply(rfcfa,divide).Map(sqrt);
+  auto rtpczcza = rtpczc.Apply(rtpcza,multiply).Apply(rzcza,divide).Map(sqrt);
 
 
-  auto step1 = tpcvc.Apply(tpcva,multiply);
-  auto step2 = tpcvc.Apply(tpcva,multiply).Apply(vcva,divide);//.Map(sqrt);
-  auto resolution = tpcvc.Apply(tpcva,multiply).Apply(vcva,divide).Map(sqrt);
-
-
-  auto gstep1 = Qn::DataToProfileGraph(step1);
-  auto gstep2 = Qn::DataToProfileGraph(step2);
-  auto gresolution = Qn::DataToProfileGraph(resolution);
-  auto gtpcvc = Qn::DataToProfileGraph(tpcvc);
-  auto gtpcva = Qn::DataToProfileGraph(tpcva);
-  auto gvcva = Qn::DataToProfileGraph(vcva);
+  auto grtpcvcva = Qn::DataToProfileGraph(rtpcvcva);
+  auto grtpcfcfa = Qn::DataToProfileGraph(rtpcfcfa);
+  auto grtpczcza = Qn::DataToProfileGraph(rtpczcza);
 
 //
   auto *c1 = new TCanvas("c1", "c1", 1200, 600);
-  c1->Divide(4);
   c1->cd(1);
-//  ra->SetMaximum(1);
-//  ra->SetMinimum(0);
-  gresolution.Draw("AP");
-  c1->cd(2);
-//  ac->Draw();
-  ra->Draw();
-  ra->SetMinimum(0);
-  ra->SetMaximum(1);
-  gstep2.Draw("P");
-  c1->cd(3);
-//  ab->Draw();
-  gstep1.Draw("AP");
-  c1->cd(4);
-//  bc->Draw();
-  pbc->Draw();
-  gvcva.Draw("P");
-//  c1->SaveAs("test.root");
+  grtpcfcfa.Draw("AP");
+  grtpcvcva.Draw("P");
+  grtpczcza.Draw("P");
+
   c1->SaveAs("test.pdf");
 
 }
@@ -123,11 +104,11 @@ void SimpleTask::Process() {
   auto tpc = *values_.at("TPC_reference");
   auto vc = *values_.at("VZEROC_reference");
   auto va = *values_.at("VZEROA_reference");
-  Qn::Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
-  Qn::Axis rebinetaaxis("Eta", 2, -0.8, 0.8, VAR::kEta);
-  auto addqvec = [](Qn::QVector a, Qn::QVector b) {return a + b;};
-  auto tpceta = tpc.Projection({etaaxis},addqvec);
-  tpceta = tpceta.Rebin(addqvec,{rebinetaaxis});
+  auto fc = *values_.at("FMDC_reference");
+  auto fa = *values_.at("FMDA_reference");
+  auto zc = *values_.at("ZDCC_reference");
+  auto za = *values_.at("ZDCA_reference");
+
 
   std::vector<float> eventparameters;
   eventparameters.push_back(*eventvalues_.at("CentralityVZERO"));
@@ -148,21 +129,15 @@ void SimpleTask::Process() {
     return cos_n(2, psi_n(a.at(0), 2), psi_n(a.at(1), 2));
   };
 
-  auto correlatetest = [psi_n, cos_n](Qn::QVector a, Qn::QVector b) {
-    return cos_n(2, psi_n(a, 2), psi_n(b, 2));
-  };
-//
-//  std::cout << *eventvalues_.at("CentralityVZERO") << " : " << tpc.GetElement(0).n() << "\n ";
-
-  ab->Fill(*eventvalues_.at("CentralityVZERO"),correlatetest(tpc.GetElement(0),va.GetElement(0)));
-  ac->Fill(*eventvalues_.at("CentralityVZERO"),correlatetest(tpc.GetElement(0),vc.GetElement(0)));
-  bc->Fill(*eventvalues_.at("CentralityVZERO"),correlatetest(va.GetElement(0),vc.GetElement(0)));
-//
-//
-  correlations_.at("tpcva").Fill({tpc, va}, eventbin, correlate);
-  correlations_.at("tpcvc").Fill({tpc, vc}, eventbin, correlate);
-  correlations_.at("vcva").Fill({va, vc}, eventbin, correlate);
-
+  correlations_.at("rtpcva").Fill({tpc, va}, eventbin, correlate);
+  correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, correlate);
+  correlations_.at("rvcva").Fill({va, vc}, eventbin, correlate);
+  correlations_.at("rtpcfa").Fill({tpc, fa}, eventbin, correlate);
+  correlations_.at("rtpcfc").Fill({tpc, fc}, eventbin, correlate);
+  correlations_.at("rfcfa").Fill({fa, fc}, eventbin, correlate);
+  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, correlate);
+  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, correlate);
+  correlations_.at("rzcza").Fill({za, zc}, eventbin, correlate);
 }
 
 std::unique_ptr<TChain> SimpleTask::MakeChain(std::string filename, std::string treename) {
