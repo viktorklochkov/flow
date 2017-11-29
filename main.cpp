@@ -18,8 +18,8 @@
 
 int main(int argc, char **argv) {
   auto start = std::chrono::system_clock::now();
-  auto start_c = std::chrono::system_clock::to_time_t(start);
-  std::cout << "begin timestamp: " << std::put_time(std::localtime(&start_c), "%c") << "\n";
+//  auto start_c = std::chrono::system_clock::to_time_t(start);
+//  std::cout << "begin timestamp: " << std::put_time(std::localtime(&start_c), "%c") << "\n";
 
   ROOT::EnableImplicitMT(2);
   if (strcmp(argv[3], "correct") == 0) {
@@ -34,9 +34,9 @@ int main(int argc, char **argv) {
   }
 
   auto end = std::chrono::system_clock::now();
-  auto end_c = std::chrono::system_clock::to_time_t(end);
+//  auto end_c = std::chrono::system_clock::to_time_t(end);
   std::chrono::duration<double> elapsed_seconds = end - start;
-  std::cout << "end timestamp: " << std::put_time(std::localtime(&end_c), "%c") << "\n";
+//  std::cout << "end timestamp: " << std::put_time(std::localtime(&end_c), "%c") << "\n";
   std::cout << "elapsed time: " << elapsed_seconds.count() << " s\n";
   return 0;
 }
