@@ -61,6 +61,8 @@ class Statistics {
   float sum2_ = 0;
   int entries_ = 0;
   float error_ = 0;
+//  std::vector<float> binedges_;
+//  std::vector<float> bincontent_;
 };
 
 inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
@@ -88,7 +90,7 @@ inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
   float nmean;
   float nsum2;
   float nerror;
-  if (std::abs(b.Mean()- 0) > 10e-4) {
+  if (std::abs(b.Mean() - 0) > 10e-4) {
     nmean = a.Mean() / b.Mean();
     nsum2 = a.Mean() * a.Mean() * b.Error() * b.Error()
         + a.Mean() * a.Mean() * a.Error() * a.Error() / (b.Mean() * b.Mean() * b.Mean() * b.Mean());

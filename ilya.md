@@ -16,8 +16,10 @@
 
 ## Statistics
 * fix variance calculation; naive version is not stable.
+* add histogram feature
 
 ##Find invalid bins
+
 
 #DONE
 

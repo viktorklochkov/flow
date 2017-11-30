@@ -179,7 +179,7 @@ class DataContainer : public TObject {
    */
   std::vector<long> GetIndex(const long offset) const {
     long temp = offset;
-    std::vector<long> indices = {};
+    std::vector<long> indices;
     if ((u_long) offset >= data_.size()) return indices;
     indices.resize((std::vector<int>::size_type) dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
@@ -276,9 +276,18 @@ class DataContainer : public TObject {
    */
   template<typename Function>
   void CallOnElement(const std::vector<long> &indices, Function &&lambda) {
-    long a = GetLinearIndex(indices);
-    auto &element = data_.at(a);
-    lambda(element);
+    lambda(data_[GetLinearIndex(indices)]);
+  }
+
+  /**
+* Calls function on element for integrated datacontainer.
+* @tparam Function type of function to be called on the object
+* @param coordinates coordinates of element to be modified
+* @param lambda function to be called on the element. Takes element of type T as an argument.
+*/
+  template<typename Function>
+  void CallOnElement(Function &&lambda) {
+    lambda(data_[0]);
   }
 
   /**
@@ -289,8 +298,7 @@ class DataContainer : public TObject {
  */
   template<typename Function>
   void CallOnElement(const std::vector<float> &coordinates, Function &&lambda) {
-    auto &element = data_.at(GetLinearIndex(GetIndex(coordinates)));
-    lambda(element);
+    lambda(data_[GetLinearIndex(GetIndex(coordinates))]);
   }
 
   /**
@@ -301,8 +309,7 @@ class DataContainer : public TObject {
 */
   template<typename Function>
   inline void CallOnElement(const long index, Function &&lambda) {
-    auto &element = data_[index];
-    lambda(element);
+    lambda(data_[index]);
   }
 
   /**
@@ -327,10 +334,9 @@ class DataContainer : public TObject {
   * @param element element to be added.
   */
   template<typename Function>
-  void AddElement(const long &index, Function &&lambda, T element) {
-    auto &oelement = data_.at(index);
+  void AddElement(const long index, Function &&lambda, T element) {
     auto add = [lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
-    add(oelement, element);
+    add(data_[index], element);
   }
 
 /**
@@ -354,16 +360,15 @@ class DataContainer : public TObject {
    * @return
    */
   DataContainer<T> Select(const DataContainer<T> &data, Qn::Axis &axis) const {
-    DataContainer<T>selected;
+    DataContainer<T> selected;
     long axisposition = 0;
     for (const auto &a : axes_) {
       axisposition++;
       if (a.Name() == axis.Name()) {
         selected.AddAxis(axis);
         break;
-      } else {
-        selected.AddAxis(a);
       }
+      selected.AddAxis(a);
     }
     long index = 0;
     for (const auto &bin : data) {
@@ -375,7 +380,7 @@ class DataContainer : public TObject {
       auto rebinnedindex = axis.FindBin(binmid);
       if (rebinnedindex != -1) {
         indices[axisposition] = rebinnedindex;
-        selected.CallOnElement(indices, [bin](T &element){element = bin;});
+        selected.CallOnElement(indices, [bin](T &element) { element = bin; });
       }
     }
   }
@@ -498,9 +503,9 @@ class DataContainer : public TObject {
  * @param coordinates floating point coordinates
  * @return index belonging to coordinates
  */
-  std::vector<long> GetIndex(std::vector<float> coordinates) {
+  std::vector<long> GetIndex(const std::vector<float> &coordinates) {
     std::vector<long> indices;
-    std::vector<int>::size_type axisindex = 0;
+    u_long axisindex = 0;
     for (auto axis : axes_) {
       auto bin = axis.FindBin(coordinates.at(axisindex));
       if (bin >= axis.size() || bin < 0)
@@ -522,7 +527,7 @@ class DataContainer : public TObject {
   }
 
   /// \cond CLASSIMP
- ClassDef(DataContainer, 3);
+ ClassDef(DataContainer, 4);
   /// \endcond
 };
 

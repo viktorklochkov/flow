@@ -60,50 +60,53 @@ class Correlation {
    * @param lambda correlation function
    */
   template<typename Function>
-  void Fill(std::vector<CONTAINERS> input, std::vector<long> eventindex, Function lambda) {
+  void Fill(const std::vector<CONTAINERS> &input, std::vector<long> &eventindex, Function &&lambda) {
     std::vector<std::vector<long>> index;
     std::vector<QVector> contents;
-    inputs_ = std::move(input);
-    u_int iteration = 0;
-    FillCorrelation(eventindex, index, contents, iteration, lambda);
+    contents.resize(input.size());
+    inputs_ = input;
+    uint iteration = 0;
+    std::vector<long> cindex;
+    cindex.reserve(10);
+    index.reserve(10);
+    FillCorrelation(eventindex, index, contents, iteration, lambda, cindex);
   }
   template<typename Function>
   void FillCorrelation(std::vector<long> &eventindex,
                        std::vector<std::vector<long>> &index,
                        std::vector<QVector> &contents,
                        u_int iteration,
-                       Function &&lambda) {
-
+                       Function &&lambda,
+                       std::vector<long> &cindex) {
+    auto &datacontainer = *(inputs_.begin() + iteration);
     if (iteration + 1 == inputs_.size()) {
-      auto datacontainer = *(inputs_.begin() + iteration);
       int ibin = 0;
       for (auto &bin : datacontainer) {
         auto binindex = datacontainer.GetIndex(ibin);
         if (datacontainer.size() != 1) index.push_back(binindex);
         index.push_back(eventindex);
-        std::vector<long> cindex;
-        std::for_each(std::begin(index), std::end(index), [&cindex](std::vector<long> element) {
+        u_long i = 0;
+        std::for_each(std::begin(index), std::end(index), [&cindex, &i](const std::vector<long> &element) {
           for (const auto &a : element) { cindex.push_back(a); }
+          ++i;
         });
-        contents.push_back(bin);
+        contents[iteration] = bin;
         data_correlation_.CallOnElement(cindex,
                                         [lambda, &contents](Qn::Statistics &a) { a.Update(lambda(contents)); });
         if (datacontainer.size() != 1) index.erase(index.end() - 2);
         index.erase(index.end() - 1);
-        contents.erase(contents.end() - 1);
         ++ibin;
+        cindex.clear();
       }
       index.clear();
       return;
     }
-
-    auto datacontainer = *(inputs_.begin() + iteration);
     int ibin = 0;
     for (auto &bin : datacontainer) {
       auto binindex = datacontainer.GetIndex(ibin);
       if (datacontainer.size() != 1) index.push_back(binindex);
-      contents.push_back(bin);
-      FillCorrelation(eventindex, index, contents, iteration + 1, lambda);
+      contents[iteration] = bin;
+      FillCorrelation(eventindex, index, contents, iteration + 1, lambda, cindex);
       ++ibin;
     }
   }

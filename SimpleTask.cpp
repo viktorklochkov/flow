@@ -137,15 +137,6 @@ void SimpleTask::Run() {
   gv2tpcvaxx.SetTitle("v2");
   gv2tpcvaxx.Draw("ALP");
   gv2tpcvayy.Draw("LP");
-//  grzatpczc.SetLineColor(kViolet);
-//  grzatpczc.SetMarkerColor(kViolet);
-//  grzatpczc.SetMarkerStyle(kCircle);
-//  grzatpczc.Draw("P");
-//  grzctpcza.SetLineColor(kViolet);
-//  grzctpcza.SetMarkerColor(kViolet);
-//  grzctpcza.SetMarkerStyle(kOpenSquare);
-//  gzazc.SetMarkerStyle(kStar);
-//  gzazc.Draw("P");
 
   c1->SaveAs("test.root");
   c1->SaveAs("test.pdf");
@@ -173,20 +164,14 @@ void SimpleTask::Process() {
   }
 
   auto resolution = [] (std::vector<Qn::QVector> a) {
-    return cos(2 * (Qn::Resolution::PsiN(a.at(0), 2) - Qn::Resolution::PsiN(a.at(1), 2)));
+    return cos(2 * (Qn::Resolution::PsiN(a[0], 2) - Qn::Resolution::PsiN(a[1], 2)));
   };
 
   auto xx = [] (std::vector<Qn::QVector> a) {
-    return a.at(0).x(2) * a.at(1).Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2);
-  };
-  auto xy = [] (std::vector<Qn::QVector> a) {
-    return a.at(0).x(2) * a.at(1).y(2);
-  };
-  auto yx = [] (std::vector<Qn::QVector> a) {
-    return a.at(0).y(2) * a.at(1).x(2);
+    return a[0].x(2) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2);
   };
   auto yy = [] (std::vector<Qn::QVector> a) {
-    return a.at(0).y(2) * a.at(1).Normal(Qn::QVector::Normalization::QOVERNORMQ).y(2);
+    return a[0].y(2) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).y(2);
   };
 //
   correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
@@ -197,8 +182,8 @@ void SimpleTask::Process() {
   correlations_.at("rfcfa").Fill({fa, fc}, eventbin, resolution);
   correlations_.at("v2tpcvaxx").Fill({tpc, va}, eventbin, xx);
   correlations_.at("v2tpcvayy").Fill({tpc, va}, eventbin, yy);
-//  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, resolution);
-//  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, resolution);
+  correlations_.at("rtpcza").Fill({tpc, za}, eventbin, resolution);
+  correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, resolution);
 //  correlations_.at("rzcza").Fill({za, zc}, eventbin, zdccorrelation);
 }
 

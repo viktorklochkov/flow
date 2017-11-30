@@ -28,6 +28,11 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
   TIter next(trackList);
   next.Reset();
   auto *h_track_qa = (THnSparseF *) histograms.FindObject("trackqa");
+  auto &axes = datacontainer->GetAxes();
+  std::vector<float> trackparams;
+  trackparams.reserve(axes.size());
+  long ntracks = trackList->GetSize();
+  std::for_each(datacontainer->begin(), datacontainer->end(), [ntracks](std::vector<DataVector> &vector){vector.reserve(ntracks);});
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
@@ -43,9 +48,6 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
       }
     }
     values[-1] = 0;
-    auto axes = datacontainer->GetAxes();
-    std::vector<float> trackparams;
-    trackparams.reserve(axes.size());
     for (const auto &axis : axes) {
       trackparams.push_back(values[axis.Id()]);
     }
@@ -74,8 +76,7 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
     for (const auto &axis : axes) {
       float etavalue = 0;
       if (axis.IsIntegrated()) {
-        datacontainer->CallOnElement(std::vector<float>{0.5},
-                                     [ich, Y, X, weight](std::vector<DataVector> &vector) {
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
                                        vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
                                      });
       } else {
@@ -103,8 +104,7 @@ void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
     for (const auto &axis : axes) {
       float etavalue = 0;
       if (axis.IsIntegrated()) {
-        datacontainer->CallOnElement(std::vector<float>{0.5},
-                                     [ich, Y, X, weight](std::vector<DataVector> &vector) {
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
                                        vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
                                      });
       } else {
@@ -129,8 +129,7 @@ void FillFMDA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
     if (fmd->Id() < 1000) continue;
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
-        datacontainer->CallOnElement(std::vector<float>{0.5},
-                                     [fmd](std::vector<DataVector> &vector) {
+        datacontainer->CallOnElement([fmd](std::vector<DataVector> &vector) {
                                        vector.emplace_back(fmd->Phi(), fmd->Multiplicity());
                                      });
       } else {
@@ -154,8 +153,7 @@ void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
     if (fmd->Id() > 1000) continue;
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
-        datacontainer->CallOnElement(std::vector<float>{0.5},
-                                     [fmd](std::vector<DataVector> &vector) {
+        datacontainer->CallOnElement([fmd](std::vector<DataVector> &vector) {
                                        vector.emplace_back(fmd->Phi(), fmd->Multiplicity());
                                      });
       } else {
@@ -178,8 +176,7 @@ void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
       if (axis.IsIntegrated()) {
         double weight = event.EnergyZDCnTree(ich);
         if (weight < 0.01) weight = 0.;
-        datacontainer->CallOnElement(std::vector<float>{0.5},
-                                     [ich, Y, X, weight](std::vector<DataVector> &vector) {
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
                                        vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
                                      });
       }
@@ -196,8 +193,7 @@ void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
       if (axis.IsIntegrated()) {
         double weight = event.EnergyZDCnTree(ich);
         if (weight < 0.01) weight = 0.;
-        datacontainer->CallOnElement(std::vector<float>{0.5},
-                                     [ich, Y, X, weight](std::vector<DataVector> &vector) {
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
                                        vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
                                      });
       }

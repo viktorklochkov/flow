@@ -139,7 +139,7 @@ class VZEROC_reference : public DetectorConfig {
 class FMDA_reference : public DetectorConfig {
  public:
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
-//    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
     auto align = new QnCorrectionsQnVectorAlignment();
     align->SetHarmonicNumberForAlignment(2);
