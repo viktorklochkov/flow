@@ -55,6 +55,7 @@ class Statistics {
   friend Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b);
+  friend Qn::Statistics operator*(Qn::Statistics a, float b);
  private:
   float mean_ = 0;
   float sum_ = 0;
@@ -64,6 +65,16 @@ class Statistics {
 //  std::vector<float> binedges_;
 //  std::vector<float> bincontent_;
 };
+
+inline Qn::Statistics operator*(Qn::Statistics a, float b) {
+  float nsum = a.Sum()*2;
+  float nsum2 = a.Sum2()*2;
+  int nentries = a.Entries();
+  float nmean = nsum / (float) nentries;
+  float nerror = a.error_;
+  Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
+  return c;
+}
 
 inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
   float nsum = a.Sum() + b.Sum();

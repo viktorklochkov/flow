@@ -13,7 +13,7 @@ SimpleTask::SimpleTask(std::string filelist, std::string treename) :
 
 void SimpleTask::Initialize() {
   std::vector<Qn::Axis> noaxes;
-  eventaxes_.emplace_back("CentralityVZERO", 8, 0, 80, 1);
+  eventaxes_.emplace_back("CentralityVZERO", 10, 0, 80, 1);
 
   auto tpc = *values_.at("TPC_reference");
   auto vc = *values_.at("VZEROC_reference");
@@ -34,6 +34,8 @@ void SimpleTask::Initialize() {
   correlations_.insert({"rzcza", {{zc, za}, eventaxes_}});
   correlations_.insert({"v2tpcvaxx", {{tpc, va}, eventaxes_}});
   correlations_.insert({"v2tpcvayy", {{tpc, va}, eventaxes_}});
+  correlations_.insert({"vcvaxx", {{vc, va}, eventaxes_}});
+  correlations_.insert({"vcvayy", {{vc, va}, eventaxes_}});
 }
 
 void SimpleTask::Run() {
@@ -68,6 +70,8 @@ void SimpleTask::Run() {
   auto rzcza = correlations_.at("rzcza").GetCorrelation();
   auto v2tpcvaxx = correlations_.at("v2tpcvaxx").GetCorrelation();
   auto v2tpcvayy = correlations_.at("v2tpcvayy").GetCorrelation();
+  auto vcvaxx = correlations_.at("vcvaxx").GetCorrelation();
+  auto vcvayy = correlations_.at("vcvayy").GetCorrelation();
 
   auto multiply = [](Qn::Statistics a, Qn::Statistics b) {
     return a * b;
@@ -81,6 +85,10 @@ void SimpleTask::Run() {
     return a.Sqrt();
   };
 
+  auto multiscalar = [](Qn::Statistics a) {
+    return a * 2;
+  };
+
 
   auto rtpcvcva = rtpcvc.Apply(rtpcva,multiply).Apply(rvcva,divide).Map(sqrt);
   auto rtpcfcfa = rtpcfc.Apply(rtpcfa,multiply).Apply(rfcfa,divide).Map(sqrt);
@@ -91,8 +99,10 @@ void SimpleTask::Run() {
   auto rfatpcfc = rtpcfc.Apply(rfcfa,multiply).Apply(rtpcfa,divide).Map(sqrt);
   auto rzctpcza = rtpcfa.Apply(rfcfa,multiply).Apply(rtpcfc,divide).Map(sqrt);
   auto rzatpczc = rtpczc.Apply(rzcza,multiply).Apply(rtpczc,divide).Map(sqrt);
-  v2tpcvaxx = v2tpcvaxx.Apply(rvatpcvc,divide);
-  v2tpcvayy = v2tpcvayy.Apply(rvatpcvc,divide);
+  vcvaxx.Map(multiscalar).Map(sqrt);
+  vcvayy.Map(multiscalar).Map(sqrt);
+  v2tpcvaxx = v2tpcvaxx.Apply(vcvaxx,divide);
+  v2tpcvayy = v2tpcvayy.Apply(vcvayy,divide);
 
 
   auto grtpcvcva = Qn::DataToProfileGraph(rtpcvcva);
@@ -112,6 +122,8 @@ void SimpleTask::Run() {
   c1->cd(1);
   grtpcfcfa.SetTitle("Resolution");
   grtpcfcfa.Draw("AP");
+  grtpcfcfa.SetMinimum(0);
+  grtpcfcfa.SetMinimum(1.0);
   grtpcfcfa.SetLineColor(kRed);
   grtpcfcfa.SetMarkerColor(kRed);
   grtpcfcfa.SetMarkerStyle(kOpenSquare);
@@ -136,6 +148,8 @@ void SimpleTask::Run() {
   c2->cd();
   gv2tpcvaxx.SetTitle("v2");
   gv2tpcvaxx.Draw("ALP");
+  gv2tpcvaxx.SetMaximum(0.15);
+  gv2tpcvaxx.SetMinimum(0.0);
   gv2tpcvayy.Draw("LP");
 
   c1->SaveAs("test.root");
@@ -163,15 +177,15 @@ void SimpleTask::Process() {
     if (bin == -1) return;
   }
 
-  auto resolution = [] (std::vector<Qn::QVector> a) {
+  auto resolution = [] (const std::vector<Qn::QVector> &a) {
     return cos(2 * (Qn::Resolution::PsiN(a[0], 2) - Qn::Resolution::PsiN(a[1], 2)));
   };
 
-  auto xx = [] (std::vector<Qn::QVector> a) {
+  auto xx = [] (const std::vector<Qn::QVector> &a) {
     return a[0].x(2) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2);
   };
-  auto yy = [] (std::vector<Qn::QVector> a) {
-    return a[0].y(2) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).y(2);
+  auto yy = [] (const std::vector<Qn::QVector> &a) {
+    return a[0].y(3) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).y(3);
   };
 //
   correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
@@ -184,6 +198,8 @@ void SimpleTask::Process() {
   correlations_.at("v2tpcvayy").Fill({tpc, va}, eventbin, yy);
   correlations_.at("rtpcza").Fill({tpc, za}, eventbin, resolution);
   correlations_.at("rtpczc").Fill({tpc, zc}, eventbin, resolution);
+  correlations_.at("vcvaxx").Fill({va, vc}, eventbin, xx);
+  correlations_.at("vcvayy").Fill({va, vc}, eventbin, yy);
 //  correlations_.at("rzcza").Fill({za, zc}, eventbin, zdccorrelation);
 }
 

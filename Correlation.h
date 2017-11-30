@@ -13,7 +13,6 @@
 
 namespace Qn {
 
-using CORR = DataContainer<Qn::Statistics>;
 using AXES = std::vector<Qn::Axis>;
 
 class Correlation {
@@ -60,7 +59,7 @@ class Correlation {
    * @param lambda correlation function
    */
   template<typename Function>
-  void Fill(const std::vector<CONTAINERS> &input, std::vector<long> &eventindex, Function &&lambda) {
+  void Fill(const std::vector<CONTAINERS> &input, const std::vector<long> &eventindex, Function &&lambda) {
     std::vector<std::vector<long>> index;
     std::vector<QVector> contents;
     contents.resize(input.size());
@@ -72,7 +71,7 @@ class Correlation {
     FillCorrelation(eventindex, index, contents, iteration, lambda, cindex);
   }
   template<typename Function>
-  void FillCorrelation(std::vector<long> &eventindex,
+  void FillCorrelation(const std::vector<long> &eventindex,
                        std::vector<std::vector<long>> &index,
                        std::vector<QVector> &contents,
                        u_int iteration,
@@ -92,7 +91,7 @@ class Correlation {
         });
         contents[iteration] = bin;
         data_correlation_.CallOnElement(cindex,
-                                        [lambda, &contents](Qn::Statistics &a) { a.Update(lambda(contents)); });
+                                        [&lambda, &contents](Qn::Statistics &a) { a.Update(lambda(contents)); });
         if (datacontainer.size() != 1) index.erase(index.end() - 2);
         index.erase(index.end() - 1);
         ++ibin;
@@ -118,7 +117,7 @@ class Correlation {
  * @param eventvars vector of event variables
  * @return vector of event axes.
  */
-inline std::vector<long> CalculateEventBin(AXES &eventaxes, std::vector<float> eventvars) {
+inline std::vector<long> CalculateEventBin(const AXES &eventaxes, const std::vector<float> &eventvars) {
   std::vector<long> index;
   int ie = 0;
   for (const auto &ae : eventaxes) {
