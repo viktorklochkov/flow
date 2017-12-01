@@ -99,10 +99,10 @@ void SimpleTask::Run() {
   auto rfatpcfc = rtpcfc.Apply(rfcfa,multiply).Apply(rtpcfa,divide).Map(sqrt);
   auto rzctpcza = rtpcfa.Apply(rfcfa,multiply).Apply(rtpcfc,divide).Map(sqrt);
   auto rzatpczc = rtpczc.Apply(rzcza,multiply).Apply(rtpczc,divide).Map(sqrt);
-  vcvaxx.Map(multiscalar).Map(sqrt);
-  vcvayy.Map(multiscalar).Map(sqrt);
-  v2tpcvaxx = v2tpcvaxx.Apply(vcvaxx,divide);
-  v2tpcvayy = v2tpcvayy.Apply(vcvayy,divide);
+  vcvaxx.Map(sqrt);
+  vcvayy.Map(sqrt);
+  v2tpcvaxx = v2tpcvaxx.Apply(rvatpcvc,divide);
+  v2tpcvayy = v2tpcvayy.Apply(rvatpcvc,divide);
 
 
   auto grtpcvcva = Qn::DataToProfileGraph(rtpcvcva);
@@ -123,7 +123,7 @@ void SimpleTask::Run() {
   grtpcfcfa.SetTitle("Resolution");
   grtpcfcfa.Draw("AP");
   grtpcfcfa.SetMinimum(0);
-  grtpcfcfa.SetMinimum(1.0);
+  grtpcfcfa.SetMaximum(1.0);
   grtpcfcfa.SetLineColor(kRed);
   grtpcfcfa.SetMarkerColor(kRed);
   grtpcfcfa.SetMarkerStyle(kOpenSquare);
@@ -148,13 +148,14 @@ void SimpleTask::Run() {
   c2->cd();
   gv2tpcvaxx.SetTitle("v2");
   gv2tpcvaxx.Draw("ALP");
-  gv2tpcvaxx.SetMaximum(0.15);
-  gv2tpcvaxx.SetMinimum(0.0);
+//  gv2tpcvaxx.SetMaximum(0.15);
+//  gv2tpcvaxx.SetMinimum(0.0);
   gv2tpcvayy.Draw("LP");
 
   c1->SaveAs("test.root");
   c1->SaveAs("test.pdf");
   c2->SaveAs("test2.pdf");
+  c2->SaveAs("test2.root");
 
 }
 
@@ -182,10 +183,10 @@ void SimpleTask::Process() {
   };
 
   auto xx = [] (const std::vector<Qn::QVector> &a) {
-    return a[0].x(2) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2);
+    return a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2) * a[1].x(2);
   };
   auto yy = [] (const std::vector<Qn::QVector> &a) {
-    return a[0].y(3) * a[1].Normal(Qn::QVector::Normalization::QOVERNORMQ).y(3);
+    return a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ).y(2) * a[1].y(2);
   };
 //
   correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);

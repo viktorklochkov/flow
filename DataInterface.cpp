@@ -33,6 +33,8 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
   trackparams.reserve(axes.size());
   long ntracks = trackList->GetSize();
   std::for_each(datacontainer->begin(), datacontainer->end(), [ntracks](std::vector<DataVector> &vector){vector.reserve(ntracks);});
+  const int ndims = 9;
+  std::array<double, ndims> qaparam = {};
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
@@ -40,11 +42,9 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
     if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 5.0) continue;
     if (fillhistograms == Fill::QA) {
       if (h_track_qa) {
-        const int ndims = 9;
-        double trackparams[ndims] =
-            {values[VAR::kPt], values[VAR::kEta], values[VAR::kPhi], values[VAR::kDcaXY], values[VAR::kDcaZ],
-             values[VAR::kTPCsignal], values[VAR::kCharge], values[VAR::kTPCchi2]};
-        h_track_qa->Fill(trackparams);
+            qaparam = {{values[VAR::kPt], values[VAR::kEta], values[VAR::kPhi], values[VAR::kDcaXY], values[VAR::kDcaZ],
+             values[VAR::kTPCsignal], values[VAR::kCharge], values[VAR::kTPCchi2]}};
+        h_track_qa->Fill(qaparam.data());
       }
     }
     values[-1] = 0;
@@ -53,7 +53,7 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
     }
     try {
       datacontainer->CallOnElement(trackparams, [values](std::vector<DataVector> &vector) {
-        vector.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
+        vector.emplace_back(values[VAR::kPhi]);
       });
     }
     catch (std::exception &) {
