@@ -127,7 +127,7 @@ class DataContainer : public TObject {
   T const &GetElement(const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
-    for (auto axis : axes_) {
+    for (const auto &axis : axes_) {
       auto bin = axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
@@ -144,7 +144,7 @@ class DataContainer : public TObject {
   T &ModifyElement(const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
-    for (auto axis : axes_) {
+    for (const auto &axis : axes_) {
       auto bin = axis.FindBin(values.at(axisindex));
       if (bin >= axis.size() || bin < 0)
         throw std::out_of_range("bin out of specified range");
@@ -506,9 +506,9 @@ class DataContainer : public TObject {
   std::vector<long> GetIndex(const std::vector<float> &coordinates) {
     std::vector<long> indices;
     u_long axisindex = 0;
-    for (auto axis : axes_) {
-      auto bin = axis.FindBin(coordinates.at(axisindex));
-      if (bin >= axis.size() || bin < 0)
+    for (const auto &axis : axes_) {
+      auto bin = axis.FindBin(coordinates[axisindex]);
+      if (bin < 0)
         throw std::out_of_range("bin out of specified range");
       indices.push_back(bin);
       axisindex++;

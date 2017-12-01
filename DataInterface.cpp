@@ -34,7 +34,7 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
   long ntracks = trackList->GetSize();
   std::for_each(datacontainer->begin(), datacontainer->end(), [ntracks](std::vector<DataVector> &vector){vector.reserve(ntracks);});
   const int ndims = 9;
-  std::array<double, ndims> qaparam = {};
+  std::array<double, ndims> qaparam{};
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);

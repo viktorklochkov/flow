@@ -99,8 +99,8 @@ void SimpleTask::Run() {
   auto rfatpcfc = rtpcfc.Apply(rfcfa,multiply).Apply(rtpcfa,divide).Map(sqrt);
   auto rzctpcza = rtpcfa.Apply(rfcfa,multiply).Apply(rtpcfc,divide).Map(sqrt);
   auto rzatpczc = rtpczc.Apply(rzcza,multiply).Apply(rtpczc,divide).Map(sqrt);
-  vcvaxx.Map(sqrt);
-  vcvayy.Map(sqrt);
+//  vcvaxx.Map(sqrt);
+//  vcvayy.Map(sqrt);
   v2tpcvaxx = v2tpcvaxx.Apply(rvatpcvc,divide);
   v2tpcvayy = v2tpcvayy.Apply(rvatpcvc,divide);
 
@@ -148,8 +148,8 @@ void SimpleTask::Run() {
   c2->cd();
   gv2tpcvaxx.SetTitle("v2");
   gv2tpcvaxx.Draw("ALP");
-//  gv2tpcvaxx.SetMaximum(0.15);
-//  gv2tpcvaxx.SetMinimum(0.0);
+  gv2tpcvaxx.SetMaximum(0.15);
+  gv2tpcvaxx.SetMinimum(0.0);
   gv2tpcvayy.Draw("LP");
 
   c1->SaveAs("test.root");
@@ -170,7 +170,6 @@ void SimpleTask::Process() {
   auto zc = *values_.at("ZDCC_reference");
   auto za = *values_.at("ZDCA_reference");
 
-
   std::vector<float> eventparameters;
   eventparameters.push_back(*eventvalues_.at("CentralityVZERO"));
   auto eventbin = Qn::CalculateEventBin(eventaxes_, eventparameters);
@@ -181,14 +180,13 @@ void SimpleTask::Process() {
   auto resolution = [] (const std::vector<Qn::QVector> &a) {
     return cos(2 * (Qn::Resolution::PsiN(a[0], 2) - Qn::Resolution::PsiN(a[1], 2)));
   };
-
   auto xx = [] (const std::vector<Qn::QVector> &a) {
-    return a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ).x(2) * a[1].x(2);
+    return a[0].x(2) * a[1].x(2);
   };
   auto yy = [] (const std::vector<Qn::QVector> &a) {
-    return a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ).y(2) * a[1].y(2);
+    return a[0].y(2) * a[1].y(2);
   };
-//
+
   correlations_.at("rtpcva").Fill({tpc, va}, eventbin, resolution);
   correlations_.at("rtpcvc").Fill({tpc, vc}, eventbin, resolution);
   correlations_.at("rvcva").Fill({va, vc}, eventbin, resolution);

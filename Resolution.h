@@ -18,10 +18,6 @@ inline float PsiN(Qn::QVector a, int n) {
   return 1 / (float) n * atan2(a.y(n), a.x(n));
 }
 
-inline float Cos(int n, float a, float b) {
-  return cos((float) n * (a - b));
-};
-
 }
 }
 
