@@ -4,7 +4,7 @@
 
 #ifndef FLOW_QVECTOR_H
 #define FLOW_QVECTOR_H
-
+#include <iostream>
 #include <array>
 #include <functional>
 #include <complex>
@@ -66,10 +66,15 @@ class QVector {
 
   friend QVector operator+(QVector a, QVector b);
 
+  void Add(QVector a) {
+    *this + a;
+  }
+
   QVector Normal(Normalization norm) const {
     QVector c(*this);
-    c.norm_ = norm;
-    if (norm_ != Normalization::NOCALIB) c.DeNormal();
+    if (norm_ != Normalization::NOCALIB) {
+      c = c.DeNormal();
+    }
     switch (norm) {
       case (Normalization::NOCALIB): {
         break;
@@ -78,24 +83,27 @@ class QVector {
         auto add = [this](const QVec q) {
           return q / sum_weights_;
         };
-        std::transform(q_.begin(), q_.end(), c.q_.begin(), add);
+        std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
         break;
       }
       case (Normalization::QOVERSQRTM): {
         auto add = [this](const QVec q) {
           return q / std::sqrt(sum_weights_);
         };
-        std::transform(q_.begin(), q_.end(), c.q_.begin(), add);
+        std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
         break;
       }
       case (Normalization::QOVERNORMQ): {
         auto add = [](const QVec q) {
-          return q / Qn::norm(q);
+          if (Qn::norm(q) != 0) {
+            return q / Qn::norm(q);
+          } else {return q;}
         };
-        std::transform(q_.begin(), q_.end(), c.q_.begin(), add);
+        std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
         break;
       }
     }
+    c.norm_ = norm;
     return c;
   }
 

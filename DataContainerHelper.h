@@ -18,19 +18,19 @@ namespace Qn {
  * @param data Datacontainer with one Axis to plot as a TGraphErrors.
  * @return A graph with errors corresponding to the standard error of the mean.
  */
-inline TGraphErrors DataToProfileGraph(Qn::DataContainerStat data) {
+inline TGraphErrors *DataToProfileGraph(Qn::DataContainerStat data) {
   if (data.GetAxes().size() > 1) {
     std::cout << "Data container has more than one dimension. " << std::endl;
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
   }
-  TGraphErrors graph((int) data.size());
+  TGraphErrors *graph = new TGraphErrors((int) data.size());
   int ibin = 0;
   for (auto &bin : data) {
     float xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
     float xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
     float x = xlo + ((xhi - xlo) / 2);
-    graph.SetPoint(ibin, x, bin.Mean());
-    graph.SetPointError(ibin, (xhi - xlo) / 2, bin.Error());
+    graph->SetPoint(ibin, x, bin.Mean());
+    graph->SetPointError(ibin, (xhi - xlo) / 2, bin.Error());
     ibin++;
   }
   return graph;

@@ -17,9 +17,9 @@ namespace Qn {
 
 namespace Stats {
 
-inline float Sigma(const float mean, const float sum2, const int n) {
-  float variance = TMath::Abs(sum2 / (float) n - mean * mean);
-  return sqrt(variance) / sqrt((float) n);
+inline double Sigma(const double mean, const double sum2, const int n) {
+  double variance = TMath::Abs(sum2 / (double) n - mean * mean);
+  return sqrt(variance) / sqrt((double) n);
 }
 
 }
@@ -27,24 +27,24 @@ inline float Sigma(const float mean, const float sum2, const int n) {
 class Statistics {
  public:
   Statistics() = default;
-  Statistics(float mean, float sum, float sum2, float error, int entries) :
+  Statistics(double mean, double sum, double sum2, double error, int entries) :
       mean_(mean),
       sum_(sum),
       sum2_(sum2),
       entries_(entries),
       error_(error) {}
 
-  inline void Update(float value) {
-    mean_ = (mean_ * entries_ + value) / (entries_ + 1);
+  inline void Update(double value) {
     sum_ = sum_ + value;
+    ++entries_;
+    mean_ = sum_ / (entries_ + 1);
     sum2_ = sum2_ + value * value;
     error_ = Qn::Stats::Sigma(mean_, sum2_, entries_);
-    ++entries_;
   };
-  inline float Mean() const { return mean_; }
-  inline float Sum() const { return sum_; }
-  inline float Sum2() const { return sum2_; }
-  inline float Error() const { return error_; }
+  inline double Mean() const { return mean_; }
+  inline double Sum() const { return sum_; }
+  inline double Sum2() const { return sum2_; }
+  inline double Error() const { return error_; }
   inline int Entries() const { return entries_; }
 
   inline Statistics Sqrt() {
@@ -55,53 +55,53 @@ class Statistics {
   friend Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b);
-  friend Qn::Statistics operator*(Qn::Statistics a, float b);
+  friend Qn::Statistics operator*(Qn::Statistics a, double b);
  private:
-  float mean_ = 0;
-  float sum_ = 0;
-  float sum2_ = 0;
+  double mean_ = 0;
+  double sum_ = 0;
+  double sum2_ = 0;
   int entries_ = 0;
-  float error_ = 0;
-//  std::vector<float> binedges_;
-//  std::vector<float> bincontent_;
+  double error_ = 0;
+//  std::vector<double> binedges_;
+//  std::vector<double> bincontent_;
 };
 
-inline Qn::Statistics operator*(Qn::Statistics a, float b) {
-  float nsum = a.Sum()*2;
-  float nsum2 = a.Sum2()*2;
-  int nentries = a.Entries();
-  float nmean = nsum / (float) nentries;
-  float nerror = a.error_;
+inline Qn::Statistics operator*(Qn::Statistics a, double b) {
+  double nsum = a.sum_*b;
+  double nsum2 = a.sum2_*b;
+  int nentries = a.entries_;
+  double nmean = nsum / (double) nentries;
+  double nerror = a.error_;
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
 
 inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
-  float nsum = a.Sum() + b.Sum();
-  float nsum2 = a.Sum2() + b.Sum2();
-  int nentries = a.Entries() + b.Entries();
-  float nmean = nsum / (float) nentries;
-  float nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
+  double nsum = a.sum_ + b.sum_;
+  double nsum2 = a.sum2_ + b.sum2_;
+  int nentries = a.entries_ + b.entries_;
+  double nmean = nsum / (double) nentries;
+  double nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
 
 inline Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b) {
-  float nmean = a.Mean() * b.Mean();
-  int nentries = a.Entries() + b.Entries();
-  float nsum2 = a.Mean() * a.Mean() * b.Error() * b.Error() + a.Mean() * a.Mean() * b.Error() * b.Error();
-  float nerror = std::sqrt(nsum2);
-  float nsum = 0;
+  double nmean = a.mean_ * b.mean_;
+  int nentries = a.entries_ + b.entries_;
+  double nsum2 = a.mean_ * a.mean_ * b.error_ * b.error_ + a.mean_ * a.mean_ * b.error_ * b.error_;
+  double nerror = std::sqrt(nsum2);
+  double nsum = 0;
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 
 }
 
 inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
-  float nmean;
-  float nsum2;
-  float nerror;
-  if (std::abs(b.Mean() - 0) > 10e-4) {
+  double nmean = 0;
+  double nsum2 = 0;
+  double nerror = 0;
+  if (std::abs(b.Mean() - 0) > 10e-6) {
     nmean = a.Mean() / b.Mean();
     nsum2 = a.Mean() * a.Mean() * b.Error() * b.Error()
         + a.Mean() * a.Mean() * a.Error() * a.Error() / (b.Mean() * b.Mean() * b.Mean() * b.Mean());
@@ -114,7 +114,7 @@ inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
 
   }
   int nentries = a.Entries() + b.Entries();
-  float nsum = 0;
+  double nsum = 0;
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }

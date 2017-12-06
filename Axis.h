@@ -48,8 +48,8 @@ class Axis {
 
   typedef typename std::vector<float>::const_iterator citerator;
   typedef typename std::vector<float>::iterator iterator;
-  citerator cbegin() { return bin_edges_.cbegin(); } ///< iterator for external use
-  citerator cend() { return bin_edges_.cend(); } ///< iterator for external use
+  citerator begin() const { return bin_edges_.cbegin(); } ///< iterator for external use
+  citerator end() const { return bin_edges_.cend(); } ///< iterator for external use
   iterator begin() { return bin_edges_.begin(); } ///< iterator for external use
   iterator end() { return bin_edges_.end(); } ///< iterator for external use
   /**

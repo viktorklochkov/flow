@@ -19,7 +19,7 @@ class Correlation {
   using CONTAINERS = DataContainerQVector;
  public:
   Correlation() = default;
-  Correlation(std::vector<CONTAINERS> input, AXES &event) :
+  Correlation(const std::vector<CONTAINERS> input, const AXES &event) :
       inputs_(std::move(input)),
       axes_event_(event) {
     CreateCorrelationContainer();
@@ -35,6 +35,7 @@ class Correlation {
  */
   void CreateCorrelationContainer() {
     int i = 0;
+    data_correlation_.AddAxes(axes_event_);
     for (auto &input : inputs_) {
       if (!input.IsIntegrated()) {
         auto axes = input.GetAxes();
@@ -45,7 +46,6 @@ class Correlation {
         ++i;
       }
     }
-    data_correlation_.AddAxes(axes_event_);
   }
 
  public:
@@ -82,18 +82,14 @@ class Correlation {
       int ibin = 0;
       for (auto &bin : datacontainer) {
         auto binindex = datacontainer.GetIndex(ibin);
-        if (datacontainer.size() != 1) index.push_back(binindex);
-        index.push_back(eventindex);
-        u_long i = 0;
-        std::for_each(std::begin(index), std::end(index), [&cindex, &i](const std::vector<long> &element) {
+        if (!datacontainer.IsIntegrated()) index.push_back(binindex);
+        std::for_each(std::begin(index), std::end(index), [&cindex](const std::vector<long> &element) {
           for (const auto &a : element) { cindex.push_back(a); }
-          ++i;
         });
-        contents[iteration] = bin;
+        contents.at(iteration) = bin;
         data_correlation_.CallOnElement(cindex,
                                         [&lambda, &contents](Qn::Statistics &a) { a.Update(lambda(contents)); });
-        if (datacontainer.size() != 1) index.erase(index.end() - 2);
-        index.erase(index.end() - 1);
+        if (!datacontainer.IsIntegrated()) index.erase(index.end() - 1);
         ++ibin;
         cindex.clear();
       }
@@ -102,9 +98,10 @@ class Correlation {
     }
     int ibin = 0;
     for (auto &bin : datacontainer) {
+      index.push_back(eventindex);
       auto binindex = datacontainer.GetIndex(ibin);
-      if (datacontainer.size() != 1) index.push_back(binindex);
-      contents[iteration] = bin;
+      if (!datacontainer.IsIntegrated()) index.push_back(binindex);
+      contents.at(iteration) = bin;
       FillCorrelation(eventindex, index, contents, iteration + 1, lambda, cindex);
       ++ibin;
     }

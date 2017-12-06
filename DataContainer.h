@@ -39,8 +39,8 @@ class DataContainer : public TObject {
 
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
-  const_iterator cbegin() const { return data_.cbegin(); } ///< iterator for external use
-  const_iterator cend() const { return data_.cend(); } ///< iterator for external use
+  const_iterator begin() const { return data_.cbegin(); } ///< iterator for external use
+  const_iterator end() const { return data_.cend(); } ///< iterator for external use
   iterator begin() { return data_.begin(); } ///< iterator for external use
   iterator end() { return data_.end(); } ///< iterator for external use
 
@@ -124,7 +124,7 @@ class DataContainer : public TObject {
   * @param bins Vector of value to search for desired element
   * @return     Element
   */
-  T const &GetElement(const std::vector<float> &values) {
+  T const &GetElement(const std::vector<float> &values) const {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
     for (const auto &axis : axes_) {
@@ -183,10 +183,10 @@ class DataContainer : public TObject {
     if ((u_long) offset >= data_.size()) return indices;
     indices.resize(dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[i] = (int) (temp % axes_[i].size());
-      temp = temp / axes_[i].size();
+      indices[dimension_ - i -1] = (int) (temp % axes_[dimension_ - i -1].size());
+      temp = temp / axes_[dimension_ -i -1].size();
     }
-    indices[dimension_ - 1] = (int) temp;
+    indices[0] = (int) temp;
     return indices;
   }
 
@@ -346,7 +346,8 @@ class DataContainer : public TObject {
  * @return datacontainer after applying function.
  */
   template<typename Function>
-  DataContainer<T> Map(Function &&lambda) {
+  DataContainer<T> Map(Function &&lambda)
+  {
     DataContainer<T> result(*this);
     std::transform(data_.begin(), data_.end(), result.begin(), [lambda](T &element) { return lambda(element); });
     return result;
@@ -359,21 +360,22 @@ class DataContainer : public TObject {
    * @param axis subrange of axis to perform selection
    * @return
    */
-  DataContainer<T> Select(const DataContainer<T> &data, Qn::Axis &axis) const {
+  DataContainer<T> Select(const Qn::Axis &axis) const {
     DataContainer<T> selected;
     long axisposition = 0;
+    long tmpaxisposition = 0;
     for (const auto &a : axes_) {
-      axisposition++;
       if (a.Name() == axis.Name()) {
         selected.AddAxis(axis);
-        break;
+        axisposition = tmpaxisposition;
+      } else {
+        selected.AddAxis(a);
       }
-      selected.AddAxis(a);
+      tmpaxisposition++;
     }
     long index = 0;
-    for (const auto &bin : data) {
-      ++index;
-      auto indices = data.GetIndex(index);
+    for (const auto &bin : data_) {
+      auto indices = GetIndex(index);
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
       auto binmid = binlow + (binhigh - binlow) / 2;
@@ -382,38 +384,61 @@ class DataContainer : public TObject {
         indices[axisposition] = rebinnedindex;
         selected.CallOnElement(indices, [bin](T &element) { element = bin; });
       }
-    }
-  }
-
-  /**
-   * Apply binary function on two datacontainers. Axes must be equal.
-   * @tparam Function type of function
-   * @param data second Datacontainer
-   * @param lambda function with determines how two entries are processed.
-   * @return copy of datacontainer after applying function.
-   */
-  template<typename Function>
-  DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
-    long iaxis = 0;
-    for (const auto &axis : axes_) {
-      if (axis.Name() != data.GetAxes()[iaxis].Name()) {
-        throw std::runtime_error("axes are not equal");
-      }
-      ++iaxis;
-    }
-    long index = 0;
-    DataContainer<T> result;
-    result.AddAxes(axes_);
-    for (auto &bina : data_) {
-      auto binb = data.GetElement(index);
-      result.CallOnElement(index, [lambda, bina, binb](T &element) { element = lambda(bina, binb); });
       ++index;
     }
+    return selected;
+  }
+
+/**
+ * Apply function to two datacontainers.
+ * The axes need to have the same order.
+ * Elements in datacontainer with smaller dimensions are used as "integrated bins".
+ * @tparam Function type of function
+ * @param data Datacontainer
+ * @param lambda function to be applied on both elements
+ * @return resulting datacontainer.
+ */
+  template<typename Function>
+  DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
+    DataContainer<T> result;
+    std::vector<long> indices;
+    long index = 0;
+    if (axes_.size() > data.axes_.size()) {
+        for (long iaxis = 0; data.axes_.size() - 1; ++iaxis) {
+          if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
+            std::string errormsg = "Axes do not match.";
+            throw std::logic_error(errormsg);
+          }
+        }
+        result.AddAxes(axes_);
+        indices.reserve((unsigned long) dimension_);
+        for (const auto &bin_a : data_) {
+          indices = GetIndex(index);
+          auto bin_b = data.GetElement(indices);
+          result.CallOnElement(indices, [lambda, bin_a, bin_b](T &element) { element = lambda(bin_a, bin_b); });
+          ++index;
+        }
+      } else {
+        for (long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
+          if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
+            std::string errormsg = "Axes do not match.";
+            throw std::logic_error(errormsg);
+          }
+        }
+        result.AddAxes(data.axes_);
+        indices.reserve((unsigned long) data.dimension_);
+        for (const auto &bin_b : data.data_) {
+          indices = data.GetIndex(index);
+          auto bin_a = GetElement(indices);
+          result.CallOnElement(indices, [lambda, bin_a, bin_b](T &element) { element = lambda(bin_a, bin_b); });
+          ++index;
+        }
+      }
     return result;
   }
 
   template<typename Function>
-  DataContainer<T> Rebin(Function &&lambda, Qn::Axis &rebinaxis) const {
+  DataContainer<T> Rebin( const Axis &rebinaxis, Function &&lambda) const {
     DataContainer<T> rebinned;
     long axisposition = -1;
     bool axisfound = false;
@@ -437,9 +462,9 @@ class DataContainer : public TObject {
      * Check if there is no overlap in the bin edges.
      */
     bool rebin_ok = true;
-    for (auto rebinedge : rebinaxis) {
+    for (const auto &rebinedge : rebinaxis) {
       bool found = false;
-      for (const auto binedge : (Axis) axes_.at(axisposition)) {
+      for (const auto &binedge : (Axis) axes_.at(axisposition)) {
         float test = TMath::Abs(rebinedge - binedge);
         if (test < 10e-4) {
           found = rebin_ok;
@@ -490,7 +515,7 @@ class DataContainer : public TObject {
     return offset;
   }
 
-  bool IsIntegrated() const { return axes_.at(0).Name() == "integrated" ? true : false; }
+  bool IsIntegrated() const { return axes_[0].Id() == -1 ? true : false; }
 
  private:
   int dimension_ = 0; ///< dimensionality of data
@@ -503,7 +528,7 @@ class DataContainer : public TObject {
  * @param coordinates floating point coordinates
  * @return index belonging to coordinates
  */
-  std::vector<long> GetIndex(const std::vector<float> &coordinates) {
+  std::vector<long> GetIndex(const std::vector<float> &coordinates) const {
     std::vector<long> indices;
     u_long axisindex = 0;
     for (const auto &axis : axes_) {
@@ -527,7 +552,7 @@ class DataContainer : public TObject {
   }
 
   /// \cond CLASSIMP
- ClassDef(DataContainer, 4);
+ ClassDef(DataContainer, 5);
   /// \endcond
 };
 

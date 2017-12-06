@@ -15,7 +15,7 @@ namespace Qn {
 namespace Resolution {
 
 inline float PsiN(Qn::QVector a, int n) {
-  return 1 / (float) n * atan2(a.y(n), a.x(n));
+  return atan2(a.y(n), a.x(n)) / (float) n;
 }
 
 }
