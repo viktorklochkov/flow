@@ -53,13 +53,15 @@ void Task::Initialize() {
                                VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY, VAR::Variables::kDcaZ,
                               VAR::Variables::kTPCsignal, VAR::Variables::kTPCchi2, VAR::Variables::kCharge});
 
-  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0}, VAR::kPt);
-  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
+//  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0,10.0}, VAR::kPt);
+//  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
+  Axis ptaxis("Pt", {0.2,0.4,0.6,0.8,1.,1.25,1.5,1.75,2.0,2.5,3,3.5,4.,5.}, VAR::kPt);
+  Axis etaaxis("Eta", 4, -0.8, 0.8, VAR::kEta);
   Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsC("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7}, VAR::kEta);
 
-  Axes tpcaxes = {ptaxis, etaaxis};
+  Axes tpcaxes = {ptaxis};
   Axes vzeroaxes = {vzerorings};
   Axes vzeroaxesA = {vzeroringsA};
   Axes vzeroaxesC = {vzeroringsC};

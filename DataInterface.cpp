@@ -39,7 +39,7 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
     if (values[VAR::kEta] > 0.8 || values[VAR::kEta] < -0.8) continue;
-    if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 10.0) continue;
+    if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 5.0) continue;
     if (fillhistograms == Fill::QA) {
       if (h_track_qa) {
             qaparam = {{values[VAR::kPt], values[VAR::kEta], values[VAR::kPhi], values[VAR::kDcaXY], values[VAR::kDcaZ],

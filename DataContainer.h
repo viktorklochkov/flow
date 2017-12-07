@@ -229,7 +229,7 @@ class DataContainer : public TObject {
       }
     }
     if (axes.empty()) {
-      Qn::Axis integrated("integrated", 1, 0, 1, -999);
+      Qn::Axis integrated("integrated", 1, 0, 1, -1);
       projection.AddAxis(integrated);
       for (const auto &bin : data_) {
         long index = 0;
@@ -259,7 +259,7 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Projection(Function &&lambda) const {
     DataContainer<T> projection;
-    Qn::Axis integrated("integrated", 1, 0, 1, -999);
+    Qn::Axis integrated("integrated", 1, 0, 1, -1);
     projection.AddAxis(integrated);
     for (const auto &bin : data_) {
       long index = 0;

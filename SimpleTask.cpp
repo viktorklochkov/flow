@@ -24,8 +24,8 @@ void SimpleTask::Initialize() {
   auto zc = *values_.at("ZDCC_reference");
   auto za = *values_.at("ZDCA_reference");
 
-  correlations_.insert({"tpcetaptvc", {{tpcetapt, vc}, eventaxes_}});
-  correlations_.insert({"tpcetaptva", {{tpcetapt, vc}, eventaxes_}});
+  correlations_.insert({"tpcetaptvc", {{tpcetapt.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;}).Map([](Qn::QVector &a) {return a.Normal(Qn::QVector::Normalization::QOVERM);}), vc}, eventaxes_}});
+  correlations_.insert({"tpcetaptva", {{tpcetapt.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;}).Map([](Qn::QVector &a) {return a.Normal(Qn::QVector::Normalization::QOVERM);}), vc}, eventaxes_}});
   correlations_.insert({"tpcvc", {{tpc, vc}, eventaxes_}});
   correlations_.insert({"tpcva", {{tpc, vc}, eventaxes_}});
   correlations_.insert({"vavc", {{va, vc}, eventaxes_}});
@@ -76,24 +76,26 @@ void SimpleTask::Run() {
 
 //  auto tpcptva = tpcetaptva.Projection({{"0Pt",{0.2,2,10},819},eventaxes_[0]},[](Qn::Statistics a, Qn::Statistics b){return a + b;});
 
-  auto v2tpcetava = tpcetaptva.Apply(rvatpcptetavc,divide);
+  auto v2tpcetava = tpcetaptva.Apply(rvatpcvc,divide);
 //
-  auto v2tpcvaeta1 = v2tpcetava.Select({"0Eta",{-0.8,0},23});//.Projection({eventaxes_[0]},[](Qn::Statistics a, Qn::Statistics b){return a +b;});
-  auto v2tpcvaeta2 = v2tpcetava.Select({"0Eta",{0,0.8},23});//.Projection({eventaxes_[0]},[](Qn::Statistics a, Qn::Statistics b){return a+b;});
+//  auto v2tpcvaeta1 = v2tpcetava.Projection({eventaxes_[0]},[](Qn::Statistics a, Qn::Statistics b){return a +b;});
+
+//  auto v2tpcvaeta1 = v2tpcetava.Select({"0Pt",{0.2,5},23}).Projection({eventaxes_[0]},[](Qn::Statistics a, Qn::Statistics b){return a +b;});
+//  auto v2tpcvaeta2 = v2tpcetava.Select({"0Pt",{2,5},23}).Projection({eventaxes_[0]},[](Qn::Statistics a, Qn::Statistics b){return a+b;});
 
   auto *c1 = new TCanvas("c1", "c1", 1800, 600);
 //  c1->cd();
    auto gv2tpcva= Qn::DataToProfileGraph(v2tpcva);
   gv2tpcva->SetMaximum(0.15);
   gv2tpcva->SetMinimum(0);
-  gv2tpcva->Draw();
-  auto v2eta1 = Qn::DataToProfileGraph(v2tpcvaeta1);
-  v2eta1->Draw();
+  gv2tpcva->Draw("ALP");
+  auto v2eta1 = Qn::DataToProfileGraph(v2tpcetava);
+  v2eta1->Draw("P");
   v2eta1->SetLineColor(kBlue);
-  auto v2eta2 = Qn::DataToProfileGraph(v2tpcvaeta2);
-  v2eta2->Draw();
-  v2eta2->SetLineColor(kRed);
-  Qn::DataToProfileGraph(rvatpcvc)->Draw();
+//  auto v2eta2 = Qn::DataToProfileGraph(v2tpcvaeta2);
+//  v2eta2->Draw("LP");
+//  v2eta2->SetLineColor(kRed);
+//  Qn::DataToProfileGraph(rvatpcvc)->Draw();
   c1->SaveAs("test.root");
   c1->SaveAs("test.pdf");
 
@@ -123,8 +125,10 @@ void SimpleTask::Process() {
     return a[0].x(2) * a[1].x(2) + a[0].y(2) * a[1].y(2);
   };
 
-  correlations_.at("tpcetaptva").Fill({tpcetapt, va}, eventbin, scalar);
-  correlations_.at("tpcetaptvc").Fill({tpcetapt, vc}, eventbin, scalar);
+
+
+  correlations_.at("tpcetaptva").Fill({tpcetapt.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;}).Map([](Qn::QVector &a) {return a.Normal(Qn::QVector::Normalization::QOVERM);}), va}, eventbin, scalar);
+  correlations_.at("tpcetaptvc").Fill({tpcetapt.Projection([](Qn::QVector &a, Qn::QVector &b){return a + b;}).Map([](Qn::QVector &a) {return a.Normal(Qn::QVector::Normalization::QOVERM);}), vc}, eventbin, scalar);
   correlations_.at("tpcva").Fill({tpc, va}, eventbin, scalar);
   correlations_.at("tpcvc").Fill({tpc, vc}, eventbin, scalar);
   correlations_.at("vavc").Fill({va, vc}, eventbin, scalar);
