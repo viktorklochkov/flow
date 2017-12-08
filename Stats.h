@@ -80,7 +80,7 @@ inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
   double nsum = a.sum_ + b.sum_;
   double nsum2 = a.sum2_ + b.sum2_;
   int nentries = a.entries_ + b.entries_;
-  double nmean = nsum / (double) nentries;
+  double nmean = (a.entries_ * a.mean_ + b.entries_ * b.mean_) / nentries;
   double nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
@@ -114,7 +114,7 @@ inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
 
   }
   int nentries = a.Entries() + b.Entries();
-  double nsum = 0;
+  double nsum = nmean * nentries;
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }

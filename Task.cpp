@@ -53,13 +53,15 @@ void Task::Initialize() {
                                VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY, VAR::Variables::kDcaZ,
                               VAR::Variables::kTPCsignal, VAR::Variables::kTPCchi2, VAR::Variables::kCharge});
 
-  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0}, VAR::kPt);
-  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
+//  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0,10.0}, VAR::kPt);
+//  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
+  Axis ptaxis("Pt", {0.2,0.4,0.6,0.8,1.,1.25,1.5,1.75,2.0,2.5,3,3.5,4.,5.}, VAR::kPt);
+  Axis etaaxis("Eta", 4, -0.8, 0.8, VAR::kEta);
   Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsC("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7}, VAR::kEta);
 
-  Axes tpcaxes = {ptaxis, etaaxis};
+  Axes tpcaxes = {ptaxis,etaaxis};
   Axes vzeroaxes = {vzerorings};
   Axes vzeroaxesA = {vzeroringsA};
   Axes vzeroaxesC = {vzeroringsC};
@@ -108,15 +110,10 @@ void Task::Initialize() {
                                  Configuration::DetectorType::Channel,
                                  2000);
   Qn::Internal::AddDetectorToMap(raw_data_,
-                                 Configuration::DetectorId::ZDCA_reference,
-                                 new Configuration::ZDCA_reference(),
+                                 Configuration::DetectorId::ZDC,
+                                 new Configuration::ZDC(),
                                  Configuration::DetectorType::Channel,
-                                 5);
-  Qn::Internal::AddDetectorToMap(raw_data_,
-                                 Configuration::DetectorId::ZDCC_reference,
-                                 new Configuration::ZDCC_reference(),
-                                 Configuration::DetectorType::Channel,
-                                 5);
+                                 8);
 
 //  qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
   qn_data_ = Qn::Internal::MakeQVectorDataContainer(raw_data_);
@@ -134,7 +131,14 @@ void Task::Initialize() {
   auto *h_track_params =
       new THnSparseF("trackqa", "tracks;pT;eta;phi;dcaxy;dcaz;dEdx;charge;chi2/ndf;", ndim, bins, minbin, maxbin);
 
+  auto *h_zdc_channels = new TProfile("zdcchannels","zdc;channel;weight",10,0,10);
+  auto *h_zdc_phi = new TH1F("zdcphi","zdc;phi;weight",4,-TMath::Pi(),TMath::Pi());
+
+  histograms_->SetOwner(true);
   histograms_->Add(h_track_params);
+  histograms_->Add(h_zdc_channels);
+  histograms_->Add(h_zdc_phi);
+
 
   Qn::Internal::AddDetectorsToFramework(qn_manager_, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);

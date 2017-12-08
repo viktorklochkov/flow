@@ -11,6 +11,7 @@
 #include <QnCorrections/QnCorrectionsQnVectorRecentering.h>
 #include <QnCorrections/QnCorrectionsQnVectorAlignment.h>
 #include <QnCorrections/QnCorrectionsQnVectorTwistAndRescale.h>
+#include <QnCorrections/QnCorrectionsInputGainEqualization.h>
 #include <QnCorrections/QnCorrectionsDetector.h>
 #include <map>
 
@@ -27,6 +28,7 @@ enum class DetectorId : int {
   FMDC_reference,
   ZDCA_reference,
   ZDCC_reference,
+  ZDC,
 };
 static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC"},
                                                     {(int) DetectorId::TPC_reference, "TPC_reference"},
@@ -37,7 +39,8 @@ static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC
                                                     {(int) DetectorId::FMDA_reference, "FMDA_reference"},
                                                     {(int) DetectorId::FMDC_reference, "FMDC_reference"},
                                                     {(int) DetectorId::ZDCA_reference, "ZDCA_reference"},
-                                                    {(int) DetectorId::ZDCC_reference, "ZDCC_reference"}};
+                                                    {(int) DetectorId::ZDCC_reference, "ZDCC_reference"},
+                                                    {(int) DetectorId::ZDC, "ZDC"}};
 
 enum class DetectorType {
   Track,
@@ -185,6 +188,17 @@ class ZDCC_reference : public DetectorConfig {
   void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+  }
+};
+
+class ZDC : public DetectorConfig {
+ public:
+  void operator()(QnCorrectionsDetectorConfigurationBase *config) override {
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    config->AddCorrectionOnQnVector(new QnCorrectionsQnVectorRecentering());
+//      auto equal = new QnCorrectionsInputGainEqualization();
+//      equal->SetEqualizationMethod(QnCorrectionsInputGainEqualization::QnGainEqualizationMethod::GEQUAL_averageEqualization);
+//      config->AddCorrectionOnInputData(equal);
   }
 };
 
