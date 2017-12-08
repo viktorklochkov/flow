@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include "DataInterface.h"
-#include <array>
 #include <ReducedEvent/AliReducedFMDInfo.h>
 #include <THnSparse.h>
 
@@ -28,40 +27,47 @@ void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
   TIter next(trackList);
   next.Reset();
   auto *h_track_qa = (THnSparseF *) histograms.FindObject("trackqa");
+  auto &axes = datacontainer->GetAxes();
+  std::vector<float> trackparams;
+  trackparams.reserve(axes.size());
+  long ntracks = trackList->GetSize();
+  std::for_each(datacontainer->begin(),
+                datacontainer->end(),
+                [ntracks](std::vector<DataVector> &vector) { vector.reserve(ntracks); });
+  const int ndims = 9;
+  std::array<double, ndims> qaparam{};
   while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
     if (!track->TestQualityFlag(15)) continue;
     VAR::FillTrackInfo(track, values);
-    if (values[VAR::kEta] > 0.9 || values[VAR::kEta] < -0.9) continue;
+    if (values[VAR::kEta] > 0.8 || values[VAR::kEta] < -0.8) continue;
+    if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 5.0) continue;
     if (fillhistograms == Fill::QA) {
       if (h_track_qa) {
-        const int ndims = 9;
-        double trackparams[ndims] =
-            {values[VAR::kPt], values[VAR::kEta], values[VAR::kPhi], values[VAR::kDcaXY], values[VAR::kDcaZ],
-             values[VAR::kTPCsignal], values[VAR::kCharge], values[VAR::kTPCchi2]};
-        h_track_qa->Fill(trackparams);
+        qaparam = {{values[VAR::kPt], values[VAR::kEta], values[VAR::kPhi], values[VAR::kDcaXY], values[VAR::kDcaZ],
+                    values[VAR::kTPCsignal], values[VAR::kCharge], values[VAR::kTPCchi2]}};
+        h_track_qa->Fill(qaparam.data());
       }
     }
     values[-1] = 0;
-    auto axes = datacontainer->GetAxes();
-    std::vector<float> trackparams;
-    trackparams.reserve(axes.size());
     for (const auto &axis : axes) {
       trackparams.push_back(values[axis.Id()]);
     }
     try {
-      auto &element = datacontainer->ModifyElement(trackparams);
-      element.emplace_back(values[VAR::kPhi], values[VAR::kPt]);
+      datacontainer->CallOnElement(trackparams, [values](std::vector<DataVector> &vector) {
+        vector.emplace_back(values[VAR::kPhi]);
+      });
     }
     catch (std::exception &) {
       continue;
     }
+    trackparams.clear();
   }
   delete[] values;
 }
 
 void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
-  const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
+  const std::array<double, 8> X = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
+  const std::array<double, 8> Y = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
   const std::array<float, 4> etaborders = {{4.8, 4.2, 3.65, 3.1}};
   for (int ich = 32; ich < 64; ich++) {
     double weight = event.MultChannelVZERO(ich);
@@ -72,21 +78,24 @@ void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
     for (const auto &axis : axes) {
       float etavalue = 0;
       if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
-        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
+          vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
+        });
       } else {
         etavalue = etaborders[(ich - 32) / 8];
         eta.push_back(etavalue);
-        auto &element = datacontainer->ModifyElement(eta);
-        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+        datacontainer->CallOnElement(eta,
+                                     [ich, Y, X, weight](std::vector<DataVector> &vector) {
+                                       vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
+                                     });
       }
     }
   }
 }
 
 void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 8> kX = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
-  const std::array<double, 8> kY = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
+  const std::array<double, 8> X = {{0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268, 0.38268, 0.92388}};
+  const std::array<double, 8> Y = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
   const std::array<float, 4> etaborders = {{-3.45, -2.95, -2.45, -1.95}};
   for (int ich = 0; ich < 32; ich++) {
     double weight = event.MultChannelVZERO(ich);
@@ -97,13 +106,16 @@ void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, Ali
     for (const auto &axis : axes) {
       float etavalue = 0;
       if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
-        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
+          vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
+        });
       } else {
         etavalue = etaborders[ich / 8];
         eta.push_back(etavalue);
-        auto &element = datacontainer->ModifyElement(eta);
-        element.emplace_back(std::atan2(kY[ich % 8], kX[ich % 8]), weight);
+        datacontainer->CallOnElement(eta,
+                                     [ich, Y, X, weight](std::vector<DataVector> &vector) {
+                                       vector.emplace_back(TMath::ATan2(Y[ich % 8], X[ich % 8]), weight);
+                                     });
       }
     }
   }
@@ -119,12 +131,15 @@ void FillFMDA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
     if (fmd->Id() < 1000) continue;
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
-        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+        datacontainer->CallOnElement([fmd](std::vector<DataVector> &vector) {
+          vector.emplace_back(fmd->Phi(), fmd->Multiplicity());
+        });
       } else {
         std::vector<float> eta = {fmd->Eta()};
-        auto &element = datacontainer->ModifyElement(eta);
-        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+        datacontainer->CallOnElement(eta,
+                                     [fmd](std::vector<DataVector> &vector) {
+                                       vector.emplace_back(fmd->Phi(), fmd->Multiplicity());
+                                     });
       }
     }
   }
@@ -140,12 +155,15 @@ void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
     if (fmd->Id() > 1000) continue;
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
-        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+        datacontainer->CallOnElement([fmd](std::vector<DataVector> &vector) {
+          vector.emplace_back(fmd->Phi(), fmd->Multiplicity());
+        });
       } else {
         std::vector<float> eta = {fmd->Eta()};
-        auto &element = datacontainer->ModifyElement(eta);
-        element.emplace_back(fmd->Phi(), fmd->Multiplicity());
+        datacontainer->CallOnElement(eta,
+                                     [fmd](std::vector<DataVector> &vector) {
+                                       vector.emplace_back(fmd->Phi(), fmd->Multiplicity());
+                                     });
       }
     }
   }
@@ -155,35 +173,70 @@ void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
   const std::array<double, 10> X = {{0.0, -1.75, 1.75, -1.75, 1.75, 0.0, 1.75, -1.75, 1.75, -1.75}};
   const std::array<double, 10> Y = {{0.0, -1.75, -1.75, 1.75, 1.75, 0.0, -1.75, -1.75, 1.75, 1.75}};
   auto axes = datacontainer->GetAxes();
-  for (Int_t ich = 5; ich < 10; ich++) {
+  for (u_short ich = 6; ich < 10; ich++) {
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
         double weight = event.EnergyZDCnTree(ich);
-        if (weight < 0.01) weight = 0.;
-        element.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+        if (weight > 100) {
+          datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
+            vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+          });
+        }
       }
     }
   }
 }
 
 void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event) {
-  const std::array<double, 10> X = {{/* C*/ 0.0, -1.75, 1.75, -1.75, 1.75, /* A */0.0, 1.75, -1.75, 1.75, -1.75}};
+  const std::array<double, 10> X = {{0.0, -1.75, 1.75, -1.75, 1.75, 0.0, 1.75, -1.75, 1.75, -1.75}};
   const std::array<double, 10> Y = {{/* C*/ 0.0, -1.75, -1.75, 1.75, 1.75, /*A*/0.0, -1.75, -1.75, 1.75, 1.75}};
   auto axes = datacontainer->GetAxes();
-  for (Int_t ich = 0; ich < 5; ich++) {
+  for (u_short ich = 0; ich < 4; ich++) {
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
-        auto &element = datacontainer->ModifyElement({0.5});
         double weight = event.EnergyZDCnTree(ich);
-        if (weight < 0.01) weight = 0.;
-        element.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+        if (weight > 100) {
+          datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
+            vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+          });
+        }
+      }
+    }
+  }
+}
+
+void FillZDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer,
+             TList &histograms,
+             AliReducedEventInfo &event) {
+  const std::array<double, 10> X = {{0.0, -1.75, 1.75, -1.75, 1.75, 0.0, 1.75, -1.75, 1.75, -1.75}};
+  const std::array<double, 10> Y = {{0.0, -1.75, -1.75, 1.75, 1.75, 0.0, -1.75, -1.75, 1.75, 1.75}};
+  auto axes = datacontainer->GetAxes();
+  auto *h_zdc_c = (TProfile *) histograms.FindObject("zdcchannels");
+  auto *h_zdc_phi = (TH1F *) histograms.FindObject("zdcphi");
+  for (u_short ich = 0; ich < 10; ich++) {
+    double weight = event.EnergyZDCnTree(ich);
+    if (h_zdc_c) {
+      h_zdc_c->Fill(ich, weight);
+    }
+    if (ich == 0 || ich == 5) continue;
+    if (h_zdc_phi) h_zdc_phi->Fill(TMath::ATan2(Y[ich], X[ich]), weight);
+    for (const auto &axis : axes) {
+      if (axis.IsIntegrated()) {
+        if (weight > 100) {
+          datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
+            vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
+          });
+        }
       }
     }
   }
 }
 
 void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event, TList &histograms) {
+
+  if (map.find((int) Configuration::DetectorId::ZDC) != map.end())
+    FillZDC(std::get<1>(map[(int) Configuration::DetectorId::ZDC]), histograms, event);
+
   if (map.find((int) Configuration::DetectorId::ZDCA_reference) != map.end())
     FillZDCA(std::get<1>(map[(int) Configuration::DetectorId::ZDCA_reference]), event);
 

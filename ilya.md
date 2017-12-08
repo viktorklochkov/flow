@@ -6,15 +6,21 @@
 
 
 ##stability checks
-
-R_A[B,C] under different B and C
+* R_A[B,C] under different B and C
 
 ##comparison to published
-rewrite macros to produce nice plots
+* rewrite macros to produce nice plots
 
 ##Q Vectors arithmetic
-* adding two qvectors
-* projection of datacontainer qn
+* do not use abs q normalization. it is not possible to revert the normalization right now.  
+
+## Statistics
+* fix variance calculation; naive version is not stable.
+* add histogram feature
+
+##Find invalid bins
+
+## Save correlations to file
 
 #DONE
 
@@ -36,3 +42,10 @@ rewrite macros to produce nice plots
 * rewrite scripts to correct all runs individually.
 * This should keep track of correction files and merge outputs accordingly.
 * Run-wise QA is important.
+
+##Q Vectors arithmetic
+* projection of datacontainer qn
+* adding two qvectors
+* correlation of N data containers with lambda function.
+* support for adding two qvectors  
+* support for setting normalization  

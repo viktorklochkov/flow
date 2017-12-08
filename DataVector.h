@@ -13,6 +13,7 @@ namespace Qn {
  */
 struct DataVector {
   DataVector() : phi(NAN), weight(NAN) {}
+  DataVector(float phi) : phi(phi), weight(1.0) {}
   DataVector(float phi, float weight) : phi(phi), weight(weight) {}
   virtual ~DataVector() = default;
   float phi; ///< Azimuthal angle of signal
@@ -23,7 +24,7 @@ struct DataVector {
 //    int a = (int) Qn::Interface::DetectorId::TPC;
   }
   /// \cond CLASSIMP
- ClassDef(DataVector, 1);
+ ClassDef(DataVector, 2);
   /// \endcond
 };
 

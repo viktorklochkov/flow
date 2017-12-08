@@ -46,9 +46,17 @@ class Axis {
     }
   }
 
-  typedef typename std::vector<float>::const_iterator iterator;
-  iterator cbegin() { return bin_edges_.cbegin(); } ///< iterator for external use
-  iterator cend() { return bin_edges_.cend(); } ///< iterator for external use
+  typedef typename std::vector<float>::const_iterator citerator;
+  typedef typename std::vector<float>::iterator iterator;
+  citerator begin() const { return bin_edges_.cbegin(); } ///< iterator for external use
+  citerator end() const { return bin_edges_.cend(); } ///< iterator for external use
+  iterator begin() { return bin_edges_.begin(); } ///< iterator for external use
+  iterator end() { return bin_edges_.end(); } ///< iterator for external use
+  /**
+ * Set Name of axis.
+ * @param name name of axis
+ */
+  inline void SetName(std::string name) { name_ = name; }
   /**
    * Returns Name of axis.
    * @return name of axis
@@ -72,9 +80,31 @@ class Axis {
         bin = (lb - bin_edges_.begin()) - 1;
     }
     if (bin >= (long) bin_edges_.size() - 1 || bin < 0)
-      throw std::exception();
+      bin = -1;
     return bin;
   }
+
+  /**
+ * Finds bin iterator for a given value
+ * if value is smaller than lowest bin returns end().
+ * @param value for finding corresponding bin
+ * @return bin index
+ */
+  inline citerator FindBinIter(float value) {
+    citerator bin;
+    if (value < *bin_edges_.begin()) {
+      bin = end();
+    } else {
+      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
+      if (lb == bin_edges_.begin() || *lb == value)
+        bin = lb;
+      else
+        bin = lb - 1;
+    }
+    if (*bin >= (long) bin_edges_.size() - 1 || *bin < 0) bin = end();
+    return bin;
+  }
+
   /**
    * Returns number of bins.
    * @return number of bins.
@@ -96,9 +126,9 @@ class Axis {
    * Get id of axis used for the data interface
    * @return id
    */
-  inline int Id() const {return id_;}
+  inline int Id() const { return id_; }
 
-  inline bool IsIntegrated() const {return id_==-1;}
+  inline bool IsIntegrated() const { return id_ == -1; }
  private:
   std::string name_;
   std::vector<float> bin_edges_;
