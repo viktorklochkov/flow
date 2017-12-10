@@ -99,9 +99,9 @@ void GetQnFromFramework(QnCorrectionsManager &manager,
     for (auto &bin : *detector) {
       auto name = (std::string(Configuration::DetectorNames[pair.first]) + std::to_string(ibin)).data();
       ++ibin;
-      auto method = manager.FindDetector(name)->FindDetectorConfiguration(name)->GetQVectorNormalizationMethod();
       auto vector = manager.GetDetectorQnVector(name, step.c_str(), step.c_str());
       if (!vector) continue;
+      auto method = manager.FindDetector(name)->FindDetectorConfiguration(name)->GetQVectorNormalizationMethod();
       QVector temp(Internal::GetNormalization(method),*vector);
       bin = temp;
     }

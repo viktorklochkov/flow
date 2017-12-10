@@ -115,6 +115,18 @@ void Task::Initialize() {
                                  Configuration::DetectorType::Channel,
                                  8);
 
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::ZDCC_reference,
+                                 new Configuration::ZDCC_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 4);
+
+  Qn::Internal::AddDetectorToMap(raw_data_,
+                                 Configuration::DetectorId::ZDCA_reference,
+                                 new Configuration::ZDCA_reference(),
+                                 Configuration::DetectorType::Channel,
+                                 4);
+
 //  qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
   qn_data_ = Qn::Internal::MakeQVectorDataContainer(raw_data_);
 

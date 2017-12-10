@@ -11,9 +11,6 @@
 ##comparison to published
 * rewrite macros to produce nice plots
 
-##Q Vectors arithmetic
-* do not use abs q normalization. it is not possible to revert the normalization right now.  
-
 ## Statistics
 * fix variance calculation; naive version is not stable.
 * add histogram feature
