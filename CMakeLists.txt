@@ -14,7 +14,6 @@ set(SOURCES
         DataInterface.cpp
         DetectorConfig.cpp
         DetectorMap.cpp
-        Resolution.cpp
         QaAnalysis.cpp
         PlotCompare.cpp
         Correlation.cpp
