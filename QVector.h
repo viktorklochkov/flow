@@ -51,12 +51,12 @@ class QVector {
       sum_weights_(sum),
       q_(q) {}
 
-  QVector(Normalization norm, QnCorrectionsQnVector vector) :
+  QVector(Normalization norm, const QnCorrectionsQnVector &vector) :
       norm_(norm),
       n_(vector.GetN()),
       sum_weights_(vector.GetSumOfWeights()) {
     for (int i = 0; i < 4; i++) {
-      q_[i] = QVec(vector.Qx(i), vector.Qy(i));
+      q_[i] = isnan(vector.Qx(i)) || isnan(vector.Qy(i)) ? QVec(0, 0) : QVec(vector.Qx(i), vector.Qy(i));
     }
   }
 
@@ -66,11 +66,11 @@ class QVector {
 
   friend QVector operator+(QVector a, QVector b);
 
-  void Add(QVector a) {
+  void Add(const QVector &a) {
     *this + a;
   }
 
-  QVector Normal(Normalization norm) const {
+  QVector Normal(const Normalization norm) const {
     QVector c(*this);
     if (norm_ != Normalization::NOCALIB) {
       c = c.DeNormal();
@@ -97,7 +97,8 @@ class QVector {
         auto add = [](const QVec q) {
           if (Qn::norm(q) != 0) {
             return q / Qn::norm(q);
-          } else {return q;}
+          }
+          return q;
         };
         std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
         break;

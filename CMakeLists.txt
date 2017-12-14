@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(flow)
 set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE debug)
 set(SOURCES
         Task.cpp
@@ -14,7 +14,14 @@ set(SOURCES
         DataInterface.cpp
         DetectorConfig.cpp
         DetectorMap.cpp
-        QuickTask.cpp Resolution.cpp Resolution.h QaAnalysis.cpp QaAnalysis.h PlotCompare.cpp PlotCompare.h Correlation.cpp Correlation.h SimpleTask.cpp SimpleTask.h QVector.cpp QVector.h Stats.cpp Stats.h DataContainerHelper.cpp DataContainerHelper.h)
+        Resolution.cpp
+        QaAnalysis.cpp
+        PlotCompare.cpp
+        Correlation.cpp
+        SimpleTask.cpp
+        QVector.cpp
+        Stats.cpp
+        DataContainerHelper.cpp)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 
@@ -43,7 +50,7 @@ include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${
 # Generate dictionary
 ROOT_GENERATE_DICTIONARY(G__Flow ${HEADERS} LINKDEF LinkDef.h)
 # Create a shared library with generated dictionary
-add_library(flow SHARED ${SOURCES}  G__Flow)
+add_library(flow SHARED ${SOURCES} G__Flow)
 target_include_directories(flow PUBLIC ${CMAKE_SOURCE_DIR} ${QNCORRECT_INC} ${REDUCEDINC})
 target_link_libraries(flow ${ROOT_LIBRARIES} ${QNCORRECT_LIB} ${REDUCEDEVENT_LIB})
 

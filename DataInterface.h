@@ -35,26 +35,64 @@ enum class Fill {
  */
 void SetVariables(std::vector<VAR::Variables> vars);
 /**
- * Fills tpc data into the datacontainer
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param event ALICE event data
+ * @param histograms QA histograms
+ * @param fillhistograms flat to fill histograms
+ */
+void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event, TList &histograms, Fill fillhistograms);
+/**
+ * Fills detector data into the datacontainer
  * @param datacontainer datacontainer with configured binning
  * @param event ALICE event data
  */
-void FillTpc(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event, TList &histograms, Fill fillhistograms);
-//
 void FillVZEROA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-
+/**
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param event ALICE event data
+ */
 void FillVZEROC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-
+/**
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param event ALICE event data
+ */
 void FillFMDA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-
+/**
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param event ALICE event data
+ */
 void FillFMDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-
+/**
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param event ALICE event data
+ */
 void FillZDCA(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
-
+/**
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param event ALICE event data
+ */
 void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliReducedEventInfo &event);
+/**
+ * Fills detector data into the datacontainer
+ * @param datacontainer datacontainer with configured binning
+ * @param histograms list of QA histograms
+ * @param event ALICE event data
+ */
+void FillZDC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, TList &histograms, AliReducedEventInfo &event);
 
 
-
+/**
+ * Fills detector data to detector map.
+ * @param map detector map
+ * @param event ALICE vevent data
+ * @param histograms List of QA histograms
+ */
 void FillDetectors(Qn::Internal::DetectorMap &map, AliReducedEventInfo &event, TList &histograms);
 }
 }

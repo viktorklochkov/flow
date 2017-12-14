@@ -29,11 +29,10 @@ namespace Qn {
 template<typename T>
 class DataContainer : public TObject {
  public:
-
-  /*
-   * Constructor
-   * @param name Name of data container.
-   */
+/**
+ * Constructor
+ * @param name Name of data container.
+ */
   DataContainer() = default;
   ~DataContainer() = default;
 
@@ -43,27 +42,25 @@ class DataContainer : public TObject {
   const_iterator end() const { return data_.cend(); } ///< iterator for external use
   iterator begin() { return data_.begin(); } ///< iterator for external use
   iterator end() { return data_.end(); } ///< iterator for external use
-
-  /*
-   * Size of data container
-   * @return number of entries in the container
-   */
+/**
+ * Size of data container
+ * @return number of entries in the container
+ */
   std::vector<QnCorrectionsQnVector>::size_type size() const { return data_.size(); }
 
-  /*
-   * Adds axes for storing data
-   * @param axes vector of axes
-   */
+/**
+ * Adds axes for storing data
+ * @param axes vector of axes
+ */
   void AddAxes(const std::vector<Axis> &axes) {
     for (const auto &axis : axes) {
       AddAxis(axis);
     }
   }
-
-  /*
-   * Adds existing axis for storing the data with variable binning
-   * @param Axis
-   */
+/**
+ * Adds existing axis for storing the data with variable binning
+ * @param axis Axis to be added.
+ */
   void AddAxis(const Axis &axis) {
     if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name() == axis.Name(); })
         != axes_.end())
@@ -79,12 +76,12 @@ class DataContainer : public TObject {
     CalculateStride();
   }
 
-  /*
-   * Adds a element by the variables
-   * @param vect  element added into container
-   * @param vars  Vector of Variables used to determine position in the container
-   *              e.g. [p_t,eta] = [5 GeV, 0.5]
-   */
+/**
+ * Adds a element by the variables
+ * @param vect  element added into container
+ * @param vars  Vector of Variables used to determine position in the container
+ *              e.g. [p_t,eta] = [5 GeV, 0.5]
+ */
   void SetElement(T &vect, const std::vector<float> &values) {
     std::vector<long> index;
     std::vector<int>::size_type axisindex = 0;
@@ -95,23 +92,25 @@ class DataContainer : public TObject {
     data_[GetLinearIndex(index)] = std::move(vect);
   }
 
-  /*
-  * Adds a element by the variables no bounds checking
-  * @param vect  element added into container
-  * @param index  linear index position
-  */
+/**
+ * Adds a element by the variables no bounds checking
+ * @param vect  element added into container
+ * @param index  linear index position
+ */
   void SetElement(T &vect, const long index) {
     data_[index] = std::move(vect);
   }
-  /**
-   * Get element in the specified bin
-   * @param bins Vector of bin indices of the desired element
-   * @return     Element
-   */
+
+/**
+ * Get element in the specified bin
+ * @param bins Vector of bin indices of the desired element
+ * @return     Element
+ */
   T const &GetElement(const std::vector<long> &bins) const {
     return data_.at(GetLinearIndex(bins));
   }
-  /**
+
+/**
  * Get element in the specified bin
  * @param linear_index index of element
  * @return     Element
@@ -119,7 +118,8 @@ class DataContainer : public TObject {
   T const &GetElement(int linear_index) const {
     return data_.at(linear_index);
   }
-  /*
+
+/**
   * Get element with the specified value
   * @param bins Vector of value to search for desired element
   * @return     Element
@@ -136,35 +136,19 @@ class DataContainer : public TObject {
     }
     return data_.at(GetLinearIndex(index));
   }
-/*
-* Get element with the specified value to be able to modify it.
-* @param bins Vector of value to search for desired element
-* @return     Element
-*/
-  T &ModifyElement(const std::vector<float> &values) {
-    std::vector<long> index;
-    std::vector<int>::size_type axisindex = 0;
-    for (const auto &axis : axes_) {
-      auto bin = axis.FindBin(values.at(axisindex));
-      if (bin >= axis.size() || bin < 0)
-        throw std::out_of_range("bin out of specified range");
-      index.push_back(bin);
-      axisindex++;
-    }
-    return data_.at(GetLinearIndex(index));
-  }
-  /**
-   * Get vector of axes
-   * @return Vector of axes
-   */
+
+/**
+ * Get vector of axes
+ * @return Vector of axes
+ */
   inline const std::vector<Axis> &GetAxes() const { return axes_; }
-  /**
-   * Get Axis with the given name.
-   *
-   * Throws exception when not found.
-   * @param name  Name of the desired axis
-   * @return      Axis
-   */
+
+/**
+ * Get Axis with the given name.
+ * Throws exception when not found.
+ * @param name  Name of the desired axis
+ * @return      Axis
+ */
   Axis GetAxis(const std::string name) const {
     for (auto axis: axes_) {
       if (name == axis.Name()) return axis;
@@ -172,29 +156,29 @@ class DataContainer : public TObject {
     throw std::out_of_range("axis not found aborting");
   }
 
-  /**
-   * Calculates indices in multiple dimensions from linearized index
-   * @param offset Index of linearized vector
-   * @return       Vector of indices. Empty for invalid offset.
-   */
+/**
+ * Calculates indices in multiple dimensions from linearized index
+ * @param offset Index of linearized vector
+ * @return       Vector of indices. Empty for invalid offset.
+ */
   std::vector<long> GetIndex(const long offset) const {
     long temp = offset;
     std::vector<long> indices;
     if ((u_long) offset >= data_.size()) return indices;
     indices.resize(dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[dimension_ - i -1] = (int) (temp % axes_[dimension_ - i -1].size());
-      temp = temp / axes_[dimension_ -i -1].size();
+      indices[dimension_ - i - 1] = (int) (temp % axes_[dimension_ - i - 1].size());
+      temp = temp / axes_[dimension_ - i - 1].size();
     }
     indices[0] = (int) temp;
     return indices;
   }
 
-  /**
-   * Gives description by concenating axis names with coordinates
-   * @param offset linear index
-   * @return string with bin description
-   */
+/**
+ * Gives description by concenating axis names with coordinates
+ * @param offset linear index
+ * @return string with bin description
+ */
   std::string GetBinDescription(const long offset) const {
     auto indices = GetIndex(offset);
     if (indices.empty()) return "invalid offset";
@@ -210,13 +194,13 @@ class DataContainer : public TObject {
     }
     return outstring;
   }
-  /**
-   * Projects datacontainer on a subset of axes
-   * @tparam Function typename of function.
-   * @param axes subset of axes used for the projection.
-   * @param lambda Function used to add two entries.
-   * @return projected datacontainer.
-   */
+/**
+ * Projects datacontainer on a subset of axes
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return projected datacontainer.
+ */
   template<typename Function>
   DataContainer<T> Projection(const std::vector<Axis> &axes, Function &&lambda) const {
     DataContainer<T> projection;
@@ -249,13 +233,13 @@ class DataContainer : public TObject {
     return projection;
   }
 
-  /**
-   * "Integrates" container
-   * @tparam Function typename of function.
-   * @param axes subset of axes used for the projection.
-   * @param lambda Function used to add two entries.
-   * @return integrated container
-   */
+/**
+ * "Integrates" container
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return integrated container
+ */
   template<typename Function>
   DataContainer<T> Projection(Function &&lambda) const {
     DataContainer<T> projection;
@@ -267,30 +251,29 @@ class DataContainer : public TObject {
     }
     return projection;
   }
-
-  /**
-   * Calls function on element specified by indices.
-   * @tparam Function type of function to be called on the object
-   * @param indices indicies multidimensional indices of the element.
-   * @param lambda function to be called on the element. Takes element of type T as an argument.
-   */
+/**
+ * Calls function on element specified by indices.
+ * @tparam Function type of function to be called on the object
+ * @param indices indicies multidimensional indices of the element.
+ * @param lambda function to be called on the element. Takes element of type T as an argument.
+ */
   template<typename Function>
   void CallOnElement(const std::vector<long> &indices, Function &&lambda) {
     lambda(data_[GetLinearIndex(indices)]);
   }
 
-  /**
-* Calls function on element for integrated datacontainer.
-* @tparam Function type of function to be called on the object
-* @param coordinates coordinates of element to be modified
-* @param lambda function to be called on the element. Takes element of type T as an argument.
-*/
+/**
+ * Calls function on element for integrated datacontainer.
+ * @tparam Function type of function to be called on the object
+ * @param coordinates coordinates of element to be modified
+ * @param lambda function to be called on the element. Takes element of type T as an argument.
+ */
   template<typename Function>
   void CallOnElement(Function &&lambda) {
     lambda(data_[0]);
   }
 
-  /**
+/**
  * Calls function on element specified by indices.
  * @tparam Function type of function to be called on the object
  * @param coordinates coordinates of element to be modified
@@ -301,18 +284,18 @@ class DataContainer : public TObject {
     lambda(data_[GetLinearIndex(GetIndex(coordinates))]);
   }
 
-  /**
-* Calls function on element specified by indices.
-* @tparam Function type of function to be called on the object
-* @param index linear index of element to be modified
-* @param lambda function to be called on the element. Takes element of type T as an argument.
-*/
+/**
+ * Calls function on element specified by indices.
+ * @tparam Function type of function to be called on the object
+ * @param index linear index of element to be modified
+ * @param lambda function to be called on the element. Takes element of type T as an argument.
+ */
   template<typename Function>
   inline void CallOnElement(const long index, Function &&lambda) {
     lambda(data_[index]);
   }
 
-  /**
+/**
  * Calls function on element specified by indices.
  * @tparam Function type of function to be called on the object
  * @param indices multidimensional indices of the element.
@@ -322,20 +305,20 @@ class DataContainer : public TObject {
   template<typename Function>
   void AddElement(const std::vector<long> &indices, Function &&lambda, T element) {
     auto &oelement = data_.at(GetLinearIndex(indices));
-    auto add = [lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
+    auto add = [&lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
     add(oelement, element);
   }
 
 /**
-  * Calls function on element specified by indices.
-  * @tparam Function type of function to be called on the object
-  * @param index index of the element.
-  * @param lambda function to be called on the element. Takes element of type T as an argument.
-  * @param element element to be added.
-  */
+ * Calls function on element specified by indices.
+ * @tparam Function type of function to be called on the object
+ * @param index index of the element.
+ * @param lambda function to be called on the element. Takes element of type T as an argument.
+ * @param element element to be added.
+ */
   template<typename Function>
   void AddElement(const long index, Function &&lambda, T element) {
-    auto add = [lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
+    auto add = [&lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
     add(data_[index], element);
   }
 
@@ -346,20 +329,19 @@ class DataContainer : public TObject {
  * @return datacontainer after applying function.
  */
   template<typename Function>
-  DataContainer<T> Map(Function &&lambda)
-  {
+  DataContainer<T> Map(Function &&lambda) {
     DataContainer<T> result(*this);
-    std::transform(data_.begin(), data_.end(), result.begin(), [lambda](T &element) { return lambda(element); });
+    std::transform(data_.begin(), data_.end(), result.begin(), [&lambda](T &element) { return lambda(element); });
     return result;
   }
 
-  /**
-   * Selects subrange of axis of datacontainer
-   * @tparam Function type of function
-   * @param data input data container
-   * @param axis subrange of axis to perform selection
-   * @return
-   */
+/**
+ * Selects subrange of axis of datacontainer
+ * @tparam Function type of function
+ * @param data input data container
+ * @param axis subrange of axis to perform selection
+ * @return
+ */
   DataContainer<T> Select(const Qn::Axis &axis) const {
     DataContainer<T> selected;
     long axisposition = 0;
@@ -382,7 +364,7 @@ class DataContainer : public TObject {
       auto rebinnedindex = axis.FindBin(binmid);
       if (rebinnedindex != -1) {
         indices[axisposition] = rebinnedindex;
-        selected.CallOnElement(indices, [bin](T &element) { element = bin; });
+        selected.CallOnElement(indices, [&bin](T &element) { element = bin; });
       }
       ++index;
     }
@@ -404,45 +386,52 @@ class DataContainer : public TObject {
     std::vector<long> indices;
     long index = 0;
     if (axes_.size() > data.axes_.size()) {
-        for (long iaxis = 0; data.axes_.size() - 1; ++iaxis) {
-          if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
-            std::string errormsg = "Axes do not match.";
-            throw std::logic_error(errormsg);
-          }
-        }
-        result.AddAxes(axes_);
-        indices.reserve((unsigned long) dimension_);
-        for (const auto &bin_a : data_) {
-          indices = GetIndex(index);
-          auto bin_b = data.GetElement(indices);
-          result.CallOnElement(indices, [lambda, bin_a, bin_b](T &element) { element = lambda(bin_a, bin_b); });
-          ++index;
-        }
-      } else {
-        for (long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
-          if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
-            std::string errormsg = "Axes do not match.";
-            throw std::logic_error(errormsg);
-          }
-        }
-        result.AddAxes(data.axes_);
-        indices.reserve((unsigned long) data.dimension_);
-        for (const auto &bin_b : data.data_) {
-          indices = data.GetIndex(index);
-          auto bin_a = GetElement(indices);
-          result.CallOnElement(indices, [lambda, bin_a, bin_b](T &element) { element = lambda(bin_a, bin_b); });
-          ++index;
+      for (long iaxis = 0; data.axes_.size() - 1; ++iaxis) {
+        if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
+          std::string errormsg = "Axes do not match.";
+          throw std::logic_error(errormsg);
         }
       }
+      result.AddAxes(axes_);
+      indices.reserve((unsigned long) dimension_);
+      for (const auto &bin_a : data_) {
+        indices = GetIndex(index);
+        auto bin_b = data.GetElement(indices);
+        result.CallOnElement(indices, [&lambda, &bin_a, &bin_b](T &element) { element = lambda(bin_a, bin_b); });
+        ++index;
+      }
+    } else {
+      for (long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
+        if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
+          std::string errormsg = "Axes do not match.";
+          throw std::logic_error(errormsg);
+        }
+      }
+      result.AddAxes(data.axes_);
+      indices.reserve((unsigned long) data.dimension_);
+      for (const auto &bin_b : data.data_) {
+        indices = data.GetIndex(index);
+        auto bin_a = GetElement(indices);
+        result.CallOnElement(indices, [&lambda, &bin_a, &bin_b](T &element) { element = lambda(bin_a, bin_b); });
+        ++index;
+      }
+    }
     return result;
   }
 
+/**
+ * Rebins the Datacontainer using the supplied function to calculate the new bin entries of the specified axis.
+ * @tparam Function
+ * @param rebinaxis axis to be rebinned.
+ * @param lambda function used to calculate new bin entries.
+ * @return rebinned datacontainer.
+ */
   template<typename Function>
-  DataContainer<T> Rebin( const Axis &rebinaxis, Function &&lambda) const {
+  DataContainer<T> Rebin(const Axis &rebinaxis, Function &&lambda) const {
     DataContainer<T> rebinned;
     long axisposition = -1;
     bool axisfound = false;
-    /**
+    /*
      * Check if axis to be rebinned is found in the datacontainer.
      */
     for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
@@ -477,7 +466,6 @@ class DataContainer : public TObject {
       std::string errormsg = "Rebinned axis has overlapping bins." + rebinaxis.Name();
       throw std::logic_error(errormsg);
     }
-
     long ibin = 0;
     for (const auto &bin : data_) {
       auto indices = GetIndex(ibin);
@@ -489,7 +477,6 @@ class DataContainer : public TObject {
       rebinned.AddElement(indices, lambda, bin);
       ++ibin;
     }
-
     return rebinned;
   }
 
@@ -501,8 +488,7 @@ class DataContainer : public TObject {
     data_.clear();
     data_.resize(size);
   }
-
-  /**
+/**
  * Calculates one dimensional index from a vector of indices.
  * @param index vector of indices in multiple dimensions
  * @return      index in one dimension
@@ -514,8 +500,12 @@ class DataContainer : public TObject {
     }
     return offset;
   }
-
-  bool IsIntegrated() const { return axes_[0].Id() == -1 ? true : false; }
+/**
+ * Checks if datacontainer is integrated.
+ * It is integrated if first axis is the integrated axis with Id == -1;
+ * @return true if integrated, else false.
+ */
+  inline bool IsIntegrated() const { return axes_[0].Id() == -1; }
 
  private:
   int dimension_ = 0; ///< dimensionality of data
@@ -541,9 +531,9 @@ class DataContainer : public TObject {
     return indices;
   }
 
-  /**
-   * Calculates offset for transformation into one dimensional vector.
-   */
+/**
+ * Calculates offset for transformation into one dimensional vector.
+ */
   void CalculateStride() {
     stride_[dimension_] = 1;
     for (int i = 0; i < dimension_; ++i) {

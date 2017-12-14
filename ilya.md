@@ -46,3 +46,5 @@
 * correlation of N data containers with lambda function.
 * support for adding two qvectors  
 * support for setting normalization  
+
+d/dx x^-2 = 1 * -2x^-3
