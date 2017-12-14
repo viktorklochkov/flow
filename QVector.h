@@ -28,9 +28,9 @@ struct QVec {
 
 inline QVec operator+(QVec a, QVec b) { return {a.x + b.x, a.y + b.y}; }
 inline QVec operator-(QVec a, QVec b) { return {a.x - b.x, a.y - b.y}; }
-inline QVec operator/(QVec a, float s) { return {a.x / s, a.y / s}; }
-inline QVec operator*(QVec a, float s) { return {a.x * s, a.y * s}; }
-inline float norm(QVec a) { return sqrt(a.x * a.x + a.y * a.y); }
+inline QVec operator/(QVec a, float s) { return {a.x/s, a.y/s}; }
+inline QVec operator*(QVec a, float s) { return {a.x*s, a.y*s}; }
+inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
 
 class QVector {
  public:
@@ -72,7 +72,7 @@ class QVector {
 
   QVector Normal(const Normalization norm) const {
     QVector c(*this);
-    if (norm_ != Normalization::NOCALIB) {
+    if (norm_!=Normalization::NOCALIB) {
       c = c.DeNormal();
     }
     switch (norm) {
@@ -81,22 +81,23 @@ class QVector {
       }
       case (Normalization::QOVERM): {
         auto add = [this](const QVec q) {
-          return q / sum_weights_;
+          if (sum_weights_ != 0) return q/sum_weights_;
+          return q;
         };
         std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
         break;
       }
       case (Normalization::QOVERSQRTM): {
         auto add = [this](const QVec q) {
-          return q / std::sqrt(sum_weights_);
+          return q/std::sqrt(sum_weights_);
         };
         std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
         break;
       }
       case (Normalization::QOVERNORMQ): {
         auto add = [](const QVec q) {
-          if (Qn::norm(q) != 0) {
-            return q / Qn::norm(q);
+          if (Qn::norm(q)!=0) {
+            return q/Qn::norm(q);
           }
           return q;
         };
@@ -115,16 +116,16 @@ class QVector {
         break;
       }
       case (Normalization::QOVERM): {
-        std::transform(q_.begin(), q_.end(), c.q_.begin(), [this](const QVec q) { return q * sum_weights_; });
+        std::transform(q_.begin(), q_.end(), c.q_.begin(), [this](const QVec q) { return q*sum_weights_; });
         break;
       }
       case (Normalization::QOVERSQRTM): {
         std::transform(q_.begin(), q_.end(), c.q_.begin(),
-                       [this](const QVec q) { return q * std::sqrt(sum_weights_); });
+                       [this](const QVec q) { return q*std::sqrt(sum_weights_); });
         break;
       }
       case (Normalization::QOVERNORMQ): {
-        std::transform(q_.begin(), q_.end(), c.q_.begin(), [](const QVec q) { return q * Qn::norm(q); });
+        std::transform(q_.begin(), q_.end(), c.q_.begin(), [](const QVec q) { return q*Qn::norm(q); });
         break;
       }
     }
@@ -135,7 +136,7 @@ class QVector {
  private:
   Normalization norm_ = Normalization::NOCALIB;
   int n_ = 0;
-  float sum_weights_ = 0;
+  float sum_weights_ = 0.0;
   std::array<QVec, 4> q_;
   /// \cond CLASSIMP
  ClassDef(QVector, 2);
@@ -145,8 +146,8 @@ class QVector {
 inline std::vector<float> Mult(std::vector<float> temp, QVector vec, std::vector<int> harmonics) {
   std::vector<float> result;
   for (auto &value : temp) {
-    result.push_back(value * vec.x(2));
-    result.push_back(value * vec.y(2));
+    result.push_back(value*vec.x(2));
+    result.push_back(value*vec.y(2));
   }
   return result;
 }
@@ -154,10 +155,10 @@ inline std::vector<float> Mult(std::vector<float> temp, QVector vec, std::vector
 inline std::vector<float> Multiply(std::vector<QVector> vectors, std::vector<int> harmonics) {
   std::vector<float> result;
   // case for iteration = 0
-  result.push_back(vectors[0].x(harmonics[0]) * vectors[1].x(harmonics[1]));
-  result.push_back(vectors[0].x(harmonics[0]) * vectors[1].y(harmonics[1]));
-  result.push_back(vectors[0].y(harmonics[0]) * vectors[1].x(harmonics[1]));
-  result.push_back(vectors[0].y(harmonics[0]) * vectors[1].y(harmonics[1]));
+  result.push_back(vectors[0].x(harmonics[0])*vectors[1].x(harmonics[1]));
+  result.push_back(vectors[0].x(harmonics[0])*vectors[1].y(harmonics[1]));
+  result.push_back(vectors[0].y(harmonics[0])*vectors[1].x(harmonics[1]));
+  result.push_back(vectors[0].y(harmonics[0])*vectors[1].y(harmonics[1]));
   for (auto vec = vectors.begin() + 2; vec < vectors.end(); ++vec) {
     result = Mult(result, *vec, harmonics);
   }

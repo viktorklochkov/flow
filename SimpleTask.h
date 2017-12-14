@@ -13,7 +13,6 @@
 
 #define VAR AliReducedVarManager
 
-
 class SimpleTask {
  public:
   SimpleTask() = default;
@@ -26,6 +25,7 @@ class SimpleTask {
  private:
   void Initialize();
   void Process();
+  void Finalize();
   std::unique_ptr<TTree> in_tree_;
   TTreeReader reader_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> values_;
