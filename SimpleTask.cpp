@@ -221,7 +221,7 @@ void SimpleTask::Finalize() {
   c1->SaveAs("test.root");
   c1->SaveAs("test.pdf");
 
-  auto *c4 = new TCanvas("c4","c4",800,600);
+  auto *c4 = new TCanvas("c4", "c4", 800, 600);
   Qn::DataToProfileGraph(v2tpcva)->Draw();
   c4->SaveAs("v2tpcva.pdf");
 
@@ -267,7 +267,6 @@ std::unique_ptr<TChain> SimpleTask::MakeChain(std::string filename, std::string 
 void SimpleTask::AddDataContainer(std::string name) {
   TTreeReaderValue<Qn::DataContainerQVector>
       value(reader_, name.data());
-  auto pair = std::make_pair(name, value);
   values_.insert(std::make_pair(name, value));
 }
 void SimpleTask::AddEventVariable(std::string name) {

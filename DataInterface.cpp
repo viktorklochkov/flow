@@ -191,7 +191,7 @@ void FillZDCC(std::unique_ptr<Qn::DataContainerDataVector> &datacontainer, AliRe
   const std::array<double, 10> X = {{0.0, -1.75, 1.75, -1.75, 1.75, 0.0, 1.75, -1.75, 1.75, -1.75}};
   const std::array<double, 10> Y = {{/* C*/ 0.0, -1.75, -1.75, 1.75, 1.75, /*A*/0.0, -1.75, -1.75, 1.75, 1.75}};
   auto axes = datacontainer->GetAxes();
-  for (u_short ich = 0; ich < 4; ich++) {
+  for (u_short ich = 1; ich < 5; ich++) {
     for (const auto &axis : axes) {
       if (axis.IsIntegrated()) {
         double weight = event.EnergyZDCnTree(ich);

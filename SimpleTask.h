@@ -9,7 +9,6 @@
 #include <TTreeReader.h>
 #include "DataContainer.h"
 #include "Correlation.h"
-#include "Resolution.h"
 
 #define VAR AliReducedVarManager
 
