@@ -25,6 +25,7 @@ class SimpleTask {
   void Initialize();
   void Process();
   void Finalize();
+  void AddCorrelation(std::string name, std::vector<Qn::DataContainerQVector> container, std::vector<Qn::Axis> axes, std::function<double (std::vector<Qn::QVector>&)> lambda);
   std::unique_ptr<TTree> in_tree_;
   TTreeReader reader_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> values_;

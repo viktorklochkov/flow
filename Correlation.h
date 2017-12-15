@@ -20,9 +20,10 @@ class Correlation {
   using CONTAINERS = DataContainerQVector;
  public:
   Correlation() = default;
-  Correlation(std::vector<CONTAINERS> input, AXES event) :
+  Correlation(std::vector<CONTAINERS> input, AXES event, std::function<double (std::vector<Qn::QVector>&)> lambda) :
       inputs_(std::move(input)),
-      axes_event_(std::move(event)) {
+      axes_event_(std::move(event)),
+      function_(lambda) {
     CreateCorrelationContainer();
   }
   DataContainerStat GetCorrelation() const { return data_correlation_; }
@@ -30,6 +31,7 @@ class Correlation {
   DataContainerStat data_correlation_; ///<  datacontainer containing the correlations
   std::vector<CONTAINERS> inputs_; ///< vector of input datacontainers
   AXES axes_event_; ///< vector of event axes used in the correlation
+  std::function<double (std::vector<Qn::QVector>&)> function_;
 
 /**
  * Create the correlation function. Automatically called at creation of Correlation object.
@@ -54,13 +56,11 @@ class Correlation {
 /**
  * Fill Correlation container with specified inputs.
  * Recursive function called N times, where N is the number of correlated datacontainers.
- * @tparam Function type of lambda
  * @param input vector of all input containers in correlation
  * @param eventindex of the used for the event axes
  * @param lambda correlation function
  */
-  template<typename Function>
-  void Fill(const std::vector<CONTAINERS> &input, const std::vector<long> &eventindex, Function &&lambda) {
+  void Fill(const std::vector<CONTAINERS> &input, const std::vector<long> &eventindex) {
     std::vector<std::vector<long>> index;
     std::vector<QVector> contents;
     contents.resize(input.size());
@@ -69,11 +69,10 @@ class Correlation {
     std::vector<long> cindex;
     cindex.reserve(10);
     index.reserve(10);
-    FillCorrelation(eventindex, index, contents, iteration, lambda, cindex);
+    FillCorrelation(eventindex, index, contents, iteration, cindex);
   }
 /**
  * Fill correlation recursive function
- * @tparam Function type of function used to fill
  * @param eventindex event index of event axes
  * @param index index in each new axis
  * @param contents content of each correlated datacontainer for one bin
@@ -81,12 +80,10 @@ class Correlation {
  * @param lambda function which is used for the correlation
  * @param cindex compacted index of the bin in the correlation datacontainer.
  */
-  template<typename Function>
   void FillCorrelation(const std::vector<long> &eventindex,
                        std::vector<std::vector<long>> &index,
                        std::vector<QVector> &contents,
                        u_int iteration,
-                       Function &&lambda,
                        std::vector<long> &cindex) {
     auto &datacontainer = *(inputs_.begin() + iteration);
     if (iteration + 1 == inputs_.size()) {
@@ -99,9 +96,9 @@ class Correlation {
         });
         contents.at(iteration) = bin;
         data_correlation_.CallOnElement(cindex,
-                                        [&lambda, &contents](Qn::Statistics &a) {
+                                        [this, &contents](Qn::Statistics &a) {
                                           if (std::all_of(contents.begin(), contents.end(), [](QVector qv) { return qv.n() != 0; })) {
-                                            a.Update(lambda(contents));
+                                            a.Update(function_(contents));
                                           }
                                         });
         if (!datacontainer.IsIntegrated()) index.erase(index.end() - 1);
@@ -117,7 +114,7 @@ class Correlation {
       auto binindex = datacontainer.GetIndex(ibin);
       if (!datacontainer.IsIntegrated()) index.push_back(binindex);
       contents.at(iteration) = bin;
-      FillCorrelation(eventindex, index, contents, iteration + 1, lambda, cindex);
+      FillCorrelation(eventindex, index, contents, iteration + 1, cindex);
       ++ibin;
     }
   }
