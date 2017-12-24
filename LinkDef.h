@@ -24,25 +24,12 @@
 #pragma link C++ class Qn::DataContainer<Qn::Statistics>+;
 #pragma link C++ class Qn::DataContainer<std::vector<float> >+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
-#pragma link C++ class Qn::Correlation<Qn::DataContainer<Qn::QVector> >+;
 #pragma link C++ typedef Qn::DataContainerQn;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;
-#pragma link C++ typedef Qn::DataContainerD;
-#pragma link C++ class Qn::Resolution+;
-#pragma link C++ class Qn::ResolutionDetector+;
 #pragma link C++ class QaAnalysis+;
-
 
 #pragma link C++ function operator+(QVector, QVector);
 
-
-// Not needed
-//#pragma link C++ class Qn::EventInfoValue<float>+;
-//#pragma link C++ class Qn::EventInfoValue<int>+;
-//#pragma link C++ class Qn::EventInfo<int>+;
-//#pragma link C++ class Qn::EventInfo<float>+;
-//#pragma link C++ typedef Qn::EventInfoF;
-//#pragma link C++ typedef Qn::EventInfoI;
 
 #endif

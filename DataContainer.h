@@ -34,7 +34,7 @@ class DataContainer : public TObject {
  * @param name Name of data container.
  */
   DataContainer() = default;
-  ~DataContainer() = default;
+  virtual ~DataContainer() = default;
 
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
@@ -336,7 +336,8 @@ class DataContainer : public TObject {
   }
 
 /**
- * Selects subrange of axis of datacontainer
+ * Selects subrange of axis of datacontainer. If resulting axis is one dimensional it is deleted and dimension of
+ * the resulting container is reduced by one.
  * @tparam Function type of function
  * @param data input data container
  * @param axis subrange of axis to perform selection
@@ -367,6 +368,12 @@ class DataContainer : public TObject {
         selected.CallOnElement(indices, [&bin](T &element) { element = bin; });
       }
       ++index;
+    }
+    if (axis.size() == 1) {
+      selected.axes_.erase(selected.axes_.begin()+axisposition);
+      selected.stride_.resize(selected.axes_.size()+1);
+      selected.dimension_ = selected.axes_.size();
+      selected.CalculateStride();
     }
     return selected;
   }
@@ -542,7 +549,7 @@ class DataContainer : public TObject {
   }
 
   /// \cond CLASSIMP
- ClassDef(DataContainer, 5);
+ ClassDef(DataContainer, 6);
   /// \endcond
 };
 

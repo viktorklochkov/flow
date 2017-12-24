@@ -20,7 +20,7 @@ set(SOURCES
         SimpleTask.cpp
         QVector.cpp
         Stats.cpp
-        DataContainerHelper.cpp)
+        DataContainerHelper.cpp CorrelationManager.cpp CorrelationManager.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

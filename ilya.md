@@ -19,6 +19,8 @@
 
 ## Save correlations to file
 
+## XeXe train reduced tree
+
 #DONE
 
 ##Add missing QA histograms
