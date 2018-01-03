@@ -9,6 +9,7 @@
 #include <TTreeReader.h>
 #include "DataContainer.h"
 #include "Correlation.h"
+#include "CorrelationManager.h"
 
 #define VAR AliReducedVarManager
 
@@ -17,6 +18,7 @@ class SimpleTask {
   SimpleTask() = default;
   SimpleTask(std::string filelist, std::string treename);
 
+  void Configure(Qn::CorrelationManager &manager);
   void Run();
 
  private:

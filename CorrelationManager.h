@@ -45,6 +45,14 @@ class CorrelationManager {
     qvectors_.emplace(newname, projection);
   }
 
+  void AddCorrelation(std::string name,
+                      std::string containernames,
+                      FUNCTION lambda) {
+    std::list<std::string> containernamelist;
+    tokenize(containernames, containernamelist, ", ", true);
+    build_correlations_.emplace(name, std::make_pair(containernamelist, lambda));
+  }
+
   void SaveToFile(std::string name);
 
   void MakeProjections();
@@ -55,32 +63,9 @@ class CorrelationManager {
 
   bool CheckEvent();
 
-  void AddCorrelation(std::string name,
-                      std::string containernames,
-                      FUNCTION lambda) {
-    std::list<std::string> containernamelist;
-    tokenize(containernames, containernamelist, ", ", true);
-    std::vector<Qn::DataContainerQVector> qvectors;
-    qvectors.reserve(containernamelist.size());
-    for (auto &cname : containernamelist) {
-      qvectors.push_back(qvectors_.at(cname));
-    }
-    Qn::Correlation correlation(std::move(qvectors), event_axes_, std::move(lambda));
-    correlations_.emplace(name, std::make_pair(containernamelist, correlation));
-  }
+  void BuildCorrelation();
 
-  void FillCorrelations() {
-    for (auto &pair : correlations_) {
-      u_long i = 0;
-      std::vector<DataContainerQVector> inputs;
-      inputs.resize(pair.second.first.size());
-      for (const auto &name : pair.second.first) {
-        inputs.at(i) = qvectors_.at(name);
-        ++i;
-      }
-      pair.second.second.Fill(inputs,eventbin_);
-    }
-  }
+  void FillCorrelations();
 
 /**
  * Tokenize input string
@@ -112,6 +97,7 @@ class CorrelationManager {
   std::shared_ptr<TTreeReader> reader_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
+  std::map<std::string, std::pair<std::list<std::string>, FUNCTION>> build_correlations_;
   std::map<std::string, std::pair<std::list<std::string>, Qn::Correlation>> correlations_;
   std::map<std::string, Qn::DataContainerQVector> qvectors_;
   std::map<std::string, std::tuple<std::string, std::string, std::vector<Qn::Axis>>> projections_;

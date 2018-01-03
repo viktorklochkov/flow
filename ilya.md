@@ -20,6 +20,7 @@
 ## Save correlations to file
 
 ## XeXe train reduced tree
+* no fmd information inside the AOD
 
 #DONE
 
