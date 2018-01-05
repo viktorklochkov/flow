@@ -16,30 +16,52 @@ SimpleTask::SimpleTask(std::string filelist, std::string treename) :
     reader_(new TTreeReader(in_tree_.get())) {}
 
 void SimpleTask::Configure(Qn::CorrelationManager &a) {
-  auto scalar = [](std::vector<Qn::QVector> &a) -> double {
+  auto scalar = [](const std::vector<Qn::QVector> &a) -> double {
     return a[0].x(2)*a[1].x(2) + a[0].y(2)*a[1].y(2);
   };
-  auto XY = [](std::vector<Qn::QVector> &a) {
+  auto XY = [](const std::vector<Qn::QVector> &a) {
     return a[0].x(1)*a[1].y(1);
   };
-  auto YX = [](std::vector<Qn::QVector> &a) {
+  auto YX = [](const std::vector<Qn::QVector> &a) {
     return a[0].y(1)*a[1].x(1);
   };
-  auto XX = [](std::vector<Qn::QVector> &a) {
+  auto XX = [](const std::vector<Qn::QVector> &a) {
     return a[0].x(1)*a[1].x(1);
   };
-  auto YY = [](std::vector<Qn::QVector> &a) {
+  auto YY = [](const std::vector<Qn::QVector> &a) {
     return a[0].y(1)*a[1].y(1);
   };
+  auto X2X1 = [](const std::vector<Qn::QVector> &a) {
+    return a[0].x(2)*a[1].x(1);
+  };
+  auto Y2Y1 = [](const std::vector<Qn::QVector> &a) {
+    return a[0].y(2)*a[1].y(1);
+  };
+  auto Rebin = [](const Qn::DataContainerQVector &a) {
+    auto result = a.Rebin({"Eta", 2, -0.8, 0.8, VAR::kEta}, [](Qn::QVector &a, Qn::QVector &b) { return  a + b; });
+    return result;
+  };
+
   a.AddDataContainer("TPC");
   a.AddDataContainer("TPC_reference");
   a.AddDataContainer("VZEROA_reference");
+  a.AddDataContainer("VZEROC_reference");
   a.AddDataContainer("ZDCA_reference");
   a.AddDataContainer("ZDCC_reference");
-  a.AddProjection("TPC", "TPCPt", "Pt, Eta");
+  a.AddProjection("TPC", "TPCPt", "Pt");
   a.AddEventVariable({"CentralityVZERO", {0., 5., 10., 20., 30., 40., 50., 60., 70., 80.}, 1});
-  a.AddCorrelation("tpcvascalar", "TPC_reference, VZEROA_reference", scalar);
-  a.AddCorrelation("tpczdcac", "TPC_reference, TPC_reference, TPC_reference", XX);
+  a.AddFunction("TPC", Rebin);
+  a.AddCorrelation("TPCVA", "TPC_reference, VZEROA_reference", scalar);
+  a.AddCorrelation("TPCVC", "TPC_reference, VZEROC_reference", scalar);
+  a.AddCorrelation("VAVC", "VZEROA_reference, VZEROC_reference", scalar);
+  a.AddCorrelation("TPCZDCAX2X1", "TPC_reference, ZDCA_reference", X2X1);
+  a.AddCorrelation("TPCZDCAY2Y1", "TPC_reference, ZDCA_reference", Y2Y1);
+  a.AddCorrelation("TPCZDCCX2X1", "TPC_reference, ZDCC_reference", X2X1);
+  a.AddCorrelation("TPCZDCCY2Y1", "TPC_reference, ZDCC_reference", Y2Y1);
+  a.AddCorrelation("TPCZDCAXX", "TPC_reference, ZDCA_reference", XX);
+  a.AddCorrelation("TPCZDCAYY", "TPC_reference, ZDCA_reference", YY);
+  a.AddCorrelation("TPCZDCCXX", "TPC_reference, ZDCC_reference", XX);
+  a.AddCorrelation("TPCZDCCYY", "TPC_reference, ZDCC_reference", YY);
   a.AddCorrelation("ZDCAZDCXY", "ZDCA_reference, ZDCC_reference", XY);
   a.AddCorrelation("ZDCAZDCYX", "ZDCA_reference, ZDCC_reference", YX);
   a.AddCorrelation("ZDCAZDCYY", "ZDCA_reference, ZDCC_reference", XX);
@@ -52,7 +74,6 @@ void SimpleTask::Run() {
   int events = 1;
   reader_->SetEntry(0);
   a.Initialize();
-  a.UpdateEvent();
   while (reader_->Next()) {
     events++;
     a.UpdateEvent();

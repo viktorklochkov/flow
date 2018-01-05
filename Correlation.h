@@ -20,10 +20,10 @@ class Correlation {
   using CONTAINERS = DataContainerQVector;
  public:
   Correlation() = default;
-  Correlation(std::vector<CONTAINERS> input, AXES event, std::function<double(std::vector<Qn::QVector> &)> lambda) :
+  Correlation(std::vector<CONTAINERS> input, AXES event, std::function<double (std::vector<Qn::QVector>&)> lambda) :
       inputs_(std::move(input)),
       axes_event_(std::move(event)),
-      function_(std::move(lambda)) {
+      function_(lambda) {
     CreateCorrelationContainer();
   }
   DataContainerStat GetCorrelation() const { return data_correlation_; }
@@ -31,7 +31,7 @@ class Correlation {
   DataContainerStat data_correlation_; ///<  datacontainer containing the correlations
   std::vector<CONTAINERS> inputs_; ///< vector of input datacontainers
   AXES axes_event_; ///< vector of event axes used in the correlation
-  std::function<double(std::vector<Qn::QVector> &)> function_;
+  std::function<double (std::vector<Qn::QVector>&)> function_;
 
 /**
  * Create the correlation function. Automatically called at creation of Correlation object.
@@ -76,6 +76,7 @@ class Correlation {
                        u_int iteration,
                        std::vector<long> &cindex);
 };
+
 }
 
 #endif //FLOW_CORRELATION_H

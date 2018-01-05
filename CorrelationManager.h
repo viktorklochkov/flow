@@ -14,21 +14,30 @@ namespace Qn {
 
 class CorrelationManager {
   using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
+  using DATAFUNCTION = std::function<Qn::DataContainerQVector (Qn::DataContainerQVector &)>;
   using PROJECTION = std::function<std::vector<Qn::QVector>(std::vector<Qn::QVector> &)>;
  public:
   explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
       reader_(std::move(reader)) {
 
   }
-
-  void AddDataContainer(std::string name) {
+  /**
+   * Adds a new DataContainer to the correlation manager.
+   * Actual value is retrieved when the tree is read from the file.
+   * @param name
+   */
+  void AddDataContainer(const std::string &name) {
     TTreeReaderValue<Qn::DataContainerQVector>
         value(*reader_, name.data());
     tree_values_.emplace(name, value);
     DataContainerQVector a;
     qvectors_.emplace(name, a);
   }
-
+  /**
+   * Adds a new event variable to the correlation manager.
+   * Actual value is retrieved when the tree is read from the file.
+   * @param eventaxis Event variable defined as a Axis, which is used in the correlations.
+   */
   void AddEventVariable(const Qn::Axis &eventaxis) {
     TTreeReaderValue<float> value(*reader_, eventaxis.Name().data());
     tree_event_values_.emplace(eventaxis.Name(), value);
@@ -37,6 +46,21 @@ class CorrelationManager {
     event_axes_.push_back(eventaxis);
   }
 
+  void AddFunction(const std::string &name, DATAFUNCTION &&lambda) {
+    apply_function_qvectors.emplace(std::make_pair(name, lambda));
+  }
+
+  void ApplyFunction() {
+    for (const auto &data : apply_function_qvectors) {
+      qvectors_.at(data.first) = data.second(qvectors_.at(data.first));
+    }
+  }
+
+  /** Adds a new projection to the manager. Actual projection is created after the data have been read from file.
+   * @param originname Original data container.
+   * @param newname Name of the projection.
+   * @param axesnames Names of the axes.
+   */
   void AddProjection(const std::string &originname, const std::string &newname, const std::string &axesnames) {
     auto toproject = qvectors_.at(originname);
     std::vector<Axis> axes;
@@ -45,9 +69,15 @@ class CorrelationManager {
     qvectors_.emplace(newname, projection);
   }
 
-  void AddCorrelation(std::string name,
-                      std::string containernames,
-                      FUNCTION lambda) {
+  /**
+   * Adds a new correlation to the manager. Actual correlations is created when data is read from the file.
+   * @param name Name of the correlation.
+   * @param containernames Names of the correlated data containers.
+   * @param lambda Function used for the correlation.
+   */
+  void AddCorrelation(const std::string &name,
+                      const std::string &containernames,
+                      FUNCTION &&lambda) {
     std::list<std::string> containernamelist;
     tokenize(containernames, containernamelist, ", ", true);
     build_correlations_.emplace(name, std::make_pair(containernamelist, lambda));
@@ -99,6 +129,7 @@ class CorrelationManager {
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
   std::map<std::string, std::pair<std::list<std::string>, FUNCTION>> build_correlations_;
   std::map<std::string, std::pair<std::list<std::string>, Qn::Correlation>> correlations_;
+  std::map<std::string, DATAFUNCTION> apply_function_qvectors;
   std::map<std::string, Qn::DataContainerQVector> qvectors_;
   std::map<std::string, std::tuple<std::string, std::string, std::vector<Qn::Axis>>> projections_;
   std::vector<float> event_values_;
