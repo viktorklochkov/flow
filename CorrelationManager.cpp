@@ -34,11 +34,12 @@ bool CorrelationManager::CheckEvent() {
 
 void CorrelationManager::MakeProjections() {
   for (const auto &projection : projections_) {
-    qvectors_.at(std::get<0>(projection.second)) =
-        (*tree_values_.at(projection.first)).Projection(std::get<2>(projection.second),
-                                                        [](const Qn::QVector &a, const Qn::QVector &b) {
-                                                          return (a + b).Normal(Qn::QVector::Normalization::QOVERM);
-                                                        });
+    qvectors_.at(projection.first) =
+        (*tree_values_.at(std::get<0>(projection.second))).Projection(std::get<2>(projection.second),
+                                                                      [](const Qn::QVector &a, const Qn::QVector &b) {
+                                                                        return (a
+                                                                            + b).Normal(Qn::QVector::Normalization::QOVERM);
+                                                                      });
   }
 }
 void CorrelationManager::Initialize() {
@@ -53,7 +54,7 @@ void CorrelationManager::Initialize() {
   for (auto &projection : projections_) {
     std::list<std::string> axisnames;
     tokenize(std::get<1>(projection.second), axisnames, ", ", true);
-    auto toproject = qvectors_.at(projection.first);
+    auto toproject = qvectors_.at(std::get<0>(projection.second));
     for (auto const &name : axisnames) {
       std::get<2>(projection.second).push_back(toproject.GetAxis(name));
     }

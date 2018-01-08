@@ -65,7 +65,7 @@ class CorrelationManager {
     auto toproject = qvectors_.at(originname);
     std::vector<Axis> axes;
     DataContainerQVector projection;
-    projections_.emplace(originname, std::make_tuple(newname, axesnames, axes));
+    projections_.emplace(newname, std::make_tuple(originname, axesnames, axes));
     qvectors_.emplace(newname, projection);
   }
 
