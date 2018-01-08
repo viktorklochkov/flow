@@ -28,9 +28,9 @@ void QaAnalysis::TrackQa() {
   auto canvasdivisions = (int) TMath::Ceil(TMath::Sqrt(trackhistograms_->GetSize()));
   c1->Divide(canvasdivisions, canvasdivisions);
   for (int i = 1; i < trackhistograms_->GetSize() + 1; ++i) {
-    c1->cd(i);
+    auto pad = (TPad*) c1->cd(i);
     gStyle->SetOptStat(0);
-    c1->SetLogz(true);
+    pad->SetLogz(true);
     trackhistograms_->At(i - 1)->Draw("COLZ");
 
   }
