@@ -209,7 +209,7 @@ class DataContainer : public TObject {
     auto originalaxes = this->GetAxes();
     for (const auto &originalaxis : originalaxes) {
       for (const auto &axis : axes) {
-        isprojected.push_back(originalaxis.Name() == axis.Name() == 0);
+        isprojected.push_back((originalaxis.Name() == axis.Name()) == 0);
       }
     }
     if (axes.empty()) {

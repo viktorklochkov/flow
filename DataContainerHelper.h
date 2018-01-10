@@ -31,7 +31,7 @@ inline TGraphErrors *DataToProfileGraph(const Qn::DataContainerStat &data) {
     float xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
     float x = xlo + ((xhi - xlo) / 2);
     graph->SetPoint(ibin, x, bin.Mean());
-    graph->SetPointError(ibin, (xhi - xlo) / 2, bin.Error());
+    graph->SetPointError(ibin, 0, bin.Error());
     ibin++;
   }
   return graph;
@@ -46,10 +46,11 @@ inline TMultiGraph *DataToMultiGraph(const Qn::DataContainerStat &data, const st
   Qn::Axis axis;
   try { axis = data.GetAxis(axisname);}
   catch(std::exception&) {std::cout << "axis not found" << "\n"; return multigraph;}
-  for (int ibin = 0; ibin < axis.size()-1; ++ibin) {
-    auto subdata = data.Select({axisname,{axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin+1)}, 1});
+  for (int ibin = 0; ibin < axis.size(); ++ibin) {
+    auto subdata = data.Select({axisname,{axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)}, 1});
     auto subgraph = Qn::DataToProfileGraph(subdata);
     subgraph->SetTitle(Form("%.2f - %.2f",axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)));
+    subgraph->SetMarkerStyle(kFullCircle);
     multigraph->Add(subgraph);
   }
   return multigraph;
