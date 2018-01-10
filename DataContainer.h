@@ -42,11 +42,12 @@ class DataContainer : public TObject {
   const_iterator end() const { return data_.cend(); } ///< iterator for external use
   iterator begin() { return data_.begin(); } ///< iterator for external use
   iterator end() { return data_.end(); } ///< iterator for external use
-/**
+
+  /**
  * Size of data container
  * @return number of entries in the container
  */
-  std::vector<QnCorrectionsQnVector>::size_type size() const { return data_.size(); }
+  std::vector<Qn::QVector>::size_type size() const { return data_.size(); }
 
 /**
  * Adds axes for storing data
@@ -62,8 +63,8 @@ class DataContainer : public TObject {
  * @param axis Axis to be added.
  */
   void AddAxis(const Axis &axis) {
-    if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name() == axis.Name(); })
-        != axes_.end())
+    if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name()==axis.Name(); })
+        !=axes_.end())
       throw std::runtime_error("axis already defined in vector");
     axes_.push_back(axis);
     dimension_++;
@@ -151,7 +152,7 @@ class DataContainer : public TObject {
  */
   Axis GetAxis(const std::string name) const {
     for (auto axis: axes_) {
-      if (name == axis.Name()) return axis;
+      if (name==axis.Name()) return axis;
     }
     throw std::out_of_range("axis not found aborting");
   }
@@ -167,8 +168,8 @@ class DataContainer : public TObject {
     if ((u_long) offset >= data_.size()) return indices;
     indices.resize(dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[dimension_ - i - 1] = (int) (temp % axes_[dimension_ - i - 1].size());
-      temp = temp / axes_[dimension_ - i - 1].size();
+      indices[dimension_ - i - 1] = (int) (temp%axes_[dimension_ - i - 1].size());
+      temp = temp/axes_[dimension_ - i - 1].size();
     }
     indices[0] = (int) temp;
     return indices;
@@ -184,12 +185,12 @@ class DataContainer : public TObject {
     if (indices.empty()) return "invalid offset";
     std::string outstring;
     int i = 0;
-    for (auto it = axes_.cbegin(); it != axes_.cend(); ++it) {
+    for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
       const auto &axis = *it;
       outstring += axis.Name();
       outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
           + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
-      if (it + 1 != axes_.cend()) outstring += "; ";
+      if (it + 1!=axes_.cend()) outstring += "; ";
       ++i;
     }
     return outstring;
@@ -209,7 +210,7 @@ class DataContainer : public TObject {
     auto originalaxes = this->GetAxes();
     for (const auto &originalaxis : originalaxes) {
       for (const auto &axis : axes) {
-        isprojected.push_back((originalaxis.Name() == axis.Name()) == 0);
+        isprojected.push_back((originalaxis.Name()==axis.Name())==0);
       }
     }
     if (axes.empty()) {
@@ -348,7 +349,7 @@ class DataContainer : public TObject {
     long axisposition = 0;
     long tmpaxisposition = 0;
     for (const auto &a : axes_) {
-      if (a.Name() == axis.Name()) {
+      if (a.Name()==axis.Name()) {
         selected.AddAxis(axis);
         axisposition = tmpaxisposition;
       } else {
@@ -361,17 +362,17 @@ class DataContainer : public TObject {
       auto indices = GetIndex(index);
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
-      auto binmid = binlow + (binhigh - binlow) / 2;
+      auto binmid = binlow + (binhigh - binlow)/2;
       auto rebinnedindex = axis.FindBin(binmid);
-      if (rebinnedindex != -1) {
+      if (rebinnedindex!=-1) {
         indices[axisposition] = rebinnedindex;
         selected.CallOnElement(indices, [&bin](T &element) { element = bin; });
       }
       ++index;
     }
-    if (axis.size() == 1) {
-      selected.axes_.erase(selected.axes_.begin()+axisposition);
-      selected.stride_.resize(selected.axes_.size()+1);
+    if (axis.size()==1) {
+      selected.axes_.erase(selected.axes_.begin() + axisposition);
+      selected.stride_.resize(selected.axes_.size() + 1);
       selected.dimension_ = selected.axes_.size();
       selected.CalculateStride();
     }
@@ -394,7 +395,7 @@ class DataContainer : public TObject {
     long index = 0;
     if (axes_.size() > data.axes_.size()) {
       for (long iaxis = 0; data.axes_.size() - 1; ++iaxis) {
-        if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
+        if (axes_[iaxis].Id()!=data.axes_[iaxis].Id()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
         }
@@ -409,7 +410,7 @@ class DataContainer : public TObject {
       }
     } else {
       for (long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
-        if (axes_[iaxis].Id() != data.axes_[iaxis].Id()) {
+        if (axes_[iaxis].Id()!=data.axes_[iaxis].Id()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
         }
@@ -442,7 +443,7 @@ class DataContainer : public TObject {
      * Check if axis to be rebinned is found in the datacontainer.
      */
     for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
-      if (axis->Name() == rebinaxis.Name()) {
+      if (axis->Name()==rebinaxis.Name()) {
         rebinned.AddAxis(rebinaxis);
         axisposition = std::distance(axes_.begin(), axis);
         axisfound = true;
@@ -478,7 +479,7 @@ class DataContainer : public TObject {
       auto indices = GetIndex(ibin);
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
-      auto binmid = binlow + (binhigh - binlow) / 2;
+      auto binmid = binlow + (binhigh - binlow)/2;
       auto rebinnedindex = rebinaxis.FindBin(binmid);
       indices[axisposition] = rebinnedindex;
       rebinned.AddElement(indices, lambda, bin);
@@ -503,7 +504,7 @@ class DataContainer : public TObject {
   long GetLinearIndex(const std::vector<long> &index) const {
     long offset = (index[dimension_ - 1]);
     for (int i = 0; i < dimension_ - 1; ++i) {
-      offset += stride_[i + 1] * (index[i]);
+      offset += stride_[i + 1]*(index[i]);
     }
     return offset;
   }
@@ -512,7 +513,7 @@ class DataContainer : public TObject {
  * It is integrated if first axis is the integrated axis with Id == -1;
  * @return true if integrated, else false.
  */
-  inline bool IsIntegrated() const { return axes_[0].Id() == -1; }
+  inline bool IsIntegrated() const { return axes_[0].Id()==-1; }
 
  private:
   int dimension_ = 0; ///< dimensionality of data
@@ -544,7 +545,7 @@ class DataContainer : public TObject {
   void CalculateStride() {
     stride_[dimension_] = 1;
     for (int i = 0; i < dimension_; ++i) {
-      stride_[dimension_ - i - 1] = stride_[dimension_ - i] * axes_[dimension_ - i - 1].size();
+      stride_[dimension_ - i - 1] = stride_[dimension_ - i]*axes_[dimension_ - i - 1].size();
     }
   }
 
@@ -552,6 +553,31 @@ class DataContainer : public TObject {
  ClassDef(DataContainer, 6);
   /// \endcond
 };
+
+template<typename T>
+DataContainer<T> operator+(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a + b; });
+}
+
+template<typename T>
+DataContainer<T> operator*(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a*b; });
+}
+
+template<typename T>
+DataContainer<T> operator/(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a/b; });
+}
+
+template<typename T>
+DataContainer<T> operator*(DataContainer<T> a, double b) {
+  return a.Map([b](T &a) { return a*b; });
+}
+
+template<typename T>
+DataContainer<T> Sqrt(DataContainer<T> a) {
+  return a.Map([](T &a) { return Sqrt(a); });
+}
 
 using DataContainerQn = DataContainer<QnCorrectionsQnVector>;
 using DataContainerF = DataContainer<float>;

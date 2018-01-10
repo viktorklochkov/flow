@@ -49,7 +49,7 @@ void SimpleTask::Configure(Qn::CorrelationManager &a) {
   a.AddDataContainer("ZDCC_reference");
   a.AddProjection("TPC", "TPCPt", "Pt");
   a.AddProjection("TPC", "TPCEta", "Eta");
-  a.AddEventVariable({"CentralityVZERO", {0., 5., 10., 20., 30., 40., 50., 60., 70., 80.}, 1});
+  a.AddEventVariable({"CentralityVZERO", {0., 5., 10., 20., 30., 40., 50., 60., 70.}, 1});
 //  a.AddFunction("TPC", Rebin);
   a.AddCorrelation("TPCPTVA", "TPCPt, VZEROA_reference", scalar);
   a.AddCorrelation("TPCPTVC", "TPCPt, VZEROC_reference", scalar);

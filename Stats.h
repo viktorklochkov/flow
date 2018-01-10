@@ -47,12 +47,13 @@ class Statistics {
   inline double Error() const { return error_; }
   inline int Entries() const { return entries_; }
 
-  inline Statistics Sqrt() {
-    mean_ = std::sqrt(std::abs(mean_));
-    sum_ = std::sqrt(std::abs(sum_));
-    sum2_ = std::sqrt(std::abs(sum2_));
-    error_ = 1./2. * error_ / mean_;
-    return *this;
+  inline Statistics Sqrt() const {
+    Statistics a(*this);
+    a.mean_ = std::sqrt(std::abs(mean_));
+    a.sum_ = std::sqrt(std::abs(sum_));
+    a.sum2_ = std::sqrt(std::abs(sum2_));
+    a.error_ = 1./2. * a.error_ / a.mean_;
+    return a;
   }
 
   friend Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b);
