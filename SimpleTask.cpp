@@ -65,8 +65,12 @@ void SimpleTask::Configure(Qn::CorrelationManager &a) {
 //  a.AddFunction("TPC", Rebin);
   a.AddCorrelation("TPCETAZDCA","TPCEta, ZDCA_reference", XX);
   a.AddCorrelation("TPCETAZDCA","TPCEta, ZDCA_reference", YY);
+  a.AddCorrelation("TPCETAZDCA","TPCEta, ZDCA_reference", XY);
+  a.AddCorrelation("TPCETAZDCA","TPCEta, ZDCA_reference", YX);
   a.AddCorrelation("TPCETAZDCC","TPCEta, ZDCC_reference", XX);
   a.AddCorrelation("TPCETAZDCC","TPCEta, ZDCC_reference", YY);
+  a.AddCorrelation("TPCETAZDCC","TPCEta, ZDCC_reference", XY);
+  a.AddCorrelation("TPCETAZDCC","TPCEta, ZDCC_reference", YX);
   a.AddCorrelation("TPCPTVA", "TPCPt, VZEROA_reference", scalar);
   a.AddCorrelation("TPCPTVC", "TPCPt, VZEROC_reference", scalar);
   a.AddCorrelation("TPCETAVA", "TPCEta, VZEROA_reference", scalar);
