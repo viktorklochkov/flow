@@ -560,6 +560,11 @@ DataContainer<T> operator+(DataContainer<T> a, const DataContainer<T> &b) {
 }
 
 template<typename T>
+DataContainer<T> operator-(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a - b; });
+}
+
+template<typename T>
 DataContainer<T> operator*(DataContainer<T> a, const DataContainer<T> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a*b; });
 }
@@ -576,7 +581,7 @@ DataContainer<T> operator*(DataContainer<T> a, double b) {
 
 template<typename T>
 DataContainer<T> Sqrt(DataContainer<T> a) {
-  return a.Map([](T &a) { return Sqrt(a); });
+  return a.Map([](T &x) { return x.Sqrt(); });
 }
 
 using DataContainerQn = DataContainer<QnCorrectionsQnVector>;

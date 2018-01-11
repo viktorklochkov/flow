@@ -36,6 +36,18 @@ void SimpleTask::Configure(Qn::CorrelationManager &a) {
   auto Y2Y1 = [](const std::vector<Qn::QVector> &a) {
     return a[0].y(2)*a[1].y(1);
   };
+  auto Y2XY = [](const std::vector<Qn::QVector> &a) {
+    return a[0].y(2)*a[1].x(1)* a[2].y(1);
+  };
+  auto Y2YX = [](const std::vector<Qn::QVector> &a) {
+    return a[0].y(2)*a[1].y(1)* a[2].x(1);
+  };
+  auto X2XX = [](const std::vector<Qn::QVector> &a) {
+    return a[0].x(2)*a[1].x(1)* a[2].x(1);
+  };
+  auto X2YY = [](const std::vector<Qn::QVector> &a) {
+    return a[0].x(2)*a[1].y(1)* a[2].y(1);
+  };
   auto Rebin = [](const Qn::DataContainerQVector &a) {
     auto result = a.Rebin({"Eta", 2, -0.8, 0.8, VAR::kEta}, [](Qn::QVector &a, Qn::QVector &b) { return  a + b; });
     return result;
@@ -62,6 +74,10 @@ void SimpleTask::Configure(Qn::CorrelationManager &a) {
   a.AddCorrelation("TPCZDCAY2Y1", "TPC_reference, ZDCA_reference", Y2Y1);
   a.AddCorrelation("TPCZDCCX2X1", "TPC_reference, ZDCC_reference", X2X1);
   a.AddCorrelation("TPCZDCCY2Y1", "TPC_reference, ZDCC_reference", Y2Y1);
+  a.AddCorrelation("TPCZDCAZDCCX2YY", "TPC_reference, ZDCA_reference, ZDCC_reference", X2YY);
+  a.AddCorrelation("TPCZDCAZDCCX2XX", "TPC_reference, ZDCA_reference, ZDCC_reference", X2XX);
+  a.AddCorrelation("TPCZDCAZDCCY2YX", "TPC_reference, ZDCA_reference, ZDCC_reference", Y2YX);
+  a.AddCorrelation("TPCZDCAZDCCY2XY", "TPC_reference, ZDCA_reference, ZDCC_reference", Y2XY);
   a.AddCorrelation("TPCZDCAXX", "TPC_reference, ZDCA_reference", XX);
   a.AddCorrelation("TPCZDCAYY", "TPC_reference, ZDCA_reference", YY);
   a.AddCorrelation("TPCZDCCXX", "TPC_reference, ZDCC_reference", XX);
