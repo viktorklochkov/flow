@@ -74,7 +74,7 @@ inline Qn::Statistics operator*(Qn::Statistics a, double b) {
   double nsum2 = a.sum2_ * b;
   int nentries = a.entries_;
   double nmean = a.mean_ * b;
-  double nerror = a.error_ * b;
+  double nerror = a.error_ * fabs(b);
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
