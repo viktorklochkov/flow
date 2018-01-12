@@ -84,7 +84,8 @@ inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
   double nsum = (a.sum_ * a.mean_ + b.sum_ * b.mean_) / nentries;
   double nsum2 = (a.sum2_ * a.entries_+ b.sum2_ *b.entries_) / nentries;
   double nmean = (a.entries_ * a.mean_ + b.entries_ * b.mean_) / nentries;
-  double nerror = std::sqrt(a.error_* a.error_ + b.error_ * b.error_);
+//  double nerror = std::sqrt(a.error_* a.error_ + b.error_ * b.error_)/2;
+  double nerror = std::sqrt((a.error_* a.error_*a.entries_ + b.error_ * b.error_ * a.entries_ - 2* a.mean_ * b.mean_)/nentries);
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
