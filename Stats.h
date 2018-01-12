@@ -37,7 +37,7 @@ class Statistics {
   inline void Update(double value) {
     sum_ = sum_ + value;
     ++entries_;
-    mean_ = sum_ / (entries_ + 1);
+    mean_ = sum_ / (entries_);
     sum2_ = sum2_ + value * value;
     error_ = Qn::Stats::Sigma(mean_, sum2_, entries_);
   };
@@ -47,15 +47,17 @@ class Statistics {
   inline double Error() const { return error_; }
   inline int Entries() const { return entries_; }
 
-  inline Statistics Sqrt() {
-    mean_ = std::sqrt(std::abs(mean_));
-    sum_ = std::sqrt(std::abs(sum_));
-    sum2_ = std::sqrt(std::abs(sum2_));
-    error_ = std::sqrt(std::abs(error_));
-    return *this;
+  inline Statistics Sqrt() const {
+    Statistics a(*this);
+    a.mean_ = std::sqrt(std::abs(mean_));
+    a.sum_ = std::sqrt(std::abs(sum_));
+    a.sum2_ = std::sqrt(std::abs(sum2_));
+    a.error_ = 1./2. * a.error_ / a.mean_;
+    return a;
   }
 
   friend Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b);
+  friend Qn::Statistics operator-(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b);
   friend Qn::Statistics operator*(Qn::Statistics a, double b);
@@ -72,7 +74,7 @@ inline Qn::Statistics operator*(Qn::Statistics a, double b) {
   double nsum2 = a.sum2_ * b;
   int nentries = a.entries_;
   double nmean = a.mean_ * b;
-  double nerror = a.error_ * b;
+  double nerror = a.error_ * fabs(b);
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
@@ -82,7 +84,19 @@ inline Qn::Statistics operator+(Qn::Statistics a, Qn::Statistics b) {
   double nsum = (a.sum_ * a.mean_ + b.sum_ * b.mean_) / nentries;
   double nsum2 = (a.sum2_ * a.entries_+ b.sum2_ *b.entries_) / nentries;
   double nmean = (a.entries_ * a.mean_ + b.entries_ * b.mean_) / nentries;
-  double nerror = std::sqrt(nsum2);
+//  double nerror = std::sqrt(a.error_* a.error_ + b.error_ * b.error_)/2;
+  double nerror = std::sqrt((a.error_* a.error_*a.entries_ + b.error_ * b.error_ * a.entries_ - 2* a.mean_ * b.mean_)/nentries);
+  Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
+  return c;
+}
+
+
+inline Qn::Statistics operator-(Qn::Statistics a, Qn::Statistics b) {
+  int nentries = a.entries_ + b.entries_;
+  double nsum = (a.sum_ * a.mean_ - b.sum_ * b.mean_) / nentries;
+  double nsum2 = (a.sum2_ * a.entries_- b.sum2_ *b.entries_) / nentries;
+  double nmean = (a.entries_ * a.mean_ - b.entries_ * b.mean_) / nentries;
+  double nerror = std::sqrt(a.error_* a.error_ + b.error_ * b.error_);
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
@@ -91,7 +105,7 @@ inline Qn::Statistics operator*(Qn::Statistics a, Qn::Statistics b) {
   double nmean = a.mean_ * b.mean_;
   int nentries = a.entries_ + b.entries_;
   double nsum2 = a.mean_ * a.mean_ * b.error_ * b.error_ + b.mean_ * b.mean_ * a.error_ * a.error_;
-  double nerror = std::sqrt(nsum2);
+  double nerror = std::sqrt(a.mean_ * a.mean_ * b.error_ * b.error_ + b.mean_ * b.mean_ * a.error_ * a.error_);
   double nsum = 0;
   Qn::Statistics c(nmean, nsum, nsum2, nerror, nentries);
   return c;
@@ -105,12 +119,7 @@ inline Qn::Statistics operator/(Qn::Statistics a, Qn::Statistics b) {
   if (std::abs(b.Mean() - 0) > 10e-8) {
     nmean = a.Mean() / b.Mean();
     nsum2 = a.error_ * a.error_ / (b.mean_ * b.mean_) + a.mean_ * a.mean_ / (b.mean_ * b.mean_ * b.mean_ * b.mean_) * b.error_ * b.error_;
-    nerror = std::sqrt(nsum2);
-  } else {
-    nmean = 0;
-    nsum2 = 0;
-    nerror = 0;
-
+    nerror = std::sqrt(a.error_ * a.error_ / (b.mean_ * b.mean_) + a.mean_ * a.mean_ / (b.mean_ * b.mean_ * b.mean_ * b.mean_) * b.error_ * b.error_);
   }
   int nentries = a.Entries() + b.Entries();
   double nsum = nmean * nentries;

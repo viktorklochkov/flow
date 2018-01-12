@@ -24,7 +24,7 @@ Task::Task(std::string filelist, std::string incalib, std::string treename) :
     qn_eventinfo_f_(new Qn::EventInfoF()),
     qn_manager_(),
     eng(42),
-    rnd(0, 2 * M_PI),
+    rnd(0, 2*M_PI),
     write_tree_(true) {
   out_file_->cd();
   histograms_.reset(new TList());
@@ -50,18 +50,23 @@ void Task::Run() {
 void Task::Initialize() {
   using Axes = std::vector<Qn::Axis>;
   Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
-                               VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY, VAR::Variables::kDcaZ,
-                              VAR::Variables::kTPCsignal, VAR::Variables::kTPCchi2, VAR::Variables::kCharge});
+                               VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY,
+                               VAR::Variables::kDcaZ,
+                               VAR::Variables::kTPCsignal, VAR::Variables::kTPCchi2, VAR::Variables::kCharge});
 
 //  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0,10.0}, VAR::kPt);
 //  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
-  Axis ptaxis("Pt", {0.2,0.4,0.6,0.8,1.,1.25,1.5,1.75,2.0,2.5,3,3.5,4.,5.}, VAR::kPt);
+//  Axis ptaxis("Pt", {0.2,0.4,0.6,0.8,1.,1.25,1.5,1.75,2.0,2.5,3,3.5,4.,5.}, VAR::kPt);
+  Axis ptaxis
+      ("Pt",
+       {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3., 3.5, 4., 5., 6., 8., 10.},
+       VAR::kPt);
   Axis etaaxis("Eta", 4, -0.8, 0.8, VAR::kEta);
   Axis vzerorings("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7, 2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsA("EtaRings", {2.8, 3.4, 3.9, 4.5, 5.1}, VAR::kEta);
   Axis vzeroringsC("EtaRings", {-3.7, -3.2, -2.7, -2.2, -1.7}, VAR::kEta);
 
-  Axes tpcaxes = {ptaxis,etaaxis};
+  Axes tpcaxes = {ptaxis, etaaxis};
   Axes vzeroaxes = {vzerorings};
   Axes vzeroaxesA = {vzeroringsA};
   Axes vzeroaxesC = {vzeroringsC};
@@ -127,11 +132,10 @@ void Task::Initialize() {
                                  Configuration::DetectorType::Channel,
                                  4);
 
-//  qn_data_ = Qn::Internal::MakeQnDataContainer(raw_data_);
   qn_data_ = Qn::Internal::MakeQVectorDataContainer(raw_data_);
 
   auto eventset = new QnCorrectionsEventClassVariablesSet(2);
-  double centbins[][2] = {{0.0, 2}, {100.0, 20}};
+  double centbins[][2] = {{0.0, 2}, {100.0, 100}};
   double vtxbins[][2] = {{-10.0, 4}, {-7.0, 1}, {7.0, 8}, {10.0, 1}};
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kCentVZERO, "Centrality", centbins));
   eventset->Add(new QnCorrectionsEventClassVariable(VAR::kVtxZ, "z vertex", vtxbins));
@@ -139,18 +143,17 @@ void Task::Initialize() {
   const int ndim = 8;
   int bins[ndim] = {40, 40, 40, 40, 40, 50, 3, 20};
   double minbin[ndim] = {0, -0.9, 0, 0, -4, 0, -1, 0};
-  double maxbin[ndim] = {8, 0.9, 2 * TMath::Pi(), 2.5, 4, 1500, 2, 5};
+  double maxbin[ndim] = {8, 0.9, 2*TMath::Pi(), 2.5, 4, 1500, 2, 5};
   auto *h_track_params =
       new THnSparseF("trackqa", "tracks;pT;eta;phi;dcaxy;dcaz;dEdx;charge;chi2/ndf;", ndim, bins, minbin, maxbin);
 
-  auto *h_zdc_channels = new TProfile("zdcchannels","zdc;channel;weight",10,0,10);
-  auto *h_zdc_phi = new TH1F("zdcphi","zdc;phi;weight",4,-TMath::Pi(),TMath::Pi());
+  auto *h_zdc_channels = new TProfile("zdcchannels", "zdc;channel;weight", 10, 0, 10);
+  auto *h_zdc_phi = new TH1F("zdcphi", "zdc;phi;weight", 4, -TMath::Pi(), TMath::Pi());
 
   histograms_->SetOwner(true);
   histograms_->Add(h_track_params);
   histograms_->Add(h_zdc_channels);
   histograms_->Add(h_zdc_phi);
-
 
   Qn::Internal::AddDetectorsToFramework(qn_manager_, raw_data_, *eventset);
   Qn::Internal::SaveToTree(*out_tree_, qn_data_);
@@ -176,8 +179,8 @@ void Task::Process() {
   qn_eventinfo_f_->Reset();
 
   auto event = event_.Get();
-  if (event->IsA() != AliReducedEventInfo::Class()) return;
-  if (event->NTracks() == 0) return;
+  if (event->IsA()!=AliReducedEventInfo::Class()) return;
+  if (event->NTracks()==0) return;
   qn_eventinfo_f_->SetVariable("CentralityVZERO", event->CentralityVZERO());
   qn_eventinfo_f_->SetVariable("CentralityZEMvsZDC", event->CentralityZEMvsZDC());
   qn_eventinfo_f_->SetVariable("CentralityTPC", event->CentralityTPC());
@@ -200,7 +203,7 @@ void Task::Finalize() {
   qn_manager_.GetOutputHistogramsList()->Write(qn_manager_.GetOutputHistogramsList()->GetName(), TObject::kSingleKey);
   qn_manager_.GetQAHistogramsList()->Write(qn_manager_.GetQAHistogramsList()->GetName(), TObject::kSingleKey);
   out_file_->cd();
-  histograms_->Write("histograms",TObject::kSingleKey);
+  histograms_->Write("histograms", TObject::kSingleKey);
   if (write_tree_) {
     out_file_->Write();
     std::cout << "Output file written." << std::endl;

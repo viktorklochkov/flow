@@ -63,6 +63,7 @@ class QVector {
   float x(int i) const { return q_[i].x; }
   float n() const { return n_; }
   float y(int i) const { return q_[i].y; }
+  float sumweights() const {return sum_weights_; }
 
   friend QVector operator+(QVector a, QVector b);
 
@@ -139,7 +140,7 @@ class QVector {
   float sum_weights_ = 0.0;
   std::array<QVec, 4> q_;
   /// \cond CLASSIMP
- ClassDef(QVector, 2);
+ ClassDef(QVector, 3);
   /// \endcond
 };
 

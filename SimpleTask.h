@@ -9,6 +9,7 @@
 #include <TTreeReader.h>
 #include "DataContainer.h"
 #include "Correlation.h"
+#include "CorrelationManager.h"
 
 #define VAR AliReducedVarManager
 
@@ -17,20 +18,12 @@ class SimpleTask {
   SimpleTask() = default;
   SimpleTask(std::string filelist, std::string treename);
 
-  void AddDataContainer(std::string name);
-  void AddEventVariable(std::string name);
+  void Configure(Qn::CorrelationManager &manager);
   void Run();
 
  private:
-  void Initialize();
-  void Process();
-  void Finalize();
   std::unique_ptr<TTree> in_tree_;
-  TTreeReader reader_;
-  std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> values_;
-  std::map<std::string, TTreeReaderValue<float>> eventvalues_;
-  std::map<std::string, Qn::Correlation> correlations_;
-  std::vector<Qn::Axis> eventaxes_;
+  std::shared_ptr<TTreeReader> reader_;
 
   /**
    * Make TChain from file list

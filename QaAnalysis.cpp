@@ -12,25 +12,25 @@
 
 void QaAnalysis::TrackQa() {
   THnSparseF *histogram = nullptr;
-  TList *list = (TList *) file_->Get("histograms");
+  auto *list = (TList *) file_->Get("histograms");
   if (!list) {
     std::cout << "no histogram found." << std::endl;
     return;
   }
-  histogram = (static_cast<THnSparseF *>(list->FindObject("trackqa")));
+  histogram = (dynamic_cast<THnSparseF *>(list->FindObject("trackqa")));
 //  "tracks;pT;eta;phi;dcaxy;dcaz;dEdx;charge;chi2/ndf"
   trackhistograms_->Add(histogram->Projection(1, 2));
   trackhistograms_->Add(histogram->Projection(4, 3));
   trackhistograms_->Add(histogram->Projection(6, 0));
   trackhistograms_->Add(histogram->Projection(6, 1));
 
-  TCanvas *c1 = new TCanvas("c_trackqa", "track qa");
-  int canvasdivisions = (int) TMath::Ceil(TMath::Sqrt(trackhistograms_->GetSize()));
+  auto *c1 = new TCanvas("c_trackqa", "track qa");
+  auto canvasdivisions = (int) TMath::Ceil(TMath::Sqrt(trackhistograms_->GetSize()));
   c1->Divide(canvasdivisions, canvasdivisions);
   for (int i = 1; i < trackhistograms_->GetSize() + 1; ++i) {
-    c1->cd(i);
+    auto pad = (TPad*) c1->cd(i);
     gStyle->SetOptStat(0);
-    c1->SetLogz(true);
+    pad->SetLogz(true);
     trackhistograms_->At(i - 1)->Draw("COLZ");
 
   }
@@ -41,13 +41,13 @@ void QaAnalysis::EventQa() {
   tree = (TTree *) file_->Get("tree");
   if (!tree) return;
   TTreeReader reader(tree);
-  TTreeReaderValue<Qn::DataContainerQn> qntpc(reader, "TPC_reference");
-  TTreeReaderValue<Qn::DataContainerQn> qnzdca(reader, "ZDCA_reference");
-  TTreeReaderValue<Qn::DataContainerQn> qnzdcc(reader, "ZDCC_reference");
-  TTreeReaderValue<Qn::DataContainerQn> qnv0a(reader, "VZEROA_reference");
-  TTreeReaderValue<Qn::DataContainerQn> qnv0c(reader, "VZEROC_reference");
-  TTreeReaderValue<Qn::DataContainerQn> qnfmda(reader, "FMDA_reference");
-  TTreeReaderValue<Qn::DataContainerQn> qnfmdc(reader, "FMDC_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qntpc(reader, "TPC_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qnzdca(reader, "ZDCA_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qnzdcc(reader, "ZDCC_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qnv0a(reader, "VZEROA_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qnv0c(reader, "VZEROC_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qnfmda(reader, "FMDA_reference");
+  TTreeReaderValue<Qn::DataContainerQVector> qnfmdc(reader, "FMDC_reference");
   TTreeReaderValue<float> centspd(reader, "CentralitySPD");
   TTreeReaderValue<float> centtpc(reader, "CentralityTPC");
   TTreeReaderValue<float> centzdc(reader, "CentralityZEMvsZDC");
@@ -62,12 +62,12 @@ void QaAnalysis::EventQa() {
   auto *histogram = new THnSparseF("signals", binnames.data(), ndim, nbins, binmin, binmax);
 
   while (reader.Next()) {
-    double signal[12] = {(double) qntpc->GetElement(0).GetN(), (double) qnzdca->GetElement(0).GetSumOfWeights(),
-                         (double) qnzdcc->GetElement(0).GetSumOfWeights(),
-                         (double) qnv0a->GetElement(0).GetSumOfWeights(),
-                         (double) qnv0c->GetElement(0).GetSumOfWeights(),
-                         (double) qnfmda->GetElement(0).GetSumOfWeights(),
-                         (double) qnfmdc->GetElement(0).GetSumOfWeights(), (double) *centspd, (double) *centtpc,
+    double signal[12] = {(double) qntpc->GetElement(0).n(), (double) qnzdca->GetElement(0).sumweights(),
+                         (double) qnzdcc->GetElement(0).sumweights(),
+                         (double) qnv0a->GetElement(0).sumweights(),
+                         (double) qnv0c->GetElement(0).sumweights(),
+                         (double) qnfmda->GetElement(0).sumweights(),
+                         (double) qnfmdc->GetElement(0).sumweights(), (double) *centspd, (double) *centtpc,
                          (double) *centzdc, (double) *centvzero, (double) *vtxz};
     histogram->Fill(signal);
   }
@@ -88,8 +88,8 @@ void QaAnalysis::EventQa() {
   eventhistograms_->Add(histogram->Projection(9));
   eventhistograms_->Add(histogram->Projection(10));
 
-  TCanvas *c1 = new TCanvas("c_eventqa", "event qa");
-  int canvasdivisions = (int) TMath::Ceil(TMath::Sqrt(eventhistograms_->GetSize()));
+  auto *c1 = new TCanvas("c_eventqa", "event qa");
+  auto canvasdivisions = (int) TMath::Ceil(TMath::Sqrt(eventhistograms_->GetSize()));
   c1->Divide(canvasdivisions, canvasdivisions);
   for (int i = 1; i < eventhistograms_->GetSize() + 1; ++i) {
     c1->cd(i);
