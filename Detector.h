@@ -13,37 +13,40 @@ namespace Qn {
 class Detector {
  public:
   Detector(Configuration::DetectorType type, const std::vector<Qn::Axis> &axes, std::vector<int> enums) :
-      type_(type), enums_(std::move(enums)) {
-    std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
-    std::unique_ptr<Qn::DataContainerQVector> qvec(new Qn::DataContainerQVector());
-    data->AddAxes(axes);
-    qvec->AddAxes(axes);
+      type_(type),
+      enums_(std::move(enums)),
+      datavector_(new Qn::DataContainerDataVector()),
+      qvector_(new Qn::DataContainerQVector()) {
+    datavector_->AddAxes(axes);
+    qvector_->AddAxes(axes);
   }
 
   Detector(Configuration::DetectorType type, const std::vector<Qn::Axis> &axes, std::vector<int> enums, int nchannels) :
-      nchannels_(nchannels), type_(type), enums_(std::move(enums)) {
-    std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
-    std::unique_ptr<Qn::DataContainerQVector> qvec(new Qn::DataContainerQVector());
-    data->AddAxes(axes);
-    qvec->AddAxes(axes);
+      nchannels_(nchannels),
+      type_(type),
+      enums_(std::move(enums)),
+      datavector_(new Qn::DataContainerDataVector()),
+      qvector_(new Qn::DataContainerQVector()) {
+    datavector_->AddAxes(axes);
+    qvector_->AddAxes(axes);
   }
 
   Detector(Configuration::DetectorType type, int nchannels) :
-      nchannels_(nchannels), type_(type) {
-    std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
-    std::unique_ptr<Qn::DataContainerQVector> qvec(new Qn::DataContainerQVector());
+      nchannels_(nchannels),
+      type_(type),
+      datavector_(new Qn::DataContainerDataVector()),
+      qvector_(new Qn::DataContainerQVector()) {
     Qn::Axis integrated("integrated", 1, 0, 1, -1);
-    data->AddAxis(integrated);
-    qvec->AddAxis(integrated);
+    datavector_->AddAxis(integrated);
+    qvector_->AddAxis(integrated);
   }
 
   explicit Detector(Configuration::DetectorType type) :
-      type_(type) {
-    std::unique_ptr<Qn::DataContainerDataVector> data(new Qn::DataContainerDataVector());
-    std::unique_ptr<Qn::DataContainerQVector> qvec(new Qn::DataContainerQVector());
+      type_(type), datavector_(new Qn::DataContainerDataVector()),
+      qvector_(new Qn::DataContainerQVector()) {
     Qn::Axis integrated("integrated", 1, 0, 1, -1);
-    data->AddAxis(integrated);
-    qvec->AddAxis(integrated);
+    datavector_->AddAxis(integrated);
+    qvector_->AddAxis(integrated);
   }
 
   void ClearData() {
@@ -51,7 +54,10 @@ class Detector {
     qvector_->ClearData();
   }
 
-  QnCorrectionsDetector *GenerateDetector(const std::string &detname, int globalid, int binid, QnCorrectionsEventClassVariablesSet *set) {
+  QnCorrectionsDetector *GenerateDetector(const std::string &detname,
+                                          int globalid,
+                                          int binid,
+                                          QnCorrectionsEventClassVariablesSet *set) {
     auto binname = datavector_->GetBinDescription(binid);
     auto name = (detname + std::to_string(binid)).c_str();
     std::cout << name << std::endl;
@@ -62,7 +68,8 @@ class Detector {
     return detector;
   }
 
-  QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name, QnCorrectionsEventClassVariablesSet *set) {
+  QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name,
+                                                                      QnCorrectionsEventClassVariablesSet *set) {
     QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
     if (type_==Configuration::DetectorType::Channel) {
       configuration =
@@ -80,7 +87,7 @@ class Detector {
   int GetNChannels() const { return nchannels_; }
   std::function<void(QnCorrectionsDetectorConfigurationBase *config)> GetConfig() { return configuration_; }
   void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) { configuration_ = conf; }
-  std::vector<int> GetEnums() const {return enums_;}
+  std::vector<int> GetEnums() const { return enums_; }
 
  private:
   int nchannels_ = 0;

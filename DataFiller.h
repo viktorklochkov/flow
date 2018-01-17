@@ -53,7 +53,7 @@ class DataFiller {
       if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 10.0) continue;
       values[-1] = 0;
       for (const auto num : detector.GetEnums()) {
-        trackparams.push_back(num);
+        trackparams.push_back(values[num]);
       }
       try {
         datacontainer->CallOnElement(trackparams, [values](std::vector<DataVector> &vector) {

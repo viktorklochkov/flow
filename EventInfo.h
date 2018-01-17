@@ -56,6 +56,10 @@ class EventInfo {
  private:
 
  public:
+
+  typedef typename std::map<std::string, EventInfoValue<T>>::iterator iterator;
+  iterator begin() { return map_.begin(); } ///< iterator for external use
+  iterator end() { return map_.end(); } ///< iterator for external use
 /**
  * Gets value and validity of event parameter.
  * @param key identifier of event parameter

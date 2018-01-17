@@ -12,6 +12,7 @@
 #include "Correlation.h"
 #include "SimpleTask.h"
 #include "Stats.h"
+#include "TestTask.h"
 #include <iomanip>
 #include <chrono>
 
@@ -19,7 +20,7 @@ int main(int argc, char **argv) {
   auto start = std::chrono::system_clock::now();
   ROOT::EnableImplicitMT(2);
   if (strcmp(argv[3], "correct")==0) {
-    Qn::Task task(argv[1], argv[2], "DstTree");
+    Qn::TestTask task(argv[1], argv[2], "DstTree");
     task.Run();
   }
   if (strcmp(argv[3], "analysis")==0) {

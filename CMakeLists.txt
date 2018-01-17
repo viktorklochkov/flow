@@ -22,7 +22,7 @@ set(SOURCES
         Stats.cpp
         DataContainerHelper.cpp
         CorrelationManager.cpp
-        VariableManager.cpp VariableManager.h CorrectionManager.cpp CorrectionManager.h Detector.cpp Detector.h DataFiller.cpp DataFiller.h)
+        VariableManager.cpp VariableManager.h CorrectionManager.cpp CorrectionManager.h Detector.cpp Detector.h DataFiller.cpp DataFiller.h TestTask.cpp TestTask.h)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

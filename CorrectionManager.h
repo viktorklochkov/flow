@@ -18,6 +18,9 @@
 namespace Qn {
 class CorrectionManager {
  public:
+
+  CorrectionManager() : event_variables_(new Qn::EventInfoF()) {}
+
   void AddVariable(const std::string &name, const int number) { var_manager_.AddVariable(name, number); }
 
   void AddCorrectionAxis(const Qn::Axis &variable) { qncorrections_axis_.push_back(variable); }
@@ -37,10 +40,12 @@ class CorrectionManager {
     for (const auto &axis : axes) {
       enums.push_back(var_manager_.FindNum(axis.Name()));
     }
-    detectors_.insert(std::make_pair(name, (Detector){type, axes, enums, nchannels}));
+    Detector detector(type,axes,enums,nchannels);
+    detectors_.insert(std::make_pair(name, std::move(detector)));
   }
 
-  void SetCorrectionSteps(const std::string &name, std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config) {
+  void SetCorrectionSteps(const std::string &name,
+                          std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config) {
     detectors_.at(name).SetConfig(std::move(config));
   }
 
@@ -50,7 +55,7 @@ class CorrectionManager {
       auto &detector = pair.second;
       for (int ibin = 0; ibin < detector.GetDataContainer()->size(); ++ibin) {
         auto globalid = nbinsrunning + ibin;
-        auto frameworkdetector = detector.GenerateDetector(pair.first,globalid,ibin,qncorrections_varset_);
+        auto frameworkdetector = detector.GenerateDetector(pair.first, globalid, ibin, qncorrections_varset_);
         qncorrections_manager_.AddDetector(frameworkdetector);
       }
       nbinsrunning += detector.GetDataContainer()->size();
@@ -105,9 +110,45 @@ class CorrectionManager {
   }
 
   void FillDataToFramework(Qn::Differential::Interface::DataFiller filler) {
-    for (auto & detector : detectors_) {
+    for (auto &detector : detectors_) {
       filler.Fill(detector.first, detector.second);
     }
+  }
+
+  void SaveCorrectionHistograms() {
+   qncorrections_manager_.GetOutputHistogramsList()->Write(qncorrections_manager_.GetOutputHistogramsList()->GetName(), TObject::kSingleKey);
+   qncorrections_manager_.GetQAHistogramsList()->Write(qncorrections_manager_.GetQAHistogramsList()->GetName(), TObject::kSingleKey);
+  }
+
+  float *GetVariableContainer() { return qncorrections_manager_.GetDataContainer(); }
+
+  void Initialize(std::shared_ptr<TFile> &in_calibration_file_) {
+    CalculateCorrectionAxis();
+    CreateDetectors();
+    qncorrections_manager_.SetCalibrationHistogramsList(in_calibration_file_.get());
+    qncorrections_manager_.SetShouldFillQAHistograms();
+    qncorrections_manager_.SetShouldFillOutputHistograms();
+    qncorrections_manager_.InitializeQnCorrectionsFramework();
+    qncorrections_manager_.SetCurrentProcessListName("correction");
+  }
+
+  void Process() {
+    FillDataToFramework();
+    for (auto &event_var : *event_variables_) {
+      event_var.second.SetValue(qncorrections_manager_.GetDataContainer()[var_manager_.FindNum(event_var.first)]);
+    }
+    qncorrections_manager_.ProcessEvent();
+    GetQnFromFramework("latest");
+  }
+
+  void Finalize() { qncorrections_manager_.FinalizeQnCorrectionsFramework(); }
+
+  void Reset() {
+    qncorrections_manager_.ClearEvent();
+    for (auto &det : detectors_) {
+      det.second.ClearData();
+    }
+    event_variables_->Reset();
   }
 
  private:
@@ -118,10 +159,11 @@ class CorrectionManager {
     for (const auto &axis : qncorrections_axis_) {
       double axisbins[kMaxCorrectionArrayLength];
       auto nbins = axis.size();
-      for (int ibin = 0; ibin < nbins; ++ibin) {
+      for (int ibin = 0; ibin < nbins+1; ++ibin) {
         axisbins[ibin] = *(axis.begin() + ibin);
       }
-      auto variable = new QnCorrectionsEventClassVariable(var_manager_.FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
+      auto variable =
+          new QnCorrectionsEventClassVariable(var_manager_.FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
       qncorrections_varset_->Add(variable);
     }
   }
