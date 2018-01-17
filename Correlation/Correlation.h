@@ -8,8 +8,10 @@
 #include <iostream>
 #include <utility>
 #include <TGraphErrors.h>
-#include "DataContainer.h"
+#include "Base/DataContainer.h"
+#include "Base/QVector.h"
 #include "TTreeReaderValue.h"
+#include "Base/Stats.h"
 
 namespace Qn {
 /**
@@ -26,9 +28,9 @@ class Correlation {
       function_(lambda) {
     CreateCorrelationContainer();
   }
-  DataContainerStat GetCorrelation() const { return data_correlation_; }
+  DataContainerProfile GetCorrelation() const { return data_correlation_; }
  private:
-  DataContainerStat data_correlation_; ///<  datacontainer containing the correlations
+  DataContainerProfile data_correlation_; ///<  datacontainer containing the correlations
   std::vector<CONTAINERS> inputs_; ///< vector of input datacontainers
   AXES axes_event_; ///< vector of event axes used in the correlation
   std::function<double (std::vector<Qn::QVector>&)> function_;

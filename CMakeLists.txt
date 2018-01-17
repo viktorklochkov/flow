@@ -4,25 +4,21 @@ set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE debug)
 set(SOURCES
-        Task.cpp
-        DataContainer.cpp
-        Axis.cpp
-        EventInfo.cpp
-        DetectorGenerator.cpp
-        CorrectionInterface.cpp
-        DataVector.cpp
-        DataInterface.cpp
-        DetectorConfig.cpp
-        DetectorMap.cpp
-        QaAnalysis.cpp
-        PlotCompare.cpp
-        Correlation.cpp
+        Base/DataContainer.cpp
+        Base/Axis.cpp
+        DifferentialCorrection/EventInfo.cpp
+        Base/DataVector.cpp
+        Correlation/Correlation.cpp
         SimpleTask.cpp
-        QVector.cpp
-        Stats.cpp
-        DataContainerHelper.cpp
-        CorrelationManager.cpp
-        VariableManager.cpp VariableManager.h CorrectionManager.cpp CorrectionManager.h Detector.cpp Detector.h DataFiller.cpp DataFiller.h TestTask.cpp TestTask.h)
+        Base/QVector.cpp
+        Base/Stats.cpp
+        Base/DataContainerHelper.cpp
+        Correlation/CorrelationManager.cpp
+        DifferentialCorrection/VariableManager.cpp
+        DifferentialCorrection/CorrectionManager.cpp
+        DifferentialCorrection/Detector.cpp
+        DifferentialCorrection/Interface/DataFiller.cpp
+        TestTask.cpp)
 
 string(REPLACE ".cpp" ".h" HEADERS "${SOURCES}")
 

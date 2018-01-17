@@ -24,14 +24,13 @@
 #include "TTreeReader.h"
 
 #include "QnCorrections/QnCorrectionsManager.h"
-#include "DataContainer.h"
-#include "EventInfo.h"
+#include "Base/DataContainer.h"
+#include "DifferentialCorrection/EventInfo.h"
 #include "ReducedEvent/AliReducedEventInfo.h"
 #include "ReducedEvent/AliReducedVarManager.h"
 #include "ReducedEvent/AliReducedTrackInfo.h"
 #include "ReducedEvent/AliReducedBaseTrack.h"
-#include "DetectorMap.h"
-#include "CorrectionManager.h"
+#include "DifferentialCorrection/CorrectionManager.h"
 
 #define VAR AliReducedVarManager
 
@@ -68,6 +67,11 @@ class TestTask {
    */
   virtual std::unique_ptr<TChain> MakeChain(std::string filename, std::string treename);
 
+  void SetVariables(std::vector<VAR::Variables> vars) {
+    for (auto var : vars) {
+      AliReducedVarManager::SetUseVariable(var);
+    }
+  }
  protected:
   std::shared_ptr<TFile> out_file_;
   std::shared_ptr<TFile> in_calibration_file_;

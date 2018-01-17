@@ -11,7 +11,7 @@
 ##comparison to published
 * rewrite macros to produce nice plots
 
-## Statistics
+## Profile
 * fix variance calculation; naive version is not stable.
 * add histogram feature
 

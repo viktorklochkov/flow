@@ -22,7 +22,7 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
       });
       contents.at(iteration) = bin;
       data_correlation_.CallOnElement(cindex,
-                                      [this, &contents](Qn::Statistics &a) -> void {
+                                      [this, &contents](Qn::Profile &a) -> void {
                                         if (std::all_of(contents.begin(), contents.end(), [](QVector qv) { return qv.n() != 0; })) {
                                           a.Update(function_(contents));
                                         }

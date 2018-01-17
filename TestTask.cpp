@@ -7,7 +7,6 @@
 #include <random>
 #include <THnSparse.h>
 #include "TestTask.h"
-#include "CorrectionInterface.h"
 
 namespace Qn {
 
@@ -46,7 +45,7 @@ void TestTask::Run() {
 
 void TestTask::Initialize() {
   using Axes = std::vector<Qn::Axis>;
-  Qn::Interface::SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
+  SetVariables({VAR::Variables::kVtxZ, VAR::Variables::kPt, VAR::Variables::kEta, VAR::Variables::kP,
                                VAR::Variables::kPhi, VAR::Variables::kTPCncls, VAR::Variables::kDcaXY,
                                VAR::Variables::kDcaZ,
                                VAR::Variables::kTPCsignal, VAR::Variables::kTPCchi2, VAR::Variables::kCharge});
@@ -73,7 +72,7 @@ void TestTask::Initialize() {
   manager.AddVariable("Eta", VAR::Variables::kEta);
   manager.AddVariable("VtxZ", VAR::Variables::kVtxZ);
 
-  manager.AddDetector("TPC", Configuration::DetectorType::Track, tpcaxes);
+  manager.AddDetector("TPC", DetectorType::Track, tpcaxes);
   manager.SetCorrectionSteps("TPC", configure);
 
   manager.AddCorrectionAxis({"CentralityVZERO", 100, 0, 100, -1});

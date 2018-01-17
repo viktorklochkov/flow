@@ -17,14 +17,14 @@
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
-#pragma link C++ class Qn::Statistics+;
+#pragma link C++ class Qn::Profile+;
 #pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector >+;
 #pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
 #pragma link C++ class Qn::DataContainer<float >+;
-#pragma link C++ class Qn::DataContainer<Qn::Statistics>+;
+#pragma link C++ class Qn::DataContainer<Qn::Profile>+;
 #pragma link C++ class Qn::DataContainer<std::vector<float> >+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
-#pragma link C++ typedef Qn::DataContainerQn;
+#pragma link C++ typedef Qn::DataContainerProfile;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ class QaAnalysis+;

@@ -8,7 +8,7 @@
 #include <ReducedEvent/AliReducedVarManager.h>
 
 #include "SimpleTask.h"
-#include "DataContainerHelper.h"
+#include "Base/DataContainerHelper.h"
 
 SimpleTask::SimpleTask(std::string filelist, std::string treename) :
     in_tree_(this->MakeChain(std::move(filelist), treename)),
@@ -114,19 +114,19 @@ void SimpleTask::Run() {
 
 //
 //
-//  auto multiply = [](Qn::Statistics a, Qn::Statistics b) {
+//  auto multiply = [](Qn::Profile a, Qn::Profile b) {
 //    return a*b;
 //  };
 //
-//  auto divide = [](Qn::Statistics a, Qn::Statistics b) {
+//  auto divide = [](Qn::Profile a, Qn::Profile b) {
 //    return a/b;
 //  };
 //
-//  auto sqrt = [](Qn::Statistics a) {
+//  auto sqrt = [](Qn::Profile a) {
 //    return a.Sqrt();
 //  };
 //
-//  auto add = [](Qn::Statistics a, Qn::Statistics b) {
+//  auto add = [](Qn::Profile a, Qn::Profile b) {
 //    return a + b;
 //  };
 //

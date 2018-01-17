@@ -6,17 +6,19 @@
 #define QNDATACONTAINER_H
 
 #include "Axis.h"
-#include "QnCorrections/QnCorrectionsQnVector.h"
 #include "Rtypes.h"
-#include "DataVector.h"
-#include "QVector.h"
-#include "Stats.h"
+#include "TMath.h"
+#include "TObject.h"
 
 #include <map>
 #include <vector>
 #include <string>
 #include <stdexcept>
 #include <memory>
+
+#include "DataVector.h"
+#include "QVector.h"
+#include "Stats.h"
 
 /**
  * QnCorrectionsframework
@@ -47,7 +49,7 @@ class DataContainer : public TObject {
  * Size of data container
  * @return number of entries in the container
  */
-  std::vector<Qn::QVector>::size_type size() const { return data_.size(); }
+  std::vector<int>::size_type size() const { return data_.size(); }
 
 /**
  * Adds axes for storing data
@@ -165,7 +167,7 @@ class DataContainer : public TObject {
   std::vector<long> GetIndex(const long offset) const {
     long temp = offset;
     std::vector<long> indices;
-    if ((u_long) offset >= data_.size()) return indices;
+    if ((unsigned long) offset >= data_.size()) return indices;
     indices.resize(dimension_);
     for (int i = 0; i < dimension_ - 1; ++i) {
       indices[dimension_ - i - 1] = (int) (temp%axes_[dimension_ - i - 1].size());
@@ -528,7 +530,7 @@ class DataContainer : public TObject {
  */
   std::vector<long> GetIndex(const std::vector<float> &coordinates) const {
     std::vector<long> indices;
-    u_long axisindex = 0;
+    unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
       auto bin = axis.FindBin(coordinates[axisindex]);
       if (bin < 0)
@@ -584,12 +586,11 @@ DataContainer<T> Sqrt(DataContainer<T> a) {
   return a.Map([](T &x) { return x.Sqrt(); });
 }
 
-using DataContainerQn = DataContainer<QnCorrectionsQnVector>;
-using DataContainerF = DataContainer<float>;
-using DataContainerVF = DataContainer<std::vector<float>>;
-using DataContainerStat = DataContainer<Qn::Statistics>;
-using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
+using DataContainerProfile = DataContainer<Qn::Profile>;
+using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
+
+
 }
 
 #endif

@@ -11,10 +11,9 @@
 #include <QnCorrections/QnCorrectionsManager.h>
 #include "Detector.h"
 #include "VariableManager.h"
-#include "Axis.h"
+#include "Base/Axis.h"
 #include "EventInfo.h"
-#include "CorrectionInterface.h"
-#include "DataFiller.h"
+#include "DifferentialCorrection/Interface/DataFiller.h"
 namespace Qn {
 class CorrectionManager {
  public:
@@ -32,7 +31,7 @@ class CorrectionManager {
   void SetEventCut() {};
 
   void AddDetector(const std::string &name,
-                   Configuration::DetectorType type,
+                   DetectorType type,
                    const std::vector<Qn::Axis> &axes = {{"integrated", 1, 0, 1, -1}},
                    int nchannels = 0) {
     std::vector<int> enums;
@@ -92,7 +91,7 @@ class CorrectionManager {
         if (!vector) continue;
         auto method =
             qncorrections_manager_.FindDetector(name)->FindDetectorConfiguration(name)->GetQVectorNormalizationMethod();
-        QVector temp(Internal::GetNormalization(method), *vector);
+        QVector temp(GetNormalization(method), *vector);
         bin = temp;
       }
       nbinsrunning += detector->size();
@@ -167,6 +166,22 @@ class CorrectionManager {
       qncorrections_varset_->Add(variable);
     }
   }
+/**
+ * Get Normalization from Qn::CorrectionsQnVector framework
+ * @param method normalization method.
+ * @return corresponding correlation.
+ */
+inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_noCalibration)
+    return Qn::QVector::Normalization::NOCALIB;
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverM)
+    return Qn::QVector::Normalization::QOVERM;
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverSqrtM)
+    return Qn::QVector::Normalization::QOVERSQRTM;
+  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverQlength)
+    return Qn::QVector::Normalization::QOVERNORMQ;
+  return Qn::QVector::Normalization::NOCALIB;
+}
 
   QnCorrectionsEventClassVariablesSet *qncorrections_varset_;
   std::unique_ptr<Qn::EventInfoF> event_variables_;

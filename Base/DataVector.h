@@ -6,7 +6,9 @@
 #define FLOW_DATAVECTOR_H
 
 #include "Rtypes.h"
+//#include "Base/DataContainer.h"
 #include <math.h>
+
 namespace Qn {
 /**
  * simple struct containing information of the raw data for the use in the DataContainer.
@@ -27,6 +29,8 @@ struct DataVector {
  ClassDef(DataVector, 2);
   /// \endcond
 };
+
+
 
 }
 

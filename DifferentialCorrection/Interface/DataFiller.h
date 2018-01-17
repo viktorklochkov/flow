@@ -9,8 +9,8 @@
 #include <ReducedEvent/AliReducedTrackInfo.h>
 #include <ReducedEvent/AliReducedVarManager.h>
 #include "TList.h"
-#include "DataContainer.h"
-#include "Detector.h"
+#include "Base/DataContainer.h"
+#include "DifferentialCorrection/Detector.h"
 #define VAR AliReducedVarManager
 
 namespace Qn {

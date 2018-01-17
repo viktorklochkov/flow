@@ -4,14 +4,12 @@
 #include <TSystem.h>
 #include <TROOT.h>
 #include <array>
-#include "DataContainer.h"
+#include "Base/DataContainer.h"
 #include "TTree.h"
 #include "TTreeReader.h"
-#include "Task.h"
-#include "CorrectionInterface.h"
-#include "Correlation.h"
+#include "Correlation/Correlation.h"
 #include "SimpleTask.h"
-#include "Stats.h"
+#include "Base/Stats.h"
 #include "TestTask.h"
 #include <iomanip>
 #include <chrono>

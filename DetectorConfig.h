@@ -42,10 +42,7 @@ static std::map<int, const char *> DetectorNames = {{(int) DetectorId::TPC, "TPC
                                                     {(int) DetectorId::ZDCC_reference, "ZDCC_reference"},
                                                     {(int) DetectorId::ZDC, "ZDC"}};
 
-enum class DetectorType {
-  Track,
-  Channel
-};
+
 
 class DetectorConfig {
  public:
