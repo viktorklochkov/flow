@@ -15,15 +15,14 @@
 #include <iomanip>
 #include <chrono>
 
-
 int main(int argc, char **argv) {
   auto start = std::chrono::system_clock::now();
   ROOT::EnableImplicitMT(2);
-  if (strcmp(argv[3], "correct") == 0) {
+  if (strcmp(argv[3], "correct")==0) {
     Qn::Task task(argv[1], argv[2], "DstTree");
     task.Run();
   }
-  if (strcmp(argv[3], "analysis") == 0) {
+  if (strcmp(argv[3], "analysis")==0) {
     SimpleTask st(argv[1], "tree");
     st.Run();
   }

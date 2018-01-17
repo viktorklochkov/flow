@@ -21,6 +21,7 @@ class VariableManager {
  private:
   std::map<std::string, int> name_enum_map_;
   std::map<int, std::string> enum_name_map_;
+
 };
 
 #endif //FLOW_VARIABLEMANAGER_H
