@@ -402,7 +402,7 @@ class DataContainer : public TObject {
     long index = 0;
     if (axes_.size() > data.axes_.size()) {
       for (long iaxis = 0; data.axes_.size() - 1; ++iaxis) {
-        if (axes_[iaxis].Id()!=data.axes_[iaxis].Id()) {
+        if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
         }
@@ -417,7 +417,7 @@ class DataContainer : public TObject {
       }
     } else {
       for (long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
-        if (axes_[iaxis].Id()!=data.axes_[iaxis].Id()) {
+        if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
         }
