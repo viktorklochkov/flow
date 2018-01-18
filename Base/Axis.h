@@ -130,7 +130,7 @@ class Axis {
 
 
   /// \cond CLASSIMP
- ClassDef(Axis, 1);
+ ClassDef(Axis, 2);
   /// \endcond
 };
 }

@@ -566,7 +566,7 @@ class DataContainer : public TObject {
   }
 
   /// \cond CLASSIMP
- ClassDef(DataContainer, 6);
+ ClassDef(DataContainer, 7);
   /// \endcond
 };
 
