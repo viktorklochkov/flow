@@ -47,7 +47,7 @@ inline TMultiGraph *DataToMultiGraph(const Qn::DataContainerProfile &data, const
   try { axis = data.GetAxis(axisname);}
   catch(std::exception&) {std::cout << "axis not found" << "\n"; return multigraph;}
   for (int ibin = 0; ibin < axis.size(); ++ibin) {
-    auto subdata = data.Select({axisname,{axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)}, 1});
+    auto subdata = data.Select({axisname,{axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)}});
     auto subgraph = Qn::DataToProfileGraph(subdata);
     subgraph->SetTitle(Form("%.2f - %.2f",axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)));
     subgraph->SetMarkerStyle(kFullCircle);

@@ -35,7 +35,14 @@ class DataContainer : public TObject {
  * Constructor
  * @param name Name of data container.
  */
-  DataContainer() = default;
+  DataContainer() : integrated_(true) {
+    axes_.push_back({"integrated", 1, 0, 1});
+    dimension_ = 1;
+    data_.resize(1);
+    stride_.resize(1);
+    CalculateStride();
+  };
+
   virtual ~DataContainer() = default;
 
   using iterator = typename std::vector<T>::iterator;
@@ -56,6 +63,7 @@ class DataContainer : public TObject {
  * @param axes vector of axes
  */
   void AddAxes(const std::vector<Axis> &axes) {
+    if (integrated_) this->Reset();
     for (const auto &axis : axes) {
       AddAxis(axis);
     }
@@ -65,6 +73,7 @@ class DataContainer : public TObject {
  * @param axis Axis to be added.
  */
   void AddAxis(const Axis &axis) {
+    if (integrated_) this->Reset();
     if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name()==axis.Name(); })
         !=axes_.end())
       throw std::runtime_error("axis already defined in vector");
@@ -216,8 +225,6 @@ class DataContainer : public TObject {
       }
     }
     if (axes.empty()) {
-      Qn::Axis integrated("integrated", 1, 0, 1, -1);
-      projection.AddAxis(integrated);
       for (const auto &bin : data_) {
         long index = 0;
         projection.AddElement(index, lambda, bin);
@@ -246,8 +253,6 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Projection(Function &&lambda) const {
     DataContainer<T> projection;
-    Qn::Axis integrated("integrated", 1, 0, 1, -1);
-    projection.AddAxis(integrated);
     for (const auto &bin : data_) {
       long index = 0;
       projection.AddElement(index, lambda, bin);
@@ -515,13 +520,22 @@ class DataContainer : public TObject {
  * It is integrated if first axis is the integrated axis with Id == -1;
  * @return true if integrated, else false.
  */
-  inline bool IsIntegrated() const { return axes_[0].Id()==-1; }
+  inline bool IsIntegrated() const { return integrated_; }
 
  private:
+  bool integrated_;
   int dimension_ = 0; ///< dimensionality of data
   std::vector<T> data_; ///< linearized vector of data
   std::vector<Axis> axes_; ///< Vector of axes
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
+
+  void Reset() {
+    integrated_ = false;
+    dimension_ = 0;
+    data_.clear();
+    axes_.clear();
+    stride_.clear();
+  }
 
 /**
  * Calculates multidimensional index from coordinates
@@ -586,10 +600,10 @@ DataContainer<T> Sqrt(DataContainer<T> a) {
   return a.Map([](T &x) { return x.Sqrt(); });
 }
 
+using DataContainerF = DataContainer<float>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerProfile = DataContainer<Qn::Profile>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
-
 
 }
 

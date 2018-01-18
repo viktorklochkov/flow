@@ -49,7 +49,7 @@ void SimpleTask::Configure(Qn::CorrelationManager &a) {
     return a[0].x(2)*a[1].y(1)* a[2].y(1);
   };
   auto Rebin = [](const Qn::DataContainerQVector &a) {
-    auto result = a.Rebin({"Eta", 2, -0.8, 0.8, VAR::kEta}, [](Qn::QVector &a, Qn::QVector &b) { return  a + b; });
+    auto result = a.Rebin({"Eta", 2, -0.8, 0.8}, [](Qn::QVector &a, Qn::QVector &b) { return  a + b; });
     return result;
   };
 
@@ -61,7 +61,7 @@ void SimpleTask::Configure(Qn::CorrelationManager &a) {
   a.AddDataContainer("ZDCC_reference");
   a.AddProjection("TPC", "TPCPt", "Pt");
   a.AddProjection("TPC", "TPCEta", "Eta");
-  a.AddEventVariable({"CentralityVZERO", {0., 5., 10., 20., 30., 40., 50., 60., 70.}, 1});
+  a.AddEventVariable({"CentralityVZERO", {0., 5., 10., 20., 30., 40., 50., 60., 70.}});
 //  a.AddFunction("TPC", Rebin);
   a.AddCorrelation("TPCETAZDCAXX","TPCEta, ZDCA_reference", XX);
   a.AddCorrelation("TPCETAZDCAYY","TPCEta, ZDCA_reference", YY);

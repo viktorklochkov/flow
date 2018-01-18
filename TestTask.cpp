@@ -53,8 +53,8 @@ void TestTask::Initialize() {
 //  Axis ptaxis("Pt", {0.2, 0.4, 0.6, 1.0, 2.0, 5.0,10.0}, VAR::kPt);
 //  Axis etaaxis("Eta", 6, -0.8, 0.8, VAR::kEta);
 //  Axis ptaxis("Pt", {0.2,0.4,0.6,0.8,1.,1.25,1.5,1.75,2.0,2.5,3,3.5,4.,5.}, VAR::kPt);
-  Axis ptaxis("Pt", {0.2, 5, 10.}, VAR::kPt);
-  Axis etaaxis("Eta", 2, -0.8, 0.8, VAR::kEta);
+  Axis ptaxis("Pt", {0.2, 5, 10.});
+  Axis etaaxis("Eta", 2, -0.8, 0.8);
   Axes tpcaxes = {ptaxis, etaaxis};
 
   auto configure = [](QnCorrectionsDetectorConfigurationBase *config) {
@@ -75,10 +75,10 @@ void TestTask::Initialize() {
   manager.AddDetector("TPC", DetectorType::Track, tpcaxes);
   manager.SetCorrectionSteps("TPC", configure);
 
-  manager.AddCorrectionAxis({"CentralityVZERO", 100, 0, 100, -1});
+  manager.AddCorrectionAxis({"CentralityVZERO", 100, 0, 100});
   manager.AddCorrectionAxis({"VtxZ",
                              {-10, -9.25, -8.5, -7.75, -7.0, -6., -5., -4., -3., -2., -1., 0., 1., 2., 3., 4., 5., 6.,
-                              7., 7.75, 8.5, 9.25, 10.}, -1});
+                              7., 7.75, 8.5, 9.25, 10.}});
 
   manager.SetEventVariable("CentralityVZERO");
 

@@ -45,17 +45,11 @@ class Detector {
       type_(type),
       datavector_(new Qn::DataContainerDataVector()),
       qvector_(new Qn::DataContainerQVector()) {
-    Qn::Axis integrated("integrated", 1, 0, 1, -1);
-    datavector_->AddAxis(integrated);
-    qvector_->AddAxis(integrated);
   }
 
   explicit Detector(DetectorType type) :
       type_(type), datavector_(new Qn::DataContainerDataVector()),
       qvector_(new Qn::DataContainerQVector()) {
-    Qn::Axis integrated("integrated", 1, 0, 1, -1);
-    datavector_->AddAxis(integrated);
-    qvector_->AddAxis(integrated);
   }
 
   void ClearData() {

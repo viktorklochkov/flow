@@ -32,7 +32,7 @@ class CorrectionManager {
 
   void AddDetector(const std::string &name,
                    DetectorType type,
-                   const std::vector<Qn::Axis> &axes = {{"integrated", 1, 0, 1, -1}},
+                   const std::vector<Qn::Axis> &axes,
                    int nchannels = 0) {
     std::vector<int> enums;
     enums.reserve(axes.size());
