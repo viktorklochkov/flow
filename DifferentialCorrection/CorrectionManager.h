@@ -109,9 +109,7 @@ class CorrectionManager {
   }
 
   void FillDataToFramework(Qn::Differential::Interface::DataFiller filler) {
-    for (auto &detector : detectors_) {
-      filler.Fill(detector.first, detector.second);
-    }
+      filler.Fill(detectors_);
   }
 
   void SaveCorrectionHistograms() {

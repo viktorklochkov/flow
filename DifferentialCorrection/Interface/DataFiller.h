@@ -22,14 +22,8 @@ class DataFiller {
  public:
   explicit DataFiller(AliReducedEventInfo *event) : event_(event) {}
 
-  void Fill(std::string name, Detector &det) {
-    if (name == "TPC") FillTPC(det, *event_);
-  }
-
-  void SetVariables(std::vector<VAR::Variables> vars) {
-    for (auto var : vars) {
-      AliReducedVarManager::SetUseVariable(var);
-    }
+  void Fill(std::map<std::string, Detector> &detectors) {
+    FillTPC(detectors.at("TPC"), *event_);
   }
 
   void FillTPC(Qn::Detector &detector, AliReducedEventInfo &event) {
