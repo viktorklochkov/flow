@@ -43,9 +43,20 @@ class CorrectionManager {
     detectors_.insert(std::make_pair(name, std::move(detector)));
   }
 
+  void AddDetector(const std::string &name,
+                   DetectorType type,
+                   int nchannels = 0) {
+    std::vector<int> enums;
+    Detector detector(type,nchannels);
+    detectors_.insert(std::make_pair(name, std::move(detector)));
+  }
+
   void SetCorrectionSteps(const std::string &name,
                           std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config) {
-    detectors_.at(name).SetConfig(std::move(config));
+    try{detectors_.at(name).SetConfig(std::move(config));}
+    catch(std::out_of_range &) {
+      throw std::out_of_range (name+ " was not found in the list of detectors. It needs to be created before it can be configured.");
+    }
   }
 
   void CreateDetectors() {
