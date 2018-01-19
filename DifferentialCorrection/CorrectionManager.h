@@ -96,12 +96,17 @@ class CorrectionManager {
       auto &detector = pair.second.GetQnDataContainer();
       auto ibin = 0;
       for (auto &bin : *detector) {
-        auto name = (pair.first + std::to_string(ibin)).data();
+        std::string name;
+        if ( detector->IsIntegrated()) {
+          name  = pair.first;
+        } else {
+          name = (pair.first + std::to_string(ibin));
+        }
         ++ibin;
-        auto vector = qncorrections_manager_.GetDetectorQnVector(name, step.c_str(), step.c_str());
+        auto vector = qncorrections_manager_.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
         if (!vector) continue;
         auto method =
-            qncorrections_manager_.FindDetector(name)->FindDetectorConfiguration(name)->GetQVectorNormalizationMethod();
+            qncorrections_manager_.FindDetector(name.data())->FindDetectorConfiguration(name.data())->GetQVectorNormalizationMethod();
         QVector temp(GetNormalization(method), *vector);
         bin = temp;
       }

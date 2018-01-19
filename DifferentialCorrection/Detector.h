@@ -61,10 +61,19 @@ class Detector {
                                           int globalid,
                                           int binid,
                                           QnCorrectionsEventClassVariablesSet *set) {
-    auto binname = datavector_->GetBinDescription(binid);
-    auto name = (detname + std::to_string(binid)).c_str();
+    if (!configuration_) {
+      throw (std::runtime_error("no Qn correction configuration found for " + detname));
+    }
+    std::string name;
+    if (datavector_->IsIntegrated()) {
+      name = detname;
+
+    } else {
+      auto binname = datavector_->GetBinDescription(binid);
+      name = detname + std::to_string(binid);
+    }
     std::cout << name << std::endl;
-    auto detector = new QnCorrectionsDetector(name, globalid);
+    auto detector = new QnCorrectionsDetector(name.data(), globalid);
     auto configuration = CreateDetectorConfiguration(name, set);
     configuration_(configuration);
     detector->AddDetectorConfiguration(configuration);
