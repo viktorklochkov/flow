@@ -5,13 +5,11 @@
 #ifndef FLOW_DATAFILLER_H
 #define FLOW_DATAFILLER_H
 
-#include <ReducedEvent/AliReducedEventInfo.h>
-#include <ReducedEvent/AliReducedTrackInfo.h>
-#include <ReducedEvent/AliReducedVarManager.h>
 #include "TList.h"
 #include "Base/DataContainer.h"
 #include "DifferentialCorrection/Detector.h"
-#define VAR AliReducedVarManager
+#include "DifferentialCorrection/Interface/VarManager.h"
+#include "VarManager.h"
 
 namespace Qn {
 namespace Differential {
@@ -20,50 +18,27 @@ namespace Interface {
 class DataFiller {
 
  public:
-  explicit DataFiller(AliReducedEventInfo *event) : event_(event) {}
+  explicit DataFiller() = default;
 
   void Fill(std::map<std::string, Detector> &detectors) {
-    FillTPC(detectors.at("TPC"), *event_);
+    FillDetector(detectors.at("DET1"));
   }
 
-  void FillTPC(Qn::Detector &detector, AliReducedEventInfo &event) {
-    auto values = new float[AliReducedVarManager::Variables::kNVars];
-    AliReducedTrackInfo *track = nullptr;
-    auto trackList = event.GetTracks();
-    TIter next(trackList);
-    next.Reset();
+  void FillDetector(Qn::Detector &detector) {
+    const std::array<double, 10> X = {{-1.75, 1.75, -1.75, 1.75}};
+    const std::array<double, 10> Y = {{-1.75, -1.75, 1.75, 1.75}};
     auto &datacontainer = detector.GetDataContainer();
-    auto &axes = datacontainer->GetAxes();
-    std::vector<float> trackparams;
-    trackparams.reserve(axes.size());
-    long ntracks = trackList->GetSize();
-    std::for_each(datacontainer->begin(),
-                  datacontainer->end(),
-                  [ntracks](std::vector<DataVector> &vector) { vector.reserve(ntracks); });
-    while ((track = (AliReducedTrackInfo *) next()) != nullptr) {
-      if (!track->TestQualityFlag(15)) continue;
-      VAR::FillTrackInfo(track, values);
-      if (values[VAR::kEta] > 0.8 || values[VAR::kEta] < -0.8) continue;
-      if (values[VAR::kPt] < 0.2 || values[VAR::kPt] > 10.0) continue;
-      values[-1] = 0;
-      for (const auto num : detector.GetEnums()) {
-        trackparams.push_back(values[num]);
-      }
-      try {
-        datacontainer->CallOnElement(trackparams, [values](std::vector<DataVector> &vector) {
-          vector.emplace_back(values[VAR::kPhi]);
+    auto values = new float[VarManager::Values::kNMax];
+    VarManager::FillEventInfo(values);
+    for (u_short ich = 0; ich < 5; ich++) {
+      double weight = values[ich+VarManager::Values::kSignal];
+      if (weight > 100) {
+        datacontainer->CallOnElement([ich, Y, X, weight](std::vector<DataVector> &vector) {
+          vector.emplace_back(TMath::ATan2(Y[ich], X[ich]), weight);
         });
       }
-      catch (std::exception &) {
-        continue;
-      }
-      trackparams.clear();
     }
-    delete[] values;
   }
-
- private:
-  AliReducedEventInfo *event_;
 };
 
 }

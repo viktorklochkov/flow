@@ -26,10 +26,6 @@
 #include "QnCorrections/QnCorrectionsManager.h"
 #include "Base/DataContainer.h"
 #include "DifferentialCorrection/EventInfo.h"
-#include "ReducedEvent/AliReducedEventInfo.h"
-#include "ReducedEvent/AliReducedVarManager.h"
-#include "ReducedEvent/AliReducedTrackInfo.h"
-#include "ReducedEvent/AliReducedBaseTrack.h"
 #include "DifferentialCorrection/CorrectionManager.h"
 
 #define VAR AliReducedVarManager
@@ -65,23 +61,12 @@ class TestTask {
    * @param filename name of file containing paths to root files containing the input trees
    * @return Pointer to the TChain
    */
-  virtual std::unique_ptr<TChain> MakeChain(std::string filename, std::string treename);
-
-  void SetVariables(std::vector<VAR::Variables> vars) {
-    for (auto var : vars) {
-      AliReducedVarManager::SetUseVariable(var);
-    }
-  }
  protected:
   std::shared_ptr<TFile> out_file_;
   std::shared_ptr<TFile> in_calibration_file_;
   std::shared_ptr<TFile> out_calibration_file_;
-  std::unique_ptr<TTree> in_tree_;
   std::unique_ptr<TTree> out_tree_;
   std::unique_ptr<TTree> out_tree_raw;
-  std::unique_ptr<TList> histograms_;
-  TTreeReader tree_reader_;
-  TTreeReaderValue<AliReducedEventInfo> event_;
   Qn::CorrectionManager manager;
   bool write_tree_;
 
