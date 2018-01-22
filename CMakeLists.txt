@@ -23,50 +23,6 @@ set(BASE_SOURCES
         Base/Stats.cpp
         Base/DataContainerHelper.cpp)
 
-set(QNCORR_SOURCES
-        QnCorrections/QnCorrectionsCorrectionOnInputData.cpp
-        QnCorrections/QnCorrectionsEventClassVariablesSet.cpp
-        QnCorrections/QnCorrectionsCorrectionOnQvector.cpp
-        QnCorrections/QnCorrectionsHistogram.cpp
-        QnCorrections/QnCorrectionsCorrectionStepBase.cpp
-        QnCorrections/QnCorrectionsHistogramBase.cpp
-        QnCorrections/QnCorrectionsCorrectionsSetOnInputData.cpp
-        QnCorrections/QnCorrectionsHistogramChannelized.cpp
-        QnCorrections/QnCorrectionsCorrectionsSetOnQvector.cpp
-        QnCorrections/QnCorrectionsHistogramChannelizedSparse.cpp
-        QnCorrections/QnCorrectionsCutAbove.cpp
-        QnCorrections/QnCorrectionsHistogramSparse.cpp
-        QnCorrections/QnCorrectionsCutBelow.cpp
-        QnCorrections/QnCorrectionsInputGainEqualization.cpp
-        QnCorrections/QnCorrectionsCutOutside.cpp
-        QnCorrections/QnCorrectionsLog.cpp
-        QnCorrections/QnCorrectionsCutSetBit.cpp
-        QnCorrections/QnCorrectionsManager.cpp
-        QnCorrections/QnCorrectionsCutValue.cpp
-        QnCorrections/QnCorrectionsProfile.cpp
-        QnCorrections/QnCorrectionsCutWithin.cpp
-        QnCorrections/QnCorrectionsProfile3DCorrelations.cpp
-        QnCorrections/QnCorrectionsCutsBase.cpp
-        QnCorrections/QnCorrectionsProfileChannelized.cpp
-        QnCorrections/QnCorrectionsCutsSet.cpp
-        QnCorrections/QnCorrectionsProfileChannelizedIngress.cpp
-        QnCorrections/QnCorrectionsDataVector.cpp
-        QnCorrections/QnCorrectionsProfileComponents.cpp
-        QnCorrections/QnCorrectionsDataVectorChannelized.cpp
-        QnCorrections/QnCorrectionsProfileCorrelationComponents.cpp
-        QnCorrections/QnCorrectionsDetector.cpp
-        QnCorrections/QnCorrectionsProfileCorrelationComponentsHarmonics.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationBase.cpp
-        QnCorrections/QnCorrectionsQnVector.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationChannels.cpp
-        QnCorrections/QnCorrectionsQnVectorAlignment.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationTracks.cpp
-        QnCorrections/QnCorrectionsQnVectorBuild.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationsSet.cpp
-        QnCorrections/QnCorrectionsQnVectorRecentering.cpp
-        QnCorrections/QnCorrectionsEventClassVariable.cpp
-        QnCorrections/QnCorrectionsQnVectorTwistAndRescale.cpp)
-
 string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")
 string(REPLACE ".cpp" ".h" DIFF_HEADERS "${DIFF_SOURCES}")
 string(REPLACE ".cpp" ".h" CORR_HEADERS "${CORR_SOURCES}")
@@ -88,9 +44,7 @@ add_definitions(${ROOT_CXX_FLAGS})
 
 include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 
-ROOT_GENERATE_DICTIONARY(G__QnCorrFlow ${QNCORR_HEADERS} LINKDEF QnCorrections/QnLinkDef.h)
-add_library(qncorrflow SHARED ${QNCORR_SOURCES} G__QnCorrFlow)
-target_link_libraries(qncorrflow ${ROOT_LIBRARIES})
+add_subdirectory(QnCorrections)
 
 ROOT_GENERATE_DICTIONARY(G__BaseFlow ${BASE_HEADERS} LINKDEF Base/BaseLinkDef.h)
 add_library(baseflow SHARED ${BASE_SOURCES} G__BaseFlow)
