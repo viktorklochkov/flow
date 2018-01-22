@@ -6,16 +6,14 @@ set(CMAKE_BUILD_TYPE debug)
 
 set(CORR_SOURCES
         Correlation/Correlation.cpp
-        Correlation/CorrelationManager.cpp
-        )
+        Correlation/CorrelationManager.cpp)
 
 set(DIFF_SOURCES
         DifferentialCorrection/EventInfo.cpp
         DifferentialCorrection/VariableManager.cpp
         DifferentialCorrection/CorrectionManager.cpp
         DifferentialCorrection/Detector.cpp
-        DifferentialCorrection/Interface/DataFiller.cpp
-        DifferentialCorrection/Interface/VarManager.cpp)
+        DifferentialCorrection/Interface/DataFiller.cpp)
 
 set(BASE_SOURCES
         Base/DataVector.cpp
@@ -73,7 +71,6 @@ string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")
 string(REPLACE ".cpp" ".h" DIFF_HEADERS "${DIFF_SOURCES}")
 string(REPLACE ".cpp" ".h" CORR_HEADERS "${CORR_SOURCES}")
 string(REPLACE ".cpp" ".h" QNCORR_HEADERS "${QNCORR_SOURCES}")
-string(REPLACE ".cpp" ".h" EXE_HEADERS "${EXE_SOURCES}")
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
@@ -89,12 +86,7 @@ find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer
 include(${ROOT_USE_FILE})
 add_definitions(${ROOT_CXX_FLAGS})
 
-# Adding libraries and includes
-find_path(BASE_INC DataContainer.h HINTS "${CMAKE_SOURCE_DIR}/Base")
-find_path(CORR_INC Correlation.h HINTS "${CMAKE_SOURCE_DIR}/Correlation")
-find_path(DIFF_INC CorrectionManager.h HINTS "${CMAKE_SOURCE_DIR}/DifferentialCorrection")
-find_path(QNCORRECT_INC QnCorrectionsQnVector.h HINTS "${CMAKE_SOURCE_DIR}/QnCorrections")
-include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS} ${QNCORRECT_INC} ${BASE_INC} ${CORR_INC} ${DIFF_INC})
+include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 
 ROOT_GENERATE_DICTIONARY(G__QnCorrFlow ${QNCORR_HEADERS} LINKDEF QnCorrections/QnLinkDef.h)
 add_library(qncorrflow SHARED ${QNCORR_SOURCES} G__QnCorrFlow)
