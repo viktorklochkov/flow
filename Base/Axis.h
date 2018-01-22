@@ -56,7 +56,7 @@ class Axis {
  * Set Name of axis.
  * @param name name of axis
  */
-  inline void SetName(std::string name) { name_ = name; }
+  inline void SetName(const std::string name) { name_ = name; }
   /**
    * Returns Name of axis.
    * @return name of axis
@@ -68,21 +68,7 @@ class Axis {
    * @param value for finding corresponding bin
    * @return bin index
    */
-  inline long FindBin(float value) const {
-    long bin = 0;
-    if (value < *bin_edges_.begin()) {
-      bin = -1;
-    } else {
-      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
-      if (lb == bin_edges_.begin() || *lb == value)
-        bin = (lb - bin_edges_.begin());
-      else
-        bin = (lb - bin_edges_.begin()) - 1;
-    }
-    if (bin >= (long) bin_edges_.size() - 1 || bin < 0)
-      bin = -1;
-    return bin;
-  }
+   long FindBin(const float value) const;
 
   /**
  * Finds bin iterator for a given value
@@ -90,20 +76,7 @@ class Axis {
  * @param value for finding corresponding bin
  * @return bin index
  */
-  inline citerator FindBinIter(float value) {
-    citerator bin;
-    if (value < *bin_edges_.begin()) {
-      bin = end();
-    } else {
-      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
-      if (lb == bin_edges_.begin() || *lb == value)
-        bin = lb;
-      else
-        bin = lb - 1;
-    }
-    if (*bin >= (long) bin_edges_.size() - 1 || *bin < 0) bin = end();
-    return bin;
-  }
+  inline citerator FindBinIter(const float value);
 
   /**
    * Returns number of bins.
@@ -115,13 +88,13 @@ class Axis {
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline float GetLowerBinEdge(long bin) const { return bin_edges_.at(bin); }
+  inline float GetLowerBinEdge(const long bin) const { return bin_edges_.at(bin); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline float GetUpperBinEdge(long bin) const { return bin_edges_.at(bin + 1); }
+  inline float GetUpperBinEdge(const long bin) const { return bin_edges_.at(bin + 1); }
 
  private:
   std::string name_;

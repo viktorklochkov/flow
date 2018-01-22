@@ -7,7 +7,6 @@
 
 //#include "Base/DataContainer.h"
 
-#include <iostream>
 #include <iterator>
 #include <algorithm>
 #include <utility>
@@ -20,8 +19,8 @@ namespace Qn {
 namespace Stats {
 
 inline double Sigma(const double mean, const double sum2, const int n) {
-  double variance = TMath::Abs(sum2 / (double) n - mean * mean);
-  return sqrt(variance) / sqrt((double) n);
+  double variance = TMath::Abs(sum2/(double) n - mean*mean);
+  return sqrt(variance)/sqrt((double) n);
 }
 
 }
@@ -39,8 +38,8 @@ class Profile {
   inline void Update(double value) {
     sum_ = sum_ + value;
     ++entries_;
-    mean_ = sum_ / (entries_);
-    sum2_ = sum2_ + value * value;
+    mean_ = sum_/(entries_);
+    sum2_ = sum2_ + value*value;
     error_ = Qn::Stats::Sigma(mean_, sum2_, entries_);
   };
   inline double Mean() const { return mean_; }
@@ -54,7 +53,7 @@ class Profile {
     a.mean_ = std::sqrt(std::abs(mean_));
     a.sum_ = std::sqrt(std::abs(sum_));
     a.sum2_ = std::sqrt(std::abs(sum2_));
-    a.error_ = 1./2. * a.error_ / a.mean_;
+    a.error_ = 1./2.*a.error_/a.mean_;
     return a;
   }
 
@@ -72,42 +71,40 @@ class Profile {
 };
 
 inline Qn::Profile operator*(Qn::Profile a, double b) {
-  double nsum = a.sum_ * b;
-  double nsum2 = a.sum2_ * b;
+  double nsum = a.sum_*b;
+  double nsum2 = a.sum2_*b;
   int nentries = a.entries_;
-  double nmean = a.mean_ * b;
-  double nerror = a.error_ * fabs(b);
+  double nmean = a.mean_*b;
+  double nerror = a.error_*fabs(b);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
 
 inline Qn::Profile operator+(Qn::Profile a, Qn::Profile b) {
   int nentries = a.entries_ + b.entries_;
-  double nsum = (a.sum_ * a.mean_ + b.sum_ * b.mean_) / nentries;
-  double nsum2 = (a.sum2_ * a.entries_+ b.sum2_ *b.entries_) / nentries;
-  double nmean = (a.entries_ * a.mean_ + b.entries_ * b.mean_) / nentries;
-//  double nerror = std::sqrt(a.error_* a.error_ + b.error_ * b.error_)/2;
-  double nerror = std::sqrt((a.error_* a.error_*a.entries_ + b.error_ * b.error_ * a.entries_ - 2* a.mean_ * b.mean_)/nentries);
+  double nsum = (a.sum_*a.mean_ + b.sum_*b.mean_)/nentries;
+  double nsum2 = (a.sum2_*a.entries_ + b.sum2_*b.entries_)/nentries;
+  double nmean = (a.entries_*a.mean_ + b.entries_*b.mean_)/nentries;
+  double nerror = std::sqrt((a.error_*a.error_*a.entries_ + b.error_*b.error_*a.entries_ - 2*a.mean_*b.mean_)/nentries);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
 
-
 inline Qn::Profile operator-(Qn::Profile a, Qn::Profile b) {
   int nentries = a.entries_ + b.entries_;
-  double nsum = (a.sum_ * a.mean_ - b.sum_ * b.mean_) / nentries;
-  double nsum2 = (a.sum2_ * a.entries_- b.sum2_ *b.entries_) / nentries;
-  double nmean = (a.entries_ * a.mean_ - b.entries_ * b.mean_) / nentries;
-  double nerror = std::sqrt(a.error_* a.error_ + b.error_ * b.error_);
+  double nsum = (a.sum_*a.mean_ - b.sum_*b.mean_)/nentries;
+  double nsum2 = (a.sum2_*a.entries_ - b.sum2_*b.entries_)/nentries;
+  double nmean = (a.entries_*a.mean_ - b.entries_*b.mean_)/nentries;
+  double nerror = std::sqrt(a.error_*a.error_ + b.error_*b.error_);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
 
 inline Qn::Profile operator*(Qn::Profile a, Qn::Profile b) {
-  double nmean = a.mean_ * b.mean_;
+  double nmean = a.mean_*b.mean_;
   int nentries = a.entries_ + b.entries_;
-  double nsum2 = a.mean_ * a.mean_ * b.error_ * b.error_ + b.mean_ * b.mean_ * a.error_ * a.error_;
-  double nerror = std::sqrt(a.mean_ * a.mean_ * b.error_ * b.error_ + b.mean_ * b.mean_ * a.error_ * a.error_);
+  double nsum2 = a.mean_*a.mean_*b.error_*b.error_ + b.mean_*b.mean_*a.error_*a.error_;
+  double nerror = std::sqrt(a.mean_*a.mean_*b.error_*b.error_ + b.mean_*b.mean_*a.error_*a.error_);
   double nsum = 0;
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
@@ -119,12 +116,13 @@ inline Qn::Profile operator/(Qn::Profile a, Qn::Profile b) {
   double nsum2 = 0;
   double nerror = 0;
   if (std::abs(b.Mean() - 0) > 10e-8) {
-    nmean = a.Mean() / b.Mean();
-    nsum2 = a.error_ * a.error_ / (b.mean_ * b.mean_) + a.mean_ * a.mean_ / (b.mean_ * b.mean_ * b.mean_ * b.mean_) * b.error_ * b.error_;
-    nerror = std::sqrt(a.error_ * a.error_ / (b.mean_ * b.mean_) + a.mean_ * a.mean_ / (b.mean_ * b.mean_ * b.mean_ * b.mean_) * b.error_ * b.error_);
+    nmean = a.Mean()/b.Mean();
+    nsum2 = a.error_*a.error_/(b.mean_*b.mean_) + a.mean_*a.mean_/(b.mean_*b.mean_*b.mean_*b.mean_)*b.error_*b.error_;
+    nerror = std::sqrt(
+        a.error_*a.error_/(b.mean_*b.mean_) + a.mean_*a.mean_/(b.mean_*b.mean_*b.mean_*b.mean_)*b.error_*b.error_);
   }
   int nentries = a.Entries() + b.Entries();
-  double nsum = nmean * nentries;
+  double nsum = nmean*nentries;
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
