@@ -34,7 +34,6 @@ inline QVec operator*(QVec a, float s) { return {a.x*s, a.y*s}; }
 inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
 
 class QVector {
-  static constexpr int maxharmonics = 4;
 
  public:
 
@@ -48,7 +47,7 @@ class QVector {
   QVector() = default;
   virtual ~QVector() = default;
 
-  QVector(Normalization norm, int n, float sum, std::array<QVec, QVector::maxharmonics> q) :
+  QVector(Normalization norm, int n, float sum, std::array<QVec, 4> q) :
       norm_(norm),
       n_(n),
       sum_weights_(sum),
@@ -58,7 +57,7 @@ class QVector {
       norm_(norm),
       n_(vector.GetN()),
       sum_weights_(vector.GetSumOfWeights()) {
-    for (int i = 0; i < QVector::maxharmonics; i++) {
+    for (int i = 0; i < 4; i++) {
       q_[i] = isnan(vector.Qx(i)) || isnan(vector.Qy(i)) ? QVec(0, 0) : QVec(vector.Qx(i), vector.Qy(i));
     }
   }
@@ -82,7 +81,7 @@ class QVector {
   Normalization norm_ = Normalization::NOCALIB;
   int n_ = 0;
   float sum_weights_ = 0.0;
-  std::array<QVec, QVector::maxharmonics> q_;
+  std::array<QVec, 4> q_;
   /// \cond CLASSIMP
  ClassDef(QVector, 3);
   /// \endcond
