@@ -9,11 +9,9 @@ QVector operator+(const QVector a, const QVector b) {
   QVector at = a.DeNormal();
   QVector bt = b.DeNormal();
   QVector c;
-  std::transform(at.q_.begin(),
-                 at.q_.end(),
-                 bt.q_.begin(),
-                 c.q_.begin(),
-                 [](const QVec qa, const QVec qb) { return qa + qb; });
+  for (int i = 0; i < 4; ++i) {
+    c.q_[i] = a.q_[i] + b.q_[i];
+  }
   c.n_ = at.n_ + bt.n_;
   c.sum_weights_ = at.sum_weights_ + bt.sum_weights_;
   return c;
@@ -33,14 +31,18 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
         if (sum_weights_!=0) return q/sum_weights_;
         return q;
       };
-      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
+      for (int i = 0; i < 4; ++i) {
+        c.q_[i] = add(c.q_[i]);
+      }
       break;
     }
     case (Normalization::QOVERSQRTM): {
       auto add = [this](const QVec q) {
         return q/std::sqrt(sum_weights_);
       };
-      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
+      for (int i = 0; i < 4; ++i) {
+        c.q_[i] = add(c.q_[i]);
+      }
       break;
     }
     case (Normalization::QOVERNORMQ): {
@@ -50,7 +52,9 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
         }
         return q;
       };
-      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
+      for (int i = 0; i < 4; ++i) {
+        c.q_[i] = add(c.q_[i]);
+      }
       break;
     }
   }
@@ -65,16 +69,21 @@ QVector QVector::DeNormal() const {
       break;
     }
     case (Normalization::QOVERM): {
-      std::transform(q_.begin(), q_.end(), c.q_.begin(), [this](const QVec q) { return q*sum_weights_; });
+      for (int i = 0; i < 4; ++i) {
+        c.q_[i] = q_[i]*sum_weights_;
+      }
       break;
     }
     case (Normalization::QOVERSQRTM): {
-      std::transform(q_.begin(), q_.end(), c.q_.begin(),
-                     [this](const QVec q) { return q*std::sqrt(sum_weights_); });
+      for (int i = 0; i < 4; ++i) {
+        c.q_[i] = q_[i]*std::sqrt(sum_weights_);
+      }
       break;
     }
     case (Normalization::QOVERNORMQ): {
-      std::transform(q_.begin(), q_.end(), c.q_.begin(), [](const QVec q) { return q*Qn::norm(q); });
+      for (int i = 0; i < 4; ++i) {
+        c.q_[i] = q_[i]*Qn::norm(q_[i]);
+      }
       break;
     }
   }
