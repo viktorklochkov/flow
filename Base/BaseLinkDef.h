@@ -15,6 +15,7 @@
 #pragma link C++ class vector<QnCorrectionsQnVector >+;
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::QVec+;
+#pragma link C++ class array<Qn::QVec, 4>+;
 #pragma link C++ class Qn::QVector+;
 #pragma link C++ class Qn::Profile+;
 #pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector >+;
