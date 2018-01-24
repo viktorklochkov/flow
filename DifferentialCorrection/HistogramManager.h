@@ -23,12 +23,14 @@ class HistogramManager {
     auto histogram = new TH1F((x).data(), ("; " + x + "; ").data(), nbins, bins);
     histograms_->Add(histogram);
     auto value = var_manager_->FindNum(x);
-    hist1d_fill_.insert(std::make_pair((x).data(), value));
+    hist1d_fill_.push_back(value);
   }
   void FillHist1D(float *values) {
+    int i = 0;
     for (const auto &hist : hist1d_fill_) {
-      auto histogram = (TH1 *) histograms_->FindObject(hist.first.data());
-      histogram->Fill(values[hist.second]);
+      auto histogram = (TH1 *) histograms_->At(i);
+      histogram->Fill(values[hist]);
+      i++;
     }
   }
 
@@ -61,7 +63,7 @@ class HistogramManager {
     }
   }
 
-  std::map<std::string, int> hist1d_fill_;
+  std::vector<int> hist1d_fill_;
   std::unique_ptr<TList> histograms_;
   std::shared_ptr<VariableManager> var_manager_;
 };
