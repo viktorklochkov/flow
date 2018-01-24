@@ -84,7 +84,7 @@ class QVector {
   float sum_weights_ = 0.0;
   QVec q_[4];
   /// \cond CLASSIMP
- ClassDef(QVector, 3);
+ ClassDef(QVector, 4);
   /// \endcond
 };
 
