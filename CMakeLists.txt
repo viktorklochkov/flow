@@ -13,7 +13,8 @@ set(DIFF_SOURCES
         DifferentialCorrection/VariableManager.cpp
         DifferentialCorrection/CorrectionManager.cpp
         DifferentialCorrection/Detector.cpp
-        DifferentialCorrection/Interface/DataFiller.cpp)
+        DifferentialCorrection/Interface/DataFiller.cpp
+        DifferentialCorrection/HistogramManager.cpp)
 
 set(BASE_SOURCES
         Base/DataVector.cpp

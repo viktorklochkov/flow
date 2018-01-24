@@ -14,18 +14,23 @@
 #include "Base/Axis.h"
 #include "EventInfo.h"
 #include "DifferentialCorrection/Interface/DataFiller.h"
+#include "HistogramManager.h"
 namespace Qn {
 class CorrectionManager {
  public:
 
-  CorrectionManager() : event_variables_(new Qn::EventInfoF()) {}
+  CorrectionManager() : event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()), histogram_manager_(var_manager_) {}
 
-  void AddVariable(const std::string &name, const int number) { var_manager_.AddVariable(name, number); }
+  void AddVariable(const std::string &name, const int number) { var_manager_->AddVariable(name, number); }
 
   void AddCorrectionAxis(const Qn::Axis &variable) { qncorrections_axis_.push_back(variable); }
 
   void SetEventVariable(const std::string &name) {
     event_variables_->AddVariable(name);
+  }
+
+  void AddHist1D(const std::string &x, int nbins, float *bins) {
+    histogram_manager_.AddHist1D(x, nbins, bins);
   }
 
   void SetEventCut() {};
@@ -37,7 +42,7 @@ class CorrectionManager {
     std::vector<int> enums;
     enums.reserve(axes.size());
     for (const auto &axis : axes) {
-      enums.push_back(var_manager_.FindNum(axis.Name()));
+      enums.push_back(var_manager_->FindNum(axis.Name()));
     }
     Detector detector(type,axes,enums,nchannels);
     detectors_.insert(std::make_pair(name, std::move(detector)));
@@ -120,6 +125,10 @@ class CorrectionManager {
     }
   }
 
+  void SaveQaHistograms() {
+    histogram_manager_.GetList()->Write("QAHistograms", TObject::kSingleKey);
+  }
+
   void SaveEventVariablesToTree(TTree &tree) {
     event_variables_->SetToTree(tree);
   }
@@ -148,8 +157,9 @@ class CorrectionManager {
   void Process() {
     FillDataToFramework();
     for (auto &event_var : *event_variables_) {
-      event_var.second.SetValue(qncorrections_manager_.GetDataContainer()[var_manager_.FindNum(event_var.first)]);
+      event_var.second.SetValue(qncorrections_manager_.GetDataContainer()[var_manager_->FindNum(event_var.first)]);
     }
+    histogram_manager_.FillHist1D(qncorrections_manager_.GetDataContainer());
     qncorrections_manager_.ProcessEvent();
     GetQnFromFramework("latest");
   }
@@ -176,7 +186,7 @@ class CorrectionManager {
         axisbins[ibin] = *(axis.begin() + ibin);
       }
       auto variable =
-          new QnCorrectionsEventClassVariable(var_manager_.FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
+          new QnCorrectionsEventClassVariable(var_manager_->FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
       qncorrections_varset_->Add(variable);
     }
   }
@@ -201,8 +211,9 @@ inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVect
   std::unique_ptr<Qn::EventInfoF> event_variables_;
   std::vector<Qn::Axis> qncorrections_axis_;
   QnCorrectionsManager qncorrections_manager_;
-  VariableManager var_manager_;
+  std::shared_ptr<VariableManager> var_manager_;
   std::map<std::string, Detector> detectors_;
+  Qn::HistogramManager histogram_manager_;
 };
 }
 
