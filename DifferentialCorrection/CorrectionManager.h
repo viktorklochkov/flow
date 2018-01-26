@@ -19,7 +19,8 @@ namespace Qn {
 class CorrectionManager {
  public:
 
-  CorrectionManager() : event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()), histogram_manager_(var_manager_) {}
+  CorrectionManager()
+      : event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()), histogram_manager_(var_manager_) {}
 
   void AddVariable(const std::string &name, const int number) { var_manager_->AddVariable(name, number); }
 
@@ -29,8 +30,45 @@ class CorrectionManager {
     event_variables_->AddVariable(name);
   }
 
-  void AddHist1D(const std::string &x, int nbins, float *bins) {
-    histogram_manager_.AddHist1D(x, nbins, bins);
+  void AddHist1D(const std::string &x, const std::vector<float> &bin_edges) {
+    histogram_manager_.AddHist1D(x, bin_edges);
+  }
+
+  void AddHist1D(const std::string &x, int nbins, float xlo, float xhi) {
+    std::vector<float> bin_edges;
+    for (int i = 0; i < nbins + 1; ++i) {
+      float bin_width = (xhi - xlo)/(float) nbins;
+      bin_edges.push_back(xlo + i*bin_width);
+    }
+    histogram_manager_.AddHist1D(x, bin_edges);
+  }
+
+  void AddHist2D(const std::string &x,
+                 int xbins,
+                 float xlo,
+                 float xhi,
+                 const std::string &y,
+                 int ybins,
+                 float ylo,
+                 float yhi) {
+    std::vector<float> x_edges;
+    for (int i = 0; i < xbins + 1; ++i) {
+      float bin_width = (xhi - xlo)/(float) xbins;
+      x_edges.push_back(xlo + i*bin_width);
+    }
+    std::vector<float> y_edges;
+    for (int i = 0; i < ybins + 1; ++i) {
+      float bin_width = (yhi - ylo)/(float) ybins;
+      y_edges.push_back(ylo + i*bin_width);
+    }
+    histogram_manager_.AddHist2D(x, x_edges, y, y_edges);
+  }
+
+  void AddHist2D(const std::string &x,
+                 const std::vector<float> &x_edges,
+                 const std::string &y,
+                 const std::vector<float> &y_edges) {
+    histogram_manager_.AddHist2D(x, x_edges, y, y_edges);
   }
 
   void SetEventCut() {};
@@ -44,7 +82,7 @@ class CorrectionManager {
     for (const auto &axis : axes) {
       enums.push_back(var_manager_->FindNum(axis.Name()));
     }
-    Detector detector(type,axes,enums,nchannels);
+    Detector detector(type, axes, enums, nchannels);
     detectors_.insert(std::make_pair(name, std::move(detector)));
   }
 
@@ -52,15 +90,16 @@ class CorrectionManager {
                    DetectorType type,
                    int nchannels = 0) {
     std::vector<int> enums;
-    Detector detector(type,nchannels);
+    Detector detector(type, nchannels);
     detectors_.insert(std::make_pair(name, std::move(detector)));
   }
 
   void SetCorrectionSteps(const std::string &name,
                           std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config) {
-    try{detectors_.at(name).SetConfig(std::move(config));}
-    catch(std::out_of_range &) {
-      throw std::out_of_range (name+ " was not found in the list of detectors. It needs to be created before it can be configured.");
+    try { detectors_.at(name).SetConfig(std::move(config)); }
+    catch (std::out_of_range &) {
+      throw std::out_of_range(
+          name + " was not found in the list of detectors. It needs to be created before it can be configured.");
     }
   }
 
@@ -102,8 +141,8 @@ class CorrectionManager {
       auto ibin = 0;
       for (auto &bin : *detector) {
         std::string name;
-        if ( detector->IsIntegrated()) {
-          name  = pair.first;
+        if (detector->IsIntegrated()) {
+          name = pair.first;
         } else {
           name = (pair.first + std::to_string(ibin));
         }
@@ -134,12 +173,14 @@ class CorrectionManager {
   }
 
   void FillDataToFramework(Qn::Differential::Interface::DataFiller filler) {
-      filler.Fill(detectors_);
+    filler.Fill(detectors_);
   }
 
   void SaveCorrectionHistograms() {
-   qncorrections_manager_.GetOutputHistogramsList()->Write(qncorrections_manager_.GetOutputHistogramsList()->GetName(), TObject::kSingleKey);
-   qncorrections_manager_.GetQAHistogramsList()->Write(qncorrections_manager_.GetQAHistogramsList()->GetName(), TObject::kSingleKey);
+    qncorrections_manager_.GetOutputHistogramsList()->Write(qncorrections_manager_.GetOutputHistogramsList()->GetName(),
+                                                            TObject::kSingleKey);
+    qncorrections_manager_.GetQAHistogramsList()->Write(qncorrections_manager_.GetQAHistogramsList()->GetName(),
+                                                        TObject::kSingleKey);
   }
 
   float *GetVariableContainer() { return qncorrections_manager_.GetDataContainer(); }
@@ -147,6 +188,7 @@ class CorrectionManager {
   void Initialize(std::shared_ptr<TFile> &in_calibration_file_) {
     CalculateCorrectionAxis();
     CreateDetectors();
+    histogram_manager_.CreateHistograms();
     qncorrections_manager_.SetCalibrationHistogramsList(in_calibration_file_.get());
     qncorrections_manager_.SetShouldFillQAHistograms();
     qncorrections_manager_.SetShouldFillOutputHistograms();
@@ -182,7 +224,7 @@ class CorrectionManager {
     for (const auto &axis : qncorrections_axis_) {
       double axisbins[kMaxCorrectionArrayLength];
       auto nbins = axis.size();
-      for (int ibin = 0; ibin < nbins+1; ++ibin) {
+      for (int ibin = 0; ibin < nbins + 1; ++ibin) {
         axisbins[ibin] = *(axis.begin() + ibin);
       }
       auto variable =
@@ -195,17 +237,17 @@ class CorrectionManager {
  * @param method normalization method.
  * @return corresponding correlation.
  */
-inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
-  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_noCalibration)
+  inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_noCalibration)
+      return Qn::QVector::Normalization::NOCALIB;
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverM)
+      return Qn::QVector::Normalization::QOVERM;
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverSqrtM)
+      return Qn::QVector::Normalization::QOVERSQRTM;
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverQlength)
+      return Qn::QVector::Normalization::QOVERNORMQ;
     return Qn::QVector::Normalization::NOCALIB;
-  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverM)
-    return Qn::QVector::Normalization::QOVERM;
-  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverSqrtM)
-    return Qn::QVector::Normalization::QOVERSQRTM;
-  if (method == QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverQlength)
-    return Qn::QVector::Normalization::QOVERNORMQ;
-  return Qn::QVector::Normalization::NOCALIB;
-}
+  }
 
   QnCorrectionsEventClassVariablesSet *qncorrections_varset_;
   std::unique_ptr<Qn::EventInfoF> event_variables_;
