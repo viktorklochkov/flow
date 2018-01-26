@@ -44,6 +44,7 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
     ++ibin;
   }
 }
+
 void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<long> &eventindex) {
   std::vector<std::vector<long>> index;
   std::vector<QVector> contents;
@@ -54,5 +55,20 @@ void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const 
   cindex.reserve(10);
   index.reserve(10);
   FillCorrelation(eventindex, index, contents, iteration, cindex);
+}
+
+void Correlation::CreateCorrelationContainer() {
+  int i = 0;
+  data_correlation_.AddAxes(axes_event_);
+  for (auto &input : inputs_) {
+    if (!input.IsIntegrated()) {
+      auto axes = input.GetAxes();
+      for (auto &axis : axes) {
+        axis.SetName(std::to_string(i) + axis.Name());
+      }
+      data_correlation_.AddAxes(axes);
+      ++i;
+    }
+  }
 }
 }

@@ -35,7 +35,7 @@ bool CorrelationManager::CheckEvent() {
 void CorrelationManager::MakeProjections() {
   for (const auto &projection : projections_) {
     qvectors_.at(projection.first) =
-        (*tree_values_.at(std::get<0>(projection.second))).Projection(std::get<2>(projection.second),
+        qvectors_.at(std::get<0>(projection.second)).Projection(std::get<2>(projection.second),
                                                                       [](const Qn::QVector &a, const Qn::QVector &b) {
                                                                         return (a
                                                                             + b).Normal(Qn::QVector::Normalization::QOVERM);
@@ -60,8 +60,9 @@ void CorrelationManager::Initialize() {
     }
   }
   MakeProjections();
-  BuildCorrelation();
   ApplyFunction();
+  BuildCorrelation();
+
 }
 
 void CorrelationManager::SaveToFile(std::string name) {

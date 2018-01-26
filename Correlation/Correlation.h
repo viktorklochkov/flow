@@ -38,20 +38,7 @@ class Correlation {
 /**
  * Create the correlation function. Automatically called at creation of Correlation object.
  */
-  void CreateCorrelationContainer() {
-    int i = 0;
-    data_correlation_.AddAxes(axes_event_);
-    for (auto &input : inputs_) {
-      if (!input.IsIntegrated()) {
-        auto axes = input.GetAxes();
-        for (auto &axis : axes) {
-          axis.SetName(std::to_string(i) + axis.Name());
-        }
-        data_correlation_.AddAxes(axes);
-        ++i;
-      }
-    }
-  }
+  void CreateCorrelationContainer();
 
  public:
 
