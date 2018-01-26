@@ -50,9 +50,8 @@ class QVector {
   QVector(Normalization norm, int n, float sum, std::array<QVec, 4> q) :
       norm_(norm),
       n_(n),
-      sum_weights_(sum) {
-    for (int i = 0; i < 4; ++i) q_[i] = q[i];
-  }
+      sum_weights_(sum),
+      q_(q) {}
 
   QVector(Normalization norm, const QnCorrectionsQnVector &vector) :
       norm_(norm),
@@ -82,9 +81,9 @@ class QVector {
   Normalization norm_ = Normalization::NOCALIB;
   int n_ = 0;
   float sum_weights_ = 0.0;
-  QVec q_[4];
+  std::array<QVec, 4> q_;
   /// \cond CLASSIMP
- ClassDef(QVector, 4);
+ ClassDef(QVector, 5);
   /// \endcond
 };
 
