@@ -4,6 +4,10 @@ set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_cpp_STANDARD 14)
 set(CMAKE_BUILD_TYPE debug)
 
+if (APPLE)
+    add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
+    add_definitions(-D__GLIBCXX__)
+endif (APPLE)
 set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/CorrelationManager.cpp)
@@ -47,6 +51,8 @@ include_directories(${CMAKE_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 
 add_subdirectory(QnCorrections)
 
+add_subdirectory(googletest)
+
 ROOT_GENERATE_DICTIONARY(G__BaseFlow ${BASE_HEADERS} LINKDEF Base/BaseLinkDef.h)
 add_library(baseflow SHARED ${BASE_SOURCES} G__BaseFlow)
 target_link_libraries(baseflow ${ROOT_LIBRARIES} qncorrflow)
@@ -56,3 +62,5 @@ target_link_libraries(diffflow ${ROOT_LIBRARIES} qncorrflow baseflow)
 
 add_library(correlationflow SHARED ${CORR_SOURCES})
 target_link_libraries(correlationflow ${ROOT_LIBRARIES} baseflow)
+
+add_subdirectory(test)
