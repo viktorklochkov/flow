@@ -83,6 +83,10 @@ class CorrelationManager {
     build_correlations_.emplace(name, std::make_pair(containernamelist, lambda));
   }
 
+  Correlation GetCorrelation(const std::string &name) const {
+    return correlations_.at(name).second;
+  }
+
   void SaveToFile(std::string name);
 
   void MakeProjections();

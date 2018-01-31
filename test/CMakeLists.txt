@@ -5,7 +5,10 @@ set(CMAKE_cpp_STANDARD 14)
 set(CMAKE_BUILD_TYPE debug)
 
 include_directories(${gtest_SOURCE_DIR}/include)
-set(TEST_SOURCES DataContainerUnitTest.cpp CorrelationUnitTest.cpp ProfileUnitTest.cpp)
+set(TEST_SOURCES DataContainerUnitTest.cpp
+        CorrelationUnitTest.cpp
+        ProfileUnitTest.cpp
+        CorrelationManagerUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
