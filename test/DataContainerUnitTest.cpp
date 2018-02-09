@@ -7,6 +7,8 @@
 
 #include <gtest/gtest.h>
 #include "Base/DataContainer.h"
+#include <TList.h>
+#include <TFile.h>
 
 TEST(DataContainerTest, Copy) {
   Qn::DataContainer<Qn::QVector> container;
@@ -85,4 +87,31 @@ TEST(DataContainerTest, Addition) {
     numberofbins++;
   }
   EXPECT_EQ(100, numberofbins);
+}
+
+TEST(DataContainerTest, Merge) {
+  auto file_a = new TFile("testa.root","RECREATE");
+  file_a->cd();
+  auto container_a = new Qn::DataContainerProfile();
+  container_a->AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : *container_a) {
+    bin.Update(3.0);
+  }
+  file_a->WriteObject(container_a,"container");
+  file_a->Write();
+  auto file_b = new TFile("testb.root","RECREATE");
+  file_b->cd();
+  auto container_b = new Qn::DataContainerProfile();
+  container_b->AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : *container_b) {
+    bin.Update(1.0);
+  }
+  file_b->WriteObject(container_b,"container");
+  file_b->Write();
+  auto list = new TList();
+  list->Add(container_a);
+  container_b->Merge(list);
+  for (auto &bin : *container_b) {
+    EXPECT_FLOAT_EQ(2.0, bin.Mean());
+  }
 }

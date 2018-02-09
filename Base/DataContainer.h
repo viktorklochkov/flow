@@ -15,6 +15,7 @@
 #include <string>
 #include <stdexcept>
 #include <memory>
+#include <TCollection.h>
 
 #include "DataVector.h"
 #include "QVector.h"
@@ -521,6 +522,16 @@ class DataContainer : public TObject {
  * @return true if integrated, else false.
  */
   inline bool IsIntegrated() const { return integrated_; }
+
+  Long64_t Merge(TCollection* inputlist) {
+    TIter next(inputlist);
+    while (auto data=(DataContainer<T>*)next()) {
+      auto lambda = [](const T &a, const T &b){return Qn::Merge(a, b);};
+      *this = this->Apply(*data,lambda);
+    }
+    return this->size();
+  }
+
 
  private:
   bool integrated_;

@@ -62,6 +62,8 @@ class Profile {
   friend Qn::Profile operator*(Qn::Profile a, Qn::Profile b);
   friend Qn::Profile operator/(Qn::Profile a, Qn::Profile b);
   friend Qn::Profile operator*(Qn::Profile a, double b);
+  friend Qn::Profile Add(Qn::Profile a, Qn::Profile b);
+  friend Qn::Profile Merge(Qn::Profile a, Qn::Profile b);
  private:
   double mean_ = 0;
   double sum_ = 0;
@@ -82,10 +84,31 @@ inline Qn::Profile operator*(Qn::Profile a, double b) {
 
 inline Qn::Profile operator+(Qn::Profile a, Qn::Profile b) {
   int nentries = a.entries_ + b.entries_;
-  double nsum = (a.sum_*a.mean_ + b.sum_*b.mean_)/nentries;
+  double nsum = (a.sum_*a.entries_ + b.sum_*b.entries_)/nentries;
   double nsum2 = (a.sum2_*a.entries_ + b.sum2_*b.entries_)/nentries;
   double nmean = (a.entries_*a.mean_ + b.entries_*b.mean_)/nentries;
-  double nerror = std::sqrt((a.error_*a.error_*a.entries_ + b.error_*b.error_*a.entries_ - 2*a.mean_*b.mean_)/nentries);
+  double nerror =
+  std::sqrt(std::abs((a.error_*a.error_*a.entries_ + b.error_*b.error_*b.entries_ - 2*a.mean_*b.mean_))/nentries);
+  Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
+  return c;
+}
+
+inline Qn::Profile Add(Qn::Profile a, Qn::Profile b) {
+  int nentries = a.entries_ + b.entries_;
+  double nsum = a.sum_ + b.sum_;
+  double nmean = nsum/nentries;
+  double nsum2 = a.sum2_ + b.sum2_;
+  double nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
+  Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
+  return c;
+}
+
+inline Qn::Profile Merge(Qn::Profile a, Qn::Profile b) {
+  int nentries = a.entries_ + b.entries_;
+  double nsum = a.sum_ + b.sum_;
+  double nmean = nsum/nentries;
+  double nsum2 = a.sum2_ + b.sum2_;
+  double nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }

@@ -8,6 +8,7 @@ if (APPLE)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
     add_definitions(-D__GLIBCXX__)
 endif (APPLE)
+
 set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/CorrelationManager.cpp)
@@ -26,7 +27,8 @@ set(BASE_SOURCES
         Base/Axis.cpp
         Base/QVector.cpp
         Base/Stats.cpp
-        Base/DataContainerHelper.cpp)
+        Base/DataContainerHelper.cpp
+        Base/Efficiency.cpp)
 
 string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")
 string(REPLACE ".cpp" ".h" DIFF_HEADERS "${DIFF_SOURCES}")
@@ -41,7 +43,7 @@ list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib")
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
+find_package(ROOT REQUIRED COMPONENTS Core MathCore MathMore RIO Hist Tree Net TreePlayer)
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})

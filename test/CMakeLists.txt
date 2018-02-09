@@ -8,7 +8,8 @@ include_directories(${gtest_SOURCE_DIR}/include)
 set(TEST_SOURCES DataContainerUnitTest.cpp
         CorrelationUnitTest.cpp
         ProfileUnitTest.cpp
-        CorrelationManagerUnitTest.cpp)
+        CorrelationManagerUnitTest.cpp
+        EfficiencyUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
