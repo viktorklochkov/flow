@@ -522,7 +522,13 @@ class DataContainer : public TObject {
  * @return true if integrated, else false.
  */
   inline bool IsIntegrated() const { return integrated_; }
-
+/**
+ * Merges DataContainer with DataContainers in TCollection.
+ * Function used in "hadd"
+ * A function with signature T Merge( T, T) needs to be implemented for merging to work.
+ * @param inputlist List of datacontainers
+ * @return size of datacontainer. dummyvalue
+ */
   Long64_t Merge(TCollection* inputlist) {
     TIter next(inputlist);
     while (auto data=(DataContainer<T>*)next()) {
