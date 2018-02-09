@@ -89,7 +89,7 @@ TEST(DataContainerTest, Addition) {
   EXPECT_EQ(100, numberofbins);
 }
 
-TEST(DataContainerTest, Merge) {
+TEST(DataContainerTest, Hadd) {
   auto file_a = new TFile("testa.root","RECREATE");
   file_a->cd();
   auto container_a = new Qn::DataContainerProfile();
@@ -108,10 +108,11 @@ TEST(DataContainerTest, Merge) {
   }
   file_b->WriteObject(container_b,"container");
   file_b->Write();
-  auto list = new TList();
-  list->Add(container_a);
-  container_b->Merge(list);
-  for (auto &bin : *container_b) {
+  system("rm test.root");
+  system("hadd test.root testa.root testb.root");
+  auto file_c = new TFile("test.root","OPEN");
+  auto container_c = (Qn::DataContainerProfile*) file_c->Get("container");
+  for (auto &bin : *container_c) {
     EXPECT_FLOAT_EQ(2.0, bin.Mean());
   }
 }
