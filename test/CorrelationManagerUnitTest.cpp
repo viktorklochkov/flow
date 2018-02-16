@@ -34,11 +34,15 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   tree.Fill();
 
   EXPECT_EQ(3, tree.GetEntries());
-
+  std::cout << "create manager" << std::endl;
   std::shared_ptr<TTreeReader> reader(new TTreeReader(&tree));
   Qn::CorrelationManager manager(reader);
+  std::cout << "add variables" << std::endl;
+
   manager.AddEventVariable({"Ev1", 3, 0, 3});
   manager.AddDataContainer("Det1");
+  std::cout << "add correlation" << std::endl;
+
   manager.AddCorrelation("Correlation1",
                          "Det1, Det1",
                          [](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1); });
@@ -46,6 +50,8 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 
   int events = 0;
   reader->SetEntry(0);
+  std::cout << "init" << std::endl;
+
   manager.Initialize();
   reader->Restart();
   while (reader->Next()) {
@@ -55,14 +61,10 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
     events++;
   }
   EXPECT_EQ(3,events);
-
-
   auto correlation = manager.GetCorrelation("Correlation1");
-
   auto datacontainer = correlation.GetCorrelation();
-
   for (auto &bin : datacontainer) {
-    EXPECT_EQ(2.0,bin.Mean());
+    EXPECT_FLOAT_EQ(2.0,bin);
   }
 
 }

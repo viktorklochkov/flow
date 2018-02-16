@@ -123,6 +123,15 @@ class DataContainer : public TObject {
     return data_.at(GetLinearIndex(bins));
   }
 
+  /**
+ * Get element in the specified bin
+ * @param bins Vector of bin indices of the desired element
+ * @return     Element
+ */
+  T &At(const std::vector<long> &bins) {
+    return data_.at(GetLinearIndex(bins));
+  }
+
 /**
  * Get element in the specified bin
  * @param linear_index index of element
@@ -174,17 +183,17 @@ class DataContainer : public TObject {
  * @param offset Index of linearized vector
  * @return       Vector of indices. Empty for invalid offset.
  */
-  std::vector<long> GetIndex(const long offset) const {
+  void GetIndex(std::vector<long> &indices, const long offset) const {
     long temp = offset;
-    std::vector<long> indices;
-    if ((unsigned long) offset >= data_.size()) return indices;
-    indices.resize(dimension_);
-    for (int i = 0; i < dimension_ - 1; ++i) {
-      indices[dimension_ - i - 1] = (int) (temp%axes_[dimension_ - i - 1].size());
-      temp = temp/axes_[dimension_ - i - 1].size();
+//    std::vector<long> indices;
+    if ((unsigned long) offset < data_.size()) {
+      indices.resize(dimension_);
+      for (int i = 0; i < dimension_ - 1; ++i) {
+        indices[dimension_ - i - 1] = (int) (temp%axes_[dimension_ - i - 1].size());
+        temp = temp/axes_[dimension_ - i - 1].size();
+      }
+      indices[0] = (int) temp;
     }
-    indices[0] = (int) temp;
-    return indices;
   }
 
 /**
@@ -193,7 +202,8 @@ class DataContainer : public TObject {
  * @return string with bin description
  */
   std::string GetBinDescription(const long offset) const {
-    auto indices = GetIndex(offset);
+    std::vector<long> indices;
+    GetIndex(indices, offset);
     if (indices.empty()) return "invalid offset";
     std::string outstring;
     int i = 0;
@@ -232,8 +242,10 @@ class DataContainer : public TObject {
       }
     } else {
       projection.AddAxes(axes);
+      std::vector<long> indices;
+      indices.reserve(dimension_);
       for (const auto &bin : data_) {
-        auto indices = this->GetIndex(linearindex);
+        this->GetIndex(indices, linearindex);
         for (auto index = indices.begin(); index < indices.end(); ++index) {
           if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
         }
@@ -366,8 +378,10 @@ class DataContainer : public TObject {
       tmpaxisposition++;
     }
     long index = 0;
+    std::vector<long> indices;
+    indices.reserve(dimension_);
     for (const auto &bin : data_) {
-      auto indices = GetIndex(index);
+      GetIndex(indices, index);
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
       auto binmid = binlow + (binhigh - binlow)/2;
@@ -411,7 +425,7 @@ class DataContainer : public TObject {
       result.AddAxes(axes_);
       indices.reserve((unsigned long) dimension_);
       for (const auto &bin_a : data_) {
-        indices = GetIndex(index);
+        GetIndex(indices, index);
         auto bin_b = data.GetElement(indices);
         result.CallOnElement(indices, [&lambda, &bin_a, &bin_b](T &element) { element = lambda(bin_a, bin_b); });
         ++index;
@@ -426,7 +440,7 @@ class DataContainer : public TObject {
       result.AddAxes(data.axes_);
       indices.reserve((unsigned long) data.dimension_);
       for (const auto &bin_b : data.data_) {
-        indices = data.GetIndex(index);
+        data.GetIndex(indices, index);
         auto bin_a = GetElement(indices);
         result.CallOnElement(indices, [&lambda, &bin_a, &bin_b](T &element) { element = lambda(bin_a, bin_b); });
         ++index;
@@ -483,8 +497,10 @@ class DataContainer : public TObject {
       throw std::logic_error(errormsg);
     }
     long ibin = 0;
+    std::vector<long> indices;
+    indices.reserve(dimension_);
     for (const auto &bin : data_) {
-      auto indices = GetIndex(ibin);
+      GetIndex(indices, ibin);
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
       auto binmid = binlow + (binhigh - binlow)/2;
@@ -529,15 +545,14 @@ class DataContainer : public TObject {
  * @param inputlist List of datacontainers
  * @return size of datacontainer. dummyvalue
  */
-  Long64_t Merge(TCollection* inputlist) {
+  Long64_t Merge(TCollection *inputlist) {
     TIter next(inputlist);
-    while (auto data=(DataContainer<T>*)next()) {
-      auto lambda = [](const T &a, const T &b){return Qn::Merge(a, b);};
-      *this = this->Apply(*data,lambda);
+    while (auto data = (DataContainer<T> *) next()) {
+      auto lambda = [](const T &a, const T &b) { return Qn::Merge(a, b); };
+      *this = this->Apply(*data, lambda);
     }
     return this->size();
   }
-
 
  private:
   bool integrated_;
