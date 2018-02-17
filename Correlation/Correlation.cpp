@@ -8,7 +8,6 @@ namespace Qn {
 
 void Correlation::FillCorrelation(const std::vector<long> &eventindex,
                                   std::vector<QVector> &contents,
-                                  std::vector<long> &binindex,
                                   int ipos,
                                   u_int iteration,
                                   std::vector<long> &cindex,
@@ -19,7 +18,6 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
     int ibin = 0;
     for (auto &bin : datacontainer) {
       if (bin.n()==0) continue;
-//      datacontainer.GetIndex(binindex, ibin);
       if (!datacontainer.IsIntegrated()) {
         int ii = 0;
         for (auto i : index_[iteration][ibin]) {
@@ -30,7 +28,6 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
       }
       contents[iteration] = bin;
       data_correlation_.At(cindex) = function_(contents);
-//      if (!datacontainer.IsIntegrated()) index.erase(index.end() - 1);
       ++ibin;
     }
     return;
@@ -47,9 +44,8 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
         ++ii;
       }
     }
-//    if (!datacontainer.IsIntegrated()) index.push_back(binindex);
     contents[iteration] = bin;
-    FillCorrelation(eventindex, contents,binindex, pos, iteration + 1, cindex, input);
+    FillCorrelation(eventindex, contents, pos, iteration + 1, cindex, input);
     ++ibin;
   }
 }
@@ -59,10 +55,8 @@ void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const 
   contents.resize(input.size());
   uint iteration = 0;
   std::vector<long> cindex;
-  std::vector<long> binindex;
-  binindex.reserve(input[0].size());
   int size = eventindex.size();
-  for (auto i : input) {
+  for (const auto &i : input) {
     size += i.GetAxes().size();
   }
   cindex.resize(size);
@@ -71,7 +65,7 @@ void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const 
     cindex[ii] = eventind;
     ++ii;
   }
-  FillCorrelation(eventindex, contents, binindex, ii, iteration, cindex, input);
+  FillCorrelation(eventindex, contents, ii, iteration, cindex, input);
 }
 
 void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONTAINERS> &inputs) {

@@ -19,7 +19,7 @@
 
 #include "DataVector.h"
 #include "QVector.h"
-#include "Stats.h"
+#include "Profile.h"
 
 /**
  * QnCorrectionsframework
@@ -225,23 +225,25 @@ class DataContainer : public TObject {
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Projection(const std::vector<Axis> &axes, Function &&lambda) const {
+  DataContainer<T> Projection(const std::vector<std::string> names, Function &&lambda) const {
     DataContainer<T> projection;
     int linearindex = 0;
     std::vector<bool> isprojected;
     auto originalaxes = this->GetAxes();
     for (const auto &originalaxis : originalaxes) {
-      for (const auto &axis : axes) {
-        isprojected.push_back((originalaxis.Name()==axis.Name())==0);
+      for (const auto &name : names) {
+        isprojected.push_back((originalaxis.Name()==name)==0);
+        if(originalaxis.Name()==name) projection.AddAxis(originalaxis);
       }
     }
-    if (axes.empty()) {
+    if (names.empty()) {
       for (const auto &bin : data_) {
         long index = 0;
         projection.AddElement(index, lambda, bin);
       }
     } else {
-      projection.AddAxes(axes);
+//      projection.AddAxes(axes);
+//      projection.AddAxis(originalaxes.)
       std::vector<long> indices;
       indices.reserve(dimension_);
       for (const auto &bin : data_) {

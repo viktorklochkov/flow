@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 #include <Base/DataContainer.h>
-#include "Base/Stats.h"
+#include "Base/Profile.h"
 
 TEST(ProfileTest, Trivial) {
   Qn::Profile a;

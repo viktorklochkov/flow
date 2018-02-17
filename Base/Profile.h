@@ -2,8 +2,8 @@
 // Created by Lukas Kreis on 15.11.17.
 //
 
-#ifndef FLOW_STATISTICS_H
-#define FLOW_STATISTICS_H
+#ifndef FLOW_PROFILE_H
+#define FLOW_PROFILE_H
 
 //#include "Base/DataContainer.h"
 
@@ -16,7 +16,7 @@
 
 namespace Qn {
 
-namespace Stats {
+namespace Statistics {
 
 inline double Sigma(const double mean, const double sum2, const int n) {
   double variance = TMath::Abs(sum2/(double) n - mean*mean);
@@ -40,7 +40,7 @@ class Profile {
     ++entries_;
     mean_ = sum_/(entries_);
     sum2_ = sum2_ + value*value;
-    error_ = Qn::Stats::Sigma(mean_, sum2_, entries_);
+    error_ = Qn::Statistics::Sigma(mean_, sum2_, entries_);
   };
   inline double Mean() const { return mean_; }
   inline double Sum() const { return sum_; }
@@ -98,7 +98,7 @@ inline Qn::Profile Add(Qn::Profile a, Qn::Profile b) {
   double nsum = a.sum_ + b.sum_;
   double nmean = nsum/nentries;
   double nsum2 = a.sum2_ + b.sum2_;
-  double nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
+  double nerror = Qn::Statistics::Sigma(nmean, nsum2, nentries);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }
@@ -108,7 +108,7 @@ inline Qn::Profile Merge(Qn::Profile a, Qn::Profile b) {
   double nsum = a.sum_ + b.sum_;
   double nmean = nsum/nentries;
   double nsum2 = a.sum2_ + b.sum2_;
-  double nerror = Qn::Stats::Sigma(nmean, nsum2, nentries);
+  double nerror = Qn::Statistics::Sigma(nmean, nsum2, nentries);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries);
   return c;
 }

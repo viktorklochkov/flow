@@ -26,7 +26,7 @@ set(BASE_SOURCES
         Base/DataContainer.cpp
         Base/Axis.cpp
         Base/QVector.cpp
-        Base/Stats.cpp
+        Base/Profile.cpp
         Base/DataContainerHelper.cpp
         Base/Efficiency.cpp)
 
@@ -55,14 +55,16 @@ add_subdirectory(QnCorrections)
 
 add_subdirectory(googletest)
 
-ROOT_GENERATE_DICTIONARY(G__BaseFlow ${BASE_HEADERS} LINKDEF Base/BaseLinkDef.h)
-add_library(baseflow SHARED ${BASE_SOURCES} G__BaseFlow)
-target_link_libraries(baseflow ${ROOT_LIBRARIES} qncorrflow)
+ROOT_GENERATE_DICTIONARY(G__FlowBase ${BASE_HEADERS} LINKDEF Base/BaseLinkDef.h)
+add_library(FlowBase SHARED ${BASE_SOURCES} G__FlowBase)
+target_link_libraries(FlowBase ${ROOT_LIBRARIES} qncorrflow)
+set_target_properties(FlowBase PROPERTIES DEBUG_POSTFIX "")
+
 
 add_library(diffflow SHARED ${DIFF_SOURCES})
-target_link_libraries(diffflow ${ROOT_LIBRARIES} qncorrflow baseflow)
+target_link_libraries(diffflow ${ROOT_LIBRARIES} qncorrflow FlowBase)
 
 add_library(correlationflow SHARED ${CORR_SOURCES})
-target_link_libraries(correlationflow ${ROOT_LIBRARIES} baseflow)
+target_link_libraries(correlationflow ${ROOT_LIBRARIES} FlowBase)
 
 add_subdirectory(test)

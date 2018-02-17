@@ -10,7 +10,7 @@
 #include <iostream>
 #include <TMultiGraph.h>
 #include "DataContainer.h"
-#include "Stats.h"
+#include "Profile.h"
 
 namespace Qn {
 

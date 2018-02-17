@@ -25,17 +25,17 @@ TEST(DataContainerTest, AddAxes) {
 
 TEST(DataContainerTest, Projection) {
   Qn::DataContainer<float> container;
-  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}, {"a3", 100, 0, 10}});
   for (auto &bin : container) {
     bin = 1;
   }
   auto integration = container.Projection([](float a, float b) { return a + b; });
   for (const auto &bin : integration) {
-    EXPECT_EQ(100, bin);
+    EXPECT_EQ(10000, bin);
   }
-  auto projection = container.Projection({{"a2", 10, 0, 10}}, [](float a, float b) { return a + b; });
+  auto projection = container.Projection({"a2"}, [](float a, float b) { return a + b; });
   for (const auto &bin : projection) {
-    EXPECT_EQ(10, bin);
+    EXPECT_EQ(1000, bin);
   }
 }
 
@@ -90,28 +90,28 @@ TEST(DataContainerTest, Addition) {
 }
 
 TEST(DataContainerTest, Hadd) {
-  auto file_a = new TFile("testa.root","RECREATE");
+  auto file_a = new TFile("testa.root", "RECREATE");
   file_a->cd();
   auto container_a = new Qn::DataContainerProfile();
   container_a->AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : *container_a) {
     bin.Update(3.0);
   }
-  file_a->WriteObject(container_a,"container");
+  file_a->WriteObject(container_a, "container");
   file_a->Write();
-  auto file_b = new TFile("testb.root","RECREATE");
+  auto file_b = new TFile("testb.root", "RECREATE");
   file_b->cd();
   auto container_b = new Qn::DataContainerProfile();
   container_b->AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : *container_b) {
     bin.Update(1.0);
   }
-  file_b->WriteObject(container_b,"container");
+  file_b->WriteObject(container_b, "container");
   file_b->Write();
   system("rm test.root");
   system("hadd test.root testa.root testb.root");
-  auto file_c = new TFile("test.root","OPEN");
-  auto container_c = (Qn::DataContainerProfile*) file_c->Get("container");
+  auto file_c = new TFile("test.root", "OPEN");
+  auto container_c = (Qn::DataContainerProfile *) file_c->Get("container");
   for (auto &bin : *container_c) {
     EXPECT_FLOAT_EQ(2.0, bin.Mean());
   }

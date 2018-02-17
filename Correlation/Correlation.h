@@ -11,7 +11,7 @@
 #include "Base/DataContainer.h"
 #include "Base/QVector.h"
 #include "TTreeReaderValue.h"
-#include "Base/Stats.h"
+#include "Base/Profile.h"
 
 namespace Qn {
 /**
@@ -64,7 +64,6 @@ class Correlation {
  */
 void FillCorrelation(const std::vector<long> &eventindex,
                      std::vector<QVector> &contents,
-                     std::vector<long> &binindex,
                      int pos,
                      u_int iteration,
                      std::vector<long> &cindex,
