@@ -47,6 +47,8 @@ correlations
 new samples container propagating subsamples the operations
 mean from statistics in pos 0; error from subsampling in pos1...n
 
+bootstrap in subsamples then add up.
+
 #DONE
 
 ##Add missing QA histograms

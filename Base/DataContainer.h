@@ -44,6 +44,10 @@ class DataContainer : public TObject {
     CalculateStride();
   };
 
+  DataContainer(std::vector<Qn::Axis> axes) {
+    AddAxes(axes);
+  }
+
   virtual ~DataContainer() = default;
 
   using iterator = typename std::vector<T>::iterator;
@@ -123,13 +127,22 @@ class DataContainer : public TObject {
     return data_.at(GetLinearIndex(bins));
   }
 
-  /**
+/**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
   T &At(const std::vector<long> &bins) {
     return data_.at(GetLinearIndex(bins));
+  }
+
+/**
+ * Get element in the specified bin
+ * @param index index of element
+ * @return      Element
+ */
+  T &At(const long index) {
+    return data_.at(index);
   }
 
 /**
@@ -233,7 +246,7 @@ class DataContainer : public TObject {
     for (const auto &originalaxis : originalaxes) {
       for (const auto &name : names) {
         isprojected.push_back((originalaxis.Name()==name)==0);
-        if(originalaxis.Name()==name) projection.AddAxis(originalaxis);
+        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
       }
     }
     if (names.empty()) {

@@ -23,6 +23,7 @@
 #pragma link C++ class Qn::DataContainer<Qn::Profile>+;
 #pragma link C++ class Qn::DataContainer<std::vector<float> >+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
+#pragma link C++ class Qn::ResultContainer+;
 #pragma link C++ typedef Qn::DataContainerProfile;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;

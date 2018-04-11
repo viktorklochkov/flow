@@ -11,7 +11,8 @@ endif (APPLE)
 
 set(CORR_SOURCES
         Correlation/Correlation.cpp
-        Correlation/CorrelationManager.cpp)
+        Correlation/CorrelationManager.cpp
+        Correlation/BootstrapSampler.cpp)
 
 set(DIFF_SOURCES
         DifferentialCorrection/EventInfo.cpp
@@ -28,7 +29,7 @@ set(BASE_SOURCES
         Base/QVector.cpp
         Base/Profile.cpp
         Base/DataContainerHelper.cpp
-        Base/Efficiency.cpp)
+        Base/Efficiency.cpp Base/ResultContainer.cpp Base/ResultContainer.h)
 
 string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")
 string(REPLACE ".cpp" ".h" DIFF_HEADERS "${DIFF_SOURCES}")
