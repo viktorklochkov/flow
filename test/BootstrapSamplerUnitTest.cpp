@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <Correlation/BootstrapSampler.h>
 #include <TH1F.h>
+#include <Base/ResultContainer.h>
 
 TEST(BootStrapSamplerTest, Constructor) {
   const int nsamples = 50;
@@ -54,6 +55,25 @@ TEST(BootStrapSamplerTest, Constructor2) {
   EXPECT_EQ(10, isamples);
 }
 
+TEST(BootStrapSamplerTest, SubSampling) {
+  int nevents = 907;
+  int nsamples = 100;
+  BootstrapSampler test(nevents, nsamples);
+  test.CreateSubSamples();
+  std::vector<int> samplesizes;
+  samplesizes.resize(nsamples);
+  for (int ievent = 0; ievent < nevents; ++ievent) {
+    auto sample = test.GetFillVector(ievent);
+    auto position = sample.at(0);
+    std::cout << position << std::endl;
+    samplesizes.at(position)++;
+  }
+  for (auto & samplesize : samplesizes) {
+    std::cout << samplesize << std::endl;
+    ASSERT_NEAR(samplesize,nevents/nsamples,(nevents/nsamples)-1);
+  }
+}
+
 TEST(BootStrapSamplerTest, FillTest) {
   int nevents = 10000;
   int nsamples = 2;
@@ -73,5 +93,20 @@ TEST(BootStrapSamplerTest, FillTest) {
     }
     EXPECT_EQ(true, flag);
   }
-  EXPECT_NEAR(0.5,hist.GetMean(),0.1);
+  EXPECT_NEAR(0.5, hist.GetMean(), 0.1);
+}
+
+TEST(BootStrapSamplerTest, ResultContainer) {
+  int nevents = 10000;
+  int nsamples = 1000;
+  TRandom3 rndm;
+  BootstrapSampler sampler(nevents, nsamples);
+  Qn::ResultContainer container("test", nsamples);
+  sampler.CreateBootstrapSamples();
+  for (int i = 0; i < nevents; ++i) {
+    auto sample = sampler.GetFillVector(i);
+    container.Fill(rndm.Gaus(0,1), sample);
+  }
+
+  EXPECT_NEAR(container.At(0).Mean(),0,0.01);
 }
