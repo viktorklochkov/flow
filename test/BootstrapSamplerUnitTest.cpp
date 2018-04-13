@@ -10,7 +10,7 @@
 TEST(BootStrapSamplerTest, Constructor) {
   const int nsamples = 50;
   const int nevents = 100000;
-  BootstrapSampler test(nevents, nsamples);
+  Qn::BootstrapSampler test(nevents, nsamples);
   test.CreateBootstrapSamples();
   std::array<int, nsamples> size_of_sample{{0}};
   for (auto vec : test.samples_) {
@@ -28,7 +28,7 @@ TEST(BootStrapSamplerTest, Constructor) {
 TEST(BootStrapSamplerTest, Constructor3) {
   const int nsamples = 50;
   const int nevents = 100000;
-  BootstrapSampler test(nevents, nsamples);
+  Qn::BootstrapSampler test(nevents, nsamples);
   test.CreateDividedBootstrapSamples(5);
   std::array<int, nsamples> size_of_sample{{0}};
   for (auto vec : test.samples_) {
@@ -44,7 +44,7 @@ TEST(BootStrapSamplerTest, Constructor3) {
 }
 
 TEST(BootStrapSamplerTest, Constructor2) {
-  BootstrapSampler test(10, 10);
+  Qn::BootstrapSampler test(10, 10);
   test.CreateResamples();
   int isamples = 0;
   for (auto vec : test.samples_) {
@@ -58,7 +58,7 @@ TEST(BootStrapSamplerTest, Constructor2) {
 TEST(BootStrapSamplerTest, SubSampling) {
   int nevents = 907;
   int nsamples = 100;
-  BootstrapSampler test(nevents, nsamples);
+  Qn::BootstrapSampler test(nevents, nsamples);
   test.CreateSubSamples();
   std::vector<int> samplesizes;
   samplesizes.resize(nsamples);
@@ -77,7 +77,7 @@ TEST(BootStrapSamplerTest, SubSampling) {
 TEST(BootStrapSamplerTest, FillTest) {
   int nevents = 10000;
   int nsamples = 2;
-  BootstrapSampler test(nevents, nsamples);
+  Qn::BootstrapSampler test(nevents, nsamples);
   test.CreateResamples();
   TH1F hist("test", "test", 2, 0, 2);
   for (int ievent = 0; ievent < nevents; ++ievent) {
@@ -100,7 +100,7 @@ TEST(BootStrapSamplerTest, ResultContainer) {
   int nevents = 10000;
   int nsamples = 1000;
   TRandom3 rndm;
-  BootstrapSampler sampler(nevents, nsamples);
+  Qn::BootstrapSampler sampler(nevents, nsamples);
   Qn::ResultContainer container("test", nsamples);
   sampler.CreateBootstrapSamples();
   for (int i = 0; i < nevents; ++i) {

@@ -12,7 +12,7 @@ endif (APPLE)
 set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/CorrelationManager.cpp
-        Correlation/BootstrapSampler.cpp)
+        Correlation/BootstrapSampler.cpp Correlation/CorrelationHolder.cpp Correlation/CorrelationHolder.h)
 
 set(DIFF_SOURCES
         DifferentialCorrection/EventInfo.cpp

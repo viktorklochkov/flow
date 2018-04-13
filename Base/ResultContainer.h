@@ -11,7 +11,7 @@
 
 namespace Qn {
 
-class ResultContainer {
+class ResultContainer : public TObject {
  public:
   ResultContainer(std::string name, const std::vector<Axis> &axes, int nsamples) :
       name_(std::move(name)),

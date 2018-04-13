@@ -22,6 +22,7 @@ TEST(CorrelationTest, IntegratedCorrelation) {
   std::vector<Qn::DataContainer<Qn::QVector>> vector{container_a, container_b};
   Qn::Correlation correlation(vector, axes, lambda);
   correlation.Fill(vector, {1});
+  correlation.Fill(vector, {2});
   EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().GetElement(1));
   EXPECT_EQ(10, correlation.GetCorrelation().size());
 }
@@ -44,9 +45,9 @@ TEST(CorrelationTest, DifferentialCorrelation) {
   for (float i = 0; i < 10000; ++i) {
     correlation.Fill(vector, {(int)(i/1000.0)});
   }
-//  for (auto bin : correlation.GetCorrelation()) {
-//    EXPECT_FLOAT_EQ(2.0, bin);
-//  }
+  for (auto bin : correlation.GetCorrelation()) {
+    EXPECT_FLOAT_EQ(2.0, bin);
+  }
   EXPECT_EQ(100000, correlation.GetCorrelation().size());
 }
 

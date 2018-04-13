@@ -193,8 +193,8 @@ class DataContainer : public TObject {
 
 /**
  * Calculates indices in multiple dimensions from linearized index
+ * @param indices Outparameter for the indices
  * @param offset Index of linearized vector
- * @return       Vector of indices. Empty for invalid offset.
  */
   void GetIndex(std::vector<long> &indices, const long offset) const {
     long temp = offset;

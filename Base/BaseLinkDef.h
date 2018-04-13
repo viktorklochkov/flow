@@ -27,6 +27,8 @@
 #pragma link C++ typedef Qn::DataContainerProfile;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;
+#pragma link C++ typedef Qn::DataContainerF;
+
 
 #pragma link C++ function Qn::DataToProfileGraph;
 #pragma link C++ function Qn::DataToMultiGraph;

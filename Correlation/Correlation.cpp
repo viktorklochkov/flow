@@ -10,7 +10,6 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
                                   std::vector<QVector> &contents,
                                   int ipos,
                                   u_int iteration,
-                                  std::vector<long> &cindex,
                                   const std::vector<Correlation::CONTAINERS> &input) {
   const auto &datacontainer = input[iteration];
   ipos += iteration;
@@ -22,12 +21,12 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
         int ii = 0;
         for (auto i : index_[iteration][ibin]) {
           int pos = ii + ipos;
-          cindex[pos] = i;
+          c_index_[pos] = i;
           ++ii;
         }
       }
       contents[iteration] = bin;
-      data_correlation_.At(cindex) = function_(contents);
+      data_correlation_.At(c_index_) = function_(contents);
       ++ibin;
     }
     return;
@@ -40,12 +39,12 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
       int ii = 0;
       for (auto i : index_[iteration][ibin]) {
         pos += ii;
-        cindex[pos] = i;
+        c_index_[pos] = i;
         ++ii;
       }
     }
     contents[iteration] = bin;
-    FillCorrelation(eventindex, contents, pos, iteration + 1, cindex, input);
+    FillCorrelation(eventindex, contents, pos, iteration + 1, input);
     ++ibin;
   }
 }
@@ -53,29 +52,30 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
 void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<long> &eventindex) {
   std::vector<QVector> contents;
   contents.resize(input.size());
+  data_correlation_.ClearData();
   uint iteration = 0;
-  std::vector<long> cindex;
   int size = eventindex.size();
   for (const auto &i : input) {
     size += i.GetAxes().size();
   }
-  cindex.resize(size);
   int ii = 0;
   for (auto eventind : eventindex) {
-    cindex[ii] = eventind;
+    c_index_[ii] = eventind;
     ++ii;
   }
-  FillCorrelation(eventindex, contents, ii, iteration, cindex, input);
+  FillCorrelation(eventindex, contents, ii, iteration, input);
 }
 
 void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONTAINERS> &inputs) {
   int i = 0;
   data_correlation_.AddAxes(axes_event_);
+  int size = axes_event_.size();
   for (auto &input : inputs) {
+    size += input.GetAxes().size();
     std::vector<std::vector<long>> indexmap;
     for (int i = 0; i < input.size(); ++i) {
       std::vector<long> indices;
-      input.GetIndex(indices,i);
+      input.GetIndex(indices, i);
       indexmap.push_back(indices);
     }
     index_.push_back(indexmap);
@@ -88,7 +88,7 @@ void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONT
       ++i;
     }
   }
-  c_index_.reserve(i);
+  c_index_.resize(size);
 }
 
 }

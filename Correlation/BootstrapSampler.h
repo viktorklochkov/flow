@@ -10,15 +10,39 @@
 #include <TRandom3.h>
 #include <iostream>
 #include <random>
-
+namespace Qn {
 class BootstrapSampler {
  public:
+  enum class Method {
+    NONE,
+    BOOTSTRAP,
+    SUBSAMPLING,
+  };
+
   explicit BootstrapSampler(int nevents, int nsamples) :
       n_events_(nevents),
       n_samples_(nsamples) {
     samples_.resize(nevents);
     if (nevents < nsamples) n_samples_ = 1;
   }
+  explicit BootstrapSampler(int nsamples, Method met) :
+      method_(met),
+      n_events_(0),
+      n_samples_(nsamples) {
+    samples_.resize(0);
+  }
+
+  void SetNumberOfEvents(int num) {
+    n_events_ = num;
+    samples_.resize(num);
+  }
+
+  void CreateSamples() {
+    if (method_ == Method::BOOTSTRAP) CreateBootstrapSamples();
+    if (method_ == Method::SUBSAMPLING) CreateSubSamples();
+  }
+
+  int GetNumSamples() const {return n_samples_;}
 
   void CreateSubSamples() {
     TRandom3 random;
@@ -30,11 +54,11 @@ class BootstrapSampler {
     long long int seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::shuffle(event_vector.begin(), event_vector.end(), std::default_random_engine(seed));
     int div = n_events_/n_samples_;
-    for (int i = 0; i < n_events_ - (n_events_ % n_samples_); ++i) {
+    for (int i = 0; i < n_events_ - (n_events_%n_samples_); ++i) {
       samples_[event_vector[i]].push_back(i/(div));
     }
-    for (int i = n_events_ - (n_events_ % n_samples_); i < n_events_; ++i) {
-      samples_[event_vector[i]].push_back((n_samples_-1));
+    for (int i = n_events_ - (n_events_%n_samples_); i < n_events_; ++i) {
+      samples_[event_vector[i]].push_back((n_samples_ - 1));
     }
   }
 
@@ -86,10 +110,23 @@ class BootstrapSampler {
     return samples_[ievent];
   }
 
+  void GetFillVector(std::vector<unsigned long> &vector) {
+    vector = samples_[ievent_];
+  }
+
+  void UpdateEvent() {
+    ievent_++;
+  }
+
+  void ResetEvent() {
+    ievent_ = 0;
+  }
  public:
+  Method method_ = Method::NONE;
+  long ievent_ = 0;
   int n_events_;
   int n_samples_;
   std::vector<std::vector<unsigned long>> samples_;
 };
-
+}
 #endif //FLOW_BOOTSTRAPSAMPLER_H

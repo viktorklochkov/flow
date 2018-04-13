@@ -25,16 +25,16 @@ class Correlation {
   Correlation(const std::vector<CONTAINERS> &input,
               AXES event,
               std::function<double(std::vector<Qn::QVector> &)> lambda) :
+      data_correlation_(),
       axes_event_(std::move(event)),
       function_(std::move(lambda)) {
     CreateCorrelationContainer(input);
   }
   DataContainerF GetCorrelation() const { return data_correlation_; }
  private:
-  std::vector<std::vector<std::vector<long>>> index_;
-  std::vector<long> c_index_;
+  std::vector<std::vector<std::vector<long>>> index_; ///< map of indices of all inputs used for calculating the correlations
+  std::vector<long> c_index_; ///< flattened index of correlation corresponding to index_
   DataContainerF data_correlation_; ///<  datacontainer containing the correlations
-//  std::vector<CONTAINERS> inputs_; ///< vector of input datacontainers
   AXES axes_event_; ///< vector of event axes used in the correlation
   std::function<double(std::vector<Qn::QVector> &)> function_;
 
@@ -62,86 +62,12 @@ class Correlation {
  * @param lambda function which is used for the correlation
  * @param cindex compacted index of the bin in the correlation datacontainer.
  */
-void FillCorrelation(const std::vector<long> &eventindex,
-                     std::vector<QVector> &contents,
-                     int pos,
-                     u_int iteration,
-                     std::vector<long> &cindex,
-                     const std::vector<Correlation::CONTAINERS> &input);
-
-
-
-  template<typename FF>
   void FillCorrelation(const std::vector<long> &eventindex,
                        std::vector<QVector> &contents,
-                       std::vector<long> &binindex,
-                       int ipos,
+                       int pos,
                        u_int iteration,
-                       std::vector<long> &cindex,
-                       const std::vector<Correlation::CONTAINERS> &input,
-                       FF&& lambda) {
-    const auto &datacontainer = input[iteration];
-    ipos += iteration;
-    if (iteration + 1==input.size()) {
-      int ibin = 0;
-      for (auto &bin : datacontainer) {
-        if (bin.n()==0) continue;
-//      datacontainer.GetIndex(binindex, ibin);
-        if (!datacontainer.IsIntegrated()) {
-          int ii = 0;
-          for (auto i : index_[iteration][ibin]) {
-            int pos = ii + ipos;
-            cindex[pos] = i;
-            ++ii;
-          }
-        }
-        contents[iteration] = bin;
-        data_correlation_.At(cindex) = lambda(contents);
-//      if (!datacontainer.IsIntegrated()) index.erase(index.end() - 1);
-        ++ibin;
-      }
-      return;
-    }
-    int ibin = 0;
-    for (const auto &bin : datacontainer) {
-      int pos = ipos;
-      if (bin.n()==0) continue;
-      if (!datacontainer.IsIntegrated()) {
-        int ii = 0;
-        for (auto i : index_[iteration][ibin]) {
-          pos += ii;
-          cindex[pos] = i;
-          ++ii;
-        }
-      }
-//    if (!datacontainer.IsIntegrated()) index.push_back(binindex);
-      contents[iteration] = bin;
-      FillCorrelation(eventindex, contents,binindex, pos, iteration + 1, cindex, input, lambda);
-      ++ibin;
-    }
-  }
-  template <typename FF>
-  void Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<long> &eventindex, FF&& lambda) {
-    std::vector<QVector> contents;
-    contents.resize(input.size());
-    uint iteration = 0;
-    std::vector<long> cindex;
-    std::vector<long> binindex;
-    binindex.reserve(input[0].size());
-    int size = eventindex.size();
-    for (auto i : input) {
-      size += i.GetAxes().size();
-    }
-    cindex.resize(size);
-    int ii = 0;
-    for (auto eventind : eventindex) {
-      cindex[ii] = eventind;
-      ++ii;
-    }
-    FillCorrelation(eventindex, contents, binindex, ii, iteration, cindex, input, lambda);
-  }
+                       const std::vector<Correlation::CONTAINERS> &input);
 };
-
 }
 
 #endif //FLOW_CORRELATION_H

@@ -8,13 +8,16 @@
 #include <TTreeReader.h>
 
 #include <utility>
+#include <Base/ResultContainer.h>
 #include "Correlation.h"
+#include "BootstrapSampler.h"
+#include "CorrelationHolder.h"
 
 namespace Qn {
 
 class CorrelationManager {
   using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
-  using DATAFUNCTION = std::function<Qn::DataContainerQVector (Qn::DataContainerQVector &)>;
+  using DATAFUNCTION = std::function<Qn::DataContainerQVector(Qn::DataContainerQVector &)>;
   using PROJECTION = std::function<std::vector<Qn::QVector>(std::vector<Qn::QVector> &)>;
  public:
   explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
@@ -46,60 +49,82 @@ class CorrelationManager {
     event_axes_.push_back(eventaxis);
   }
 
-  void AddFunction(const std::string &name, DATAFUNCTION &&lambda) {
-    apply_function_qvectors.emplace(std::make_pair(name, lambda));
-  }
-
-  void ApplyFunction() {
-    for (const auto &data : apply_function_qvectors) {
-      qvectors_.at(data.first) = data.second(qvectors_.at(data.first));
-    }
-  }
-
-  /** Adds a new projection to the manager. Actual projection is created after the data have been read from file.
-   * @param originname Original data container.
-   * @param newname Name of the projection.
-   * @param axesnames Names of the axes.
-   */
-  void AddProjection(const std::string &originname, const std::string &newname, const std::string &axesnames) {
-    auto toproject = qvectors_.at(originname);
-    std::vector<Axis> axes;
-    DataContainerQVector projection;
-    projections_.emplace(newname, std::make_tuple(originname, axesnames, axes));
-    qvectors_.emplace(newname, projection);
-  }
-
-  /**
-   * Adds a new correlation to the manager. Actual correlations is created when data is read from the file.
-   * @param name Name of the correlation.
-   * @param containernames Names of the correlated data containers.
-   * @param lambda Function used for the correlation.
-   */
-  void AddCorrelation(const std::string &name,
-                      const std::string &containernames,
-                      FUNCTION &&lambda) {
-    std::list<std::string> containernamelist;
-    tokenize(containernames, containernamelist, ", ", true);
-    build_correlations_.emplace(name, std::make_pair(containernamelist, lambda));
-  }
-
-  Correlation GetCorrelation(const std::string &name) const {
-    return correlations_.at(name).second;
+  ResultContainer GetResult(const std::string &name) const {
+    return *(correlations_.at(name).GetResult());
   }
 
   void SaveToFile(std::string name);
 
-  void MakeProjections();
 
-  void Initialize();
+  void Initialize() {
+    for (auto &value : tree_values_) {
+      qvectors_.at(value.first) = *value.second.Get();
+    }
+    int i = 0;
+    for (auto &value : tree_event_values_) {
+      event_values_.at(i) = *value.second.Get();
+      i++;
+    }
+    BuildCorrelation();
+  }
 
-  void UpdateEvent();
+  void BuildCorrelation() {
+    int nevents = reader_->GetEntries(true);
+    std::vector<Qn::DataContainerQVector> qvectors;
+    for (auto &corr : correlations_) {
+      qvectors.reserve(corr.second.GetInputNames().size());
+      for (auto &cname : corr.second.GetInputNames()) {
+        qvectors.push_back(qvectors_.at(cname));
+      }
+      corr.second.Initialize(nevents, qvectors, event_axes_);
+    }
+  }
 
-  bool CheckEvent();
+  void AddCorrelation(std::string name,
+                      const std::string &containernames,
+                      FUNCTION &&lambda,
+                      int nsamples,
+                      BootstrapSampler::Method method) {
+    std::vector<std::string> containernamelist;
+    tokenize(containernames, containernamelist, ", ", true);
+    Qn::CorrelationHolder holder(name, containernamelist, lambda, nsamples, method);
+    correlations_.emplace(name, std::move(holder));
+  }
 
-  void BuildCorrelation();
+  void FillCorrelations() {
+    for (auto &pair : correlations_) {
+      u_long i = 0;
+      std::vector<DataContainerQVector> inputs;
+      inputs.resize(pair.second.GetInputNames().size());
+      for (const auto &name : pair.second.GetInputNames()) {
+        inputs.at(i) = qvectors_.at(name);
+        ++i;
+      }
+      pair.second.FillCorrelation(inputs, eventbin_, reader_->GetCurrentEntry());
+    }
+  }
+  void UpdateEvent() {
+    for (auto &value : tree_values_) {
+      qvectors_.at(value.first) = *value.second.Get();
+    }
+    int i = 0;
+    for (auto &value : tree_event_values_) {
+      event_values_.at(i) = *value.second.Get();
+      i++;
+    }
+  }
 
-  void FillCorrelations();
+  bool CheckEvent() {
+    u_long ie = 0;
+    for (const auto &ae : event_axes_) {
+      eventbin_.at(ie) = (ae.FindBin(event_values_[ie]));
+      ie++;
+    }
+    for (auto bin : eventbin_) {
+      if (bin==-1) return false;
+    }
+    return true;
+  }
 
 /**
  * Tokenize input string
@@ -129,13 +154,10 @@ class CorrelationManager {
 
  private:
   std::shared_ptr<TTreeReader> reader_;
+  std::map<std::string, Qn::CorrelationHolder> correlations_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
-  std::map<std::string, std::pair<std::list<std::string>, FUNCTION>> build_correlations_;
-  std::map<std::string, std::pair<std::list<std::string>, Qn::Correlation>> correlations_;
-  std::map<std::string, DATAFUNCTION> apply_function_qvectors;
   std::map<std::string, Qn::DataContainerQVector> qvectors_;
-  std::map<std::string, std::tuple<std::string, std::string, std::vector<Qn::Axis>>> projections_;
   std::vector<float> event_values_;
   std::vector<long> eventbin_;
   std::vector<Qn::Axis> event_axes_;
