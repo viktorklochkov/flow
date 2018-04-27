@@ -17,17 +17,17 @@
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
 #pragma link C++ class Qn::Profile+;
-#pragma link C++ class Qn::DataContainer<QnCorrectionsQnVector >+;
+#pragma link C++ class Qn::Sample+;
 #pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
 #pragma link C++ class Qn::DataContainer<float >+;
 #pragma link C++ class Qn::DataContainer<Qn::Profile>+;
-#pragma link C++ class Qn::DataContainer<std::vector<float> >+;
+#pragma link C++ class Qn::DataContainer<Qn::Sample>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
-#pragma link C++ class Qn::ResultContainer+;
 #pragma link C++ typedef Qn::DataContainerProfile;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ typedef Qn::DataContainerF;
+#pragma link C++ typedef Qn::DataContainerSample;
 
 
 #pragma link C++ function Qn::DataToProfileGraph;

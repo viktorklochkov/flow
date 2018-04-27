@@ -23,13 +23,14 @@ TEST(CorrelationTest, IntegratedCorrelation) {
   Qn::Correlation correlation(vector, axes, lambda);
   correlation.Fill(vector, {1});
   correlation.Fill(vector, {2});
-  EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().GetElement(1));
+  EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().GetElement(2));
+  EXPECT_FLOAT_EQ(0.0, correlation.GetCorrelation().GetElement(1));
   EXPECT_EQ(10, correlation.GetCorrelation().size());
 }
 
 TEST(CorrelationTest, DifferentialCorrelation) {
   Qn::DataContainer<Qn::QVector> container_a;
-  container_a.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  container_a.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
   for (auto &bin : container_a) {
     Qn::QVec qvec(1.0, 1.0);
     std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
@@ -44,16 +45,15 @@ TEST(CorrelationTest, DifferentialCorrelation) {
   Qn::Correlation correlation(vector, axes, lambda);
   for (float i = 0; i < 10000; ++i) {
     correlation.Fill(vector, {(int)(i/1000.0)});
+    EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().At(((int)i/1000.0)*container_a.size()*container_b.size()));
   }
-  for (auto bin : correlation.GetCorrelation()) {
-    EXPECT_FLOAT_EQ(2.0, bin);
-  }
-  EXPECT_EQ(100000, correlation.GetCorrelation().size());
+
+  EXPECT_EQ(160, correlation.GetCorrelation().size());
 }
 
 TEST(CorrelationTest, DiffPlusIntCorrelation) {
   Qn::DataContainer<Qn::QVector> container_a;
-  container_a.AddAxes({{"a1", 100, 0, 10}, {"a2", 100, 0, 10}});
+  container_a.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
   for (auto &bin : container_a) {
     Qn::QVec qvec(1.0, 1.0);
     std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
@@ -73,9 +73,58 @@ TEST(CorrelationTest, DiffPlusIntCorrelation) {
   Qn::Correlation correlation(vector, axes, lambda);
   for (int i = 0; i < 10; ++i) {
     correlation.Fill(vector, {i});
+    EXPECT_FLOAT_EQ(2, correlation.GetCorrelation().At(4*i));
   }
-  for (auto bin : correlation.GetCorrelation()) {
-    EXPECT_FLOAT_EQ(2, bin);
+  EXPECT_EQ(40, correlation.GetCorrelation().size());
+}
+
+TEST(CorrelationTest, BuildUnequalNames) {
+  Qn::DataContainer<Qn::QVector> container_a;
+  container_a.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
+  for (auto &bin : container_a) {
+    Qn::QVec qvec(1.0, 1.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::NOCALIB, 1, 1, vecarray);
   }
-  EXPECT_EQ(100000, correlation.GetCorrelation().size());
+  Qn::DataContainer<Qn::QVector> container_b;
+  for (auto &bin : container_b) {
+    Qn::QVec qvec(1.0, 1.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::NOCALIB, 1, 1, vecarray);
+  }
+  auto lambda = [](std::vector<Qn::QVector> &a) { return a[0].x(1) + a[1].x(1); };
+  std::vector<Qn::Axis> axes = {{"eva1", 10, 0, 10}};
+
+  Qn::Correlation correlation({"c1","c2"},{container_a, container_b},axes,lambda);
+
+  auto a = correlation.GetCorrelation().GetAxes();
+
+  EXPECT_STREQ(a[1].Name().data(),"0_c1_a1");
+  EXPECT_STREQ(a[2].Name().data(),"0_c1_a2");
+}
+
+TEST(CorrelationTest, BuildEqualNames) {
+  Qn::DataContainer<Qn::QVector> container_a;
+  container_a.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
+  for (auto &bin : container_a) {
+    Qn::QVec qvec(1.0, 1.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::NOCALIB, 1, 1, vecarray);
+  }
+  Qn::DataContainer<Qn::QVector> container_b;
+  container_b.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
+  for (auto &bin : container_b) {
+    Qn::QVec qvec(1.0, 1.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::NOCALIB, 1, 1, vecarray);
+  }
+  auto lambda = [](std::vector<Qn::QVector> &a) { return a[0].x(1) + a[1].x(1); };
+  std::vector<Qn::Axis> axes = {{"eva1", 10, 0, 10}};
+
+  Qn::Correlation correlation({"c","c"},{container_a, container_b},axes,lambda);
+
+  auto a = correlation.GetCorrelation().GetAxes();
+
+  EXPECT_STREQ(a[1].Name().data(),"0_c_a1");
+  EXPECT_STREQ(a[3].Name().data(),"1_c_a1");
 }

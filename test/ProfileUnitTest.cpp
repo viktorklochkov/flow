@@ -88,7 +88,7 @@ TEST(ProfileTest, DataContainerAdding) {
   b.Update(3.);
   EXPECT_FLOAT_EQ(0.47140452,b.Error());
   auto c = a + b;
-  EXPECT_FLOAT_EQ(0.69721669,c.Error());
+  EXPECT_FLOAT_EQ(1.0540925,c.Error());
 
   for (auto &bin : profilesum) {
     EXPECT_FLOAT_EQ(21.0/6.0,bin.Mean());

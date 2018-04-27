@@ -10,6 +10,7 @@
 #include <math.h>
 
 namespace Qn {
+
 /**
  * simple struct containing information of the raw data for the use in the DataContainer.
  */

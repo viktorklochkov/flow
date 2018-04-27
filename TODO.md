@@ -49,6 +49,9 @@ mean from statistics in pos 0; error from subsampling in pos1...n
 
 bootstrap in subsamples then add up.
 
+## Random subevent anti Q implementation
+Anti Q
+
 #DONE
 
 ##Add missing QA histograms

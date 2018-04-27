@@ -116,3 +116,35 @@ TEST(DataContainerTest, Hadd) {
     EXPECT_FLOAT_EQ(2.0, bin.Mean());
   }
 }
+
+TEST(DataContainerTest, ProjectionExclude) {
+  Qn::DataContainerF container_a;
+  container_a.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
+  for (auto &bin : container_a) {
+    bin = 1.0;
+  }
+  auto container_b = container_a.ProjectionEX({"a1"}, [](float a, float b) { return a + b; }, {0});
+  for (auto &bin : container_b) {
+    std::cout << bin << std::endl;
+  }
+}
+
+TEST(DataContainerTest, Diagonal) {
+  Qn::DataContainerF data;
+  data.AddAxes({{"a1",1,0,2},{"a2",2,0,2},{"a3",2,0,2},{"a2",2,0,2},{"a3",2,0,2}});
+  for (int i = 0; i<data.GetAxis("a2").size(); i++) {
+    for (int j = 0; j<data.GetAxis("a3").size(); j++) {
+      data.At({i, i,j}) = 1;
+    }
+  }
+  std::cout << data.At(0) << std::endl;
+}
+
+TEST(DataContainerTest, DiagonalTest) {
+  Qn::DataContainerF data;
+  data.AddAxes({{"a1",20,0,2},{"a2",20,0,2},{"a3",20,0,2}});
+  for ( auto &bin : data) {
+    bin = 1;
+  }
+  auto test = data.GetDiagonal({{"a1",20,0,2},{"a2",20,0,2}});
+}

@@ -8,21 +8,21 @@ namespace Qn {
 
 void Correlation::FillCorrelation(const std::vector<long> &eventindex,
                                   std::vector<QVector> &contents,
-                                  int ipos,
+                                  int iterationoffset,
                                   u_int iteration,
                                   const std::vector<Correlation::CONTAINERS> &input) {
   const auto &datacontainer = input[iteration];
-  ipos += iteration;
+  iterationoffset += iteration;
   if (iteration + 1==input.size()) {
     int ibin = 0;
     for (auto &bin : datacontainer) {
       if (bin.n()==0) continue;
       if (!datacontainer.IsIntegrated()) {
-        int ii = 0;
-        for (auto i : index_[iteration][ibin]) {
-          int pos = ii + ipos;
-          c_index_[pos] = i;
-          ++ii;
+        int i_index = 0;
+        for (auto index : index_[iteration][ibin]) {
+          int pos = i_index + iterationoffset;
+          c_index_[pos] = index;
+          ++i_index;
         }
       }
       contents[iteration] = bin;
@@ -33,26 +33,26 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
   }
   int ibin = 0;
   for (const auto &bin : datacontainer) {
-    int pos = ipos;
+    int offset = iterationoffset;
     if (bin.n()==0) continue;
     if (!datacontainer.IsIntegrated()) {
-      int ii = 0;
-      for (auto i : index_[iteration][ibin]) {
-        pos += ii;
-        c_index_[pos] = i;
-        ++ii;
+      int i_index = 0;
+      for (auto index : index_[iteration][ibin]) {
+        offset += i_index;
+        c_index_[offset] = index;
+        ++i_index;
       }
     }
     contents[iteration] = bin;
-    FillCorrelation(eventindex, contents, pos, iteration + 1, input);
+    FillCorrelation(eventindex, contents, offset, iteration + 1, input);
     ++ibin;
   }
 }
 
 void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<long> &eventindex) {
+  data_correlation_.ClearData();
   std::vector<QVector> contents;
   contents.resize(input.size());
-  data_correlation_.ClearData();
   uint iteration = 0;
   int size = eventindex.size();
   for (const auto &i : input) {
@@ -82,9 +82,11 @@ void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONT
     if (!input.IsIntegrated()) {
       auto axes = input.GetAxes();
       for (auto &axis : axes) {
-        axis.SetName(std::to_string(i) + axis.Name());
+        auto original_name = axis.Name();
+        if (names_.size()!=0) {axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name);}
+        else {axis.SetName(std::to_string(i) + "_" + original_name);}
+        data_correlation_.AddAxis(axis);
       }
-      data_correlation_.AddAxes(axes);
       ++i;
     }
   }

@@ -19,12 +19,15 @@
 
 #include "DataVector.h"
 #include "QVector.h"
-#include "Profile.h"
+#include "Sample.h"
 
 /**
  * QnCorrectionsframework
  */
 namespace Qn {
+inline void SetToZero(float &element) {
+  element = 0;
+}
 /**
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
@@ -123,7 +126,7 @@ class DataContainer : public TObject {
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  T const &GetElement(const std::vector<long> &bins) const {
+  inline T const &GetElement(const std::vector<long> &bins) const {
     return data_.at(GetLinearIndex(bins));
   }
 
@@ -132,7 +135,7 @@ class DataContainer : public TObject {
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  T &At(const std::vector<long> &bins) {
+  inline T &At(const std::vector<long> &bins) {
     return data_.at(GetLinearIndex(bins));
   }
 
@@ -141,7 +144,7 @@ class DataContainer : public TObject {
  * @param index index of element
  * @return      Element
  */
-  T &At(const long index) {
+  inline T &At(const long index) {
     return data_.at(index);
   }
 
@@ -255,11 +258,54 @@ class DataContainer : public TObject {
         projection.AddElement(index, lambda, bin);
       }
     } else {
-//      projection.AddAxes(axes);
-//      projection.AddAxis(originalaxes.)
       std::vector<long> indices;
       indices.reserve(dimension_);
       for (const auto &bin : data_) {
+        this->GetIndex(indices, linearindex);
+        for (auto index = indices.begin(); index < indices.end(); ++index) {
+          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        }
+        projection.AddElement(indices, lambda, bin);
+        ++linearindex;
+      }
+    }
+    return projection;
+  }
+
+  /**
+ * Projects datacontainer on a subset of axes
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return projected datacontainer.
+ */
+  template<typename Function>
+  DataContainer<T> ProjectionEX(const std::vector<std::string> names,
+                                Function &&lambda,
+                                std::vector<int> exindices) const {
+    DataContainer<T> projection;
+    int linearindex = 0;
+    std::vector<bool> isprojected;
+    auto originalaxes = this->GetAxes();
+    for (const auto &originalaxis : originalaxes) {
+      for (const auto &name : names) {
+        isprojected.push_back((originalaxis.Name()==name)==0);
+        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
+      }
+    }
+    if (names.empty()) {
+      for (const auto &bin : data_) {
+        long index = 0;
+        projection.AddElement(index, lambda, bin);
+      }
+    } else {
+      std::vector<long> indices;
+      indices.reserve(dimension_);
+      for (const auto &bin : data_) {
+        if (std::find(exindices.begin(), exindices.end(), linearindex)!=exindices.end()) {
+          ++linearindex;
+          continue;
+        }
         this->GetIndex(indices, linearindex);
         for (auto index = indices.begin(); index < indices.end(); ++index) {
           if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
@@ -612,9 +658,35 @@ class DataContainer : public TObject {
     }
   }
 
-  /// \cond CLASSIMP
+ public:
+
+  std::vector<int> GetDiagonal(const std::vector<Axis> &axes) {
+    std::vector<int> diagonal;
+    int stride_sum = 0;
+    int nbins_diagonal = 1;
+    int iaxis = 0;
+    for (const auto &ref_axis : axes_) {
+      bool found = false;
+      for (const auto &axis : axes) {
+        if (ref_axis==axis) {
+          stride_sum += stride_[iaxis];
+          found = true;
+        }
+      }
+      if (!found) nbins_diagonal *= ref_axis.size();
+      ++iaxis;
+    }
+    for (int ibin = 0; ibin < axes[0].size(); ++ibin) {
+      for (int idiag = 0; idiag < nbins_diagonal; ++idiag) {
+        diagonal.push_back(ibin*stride_sum + idiag);
+      }
+    }
+    return diagonal;
+  }
+
+/// \cond CLASSIMP
  ClassDef(DataContainer, 7);
-  /// \endcond
+/// \endcond
 };
 
 template<typename T>
@@ -650,6 +722,7 @@ DataContainer<T> Sqrt(DataContainer<T> a) {
 using DataContainerF = DataContainer<float>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerProfile = DataContainer<Qn::Profile>;
+using DataContainerSample = DataContainer<Qn::Sample>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 
 }

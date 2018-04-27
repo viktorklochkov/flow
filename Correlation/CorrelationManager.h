@@ -8,10 +8,9 @@
 #include <TTreeReader.h>
 
 #include <utility>
-#include <Base/ResultContainer.h>
 #include "Correlation.h"
-#include "BootstrapSampler.h"
-#include "CorrelationHolder.h"
+#include "Sampler.h"
+#include "Correlator.h"
 
 namespace Qn {
 
@@ -49,8 +48,8 @@ class CorrelationManager {
     event_axes_.push_back(eventaxis);
   }
 
-  ResultContainer GetResult(const std::string &name) const {
-    return *(correlations_.at(name).GetResult());
+  DataContainerSample GetResult(const std::string &name) const {
+    return correlations_.at(name).GetResult();
   }
 
   void SaveToFile(std::string name);
@@ -65,18 +64,19 @@ class CorrelationManager {
       event_values_.at(i) = *value.second.Get();
       i++;
     }
-    BuildCorrelation();
+    BuildCorrelations();
   }
 
-  void BuildCorrelation() {
+  void BuildCorrelations() {
     int nevents = reader_->GetEntries(true);
     std::vector<Qn::DataContainerQVector> qvectors;
     for (auto &corr : correlations_) {
       qvectors.reserve(corr.second.GetInputNames().size());
-      for (auto &cname : corr.second.GetInputNames()) {
+      for (const auto &cname : corr.second.GetInputNames()) {
         qvectors.push_back(qvectors_.at(cname));
       }
-      corr.second.Initialize(nevents, qvectors, event_axes_);
+      corr.second.ConfigureCorrelation(qvectors,event_axes_);
+      corr.second.BuildSamples(nevents);
     }
   }
 
@@ -84,11 +84,12 @@ class CorrelationManager {
                       const std::string &containernames,
                       FUNCTION &&lambda,
                       int nsamples,
-                      BootstrapSampler::Method method) {
+                      Sampler::Method method) {
     std::vector<std::string> containernamelist;
     tokenize(containernames, containernamelist, ", ", true);
-    Qn::CorrelationHolder holder(name, containernamelist, lambda, nsamples, method);
-    correlations_.emplace(name, std::move(holder));
+    Qn::Correlator correlator(containernamelist,lambda);
+    correlator.ConfigureSampler(method,nsamples);
+    correlations_.emplace(name,std::move(correlator));
   }
 
   void FillCorrelations() {
@@ -103,6 +104,7 @@ class CorrelationManager {
       pair.second.FillCorrelation(inputs, eventbin_, reader_->GetCurrentEntry());
     }
   }
+
   void UpdateEvent() {
     for (auto &value : tree_values_) {
       qvectors_.at(value.first) = *value.second.Get();
@@ -154,7 +156,7 @@ class CorrelationManager {
 
  private:
   std::shared_ptr<TTreeReader> reader_;
-  std::map<std::string, Qn::CorrelationHolder> correlations_;
+  std::map<std::string, Qn::Correlator> correlations_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
   std::map<std::string, Qn::DataContainerQVector> qvectors_;

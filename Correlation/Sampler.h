@@ -11,7 +11,7 @@
 #include <iostream>
 #include <random>
 namespace Qn {
-class BootstrapSampler {
+class Sampler {
  public:
   enum class Method {
     NONE,
@@ -19,30 +19,36 @@ class BootstrapSampler {
     SUBSAMPLING,
   };
 
-  explicit BootstrapSampler(int nevents, int nsamples) :
+  Sampler() = default;
+
+  explicit Sampler(int nevents, int nsamples) :
       n_events_(nevents),
       n_samples_(nsamples) {
     samples_.resize(nevents);
     if (nevents < nsamples) n_samples_ = 1;
   }
-  explicit BootstrapSampler(int nsamples, Method met) :
+  explicit Sampler(int nsamples, Method met) :
       method_(met),
       n_events_(0),
       n_samples_(nsamples) {
     samples_.resize(0);
   }
 
+  void Configure(Method method, int nsamples) {
+    method_ = method;
+    n_samples_ = nsamples;
+  }
   void SetNumberOfEvents(int num) {
     n_events_ = num;
     samples_.resize(num);
   }
 
   void CreateSamples() {
-    if (method_ == Method::BOOTSTRAP) CreateBootstrapSamples();
-    if (method_ == Method::SUBSAMPLING) CreateSubSamples();
+    if (method_==Method::BOOTSTRAP) CreateBootstrapSamples();
+    if (method_==Method::SUBSAMPLING) CreateSubSamples();
   }
 
-  int GetNumSamples() const {return n_samples_;}
+  int GetNumSamples() const { return n_samples_; }
 
   void CreateSubSamples() {
     TRandom3 random;
@@ -106,11 +112,11 @@ class BootstrapSampler {
     }
   }
 
-  std::vector<unsigned long> GetFillVector(const int ievent) const {
+  const std::vector<int> &GetFillVector(const int ievent) const {
     return samples_[ievent];
   }
 
-  void GetFillVector(std::vector<unsigned long> &vector) {
+  void GetFillVector(std::vector<int> &vector) {
     vector = samples_[ievent_];
   }
 
@@ -121,12 +127,14 @@ class BootstrapSampler {
   void ResetEvent() {
     ievent_ = 0;
   }
- public:
+  std::vector<std::vector<int>> GetSamples() const {return samples_;}
+
+ private:
   Method method_ = Method::NONE;
   long ievent_ = 0;
-  int n_events_;
-  int n_samples_;
-  std::vector<std::vector<unsigned long>> samples_;
+  int n_events_ = 0;
+  int n_samples_ = 0;
+  std::vector<std::vector<int>> samples_;
 };
 }
 #endif //FLOW_BOOTSTRAPSAMPLER_H

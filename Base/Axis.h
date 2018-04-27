@@ -41,10 +41,12 @@ class Axis {
   Axis(std::string name, const int nbins, const float lowbin, const float upbin)
       : name_(std::move(name)) {
     for (int i = 0; i < nbins + 1; ++i) {
-      float bin_width = (upbin - lowbin) / (float) nbins;
-      bin_edges_.push_back(lowbin + i * bin_width);
+      float bin_width = (upbin - lowbin)/(float) nbins;
+      bin_edges_.push_back(lowbin + i*bin_width);
     }
   }
+
+  bool operator==(const Axis &axis) const { return name_==axis.name_; }
 
   typedef typename std::vector<float>::const_iterator citerator;
   typedef typename std::vector<float>::iterator iterator;
@@ -68,7 +70,7 @@ class Axis {
    * @param value for finding corresponding bin
    * @return bin index
    */
-   long FindBin(const float value) const;
+  long FindBin(const float value) const;
 
   /**
  * Finds bin iterator for a given value
@@ -106,5 +108,6 @@ class Axis {
  ClassDef(Axis, 2);
   /// \endcond
 };
+
 }
 #endif //FLOW_QNAXIS_H
