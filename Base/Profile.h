@@ -62,6 +62,7 @@ class Profile {
   friend Qn::Profile operator*(Qn::Profile a, double b);
   friend Qn::Profile Add(Qn::Profile a, Qn::Profile b);
   friend Qn::Profile Merge(Qn::Profile a, Qn::Profile b);
+  friend void SetToZero(Qn::Profile &a);
  protected:
   double mean_ = 0;
   double sum_ = 0;
@@ -69,6 +70,14 @@ class Profile {
   int entries_ = 0;
   double error_ = 0;
 };
+
+inline void SetToZero(Qn::Profile &a) {
+  a.mean_ = 0;
+  a.sum_ = 0;
+  a.sum2_ = 0;
+  a.entries_ = 0;
+  a.error_ = 0;
+}
 
 inline Qn::Profile operator*(Qn::Profile a, double b) {
   double nsum = a.sum_*b;

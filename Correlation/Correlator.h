@@ -65,7 +65,7 @@ class Correlator {
   void RemoveAutoCorrelation() {
     for (auto bins : autocorrelated_bins_) {
       for (auto bin : bins) {
-        correlation_.At(bin) = 0;
+        Qn::SetToZero(correlation_.At(bin));
       }
     }
   }

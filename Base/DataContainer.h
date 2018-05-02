@@ -25,9 +25,12 @@
  * QnCorrectionsframework
  */
 namespace Qn {
-inline void SetToZero(float &element) {
-  element = 0;
+
+inline void SetToZero(float &a) {
+  a = 0;
 }
+
+
 /**
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
