@@ -131,10 +131,10 @@ TEST(DataContainerTest, ProjectionExclude) {
 
 TEST(DataContainerTest, Diagonal) {
   Qn::DataContainerF data;
-  data.AddAxes({{"a1",1,0,2},{"a2",2,0,2},{"a3",2,0,2},{"a2",2,0,2},{"a3",2,0,2}});
-  for (int i = 0; i<data.GetAxis("a2").size(); i++) {
-    for (int j = 0; j<data.GetAxis("a3").size(); j++) {
-      data.At({i, i,j}) = 1;
+  data.AddAxes({{"a2", 2, 0, 2}, {"a3", 2, 0, 2}});
+  for (unsigned long i = 0; i < data.GetAxis("a2").size(); i++) {
+    for (unsigned long j = 0; j < data.GetAxis("a3").size(); j++) {
+      data.At({i, i, j}) = 1;
     }
   }
   std::cout << data.At(0) << std::endl;
@@ -142,9 +142,26 @@ TEST(DataContainerTest, Diagonal) {
 
 TEST(DataContainerTest, DiagonalTest) {
   Qn::DataContainerF data;
-  data.AddAxes({{"a1",20,0,2},{"a2",20,0,2},{"a3",20,0,2}});
-  for ( auto &bin : data) {
+  data.AddAxes({{"a1", 20, 0, 2}, {"a2", 20, 0, 2}, {"a3", 20, 0, 2}});
+  for (auto &bin : data) {
     bin = 1;
   }
-  auto test = data.GetDiagonal({{"a1",20,0,2},{"a2",20,0,2}});
+  auto test = data.GetDiagonal({{"a1", 20, 0, 2}, {"a2", 20, 0, 2}});
+}
+
+TEST(DataContainerTest, Apply) {
+  Qn::DataContainerF data1({{"a1", 5, 0, 2}});
+  Qn::DataContainerF data2({{"a1", 5, 0, 2}, {"a2", 5, 0, 2}});
+  int ibin = 0;
+  for (auto &bin : data1) {
+    bin = ++ibin;
+  }
+  for (auto &bin : data2) {
+    bin = 1;
+  }
+  auto result = data1.Apply(data2, [](float a, float b) { return a + b; });
+  ibin = 0;
+  for (const auto &bin : result) {
+    EXPECT_FLOAT_EQ(bin, 2 + (ibin++ / 5));
+  }
 }

@@ -33,7 +33,7 @@ class Correlator {
   const std::vector<std::string> &GetInputNames() const { return input_names_; }
 
   void FillCorrelation(const std::vector<DataContainerQVector> &inputs,
-                       const std::vector<long> eventindex,
+                       const std::vector<unsigned long> eventindex,
                        int event_id) {
     correlation_.Fill(inputs, eventindex);
     FillResult(event_id);

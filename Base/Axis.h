@@ -84,19 +84,19 @@ class Axis {
    * Returns number of bins.
    * @return number of bins.
    */
-  inline long size() const { return bin_edges_.size() - 1; }
+  inline std::vector<float>::size_type size() const { return bin_edges_.size() - 1; }
   /**
    * Gets lower bin edge
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline float GetLowerBinEdge(const long bin) const { return bin_edges_.at(bin); }
+  inline float GetLowerBinEdge(const unsigned long bin) const { return bin_edges_.at(bin); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline float GetUpperBinEdge(const long bin) const { return bin_edges_.at(bin + 1); }
+  inline float GetUpperBinEdge(const unsigned long bin) const { return bin_edges_.at(bin + 1); }
 
  private:
   std::string name_;

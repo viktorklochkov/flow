@@ -6,7 +6,7 @@
 
 namespace Qn {
 
-void Correlation::FillCorrelation(const std::vector<long> &eventindex,
+void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
                                   std::vector<QVector> &contents,
                                   int iterationoffset,
                                   u_int iteration,
@@ -49,7 +49,7 @@ void Correlation::FillCorrelation(const std::vector<long> &eventindex,
   }
 }
 
-void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<long> &eventindex) {
+void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<unsigned long> &eventindex) {
   data_correlation_.ClearData();
   std::vector<QVector> contents;
   contents.resize(input.size());
@@ -72,9 +72,9 @@ void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONT
   int size = axes_event_.size();
   for (auto &input : inputs) {
     size += input.GetAxes().size();
-    std::vector<std::vector<long>> indexmap;
+    std::vector<std::vector<unsigned long>> indexmap;
     for (int i = 0; i < input.size(); ++i) {
-      std::vector<long> indices;
+      std::vector<unsigned long> indices;
       input.GetIndex(indices, i);
       indexmap.push_back(indices);
     }

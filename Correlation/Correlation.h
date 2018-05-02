@@ -54,9 +54,9 @@ class Correlation {
   AXES GetEventAxes() const { return axes_event_; }
   inline float &At(int index) {return data_correlation_.At(index); }
  private:
-  std::vector<std::vector<std::vector<long>>>
+  std::vector<std::vector<std::vector<unsigned long>>>
       index_; ///< map of indices of all inputs used for calculating the correlations
-  std::vector<long> c_index_; ///< flattened index of correlation
+  std::vector<unsigned long> c_index_; ///< flattened index of correlation
   DataContainerF data_correlation_; ///<  datacontainer containing the correlations
   AXES axes_event_; ///< vector of event axes used in the correlation
   std::function<double(std::vector<Qn::QVector> &)> function_; ///< correlation function
@@ -76,7 +76,7 @@ class Correlation {
  * @param eventindex of the used for the event axes
  * @param lambda correlation function
  */
-  void Fill(const std::vector<CONTAINERS> &input, const std::vector<long> &eventindex);
+  void Fill(const std::vector<CONTAINERS> &input, const std::vector<unsigned long> &eventindex);
 /**
  * Fill correlation recursive function
  * @param eventindex event index of event axes
@@ -86,7 +86,7 @@ class Correlation {
  * @param lambda function which is used for the correlation
  * @param cindex compacted index of the bin in the correlation datacontainer.
  */
-  void FillCorrelation(const std::vector<long> &eventindex,
+  void FillCorrelation(const std::vector<unsigned long> &eventindex,
                        std::vector<QVector> &contents,
                        int iterationoffset,
                        u_int iteration,

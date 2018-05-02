@@ -161,7 +161,7 @@ class CorrelationManager {
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
   std::map<std::string, Qn::DataContainerQVector> qvectors_;
   std::vector<float> event_values_;
-  std::vector<long> eventbin_;
+  std::vector<unsigned long> eventbin_;
   std::vector<Qn::Axis> event_axes_;
 
 };

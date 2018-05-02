@@ -53,6 +53,7 @@ class DataContainer : public TObject {
 
   virtual ~DataContainer() = default;
 
+  using SIZETYPE = typename std::vector<T>::size_type;
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
   const_iterator begin() const { return data_.cbegin(); } ///< iterator for external use
@@ -64,7 +65,7 @@ class DataContainer : public TObject {
  * Size of data container
  * @return number of entries in the container
  */
-  std::vector<int>::size_type size() const { return data_.size(); }
+  SIZETYPE size() const { return data_.size(); }
 
 /**
  * Adds axes for storing data
@@ -84,255 +85,38 @@ class DataContainer : public TObject {
     if (integrated_) this->Reset();
     if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name()==axis.Name(); })
         !=axes_.end())
-      throw std::runtime_error("axis already defined in vector");
+      throw std::runtime_error("Axis already defined in vector.");
     axes_.push_back(axis);
     dimension_++;
-    std::vector<float>::size_type totalbins = 1;
+    SIZETYPE totalbins = 1;
     for (const auto &iaxis : axes_) {
       totalbins *= iaxis.size();
     }
     data_.resize(totalbins);
-    stride_.resize((std::vector<long>::size_type) dimension_ + 1);
+    stride_.resize((SIZETYPE) dimension_ + 1);
     CalculateStride();
   }
 
 /**
- * Adds a element by the variables
- * @param vect  element added into container
- * @param vars  Vector of Variables used to determine position in the container
- *              e.g. [p_t,eta] = [5 GeV, 0.5]
+ * Get element in the specified bin
+ * @param bins Vector of bin indices of the desired element
+ * @return     Element
  */
-  void SetElement(T &vect, const std::vector<float> &values) {
-    std::vector<long> index;
-    std::vector<int>::size_type axisindex = 0;
-    for (const auto &axis : axes_) {
-      index.push_back(axis.FindBin(values.at(axisindex)));
-      axisindex++;
-    }
-    data_[GetLinearIndex(index)] = std::move(vect);
-  }
-
-/**
- * Adds a element by the variables no bounds checking
- * @param vect  element added into container
- * @param index  linear index position
- */
-  void SetElement(T &vect, const long index) {
-    data_[index] = std::move(vect);
-  }
+  inline T const &At(const typename std::vector<SIZETYPE> &bins) const { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  inline T const &GetElement(const std::vector<long> &bins) const {
-    return data_.at(GetLinearIndex(bins));
-  }
-
-/**
- * Get element in the specified bin
- * @param bins Vector of bin indices of the desired element
- * @return     Element
- */
-  inline T &At(const std::vector<long> &bins) {
-    return data_.at(GetLinearIndex(bins));
-  }
+  inline T &At(const typename std::vector<SIZETYPE> &bins) { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
-  inline T &At(const long index) {
-    return data_.at(index);
-  }
-
-/**
- * Get element in the specified bin
- * @param linear_index index of element
- * @return     Element
- */
-  T const &GetElement(int linear_index) const {
-    return data_.at(linear_index);
-  }
-
-/**
-  * Get element with the specified value
-  * @param bins Vector of value to search for desired element
-  * @return     Element
-  */
-  T const &GetElement(const std::vector<float> &values) const {
-    std::vector<long> index;
-    std::vector<int>::size_type axisindex = 0;
-    for (const auto &axis : axes_) {
-      auto bin = axis.FindBin(values.at(axisindex));
-      if (bin >= axis.size() || bin < 0)
-        throw std::out_of_range("bin out of specified range");
-      index.push_back(bin);
-      axisindex++;
-    }
-    return data_.at(GetLinearIndex(index));
-  }
-
-/**
- * Get vector of axes
- * @return Vector of axes
- */
-  inline const std::vector<Axis> &GetAxes() const { return axes_; }
-
-/**
- * Get Axis with the given name.
- * Throws exception when not found.
- * @param name  Name of the desired axis
- * @return      Axis
- */
-  Axis GetAxis(const std::string name) const {
-    for (auto axis: axes_) {
-      if (name==axis.Name()) return axis;
-    }
-    throw std::out_of_range("axis not found aborting");
-  }
-
-/**
- * Calculates indices in multiple dimensions from linearized index
- * @param indices Outparameter for the indices
- * @param offset Index of linearized vector
- */
-  void GetIndex(std::vector<long> &indices, const long offset) const {
-    long temp = offset;
-//    std::vector<long> indices;
-    if ((unsigned long) offset < data_.size()) {
-      indices.resize(dimension_);
-      for (int i = 0; i < dimension_ - 1; ++i) {
-        indices[dimension_ - i - 1] = (int) (temp%axes_[dimension_ - i - 1].size());
-        temp = temp/axes_[dimension_ - i - 1].size();
-      }
-      indices[0] = (int) temp;
-    }
-  }
-
-/**
- * Gives description by concenating axis names with coordinates
- * @param offset linear index
- * @return string with bin description
- */
-  std::string GetBinDescription(const long offset) const {
-    std::vector<long> indices;
-    GetIndex(indices, offset);
-    if (indices.empty()) return "invalid offset";
-    std::string outstring;
-    int i = 0;
-    for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
-      const auto &axis = *it;
-      outstring += axis.Name();
-      outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
-          + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
-      if (it + 1!=axes_.cend()) outstring += "; ";
-      ++i;
-    }
-    return outstring;
-  }
-/**
- * Projects datacontainer on a subset of axes
- * @tparam Function typename of function.
- * @param axes subset of axes used for the projection.
- * @param lambda Function used to add two entries.
- * @return projected datacontainer.
- */
-  template<typename Function>
-  DataContainer<T> Projection(const std::vector<std::string> names, Function &&lambda) const {
-    DataContainer<T> projection;
-    int linearindex = 0;
-    std::vector<bool> isprojected;
-    auto originalaxes = this->GetAxes();
-    for (const auto &originalaxis : originalaxes) {
-      for (const auto &name : names) {
-        isprojected.push_back((originalaxis.Name()==name)==0);
-        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
-      }
-    }
-    if (names.empty()) {
-      for (const auto &bin : data_) {
-        long index = 0;
-        projection.AddElement(index, lambda, bin);
-      }
-    } else {
-      std::vector<long> indices;
-      indices.reserve(dimension_);
-      for (const auto &bin : data_) {
-        this->GetIndex(indices, linearindex);
-        for (auto index = indices.begin(); index < indices.end(); ++index) {
-          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
-        }
-        projection.AddElement(indices, lambda, bin);
-        ++linearindex;
-      }
-    }
-    return projection;
-  }
-
-  /**
- * Projects datacontainer on a subset of axes
- * @tparam Function typename of function.
- * @param axes subset of axes used for the projection.
- * @param lambda Function used to add two entries.
- * @return projected datacontainer.
- */
-  template<typename Function>
-  DataContainer<T> ProjectionEX(const std::vector<std::string> names,
-                                Function &&lambda,
-                                std::vector<int> exindices) const {
-    DataContainer<T> projection;
-    int linearindex = 0;
-    std::vector<bool> isprojected;
-    auto originalaxes = this->GetAxes();
-    for (const auto &originalaxis : originalaxes) {
-      for (const auto &name : names) {
-        isprojected.push_back((originalaxis.Name()==name)==0);
-        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
-      }
-    }
-    if (names.empty()) {
-      for (const auto &bin : data_) {
-        long index = 0;
-        projection.AddElement(index, lambda, bin);
-      }
-    } else {
-      std::vector<long> indices;
-      indices.reserve(dimension_);
-      for (const auto &bin : data_) {
-        if (std::find(exindices.begin(), exindices.end(), linearindex)!=exindices.end()) {
-          ++linearindex;
-          continue;
-        }
-        this->GetIndex(indices, linearindex);
-        for (auto index = indices.begin(); index < indices.end(); ++index) {
-          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
-        }
-        projection.AddElement(indices, lambda, bin);
-        ++linearindex;
-      }
-    }
-    return projection;
-  }
-
-/**
- * "Integrates" container
- * @tparam Function typename of function.
- * @param axes subset of axes used for the projection.
- * @param lambda Function used to add two entries.
- * @return integrated container
- */
-  template<typename Function>
-  DataContainer<T> Projection(Function &&lambda) const {
-    DataContainer<T> projection;
-    for (const auto &bin : data_) {
-      long index = 0;
-      projection.AddElement(index, lambda, bin);
-    }
-    return projection;
-  }
+  inline T &At(const long index) { return data_.at(index); }
 /**
  * Calls function on element specified by indices.
  * @tparam Function type of function to be called on the object
@@ -340,7 +124,7 @@ class DataContainer : public TObject {
  * @param lambda function to be called on the element. Takes element of type T as an argument.
  */
   template<typename Function>
-  void CallOnElement(const std::vector<long> &indices, Function &&lambda) {
+  void CallOnElement(const typename std::vector<SIZETYPE> &indices, Function &&lambda) {
     lambda(data_[GetLinearIndex(indices)]);
   }
 
@@ -376,34 +160,161 @@ class DataContainer : public TObject {
   inline void CallOnElement(const long index, Function &&lambda) {
     lambda(data_[index]);
   }
+/**
+ * Get vector of axes
+ * @return Vector of axes
+ */
+  inline const std::vector<Axis> &GetAxes() const { return axes_; }
 
 /**
- * Calls function on element specified by indices.
- * @tparam Function type of function to be called on the object
- * @param indices multidimensional indices of the element.
- * @param lambda function to be called on the element. Takes element of type T as an argument.
- * @param element element to be added.
+ * Get Axis with the given name.
+ * Throws exception when not found.
+ * @param name  Name of the desired axis
+ * @return      Axis
  */
-  template<typename Function>
-  void AddElement(const std::vector<long> &indices, Function &&lambda, T element) {
-    auto &oelement = data_.at(GetLinearIndex(indices));
-    auto add = [&lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
-    add(oelement, element);
+  Axis GetAxis(const std::string name) const {
+    for (auto axis: axes_) {
+      if (name==axis.Name()) return axis;
+    }
+    throw std::out_of_range("axis not found aborting");
   }
 
 /**
- * Calls function on element specified by indices.
- * @tparam Function type of function to be called on the object
- * @param index index of the element.
- * @param lambda function to be called on the element. Takes element of type T as an argument.
- * @param element element to be added.
+ * Calculates indices in multiple dimensions from linearized index
+ * @param indices Outparameter for the indices
+ * @param offset Index of linearized vector
  */
-  template<typename Function>
-  void AddElement(const long index, Function &&lambda, T element) {
-    auto add = [&lambda](T &e1, T &e2) { e1 = lambda(e1, e2); };
-    add(data_[index], element);
+  void GetIndex(typename std::vector<SIZETYPE> &indices, const unsigned long offset) const {
+    unsigned long temp = offset;
+    if (offset < data_.size()) {
+      indices.resize(dimension_);
+      for (int i = 0; i < dimension_ - 1; ++i) {
+        indices[dimension_ - i - 1] = temp%axes_[dimension_ - i - 1].size();
+        temp = temp/axes_[dimension_ - i - 1].size();
+      }
+      indices[0] = temp;
+    }
   }
 
+/**
+ * Gives description by concenating axis names with coordinates
+ * @param offset linear index
+ * @return string with bin description
+ */
+  std::string GetBinDescription(const long offset) const {
+    std::vector<unsigned long> indices;
+    GetIndex(indices, offset);
+    if (indices.empty()) return "invalid offset";
+    std::string outstring;
+    int i = 0;
+    for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
+      const auto &axis = *it;
+      outstring += axis.Name();
+      outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
+          + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
+      if (it + 1!=axes_.cend()) outstring += "; ";
+      ++i;
+    }
+    return outstring;
+  }
+/**
+ * Projects datacontainer on a subset of axes
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return projected datacontainer.
+ */
+  template<typename Function>
+  DataContainer<T> Projection(const std::vector<std::string> names, Function &&lambda) const {
+    DataContainer<T> projection;
+    int linearindex = 0;
+    std::vector<bool> isprojected;
+    auto originalaxes = this->GetAxes();
+    for (const auto &originalaxis : originalaxes) {
+      for (const auto &name : names) {
+        isprojected.push_back((originalaxis.Name()==name)==0);
+        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
+      }
+    }
+    if (names.empty()) {
+      for (const auto &bin : data_) {
+        projection.At(0) = lambda(projection.At(0), bin);
+
+      }
+    } else {
+      std::vector<unsigned long> indices;
+      indices.reserve(dimension_);
+      for (const auto &bin : data_) {
+        this->GetIndex(indices, linearindex);
+        for (auto index = indices.begin(); index < indices.end(); ++index) {
+          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        }
+        projection.At(indices) = lambda(projection.At(indices), bin);
+        ++linearindex;
+      }
+    }
+    return projection;
+  }
+
+  /**
+ * Projects datacontainer on a subset of axes
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return projected datacontainer.
+ */
+  template<typename Function>
+  DataContainer<T> ProjectionEX(const std::vector<std::string> names,
+                                Function &&lambda,
+                                std::vector<int> exindices) const {
+    DataContainer<T> projection;
+    int linearindex = 0;
+    std::vector<bool> isprojected;
+    auto originalaxes = this->GetAxes();
+    for (const auto &originalaxis : originalaxes) {
+      for (const auto &name : names) {
+        isprojected.push_back((originalaxis.Name()==name)==0);
+        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
+      }
+    }
+    if (names.empty()) {
+      for (const auto &bin : data_) {
+        projection.At(0) = lambda(projection.At(0), bin);
+      }
+    } else {
+      std::vector<unsigned long> indices;
+      indices.reserve(dimension_);
+      for (const auto &bin : data_) {
+        if (std::find(exindices.begin(), exindices.end(), linearindex)!=exindices.end()) {
+          ++linearindex;
+          continue;
+        }
+        this->GetIndex(indices, linearindex);
+        for (auto index = indices.begin(); index < indices.end(); ++index) {
+          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        }
+        projection.At(indices) = lambda(projection.At(indices), bin);
+        ++linearindex;
+      }
+    }
+    return projection;
+  }
+
+/**
+ * "Integrates" container
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return integrated container
+ */
+  template<typename Function>
+  DataContainer<T> Projection(Function &&lambda) const {
+    DataContainer<T> projection;
+    for (const auto &bin : data_) {
+      projection.data_[0] = lambda(projection.data_[0], bin);
+    }
+    return projection;
+  }
 /**
  * Map function to datacontainer. Does not modify the original container.
  * @tparam Function function
@@ -439,7 +350,7 @@ class DataContainer : public TObject {
       tmpaxisposition++;
     }
     long index = 0;
-    std::vector<long> indices;
+    std::vector<unsigned long> indices;
     indices.reserve(dimension_);
     for (const auto &bin : data_) {
       GetIndex(indices, index);
@@ -474,21 +385,20 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
     DataContainer<T> result;
-    std::vector<long> indices;
+    std::vector<SIZETYPE> indices;
     long index = 0;
     if (axes_.size() > data.axes_.size()) {
-      for (long iaxis = 0; data.axes_.size() - 1; ++iaxis) {
+      for (long iaxis = 0; iaxis < data.axes_.size() - 1; ++iaxis) {
         if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
         }
       }
       result.AddAxes(axes_);
-      indices.reserve((unsigned long) dimension_);
+      indices.reserve(dimension_);
       for (const auto &bin_a : data_) {
         GetIndex(indices, index);
-        auto bin_b = data.GetElement(indices);
-        result.CallOnElement(indices, [&lambda, &bin_a, &bin_b](T &element) { element = lambda(bin_a, bin_b); });
+        result.data_[index] = lambda(bin_a,data.At(indices));
         ++index;
       }
     } else {
@@ -499,11 +409,10 @@ class DataContainer : public TObject {
         }
       }
       result.AddAxes(data.axes_);
-      indices.reserve((unsigned long) data.dimension_);
+      indices.reserve(data.dimension_);
       for (const auto &bin_b : data.data_) {
         data.GetIndex(indices, index);
-        auto bin_a = GetElement(indices);
-        result.CallOnElement(indices, [&lambda, &bin_a, &bin_b](T &element) { element = lambda(bin_a, bin_b); });
+        result.data_[index] = lambda(At(indices),bin_b);
         ++index;
       }
     }
@@ -520,7 +429,7 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Rebin(const Axis &rebinaxis, Function &&lambda) const {
     DataContainer<T> rebinned;
-    long axisposition = -1;
+    unsigned long axisposition = 0;
     bool axisfound = false;
     /*
      * Check if axis to be rebinned is found in the datacontainer.
@@ -558,7 +467,7 @@ class DataContainer : public TObject {
       throw std::logic_error(errormsg);
     }
     long ibin = 0;
-    std::vector<long> indices;
+    std::vector<SIZETYPE> indices;
     indices.reserve(dimension_);
     for (const auto &bin : data_) {
       GetIndex(indices, ibin);
@@ -567,7 +476,7 @@ class DataContainer : public TObject {
       auto binmid = binlow + (binhigh - binlow)/2;
       auto rebinnedindex = rebinaxis.FindBin(binmid);
       indices[axisposition] = rebinnedindex;
-      rebinned.AddElement(indices, lambda, bin);
+      rebinned.At(indices) = lambda(rebinned.At(indices), bin);
       ++ibin;
     }
     return rebinned;
@@ -586,8 +495,8 @@ class DataContainer : public TObject {
  * @param index vector of indices in multiple dimensions
  * @return      index in one dimension
  */
-  long GetLinearIndex(const std::vector<long> &index) const {
-    long offset = (index[dimension_ - 1]);
+  SIZETYPE GetLinearIndex(const std::vector<SIZETYPE> &index) const {
+    SIZETYPE offset = (index[dimension_ - 1]);
     for (int i = 0; i < dimension_ - 1; ++i) {
       offset += stride_[i + 1]*(index[i]);
     }
@@ -616,8 +525,8 @@ class DataContainer : public TObject {
   }
 
  private:
-  bool integrated_;
-  int dimension_ = 0; ///< dimensionality of data
+  bool integrated_ = true;
+  unsigned long dimension_ = 0; ///< dimensionality of data
   std::vector<T> data_; ///< linearized vector of data
   std::vector<Axis> axes_; ///< Vector of axes
   std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
@@ -635,12 +544,12 @@ class DataContainer : public TObject {
  * @param coordinates floating point coordinates
  * @return index belonging to coordinates
  */
-  std::vector<long> GetIndex(const std::vector<float> &coordinates) const {
-    std::vector<long> indices;
+  typename std::vector<SIZETYPE> GetIndex(const std::vector<float> &coordinates) const {
+    typename std::vector<SIZETYPE> indices;
     unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
       auto bin = axis.FindBin(coordinates[axisindex]);
-      if (bin < 0)
+      if (bin < 0 || bin > axis.size())
         throw std::out_of_range("bin out of specified range");
       indices.push_back(bin);
       axisindex++;
@@ -659,6 +568,28 @@ class DataContainer : public TObject {
   }
 
  public:
+
+/**
+ * Calculates linear index from coordinates
+ * returns -1 if outside of range.
+ * @param coordinates floating point coordinates
+ * @return linear index
+ */
+  long GetLinearIndex(const std::vector<float> &coordinates) const {
+    SIZETYPE index;
+    typename std::vector<SIZETYPE> indices;
+    unsigned long axisindex = 0;
+    for (const auto &axis : axes_) {
+      auto bin = axis.FindBin(coordinates[axisindex]);
+      if (bin >= axis.size() || bin < 0) {
+        return -1;
+      } else {
+        indices.push_back(bin);
+        axisindex++;
+      }
+    }
+    return GetLinearIndex(indices);
+  }
 
   std::vector<int> GetDiagonal(const std::vector<Axis> &axes) {
     std::vector<int> diagonal;
@@ -685,7 +616,7 @@ class DataContainer : public TObject {
   }
 
 /// \cond CLASSIMP
- ClassDef(DataContainer, 7);
+ ClassDef(DataContainer, 8);
 /// \endcond
 };
 
