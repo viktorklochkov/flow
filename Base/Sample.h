@@ -16,8 +16,6 @@ struct StatisticMean {
   int n = 0;
 
   StatisticMean() = default;
-//    StatisticMean(double mean, double sum, int n) : mean(mean), sum(sum), n(n) {}
-//    StatisticMean(double sum, int n) : sum(sum), n(n) { mean = sum/(float) n; }
 
   void Update(double value) {
     sum += value;
@@ -58,14 +56,12 @@ struct StatisticMean {
 class Sample : public Profile {
  public:
   Sample() = default;
-  explicit Sample(int n_samples) {
-    samples_stat_.resize(n_samples);
-  }
 
-  Sample(Profile
-         a,
-         std::vector<StatisticMean> means
-  ) :
+  virtual ~Sample() = default;
+
+  explicit Sample(int n_samples) { samples_stat_.resize(n_samples); }
+
+  Sample(Profile a, std::vector<StatisticMean> means) :
       Profile(a),
       samples_stat_(std::move(means)) {}
 
@@ -107,7 +103,9 @@ class Sample : public Profile {
   double subsample_sum = 0.;
   double subsample_sum2_ = 0.;
   double correlated_error_ = 0.;
-
+  /// \cond CLASSIMP
+ ClassDef(Sample, 1);
+  /// \endcond
 };
 
 inline Sample operator+(const Sample &a, const Sample &b) {

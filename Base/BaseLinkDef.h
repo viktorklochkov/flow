@@ -17,6 +17,7 @@
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
 #pragma link C++ class Qn::Profile+;
+#pragma link C++ class Qn::StatisticMean+;
 #pragma link C++ class Qn::Sample+;
 #pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
 #pragma link C++ class Qn::DataContainer<float >+;

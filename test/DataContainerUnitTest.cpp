@@ -93,7 +93,7 @@ TEST(DataContainerTest, Hadd) {
   auto file_a = new TFile("testa.root", "RECREATE");
   file_a->cd();
   auto container_a = new Qn::DataContainerProfile();
-  container_a->AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  container_a->AddAxes({{"a1", 2, 0, 10}});
   for (auto &bin : *container_a) {
     bin.Update(3.0);
   }
@@ -102,7 +102,7 @@ TEST(DataContainerTest, Hadd) {
   auto file_b = new TFile("testb.root", "RECREATE");
   file_b->cd();
   auto container_b = new Qn::DataContainerProfile();
-  container_b->AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  container_b->AddAxes({{"a1",2, 0, 10}});
   for (auto &bin : *container_b) {
     bin.Update(1.0);
   }

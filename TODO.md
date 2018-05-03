@@ -26,20 +26,22 @@
 ## special functions for adding mult scaling ...
 
 
-lambda function projection default addition
-
 victor synchronizing qncorrectionsframework
-
-####possible to use hadd which functions are used?
 
 cut functionality for detectors
 
 correction histograms with enough entries for correction?
 check in framework
 
-####Add bootstrapping subsampling to the correlations for calculation of uncertainty
+## Random subevent anti Q implementation
+Anti Q
+
+#DONE
 
 remove autocorrelation select and integrate other components
+
+####Add bootstrapping subsampling to the correlations for calculation of uncertainty
+bootstrap in subsamples then add up.
 possibly inside loop directly after building the correlations
 temporary object single event information.
 correlations
@@ -47,12 +49,7 @@ correlations
 new samples container propagating subsamples the operations
 mean from statistics in pos 0; error from subsampling in pos1...n
 
-bootstrap in subsamples then add up.
-
-## Random subevent anti Q implementation
-Anti Q
-
-#DONE
+####possible to use hadd which functions are used?
 
 ##Add missing QA histograms
 ###tracks QA histograms
