@@ -56,7 +56,7 @@ class Sampler {
     TRandom3 random;
     std::vector<int> event_vector;
     event_vector.reserve(n_events_);
-    for (int i = 0; i < n_events_; ++i) {
+    for (unsigned int i = 0; i < n_events_; ++i) {
       event_vector.push_back(i);
     }
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -86,7 +86,7 @@ class Sampler {
     std::vector<std::vector<std::vector<int>>> chunks = {{{0}}};
     auto chunk = n_events_/ndivisions;
     auto remainder = n_events_%ndivisions;
-    for (int i = 1; i < ndivisions; ++i) {
+    for (unsigned int i = 1; i < ndivisions; ++i) {
       divisions[i] = i*chunk;
     }
     divisions[0] = 0;

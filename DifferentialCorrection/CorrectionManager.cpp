@@ -145,7 +145,7 @@ void Qn::CorrectionManager::CalculateCorrectionAxis() {
   for (const auto &axis : qncorrections_axis_) {
     double axisbins[kMaxCorrectionArrayLength];
     auto nbins = axis.size();
-    for (int ibin = 0; ibin < nbins + 1; ++ibin) {
+    for (unsigned int ibin = 0; ibin < nbins + 1; ++ibin) {
       axisbins[ibin] = *(axis.begin() + ibin);
     }
     auto variable =
