@@ -24,8 +24,8 @@ inline TGraphErrors *DataToProfileGraph(const Qn::DataContainerProfile &data) {
     std::cout << "Data container has more than one dimension. " << std::endl;
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
   }
-  TGraphErrors *graph = new TGraphErrors((int) data.size());
-  int ibin = 0;
+  auto graph = new TGraphErrors((int) data.size());
+  unsigned int ibin = 0;
   for (auto &bin : data) {
     float xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
     float xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
@@ -46,7 +46,7 @@ inline TMultiGraph *DataToMultiGraph(const Qn::DataContainerProfile &data, const
   Qn::Axis axis;
   try { axis = data.GetAxis(axisname);}
   catch(std::exception&) {std::cout << "axis not found" << "\n"; return multigraph;}
-  for (int ibin = 0; ibin < axis.size(); ++ibin) {
+  for (unsigned int ibin = 0; ibin < axis.size(); ++ibin) {
     auto subdata = data.Select({axisname,{axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)}});
     auto subgraph = Qn::DataToProfileGraph(subdata);
     subgraph->SetTitle(Form("%.2f - %.2f",axis.GetLowerBinEdge(ibin),axis.GetUpperBinEdge(ibin)));

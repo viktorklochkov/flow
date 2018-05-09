@@ -64,7 +64,6 @@ TEST(BootStrapSamplerTest, SubSampling) {
   for (int ievent = 0; ievent < nevents; ++ievent) {
     auto sample = test.GetFillVector(ievent);
     auto position = sample.at(0);
-    std::cout << position << std::endl;
     samplesizes.at(position)++;
   }
   for (auto & samplesize : samplesizes) {

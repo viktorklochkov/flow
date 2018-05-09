@@ -68,7 +68,7 @@ class CorrelationManager {
   }
 
   void BuildCorrelations() {
-    int nevents = reader_->GetEntries(true);
+    auto nevents = reader_->GetEntries(true);
     std::vector<Qn::DataContainerQVector> qvectors;
     for (auto &corr : correlations_) {
       qvectors.reserve(corr.second.GetInputNames().size());
@@ -109,7 +109,7 @@ class CorrelationManager {
     for (auto &value : tree_values_) {
       qvectors_.at(value.first) = *value.second.Get();
     }
-    int i = 0;
+    unsigned long i = 0;
     for (auto &value : tree_event_values_) {
       event_values_.at(i) = *value.second.Get();
       i++;
@@ -119,11 +119,13 @@ class CorrelationManager {
   bool CheckEvent() {
     u_long ie = 0;
     for (const auto &ae : event_axes_) {
-      eventbin_.at(ie) = (ae.FindBin(event_values_[ie]));
+      auto bin = ae.FindBin(event_values_[ie]);
+      if (bin != -1 ) {
+        eventbin_.at(ie) = (unsigned long) bin;
+      } else {
+        return false;
+      }
       ie++;
-    }
-    for (auto bin : eventbin_) {
-      if (bin==-1) return false;
     }
     return true;
   }

@@ -26,7 +26,6 @@ TEST(CorrelatorUnitTest, Basic) {
   correlator.ConfigureSampler(Qn::Sampler::Method::SUBSAMPLING, nsamples);
   correlator.BuildSamples(nevents);
   for (int i = 0; i < nevents; ++i) {
-    std::cout << i/(nevents/nsamples) << std::endl;
   correlator.FillCorrelation(vector,{0},i);
   }
   auto test = correlator.GetResult();

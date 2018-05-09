@@ -65,7 +65,7 @@ class Sample : public Profile {
       Profile(a),
       samples_stat_(std::move(means)) {}
 
-  void Fill(const double value, const std::vector<int> &samples) {
+  void Fill(const double value, const std::vector<unsigned int> &samples) {
     Profile::Update(value);
     for (const auto sample : samples) {
       samples_stat_[sample].Update(value);

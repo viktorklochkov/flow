@@ -13,7 +13,7 @@ TEST(SampleUnitTest, create) {
 
   for (int i = 0; i < 10000000; ++i) {
     auto g = rndm.Gaus(0., 1.);
-    a.Fill(g, {(int) (i / 10000.)});
+    a.Fill(g, {(unsigned int) (i / 10000.)});
   }
   a.CalculateCorrelatedError();
   EXPECT_NEAR(a.Error(),a.CorrelatedError(),a.Error()*0.01);
@@ -28,10 +28,10 @@ TEST(SampleUnitTest, add) {
   for (int i = 0; i < 10000000; ++i) {
     auto g1 = rndm.Gaus(0., 1.);
     auto g2 = rndm.Gaus(0., 1.);
-    a.Fill(g1, {(int) (i / 10000.)});
-    b.Fill(g2, {(int) (i / 10000.)});
-    d.Fill(g1, {(int) (i / 10000.)});
-    d.Fill(g2, {(int) (i / 10000.)});
+    a.Fill(g1, {static_cast<unsigned int>(i / 10000.)});
+    b.Fill(g2, {static_cast<unsigned int>(i / 10000.)});
+    d.Fill(g1, {static_cast<unsigned int>(i / 10000.)});
+    d.Fill(g2, {static_cast<unsigned int>(i / 10000.)});
   }
   auto c = a + b;
   d.CalculateCorrelatedError();

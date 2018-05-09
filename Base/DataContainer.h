@@ -30,7 +30,6 @@ inline void SetToZero(float &a) {
   a = 0;
 }
 
-
 /**
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
@@ -50,7 +49,7 @@ class DataContainer : public TObject {
     CalculateStride();
   };
 
-  DataContainer(std::vector<Qn::Axis> axes) {
+  explicit DataContainer(std::vector<Qn::Axis> axes) {
     AddAxes(axes);
   }
 
@@ -191,7 +190,7 @@ class DataContainer : public TObject {
     unsigned long temp = offset;
     if (offset < data_.size()) {
       indices.resize(dimension_);
-      for (int i = 0; i < dimension_ - 1; ++i) {
+      for (unsigned int i = 0; i < dimension_ - 1; ++i) {
         indices[dimension_ - i - 1] = temp%axes_[dimension_ - i - 1].size();
         temp = temp/axes_[dimension_ - i - 1].size();
       }
@@ -204,7 +203,7 @@ class DataContainer : public TObject {
  * @param offset linear index
  * @return string with bin description
  */
-  std::string GetBinDescription(const long offset) const {
+  std::string GetBinDescription(const unsigned long offset) const {
     std::vector<unsigned long> indices;
     GetIndex(indices, offset);
     if (indices.empty()) return "invalid offset";
@@ -230,7 +229,7 @@ class DataContainer : public TObject {
   template<typename Function>
   DataContainer<T> Projection(const std::vector<std::string> names, Function &&lambda) const {
     DataContainer<T> projection;
-    int linearindex = 0;
+    unsigned long linearindex = 0;
     std::vector<bool> isprojected;
     auto originalaxes = this->GetAxes();
     for (const auto &originalaxis : originalaxes) {
@@ -271,7 +270,7 @@ class DataContainer : public TObject {
                                 Function &&lambda,
                                 std::vector<int> exindices) const {
     DataContainer<T> projection;
-    int linearindex = 0;
+    unsigned long linearindex = 0;
     std::vector<bool> isprojected;
     auto originalaxes = this->GetAxes();
     for (const auto &originalaxis : originalaxes) {
@@ -352,7 +351,7 @@ class DataContainer : public TObject {
       }
       tmpaxisposition++;
     }
-    long index = 0;
+    unsigned long index = 0;
     std::vector<unsigned long> indices;
     indices.reserve(dimension_);
     for (const auto &bin : data_) {
@@ -362,7 +361,7 @@ class DataContainer : public TObject {
       auto binmid = binlow + (binhigh - binlow)/2;
       auto rebinnedindex = axis.FindBin(binmid);
       if (rebinnedindex!=-1) {
-        indices[axisposition] = rebinnedindex;
+        indices[axisposition] = static_cast<unsigned long>(rebinnedindex);
         selected.CallOnElement(indices, [&bin](T &element) { element = bin; });
       }
       ++index;
@@ -389,9 +388,9 @@ class DataContainer : public TObject {
   DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
     DataContainer<T> result;
     std::vector<SIZETYPE> indices;
-    long index = 0;
+    unsigned long index = 0;
     if (axes_.size() > data.axes_.size()) {
-      for (long iaxis = 0; iaxis < data.axes_.size() - 1; ++iaxis) {
+      for (unsigned long iaxis = 0; iaxis < data.axes_.size() - 1; ++iaxis) {
         if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
@@ -401,11 +400,11 @@ class DataContainer : public TObject {
       indices.reserve(dimension_);
       for (const auto &bin_a : data_) {
         GetIndex(indices, index);
-        result.data_[index] = lambda(bin_a,data.At(indices));
+        result.data_[index] = lambda(bin_a, data.At(indices));
         ++index;
       }
     } else {
-      for (long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
+      for (unsigned long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
         if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
           std::string errormsg = "Axes do not match.";
           throw std::logic_error(errormsg);
@@ -415,7 +414,7 @@ class DataContainer : public TObject {
       indices.reserve(data.dimension_);
       for (const auto &bin_b : data.data_) {
         data.GetIndex(indices, index);
-        result.data_[index] = lambda(At(indices),bin_b);
+        result.data_[index] = lambda(At(indices), bin_b);
         ++index;
       }
     }
@@ -440,7 +439,7 @@ class DataContainer : public TObject {
     for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
       if (axis->Name()==rebinaxis.Name()) {
         rebinned.AddAxis(rebinaxis);
-        axisposition = std::distance(axes_.begin(), axis);
+        axisposition = static_cast<unsigned long>(std::distance(axes_.begin(), axis));
         axisfound = true;
       } else {
         rebinned.AddAxis(*axis);
@@ -469,7 +468,7 @@ class DataContainer : public TObject {
       std::string errormsg = "Rebinned axis has overlapping bins." + rebinaxis.Name();
       throw std::logic_error(errormsg);
     }
-    long ibin = 0;
+    unsigned long ibin = 0;
     std::vector<SIZETYPE> indices;
     indices.reserve(dimension_);
     for (const auto &bin : data_) {
@@ -477,7 +476,7 @@ class DataContainer : public TObject {
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
       auto binmid = binlow + (binhigh - binlow)/2;
-      auto rebinnedindex = rebinaxis.FindBin(binmid);
+      unsigned long rebinnedindex = static_cast<unsigned long>(rebinaxis.FindBin(binmid));
       indices[axisposition] = rebinnedindex;
       rebinned.At(indices) = lambda(rebinned.At(indices), bin);
       ++ibin;
@@ -500,7 +499,7 @@ class DataContainer : public TObject {
  */
   SIZETYPE GetLinearIndex(const std::vector<SIZETYPE> &index) const {
     SIZETYPE offset = (index[dimension_ - 1]);
-    for (int i = 0; i < dimension_ - 1; ++i) {
+    for (unsigned int i = 0; i < dimension_ - 1; ++i) {
       offset += stride_[i + 1]*(index[i]);
     }
     return offset;
@@ -565,7 +564,7 @@ class DataContainer : public TObject {
  */
   void CalculateStride() {
     stride_[dimension_] = 1;
-    for (int i = 0; i < dimension_; ++i) {
+    for (unsigned int i = 0; i < dimension_; ++i) {
       stride_[dimension_ - i - 1] = stride_[dimension_ - i]*axes_[dimension_ - i - 1].size();
     }
   }
@@ -610,7 +609,7 @@ class DataContainer : public TObject {
       if (!found) nbins_diagonal *= ref_axis.size();
       ++iaxis;
     }
-    for (int ibin = 0; ibin < axes[0].size(); ++ibin) {
+    for (unsigned int ibin = 0; ibin < axes[0].size(); ++ibin) {
       for (int idiag = 0; idiag < nbins_diagonal; ++idiag) {
         diagonal.push_back(ibin*stride_sum + idiag);
       }
