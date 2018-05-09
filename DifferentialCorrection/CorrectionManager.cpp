@@ -44,7 +44,7 @@ void Qn::CorrectionManager::CreateDetectors() {
   int nbinsrunning = 0;
   for (auto &pair : detectors_) {
     auto &detector = pair.second;
-    for (int ibin = 0; ibin < detector.GetDataContainer()->size(); ++ibin) {
+    for (unsigned int ibin = 0; ibin < detector.GetDataContainer()->size(); ++ibin) {
       auto globalid = nbinsrunning + ibin;
       auto frameworkdetector = detector.GenerateDetector(pair.first, globalid, ibin, qncorrections_varset_);
       qncorrections_manager_.AddDetector(frameworkdetector);

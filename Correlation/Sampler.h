@@ -109,7 +109,7 @@ class Sampler {
 
   void CreateResamples() {
     TRandom3 random;
-    for (int ievent = 0; ievent < n_events_; ++ievent) {
+    for (unsigned int ievent = 0; ievent < n_events_; ++ievent) {
       samples_[ievent].push_back((unsigned int) (random.Rndm()*n_samples_));
     }
   }
