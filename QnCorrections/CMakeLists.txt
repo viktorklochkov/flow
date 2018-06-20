@@ -67,4 +67,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 
 ROOT_GENERATE_DICTIONARY(G__QnCorrFlow ${QNCORR_HEADERS} LINKDEF QnLinkDef.h)
 add_library(qncorrflow SHARED ${QNCORR_SOURCES} G__QnCorrFlow)
+set_target_properties(qncorrflow PROPERTIES DEBUG_POSTFIX "")
 target_link_libraries(qncorrflow ${ROOT_LIBRARIES})
