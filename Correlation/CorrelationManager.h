@@ -35,6 +35,28 @@ class CorrelationManager {
     DataContainerQVector a;
     qvectors_.emplace(name, a);
   }
+
+  void AddProjection(const std::string &input, const std::string &name, const std::string axesstring) {
+    auto toproject = qvectors_.at(input);
+    DataContainerQVector projection;
+    std::vector<std::string> axisnames;
+    tokenize(axesstring, axisnames, ", ", true);
+    projections_.emplace(name, std::make_tuple(input, axisnames));
+    qvectors_.emplace(name, projection);
+  }
+
+  void MakeProjections() {
+    for (const auto &projection : projections_) {
+      qvectors_.at(projection.first) =
+          qvectors_.at(std::get<0>(projection.second)).Projection(std::get<1>(projection.second),
+                                                                  [](const Qn::QVector &a,
+                                                                     const Qn::QVector &b) {
+                                                                    return (a
+                                                                        + b).Normal(Qn::QVector::Normalization::QOVERM);
+                                                                  });
+    }
+  }
+
   /**
    * Adds a new event variable to the correlation manager.
    * Actual value is retrieved when the tree is read from the file.
@@ -54,7 +76,6 @@ class CorrelationManager {
 
   void SaveToFile(std::string name);
 
-
   void Initialize() {
     for (auto &value : tree_values_) {
       qvectors_.at(value.first) = *value.second.Get();
@@ -64,6 +85,7 @@ class CorrelationManager {
       event_values_.at(i) = *value.second.Get();
       i++;
     }
+    MakeProjections();
     BuildCorrelations();
   }
 
@@ -75,7 +97,7 @@ class CorrelationManager {
       for (const auto &cname : corr.second.GetInputNames()) {
         qvectors.push_back(qvectors_.at(cname));
       }
-      corr.second.ConfigureCorrelation(qvectors,event_axes_);
+      corr.second.ConfigureCorrelation(qvectors, event_axes_);
       corr.second.BuildSamples(nevents);
     }
   }
@@ -87,9 +109,9 @@ class CorrelationManager {
                       Sampler::Method method) {
     std::vector<std::string> containernamelist;
     tokenize(containernames, containernamelist, ", ", true);
-    Qn::Correlator correlator(containernamelist,lambda);
-    correlator.ConfigureSampler(method,nsamples);
-    correlations_.emplace(name,std::move(correlator));
+    Qn::Correlator correlator(containernamelist, lambda);
+    correlator.ConfigureSampler(method, nsamples);
+    correlations_.emplace(name, std::move(correlator));
   }
 
   void FillCorrelations() {
@@ -114,13 +136,14 @@ class CorrelationManager {
       event_values_.at(i) = *value.second.Get();
       i++;
     }
+    MakeProjections();
   }
 
   bool CheckEvent() {
     u_long ie = 0;
     for (const auto &ae : event_axes_) {
       auto bin = ae.FindBin(event_values_[ie]);
-      if (bin != -1 ) {
+      if (bin!=-1) {
         eventbin_.at(ie) = (unsigned long) bin;
       } else {
         return false;
@@ -159,6 +182,7 @@ class CorrelationManager {
  private:
   std::shared_ptr<TTreeReader> reader_;
   std::map<std::string, Qn::Correlator> correlations_;
+  std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
   std::map<std::string, Qn::DataContainerQVector> qvectors_;

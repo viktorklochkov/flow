@@ -17,8 +17,9 @@ TEST(CorrelatorUnitTest, Basic) {
     bin = Qn::QVector(Qn::QVector::Normalization::QOVERM, 1, 1, vecarray);
   }
   Qn::DataContainer<Qn::QVector> container_b(container_a);
+//  container_b = container_b.Projection({"a1"},[](const Qn::QVector &a, const Qn::QVector &b) {return a + b;});
   std::vector<Qn::DataContainer<Qn::QVector>> vector{container_a, container_b};
-  std::vector<Qn::Axis> axes = {{"eva1", 1, 0, 10}};
+  std::vector<Qn::Axis> axes = {{"eva1", 2, 0, 10}};
   std::vector<std::string> names = {"DET1", "DET2"};
   auto lambda = [](std::vector<Qn::QVector> &a) { return a[0].x(1) + a[1].x(1); };
   Qn::Correlator correlator(names, lambda);
@@ -29,9 +30,13 @@ TEST(CorrelatorUnitTest, Basic) {
   correlator.FillCorrelation(vector,{0},i);
   }
   auto test = correlator.GetResult();
+  int i = 0;
   for (auto & bin : test) {
-    EXPECT_EQ(2.0,bin.Mean());
+    if (i <16) EXPECT_EQ(2.0,bin.Mean());
+    else EXPECT_EQ(0,bin.Mean());
+    i++;
   }
+  EXPECT_EQ(test.size(),32);
 }
 
 TEST(CorrelatorUnitTest, AutoCorrelation) {

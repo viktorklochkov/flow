@@ -19,7 +19,7 @@ namespace Qn {
  * @param data Datacontainer with one Axis to plot as a TGraphErrors.
  * @return A graph with errors corresponding to the standard error of the mean.
  */
-inline TGraphErrors *DataToProfileGraph(const Qn::DataContainerProfile &data) {
+inline TGraphErrors *DataToProfileGraph(const Qn::DataContainerSample &data) {
   if (data.GetAxes().size() > 1) {
     std::cout << "Data container has more than one dimension. " << std::endl;
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
@@ -37,7 +37,7 @@ inline TGraphErrors *DataToProfileGraph(const Qn::DataContainerProfile &data) {
   return graph;
 };
 
-inline TMultiGraph *DataToMultiGraph(const Qn::DataContainerProfile &data, const std::string &axisname) {
+inline TMultiGraph *DataToMultiGraph(const Qn::DataContainerSample &data, const std::string &axisname) {
   auto multigraph = new TMultiGraph();
   if (data.GetAxes().size() != 2) {
     std::cout << "Data Container dimension has wrong dimension " << data.GetAxes().size() << "\n";
