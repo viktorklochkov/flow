@@ -26,7 +26,8 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
         }
       }
       contents[iteration] = bin;
-      data_correlation_.At(c_index_) = function_(contents);
+      data_correlation_.At(c_index_).first = true;
+      data_correlation_.At(c_index_).second = function_(contents);
       ++ibin;
     }
     return;

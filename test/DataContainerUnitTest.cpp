@@ -29,7 +29,7 @@ TEST(DataContainerTest, Projection) {
   for (auto &bin : container) {
     bin = 1;
   }
-  auto integration = container.Projection([](float a, float b) { return a + b; });
+  auto integration = container.ProjectionInt([](float a, float b) { return a + b; });
   for (const auto &bin : integration) {
     EXPECT_EQ(10000, bin);
   }

@@ -45,8 +45,16 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 
   manager.AddCorrelation("Correlation1",
                          "Det1, Det1",
-                         [](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1); },10,Qn::Sampler::Method::SUBSAMPLING);
-  TTreeReaderValue<float> eventvalue(*reader,"Ev1");
+                         [](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1); },
+                         10,
+                         Qn::Sampler::Method::SUBSAMPLING);
+  TTreeReaderValue<float> eventvalue(*reader, "Ev1");
+
+  manager.AddCorrelation("Correlation2",
+                         "Det1",
+                         [](std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n()); },
+                         10,
+                         Qn::Sampler::Method::SUBSAMPLING);
 
   int events = 0;
   reader->SetEntry(0);
@@ -60,10 +68,13 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
     manager.FillCorrelations();
     events++;
   }
-  EXPECT_EQ(3,events);
+  EXPECT_EQ(3, events);
   auto correlation = manager.GetResult("Correlation1");
   for (auto &bin : correlation) {
-    EXPECT_FLOAT_EQ(2.0/3.0,bin.Mean());
+    EXPECT_FLOAT_EQ(2.0, bin.Mean());
   }
-
+  auto average = manager.GetResult("Correlation2");
+  for (auto &bin : correlation) {
+    EXPECT_FLOAT_EQ(2.0, bin.Mean());
+  }
 }

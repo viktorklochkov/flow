@@ -35,6 +35,10 @@ set(BASE_SOURCES
         Base/DataContainerHelper.cpp
         Base/Efficiency.cpp
         Base/Sample.cpp
+        Base/Hist.cpp
+        Base/Hist.h
+        Base/EventShape.cpp
+        Base/EventShape.h
         )
 
 string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")

@@ -9,6 +9,7 @@
 #include "Rtypes.h"
 #include "TMath.h"
 #include "TObject.h"
+#include "TH1F.h"
 
 #include <map>
 #include <vector>
@@ -20,6 +21,7 @@
 #include "DataVector.h"
 #include "QVector.h"
 #include "Sample.h"
+#include "EventShape.h"
 
 /**
  * QnCorrectionsframework
@@ -97,6 +99,12 @@ class DataContainer : public TObject {
     data_.resize(totalbins);
     stride_.resize((SIZETYPE) dimension_ + 1);
     CalculateStride();
+  }
+
+  void InitializeEntries( const T obj) {
+    for (auto &bin : data_) {
+      bin = obj;
+    }
   }
 
 /**
@@ -227,11 +235,51 @@ class DataContainer : public TObject {
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Projection(const std::vector<std::string> names, Function &&lambda) const {
+  DataContainer<T> Projection(const std::vector<std::string> names,
+                              Function &&lambda) const {
     DataContainer<T> projection;
     unsigned long linearindex = 0;
     std::vector<bool> isprojected;
     auto originalaxes = this->GetAxes();
+    for (const auto &originalaxis : originalaxes) {
+      for (const auto &name : names) {
+        isprojected.push_back((originalaxis.Name()==name)==0);
+        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
+      }
+    }
+    if (names.empty()) {
+      for (const auto &bin : data_) {
+        projection.At(0) = lambda(projection.At(0), bin);
+
+      }
+    } else {
+      std::vector<unsigned long> indices;
+      indices.reserve(dimension_);
+      for (const auto &bin : data_) {
+        this->GetIndex(indices, linearindex);
+        for (auto index = indices.begin(); index < indices.end(); ++index) {
+          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        }
+        projection.At(indices) = lambda(projection.At(indices), bin);
+        ++linearindex;
+      }
+    }
+    return projection;
+  }
+
+  /**
+ * Projects datacontainer on a subset of axes
+ * @tparam Function typename of function.
+ * @param axes subset of axes used for the projection.
+ * @param lambda Function used to add two entries.
+ * @return projected datacontainer.
+ */
+  DataContainer<T> Projection(const std::vector<std::string> names) const {
+    DataContainer<T> projection;
+    unsigned long linearindex = 0;
+    std::vector<bool> isprojected;
+    auto originalaxes = this->GetAxes();
+    auto lambda = [](const T&a, const T&b) { return a + b;};
     for (const auto &originalaxis : originalaxes) {
       for (const auto &name : names) {
         isprojected.push_back((originalaxis.Name()==name)==0);
@@ -310,7 +358,7 @@ class DataContainer : public TObject {
  * @return integrated container
  */
   template<typename Function>
-  DataContainer<T> Projection(Function &&lambda) const {
+  DataContainer<T> ProjectionInt(Function &&lambda) const {
     DataContainer<T> projection;
     for (const auto &bin : data_) {
       projection.data_[0] = lambda(projection.data_[0], bin);
@@ -618,7 +666,7 @@ class DataContainer : public TObject {
   }
 
 /// \cond CLASSIMP
- ClassDef(DataContainer, 9);
+ ClassDef(DataContainer, 10);
 /// \endcond
 };
 
@@ -653,11 +701,13 @@ DataContainer<T> Sqrt(DataContainer<T> a) {
 }
 
 using DataContainerF = DataContainer<float>;
+using DataContainerFB = DataContainer<std::pair<bool,float>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerProfile = DataContainer<Qn::Profile>;
 using DataContainerSample = DataContainer<Qn::Sample>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
+using DataContainerTH1F = DataContainer<TH1F>;
+using DataContainerESE = DataContainer<Qn::EventShape>;
 
 }
-
 #endif

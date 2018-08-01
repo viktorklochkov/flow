@@ -62,3 +62,44 @@ TEST(CorrelatorUnitTest, AutoCorrelation) {
   correlator.FillCorrelation(vector,{1},1);
   correlator.RemoveAutoCorrelation();
 }
+
+TEST(CorrelatorUnitTest, OneDataContainerOnly) {
+
+  int nevents = 100;
+  int nsamples = 1;
+  Qn::DataContainer<Qn::QVector> container_a;
+  for (auto &bin : container_a) {
+    Qn::QVec qvec(1.0, 1.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::QOVERSQRTM, 1, 1, vecarray);
+  }
+  std::vector<Qn::DataContainer<Qn::QVector>> vector{container_a};
+  std::vector<Qn::Axis> axes = {{"eva1", 3, 0, 10}};
+  std::vector<std::string> names = {"DET1", "DET2"};
+  auto lambda = [](std::vector<Qn::QVector> &a) { return a[0].x(1) * a[0].x(1); };
+  Qn::Correlator correlator(names, lambda);
+  correlator.ConfigureCorrelation(vector,axes);
+  correlator.ConfigureSampler(Qn::Sampler::Method::NONE, 1);
+  correlator.BuildSamples(nevents);
+
+  correlator.FillCorrelation(vector,{0},0);
+  for (auto &bin : vector.at(0)) {
+    Qn::QVec qvec(2.0, 2.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::QOVERSQRTM, 1, 1, vecarray);
+  }
+  correlator.FillCorrelation(vector,{1},0);
+  for (auto &bin : vector.at(0)) {
+    Qn::QVec qvec(3.0, 3.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::QOVERSQRTM, 1, 1, vecarray);
+  }
+  correlator.FillCorrelation(vector,{2},0);
+
+
+  auto test = correlator.GetResult();
+  EXPECT_EQ(1.0,test.At(0).Mean());
+  EXPECT_EQ(4.0,test.At(1).Mean());
+  EXPECT_EQ(9.0,test.At(2).Mean());
+  EXPECT_EQ(test.size(),3);
+}

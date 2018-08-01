@@ -50,14 +50,14 @@ class Correlation {
     function_ = function;
     CreateCorrelationContainer(input);
   }
-  DataContainerF GetCorrelation() const { return data_correlation_; }
+  DataContainerFB GetCorrelation() const { return data_correlation_; }
   AXES GetEventAxes() const { return axes_event_; }
-  inline float &At(int index) {return data_correlation_.At(index); }
+  inline float &At(int index) {return data_correlation_.At(index).second; }
  private:
   std::vector<std::vector<std::vector<unsigned long>>>
       index_; ///< map of indices of all inputs used for calculating the correlations
   std::vector<unsigned long> c_index_; ///< flattened index of correlation
-  DataContainerF data_correlation_; ///<  datacontainer containing the correlations
+  DataContainerFB data_correlation_; ///<  datacontainer containing the correlations
   AXES axes_event_; ///< vector of event axes used in the correlation
   std::function<double(std::vector<Qn::QVector> &)> function_; ///< correlation function
   std::vector<std::string> names_; ///< vector of input names

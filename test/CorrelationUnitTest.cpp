@@ -23,8 +23,25 @@ TEST(CorrelationTest, IntegratedCorrelation) {
   Qn::Correlation correlation(vector, axes, lambda);
   correlation.Fill(vector, {1});
   correlation.Fill(vector, {2});
-  EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().At(2));
-  EXPECT_FLOAT_EQ(0.0, correlation.GetCorrelation().At(1));
+  EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().At(2).second);
+  EXPECT_FLOAT_EQ(0.0, correlation.GetCorrelation().At(1).second);
+  EXPECT_EQ(10, correlation.GetCorrelation().size());
+}
+
+TEST(CorrelationTest, AveragingCorrelation) {
+  Qn::DataContainer<Qn::QVector> container_a;
+  for (auto &bin : container_a) {
+    Qn::QVec qvec(1.0, 1.0);
+    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    bin = Qn::QVector(Qn::QVector::Normalization::NOCALIB, 1, 1, vecarray);
+  }
+  std::vector<Qn::Axis> axes = {{"eva1", 10, 0, 10}};
+  auto lambda = [](std::vector<Qn::QVector> &a) { return sqrt(a[0].x(1) * a[0].x(1)); };
+  std::vector<Qn::DataContainer<Qn::QVector>> vector{container_a};
+  Qn::Correlation correlation(vector, axes, lambda);
+  correlation.Fill(vector, {1});
+  auto data = correlation.GetCorrelation();
+  EXPECT_FLOAT_EQ(1.0, data.At(1).second);
   EXPECT_EQ(10, correlation.GetCorrelation().size());
 }
 
@@ -45,7 +62,7 @@ TEST(CorrelationTest, DifferentialCorrelation) {
   Qn::Correlation correlation(vector, axes, lambda);
   for (float i = 0; i < 10000; ++i) {
     correlation.Fill(vector, {(unsigned long)(i/1000.0)});
-    EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().At(((int)i/1000.0)*container_a.size()*container_b.size()));
+    EXPECT_FLOAT_EQ(2.0, correlation.GetCorrelation().At(((int)i/1000.0)*container_a.size()*container_b.size()).second);
   }
 
   EXPECT_EQ(160, correlation.GetCorrelation().size());
@@ -73,7 +90,7 @@ TEST(CorrelationTest, DiffPlusIntCorrelation) {
   Qn::Correlation correlation(vector, axes, lambda);
   for (unsigned long i = 0; i < 10; ++i) {
     correlation.Fill(vector, {i});
-    EXPECT_FLOAT_EQ(2, correlation.GetCorrelation().At(4*i));
+    EXPECT_FLOAT_EQ(2, correlation.GetCorrelation().At(4*i).second);
   }
   EXPECT_EQ(40, correlation.GetCorrelation().size());
 }

@@ -12,7 +12,8 @@ set(TEST_SOURCES DataContainerUnitTest.cpp
         EfficiencyUnitTest.cpp
         BootstrapSamplerUnitTest.cpp
         SampleUnitTest.cpp
-        CorrelatorUnitTest.cpp)
+        CorrelatorUnitTest.cpp
+        HistUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
