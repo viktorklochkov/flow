@@ -97,6 +97,15 @@ class Sample : public Profile {
   friend Sample operator*(const Sample &a, double b);
   friend Sample Merge(const Sample &a, const Sample &b);
 //
+  inline Sample Sqrt() const {
+    Sample a(*this);
+    a.mean_ = std::sqrt(std::abs(mean_));
+    a.sum_ = std::sqrt(std::abs(sum_));
+    a.sum2_ = std::sqrt(std::abs(sum2_));
+    a.error_ = 1./2.*a.error_/a.mean_;
+    return a;
+  }
+
  private:
   std::vector<StatisticMean> samples_stat_;
   int subsample_entries_ = 0;

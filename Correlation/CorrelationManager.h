@@ -92,7 +92,6 @@ class CorrelationManager {
   }
 
   void BuildCorrelations() {
-    auto nevents = reader_->GetEntries(true);
     std::vector<Qn::DataContainerQVector> qvectors;
     for (auto &corr : correlations_) {
       qvectors.clear();
@@ -106,7 +105,7 @@ class CorrelationManager {
         axes.push_back(eventshape_axes_.at(0));
       }
       corr.second.ConfigureCorrelation(qvectors, axes);
-      corr.second.BuildSamples(nevents);
+      corr.second.BuildSamples(num_events_);
     }
   }
 
@@ -228,7 +227,6 @@ class CorrelationManager {
   }
 
   void BuildESECorrelation() {
-    auto nevents = reader_->GetEntries(true);
     std::vector<Qn::DataContainerQVector> qvectors;
     for (auto &corr : ese_correlations_) {
       qvectors.clear();
@@ -237,7 +235,7 @@ class CorrelationManager {
         qvectors.push_back(qvectors_.at(cname));
       }
       corr.second.ConfigureCorrelation(qvectors, event_axes_);
-      corr.second.BuildSamples(nevents);
+      corr.second.BuildSamples(num_events_);
     }
   }
 
@@ -304,6 +302,8 @@ class CorrelationManager {
                        [](Qn::EventShape &a) { return a.IsReady(); }) && !fill_ese_;
   }
 
+  void SetNumEvents(int events) { num_events_ = events; }
+
  private:
   std::unique_ptr<TFile> ese_file_;
   std::shared_ptr<TTreeReader> reader_;
@@ -319,6 +319,7 @@ class CorrelationManager {
   std::vector<Qn::Axis> eventshape_axes_;
   std::unique_ptr<Qn::DataContainerESE> event_shape_ = nullptr;
   bool fill_ese_;
+  int num_events_;
 
 };
 }

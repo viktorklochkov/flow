@@ -9,7 +9,6 @@
 #include <TSpline.h>
 #include <TCanvas.h>
 #include <TFile.h>
-#include <iostream>
 
 namespace Qn {
 class EventShape : public TObject {
@@ -43,9 +42,7 @@ class EventShape : public TObject {
   }
 
   float GetPercentile(float q) {
-    auto per = static_cast<float>(spline_->Eval(q));
-    std::cout << "per " << per << "\n";
-    return per;
+    return static_cast<float>(spline_->Eval(q));
   }
 
   void WriteSpline(TFile *file) {
