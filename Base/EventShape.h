@@ -25,7 +25,7 @@ class EventShape : public TObject {
 
   void IntegrateHist() {
     integral_ = (TH1F *) histo_->Clone("integral");
-    for (int i = 0; i < histo_->GetNbinsX(); ++i) {
+    for (int i = 0; i < histo_->GetNbinsX()+1; ++i) {
       double inte = histo_->Integral(0, i)/histo_->Integral();
       integral_->SetBinContent(i, inte);
     }

@@ -227,6 +227,7 @@ class CorrelationManager {
   }
 
   void BuildESECorrelation() {
+    if (!use_ese_) return;
     std::vector<Qn::DataContainerQVector> qvectors;
     for (auto &corr : ese_correlations_) {
       qvectors.clear();
@@ -249,7 +250,8 @@ class CorrelationManager {
   }
 
   void FitEventShape(const std::string &name) {
-    int ibin = 0;
+    if (!use_ese_) return;
+      int ibin = 0;
     for (auto bin : ese_correlations_.at("ESE_" + name).GetBinnedResult()) {
       event_shape_->At(ibin).SetName("ESE_" + name);;
       event_shape_->At(ibin).SetHisto(&bin);
@@ -260,7 +262,7 @@ class CorrelationManager {
   }
 
   void SaveEventShape() {
-    if (fill_ese_) {
+    if (fill_ese_ && use_ese_) {
       event_shape_.reset((Qn::DataContainerESE *) event_shape_->Clone("ESE"));
       ese_file_.reset(new TFile("ese_file.root", "RECREATE"));
       if (event_shape_ && fill_ese_) ese_file_->WriteTObject(event_shape_.get(), "ESE", "");
@@ -269,6 +271,7 @@ class CorrelationManager {
   }
 
   void CheckESEbin(const std::string &name) {
+    if (!use_ese_) return;
     auto ese = ese_correlations_.at("ESE_" + name).GetCorrelation().GetCorrelation();
     auto pair = ese.At(eventbin_);
     float value = -999.;
@@ -277,6 +280,7 @@ class CorrelationManager {
   }
 
   void AddESE(const std::string &name, int harmonic) {
+    use_ese_ = true;
     auto Mag = [harmonic](const std::vector<Qn::QVector> &a) {
       return 1./TMath::Sqrt(a[0].sumweights())*a[0].DeNormal().mag(harmonic);
     };
@@ -297,6 +301,7 @@ class CorrelationManager {
   }
 
   bool IsESE() const {
+    if (!use_ese_) return false;
     return std::all_of(event_shape_->begin(),
                        event_shape_->end(),
                        [](Qn::EventShape &a) { return a.IsReady(); }) && !fill_ese_;
@@ -318,7 +323,8 @@ class CorrelationManager {
   std::vector<Qn::Axis> event_axes_;
   std::vector<Qn::Axis> eventshape_axes_;
   std::unique_ptr<Qn::DataContainerESE> event_shape_ = nullptr;
-  bool fill_ese_;
+  bool fill_ese_ = false;
+  bool use_ese_ = false;
   int num_events_;
 
 };

@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <Correlation/Sampler.h>
 #include <TH1F.h>
+#include <Base/DataContainer.h>
 
 TEST(BootStrapSamplerTest, Constructor) {
   const int nsamples = 50;
@@ -70,6 +71,37 @@ TEST(BootStrapSamplerTest, SubSampling) {
     std::cout << samplesize << std::endl;
     ASSERT_NEAR(samplesize,nevents/nsamples,(nevents/nsamples)-1);
   }
+}
+
+TEST(BootStrapSamplerTest, Bootstraptest) {
+  TRandom3 rndm;
+  int nevents = 100000;
+  int nsamples = 100;
+  Qn::Sampler test(nevents, nsamples);
+  test.CreateSubSamples();
+  Qn::DataContainerSample a;
+  a.At(0).SetNumberOfSamples(10);
+  TH1D hdist("dist","dist",100,-2,2);
+  TH1D hboot("boot","boot",100,-2,2);
+  for ( int i = 0; i<nevents; ++i) {
+    auto g1 = rndm.Gaus(0., 1.);
+    a.At(0).Fill(g1,test.GetFillVector(i));
+    hdist.Fill(g1);
+  }
+  for (int i = 0; i < nsamples; ++i) {
+    hboot.Fill(a.At(0).SampleMean(i));
+  }
+  auto d = hdist.Integral("width");
+  auto b = hboot.Integral("width");
+  hdist.Scale(1. / d * b);
+  hboot.Scale(1. / b * d);
+  TCanvas c1("c1","c1",800,600);
+  c1.cd();
+  hdist.Draw();
+  hboot.Draw();
+  c1.SaveAs("boottest.root");
+  a.At(0).CalculateCorrelatedError();
+//  ASSERT_NEAR(a.At(0).Error(),a.At(0).CorrelatedError(),0.00001);
 }
 
 TEST(BootStrapSamplerTest, FillTest) {
