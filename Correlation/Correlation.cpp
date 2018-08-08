@@ -16,7 +16,7 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
   if (iteration + 1==input.size()) {
     int ibin = 0;
     for (auto &bin : datacontainer) {
-      if (bin.n()==0) continue;
+//      if (bin.n()==0) continue;
       if (!datacontainer.IsIntegrated()) {
         int i_index = 0;
         for (auto index : index_[iteration][ibin]) {
@@ -26,7 +26,8 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
         }
       }
       contents[iteration] = bin;
-      data_correlation_.At(c_index_).first = true;
+      auto is_n = std::all_of(contents.begin(),contents.end(),[](QVector q) {return q.n() > 0;});
+      data_correlation_.At(c_index_).first = is_n;
       data_correlation_.At(c_index_).second = function_(contents);
       ++ibin;
     }
@@ -35,7 +36,7 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
   int ibin = 0;
   for (const auto &bin : datacontainer) {
     int offset = iterationoffset;
-    if (bin.n()==0) continue;
+//    if (bin.n()==0) continue;
     if (!datacontainer.IsIntegrated()) {
       int i_index = 0;
       for (auto index : index_[iteration][ibin]) {
@@ -52,6 +53,7 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
 
 void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<unsigned long> &eventindex) {
   data_correlation_.ClearData();
+//  data_correlation_.Map([](std::pair<bool,float> &pair) {pair.first = false; return pair;});
   std::vector<QVector> contents;
   contents.resize(input.size());
   uint iteration = 0;
