@@ -57,6 +57,15 @@ class Detector {
     qvector_->ClearData();
   }
 
+  void SetChannelScheme(
+      Bool_t *bUsedChannel,
+      Int_t *nChannelGroup,
+      Float_t *hardCodedGroupWeights) {
+    fUsedChannel = bUsedChannel;
+    fHardCodedGroupWeights = hardCodedGroupWeights;
+    fChannelGroup = nChannelGroup;
+  }
+
   QnCorrectionsDetector *GenerateDetector(const std::string &detname,
                                           int globalid,
                                           int binid,
@@ -86,7 +95,9 @@ class Detector {
     if (type_==DetectorType::Channel) {
       configuration =
           new QnCorrectionsDetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_);
-      ((QnCorrectionsDetectorConfigurationChannels *) configuration)->SetChannelsScheme(nullptr, nullptr, nullptr);
+      ((QnCorrectionsDetectorConfigurationChannels *) configuration)->SetChannelsScheme(fUsedChannel,
+                                                                                        fChannelGroup,
+                                                                                        fHardCodedGroupWeights);
     }
     if (type_==DetectorType::Track)
       configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), set, nharmonics_);
@@ -110,6 +121,9 @@ class Detector {
   std::unique_ptr<DataContainerDataVector> datavector_;
   std::unique_ptr<DataContainerQVector> qvector_;
   std::function<void(QnCorrectionsDetectorConfigurationBase *config)> configuration_;
+  bool *fUsedChannel = nullptr;                   //[fNoOfChannels] /// array, mapping external to internal channel id.
+  int *fChannelGroup = nullptr;                   //[fNoOfChannels] /// array, group hard coded weight
+  float *fHardCodedGroupWeights = nullptr;        //[fNoOfChannels]
 
 };
 }

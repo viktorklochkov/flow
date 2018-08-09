@@ -176,6 +176,11 @@ class DataContainer : public TObject {
  */
   inline const std::vector<Axis> &GetAxes() const { return axes_; }
 
+  /**
+ * Get vector of axes
+ * @return Vector of axes
+ */
+  inline std::vector<Axis> &GetAxes() { return axes_; }
 /**
  * Get Axis with the given name.
  * Throws exception when not found.

@@ -25,13 +25,22 @@ void Qn::CorrectionManager::AddDetector(const std::string &name, Qn::DetectorTyp
     enums.push_back(var_manager_->FindNum(axis.Name()));
   }
   Detector detector(type, axes, enums, nchannels);
-  detectors_.insert(std::make_pair(name, std::move(detector)));
+  detectors_.emplace(std::make_pair(name, std::move(detector)));
 }
+
 void Qn::CorrectionManager::AddDetector(const std::string &name, Qn::DetectorType type, int nchannels) {
   std::vector<int> enums;
   Detector detector(type, nchannels);
+  detectors_.emplace(std::make_pair(name, std::move(detector)));
+}
+
+void Qn::CorrectionManager::AddDetector(const std::string &name, Qn::DetectorType type, int nchannels, bool *s1, int *s2, float *s3) {
+  std::vector<int> enums;
+  Detector detector(type, nchannels);
+  detector.SetChannelScheme(s1,s2,s3);
   detectors_.insert(std::make_pair(name, std::move(detector)));
 }
+
 void Qn::CorrectionManager::SetCorrectionSteps(const std::string &name,
                                                std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config) {
   try { detectors_.at(name).SetConfig(std::move(config)); }

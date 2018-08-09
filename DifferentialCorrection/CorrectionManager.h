@@ -19,6 +19,8 @@ namespace Qn {
 class CorrectionManager {
  public:
 
+  using ChannelScheme = std::tuple<bool *, int *,float *>;
+
   CorrectionManager()
       : event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()), histogram_manager_(var_manager_) {}
 
@@ -44,6 +46,8 @@ class CorrectionManager {
                    const std::vector<Qn::Axis> &axes, int nchannels = 0);
 
   void AddDetector(const std::string &name, DetectorType type, int nchannels = 0);
+
+  void AddDetector(const std::string &name, DetectorType type, int nchannels, bool *s1, int *s2, float *s3);
 
   void SetCorrectionSteps(const std::string &name,
                           std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config);
