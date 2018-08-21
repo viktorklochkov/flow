@@ -18,34 +18,96 @@ namespace Qn {
 
 class CorrelationManager {
   using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
-  using DATAFUNCTION = std::function<Qn::DataContainerQVector(Qn::DataContainerQVector &)>;
-  using PROJECTION = std::function<std::vector<Qn::QVector>(std::vector<Qn::QVector> &)>;
  public:
-  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
-      reader_(std::move(reader)) {
-  }
+  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) : reader_(std::move(reader)) {}
+  CorrelationManager(std::shared_ptr<TTreeReader> reader, long num_events)
+      : reader_(std::move(reader)), num_events_(num_events) {}
+
   /**
    * Adds a new DataContainer to the correlation manager.
    * Actual value is retrieved when the tree is read from the file.
    * @param name
    */
-  void AddDataContainer(const std::string &name) {
-    TTreeReaderValue<Qn::DataContainerQVector>
-        value(*reader_, name.data());
-    tree_values_.emplace(name, value);
-    DataContainerQVector a;
-    qvectors_.emplace(name, a);
+  void AddDataContainer(const std::string &name);
+
+  /**
+   * Adds new Projection to the correlation manager.
+   * Projects the DataContainer on the specified axes and creates a new Datacontainer with a new name.
+   * @param input_name Name of the input datacontainer.
+   * @param output_name  Name of the output projection
+   * @param axis_names Names of axes to be projected upon.
+   */
+  void AddProjection(const std::string &input_name, const std::string &output_name, const std::string axis_names);
+
+  /**
+   * Adds a new event variable to the correlation manager.
+   * Actual value is retrieved when the tree is read from the file.
+   * @param eventaxis Event variable defined as a Axis, which is used in the correlations.
+   */
+
+  void AddEventVariable(const Qn::Axis &eventaxis);
+  /**
+   * Adds a correlation to the output.
+   * @param name Name of the correlation under which it is saved to the file
+   * @param input_names Names of the input datacontainers.
+   * @param lambda Function which is used to calculate the correlation.
+   * @param nsamples number of samples used in the subsampling
+   * @param method method which is used for the subsampling
+   */
+  void AddCorrelation(std::string name,
+                      const std::string &input_names,
+                      FUNCTION &&lambda,
+                      int nsamples,
+                      Sampler::Method method);
+  /**
+   * Adds a correlation to the output.
+   * @param name Name of the correlation under which it is saved to the file
+   * @param containernames Names of the input datacontainers.
+   * @param lambda Function which is used to calculate the correlation.
+   */
+  void AddCorrelation(std::string name,
+                      const std::string &containernames,
+                      FUNCTION &&lambda);
+
+  /**
+   * Adds a ESE axis to all correlations
+   * @param name Name of the datacontainer used to calculate the Q-vector magnitude.
+   * @param harmonic harmonic used for calculation
+   */
+  void AddESE(const std::string &name, int harmonic, float qmax);
+
+  /**
+   * Initializes the Correlation task.
+   */
+  void Initialize();
+
+  /**
+   * Process the correlation. Needs to be called in the event loop.
+   */
+  void Process();
+  /**
+   * Finalizes the correlation task
+   * @param correlation_file name of the correlation file.
+   * @param ese_file name of the ese q-vector magnitude calibration file.
+   */
+  void Finalize();
+
+  /**
+   * Set Name of correlation output file.
+   * @param output_name
+   */
+  void SetOutputFile(const std::string output_name) {
+    correlation_file_name_ = output_name;
+  }
+  /**
+   * Set name of ese calibration file.
+   * @param ese_name
+   */
+  void SetESECalibrationFile(const std::string ese_name) {
+    ese_file_name_ = ese_name;
   }
 
-  void AddProjection(const std::string &input, const std::string &name, const std::string axesstring) {
-    auto toproject = qvectors_.at(input);
-    DataContainerQVector projection;
-    std::vector<std::string> axisnames;
-    tokenize(axesstring, axisnames, ", ", true);
-    projections_.emplace(name, std::make_tuple(input, axisnames));
-    qvectors_.emplace(name, projection);
-  }
-
+ private:
   void MakeProjections() {
     for (const auto &projection : projections_) {
       qvectors_.at(projection.first) =
@@ -58,38 +120,11 @@ class CorrelationManager {
     }
   }
 
-  /**
-   * Adds a new event variable to the correlation manager.
-   * Actual value is retrieved when the tree is read from the file.
-   * @param eventaxis Event variable defined as a Axis, which is used in the correlations.
-   */
-  void AddEventVariable(const Qn::Axis &eventaxis) {
-    TTreeReaderValue<float> value(*reader_, eventaxis.Name().data());
-    tree_event_values_.emplace(eventaxis.Name(), value);
-    event_values_.emplace_back(-999);
-    eventbin_.emplace_back(-1);
-    event_axes_.push_back(eventaxis);
-  }
-
   DataContainerSample GetResult(const std::string &name) const {
     return correlations_.at(name).GetResult();
   }
 
   void SaveToFile(std::string name);
-
-  void Initialize() {
-    for (auto &value : tree_values_) {
-      qvectors_.at(value.first) = *value.second.Get();
-    }
-    int i = 0;
-    for (auto &value : tree_event_values_) {
-      event_values_.at(i) = *value.second.Get();
-      i++;
-    }
-    MakeProjections();
-    BuildCorrelations();
-    BuildESECorrelation();
-  }
 
   void BuildCorrelations() {
     std::vector<Qn::DataContainerQVector> qvectors;
@@ -109,27 +144,7 @@ class CorrelationManager {
     }
   }
 
-  void AddCorrelation(std::string name,
-                      const std::string &containernames,
-                      FUNCTION &&lambda,
-                      int nsamples,
-                      Sampler::Method method) {
-    std::vector<std::string> containernamelist;
-    tokenize(containernames, containernamelist, ", ", true);
-    Qn::Correlator correlator(containernamelist, lambda);
-    correlator.ConfigureSampler(method, nsamples);
-    correlations_.emplace(name, std::move(correlator));
-  }
-
-  void FillCorrelations() {
-    FillCorr(correlations_);
-  }
-
-  void FillESECorrelation() {
-    if (event_shape_) FillESECorr(ese_correlations_);
-  }
-
-  void FillESECorr(std::map<std::string, Qn::Correlator> &corr) {
+  void FillESE(std::map<std::string, Qn::Correlator> &corr) {
     for (auto &pair : corr) {
       u_long i = 0;
       std::vector<DataContainerQVector> inputs;
@@ -142,7 +157,7 @@ class CorrelationManager {
     }
   }
 
-  void FillCorr(std::map<std::string, Qn::Correlator> &corr) {
+  void FillCorrelations(std::map<std::string, Qn::Correlator> &corr) {
     for (auto &pair : corr) {
       u_long i = 0;
       std::vector<DataContainerQVector> inputs;
@@ -182,6 +197,15 @@ class CorrelationManager {
   }
 
   bool CheckESEEvent() {
+    if (use_ese_) {
+      for (auto bin : ese_correlations_) {
+        auto ese = bin.second.GetCorrelation().GetCorrelation();
+        auto pair = ese.At(eventbin_);
+        float value = -999.;
+        if (pair.first) value = pair.second;
+        event_values_.back() = event_shape_->At(eventbin_).GetPercentile(value);
+      }
+    }
     if (!fill_ese_) {
       u_long ie = 0;
       auto event_axis_size = event_axes_.size();
@@ -198,6 +222,63 @@ class CorrelationManager {
     } else {
       return false;
     }
+  }
+
+  void BuildESECorrelation() {
+    if (!use_ese_) return;
+    for (const auto &ese : ese_correlations_) {
+      if (!event_shape_) {
+        event_shape_.reset(new Qn::DataContainerESE);
+        event_shape_->AddAxes(event_axes_);
+      }
+      if (event_shape_ && !fill_ese_) {
+        eventshape_axes_.emplace_back(ese.first, 10, 0., 1.);
+      }
+      if (event_shape_ && !fill_ese_) {
+        event_values_.emplace_back(-999);
+      }
+    }
+    std::vector<Qn::DataContainerQVector> qvectors;
+    for (auto &corr : ese_correlations_) {
+      qvectors.clear();
+      qvectors.reserve(corr.second.GetInputNames().size());
+      for (const auto &cname : corr.second.GetInputNames()) {
+        qvectors.push_back(qvectors_.at(cname));
+      }
+      corr.second.ConfigureCorrelation(qvectors, event_axes_);
+      corr.second.BuildSamples(num_events_);
+    }
+  }
+
+  void FitEventShape() {
+    if (!use_ese_ || !fill_ese_) return;
+    int ibin = 0;
+    for (auto correlation : ese_correlations_) {
+      for (auto bin : *correlation.second.GetBinnedResult()) {
+        auto name = correlation.first;
+        event_shape_->At(ibin).SetName("ESE_" + name);;
+        event_shape_->At(ibin).SetHisto(&bin);
+        event_shape_->At(ibin).FitWithSpline(bin);
+        event_shape_->At(ibin).SetReady();
+        ++ibin;
+      }
+    }
+  }
+
+  void SaveEventShape(const std::string &filename) {
+    if (fill_ese_ && use_ese_) {
+      event_shape_.reset((Qn::DataContainerESE *) event_shape_->Clone("ESE"));
+      ese_file_.reset(new TFile(filename.data(), "RECREATE"));
+      if (event_shape_ && fill_ese_) ese_file_->WriteTObject(event_shape_.get(), "ESE", "");
+      ese_file_->Close();
+    }
+  }
+
+  bool IsESE() const {
+    if (!use_ese_) return false;
+    return std::all_of(event_shape_->begin(),
+                       event_shape_->end(),
+                       [](Qn::EventShape &a) { return a.IsReady(); }) && !fill_ese_;
   }
 
 /**
@@ -226,90 +307,9 @@ class CorrelationManager {
     }
   }
 
-  void BuildESECorrelation() {
-    if (!use_ese_) return;
-    std::vector<Qn::DataContainerQVector> qvectors;
-    for (auto &corr : ese_correlations_) {
-      qvectors.clear();
-      qvectors.reserve(corr.second.GetInputNames().size());
-      for (const auto &cname : corr.second.GetInputNames()) {
-        qvectors.push_back(qvectors_.at(cname));
-      }
-      corr.second.ConfigureCorrelation(qvectors, event_axes_);
-      corr.second.BuildSamples(num_events_);
-    }
-  }
-
-  void SetESEInputFile(const std::string &name) {
-    ese_file_.reset(new TFile("ese_file.root", "OPEN"));
-    fill_ese_ = true;
-    if (ese_file_->IsOpen()) {
-      event_shape_.reset((Qn::DataContainerESE *) (ese_file_->Get("ESE"))->Clone("ESE"));
-      fill_ese_ = false;
-    }
-  }
-
-  void FitEventShape(const std::string &name) {
-    if (!use_ese_) return;
-      int ibin = 0;
-    for (auto bin : ese_correlations_.at("ESE_" + name).GetBinnedResult()) {
-      event_shape_->At(ibin).SetName("ESE_" + name);;
-      event_shape_->At(ibin).SetHisto(&bin);
-      event_shape_->At(ibin).FitWithSpline(bin);
-      event_shape_->At(ibin).SetReady();
-      ++ibin;
-    }
-  }
-
-  void SaveEventShape() {
-    if (fill_ese_ && use_ese_) {
-      event_shape_.reset((Qn::DataContainerESE *) event_shape_->Clone("ESE"));
-      ese_file_.reset(new TFile("ese_file.root", "RECREATE"));
-      if (event_shape_ && fill_ese_) ese_file_->WriteTObject(event_shape_.get(), "ESE", "");
-      ese_file_->Close();
-    }
-  }
-
-  void CheckESEbin(const std::string &name) {
-    if (!use_ese_) return;
-    auto ese = ese_correlations_.at("ESE_" + name).GetCorrelation().GetCorrelation();
-    auto pair = ese.At(eventbin_);
-    float value = -999.;
-    if (pair.first) value = pair.second;
-    event_values_.back() = event_shape_->At(eventbin_).GetPercentile(value);
-  }
-
-  void AddESE(const std::string &name, int harmonic) {
-    use_ese_ = true;
-    auto Mag = [harmonic](const std::vector<Qn::QVector> &a) {
-      return 1./TMath::Sqrt(a[0].sumweights())*a[0].DeNormal().mag(harmonic);
-    };
-    Qn::Correlator correlator({name}, Mag, TH1F("q", ";q;%;", 100, 0., 8.));
-    correlator.ConfigureSampler(Sampler::Method::NONE, 0);
-    ese_correlations_.emplace("ESE_" + name, std::move(correlator));
-    if (event_shape_) eventbin_.push_back(-1);
-    if (!event_shape_) {
-      event_shape_.reset(new Qn::DataContainerESE);
-      event_shape_->AddAxes(event_axes_);
-    }
-    if (event_shape_ && !fill_ese_) {
-      eventshape_axes_.emplace_back("ESE_" + name, 10, 0., 1.);
-    }
-    if (event_shape_ && !fill_ese_) {
-      event_values_.emplace_back(-999);
-    }
-  }
-
-  bool IsESE() const {
-    if (!use_ese_) return false;
-    return std::all_of(event_shape_->begin(),
-                       event_shape_->end(),
-                       [](Qn::EventShape &a) { return a.IsReady(); }) && !fill_ese_;
-  }
-
-  void SetNumEvents(int events) { num_events_ = events; }
-
  private:
+  std::string correlation_file_name_;
+  std::string ese_file_name_;
   std::unique_ptr<TFile> ese_file_;
   std::shared_ptr<TTreeReader> reader_;
   std::map<std::string, Qn::Correlator> correlations_;
@@ -325,7 +325,7 @@ class CorrelationManager {
   std::unique_ptr<Qn::DataContainerESE> event_shape_ = nullptr;
   bool fill_ese_ = false;
   bool use_ese_ = false;
-  int num_events_;
+  long num_events_ = 0;
 
 };
 }

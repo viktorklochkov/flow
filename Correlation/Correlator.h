@@ -14,14 +14,12 @@ class Correlator {
  public:
   Correlator(std::vector<std::string> input_names,
              std::function<double(std::vector<Qn::QVector> &)> lambda
-  ) : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {
-    binned_result_.InitializeEntries(TH1F("no","no",1,0,1));
-  }
+  ) : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {}
 
   Correlator(std::vector<std::string> input_names,
              std::function<double(std::vector<Qn::QVector> &)> lambda, const TH1F &base
-  ) : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {
-    binned_result_.InitializeEntries(base);
+  ) : binned_result_(new Qn::DataContainerTH1F()), lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {
+    binned_result_->InitializeEntries(base);
   }
 
   void ConfigureSampler(Sampler::Method method, int nsamples) {
@@ -83,7 +81,9 @@ class Correlator {
     int ibin = 0;
     for (const auto &bin : correlation_.GetCorrelation()) {
       if (bin.first) result_.At(ibin).Fill(bin.second, sample_id_vector);
-      if (bin.first) binned_result_.At(ibin).Fill(bin.second);
+      if (bin.first && binned_result_) {
+        binned_result_->At(ibin).Fill(bin.second);
+      }
       ++ibin;
     }
   }
@@ -91,22 +91,24 @@ class Correlator {
   void ConfigureCorrelation(const std::vector<DataContainerQVector> &input, std::vector<Qn::Axis> event) {
     correlation_.ConfigureCorrelation(input, event, lambda_correlation_, input_names_);
     result_.AddAxes(correlation_.GetCorrelation().GetAxes());
-    auto base_hist = binned_result_.At(0);
-    binned_result_.AddAxes(correlation_.GetCorrelation().GetAxes());
-    binned_result_.InitializeEntries(base_hist);
+    if (binned_result_) {
+      auto base_hist = binned_result_->At(0);
+      binned_result_->AddAxes(correlation_.GetCorrelation().GetAxes());
+      binned_result_->InitializeEntries(base_hist);
+    }
   }
 
   Qn::Correlation GetCorrelation() const { return correlation_; }
 
   DataContainerSample GetResult() const { return result_; }
 
-  DataContainerTH1F GetBinnedResult() const { return binned_result_; }
+  std::shared_ptr<DataContainerTH1F> GetBinnedResult() const { return binned_result_; }
 
  private:
   Qn::Sampler sampler_;
   Qn::Correlation correlation_;
   Qn::DataContainerSample result_;
-  Qn::DataContainerTH1F binned_result_;
+  std::shared_ptr<Qn::DataContainerTH1F> binned_result_;
   std::function<double(std::vector<Qn::QVector> &)> lambda_correlation_;
   std::vector<std::string> input_names_;
   std::vector<std::vector<int>> autocorrelated_bins_;
