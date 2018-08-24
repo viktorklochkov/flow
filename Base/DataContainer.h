@@ -101,7 +101,7 @@ class DataContainer : public TObject {
     CalculateStride();
   }
 
-  void InitializeEntries( const T obj) {
+  void InitializeEntries(const T obj) {
     for (auto &bin : data_) {
       bin = obj;
     }
@@ -284,7 +284,7 @@ class DataContainer : public TObject {
     unsigned long linearindex = 0;
     std::vector<bool> isprojected;
     auto originalaxes = this->GetAxes();
-    auto lambda = [](const T&a, const T&b) { return a + b;};
+    auto lambda = [](const T &a, const T &b) { return a + b; };
     for (const auto &originalaxis : originalaxes) {
       for (const auto &name : names) {
         isprojected.push_back((originalaxis.Name()==name)==0);
@@ -531,7 +531,7 @@ class DataContainer : public TObject {
       auto binmid = binlow + (binhigh - binlow)/2;
       unsigned long rebinnedindex = static_cast<unsigned long>(rebinaxis.FindBin(binmid));
       indices[axisposition] = rebinnedindex;
-      rebinned.At(indices) = lambda(rebinned.At(indices), bin);
+      if (rebinnedindex!=-1) rebinned.At(indices) = lambda(rebinned.At(indices), bin);
       ++ibin;
     }
     return rebinned;
@@ -706,7 +706,7 @@ DataContainer<T> Sqrt(DataContainer<T> a) {
 }
 
 using DataContainerF = DataContainer<float>;
-using DataContainerFB = DataContainer<std::pair<bool,float>>;
+using DataContainerFB = DataContainer<std::pair<bool, float>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerProfile = DataContainer<Qn::Profile>;
 using DataContainerSample = DataContainer<Qn::Sample>;
