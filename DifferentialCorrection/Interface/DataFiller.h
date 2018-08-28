@@ -10,7 +10,7 @@
 namespace Qn {
 class DataFiller {
  public:
-  explicit DataFiller() : {}
+  explicit DataFiller() {}
   void Fill(std::map<std::string, Detector> &channel, std::map<std::string, Detector> &tracking, const std::shared_ptr<VariableManager> &var_manager) {
     for (auto &dp : channel) {
       dp.second.FillData();
