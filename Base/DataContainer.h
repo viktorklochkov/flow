@@ -76,9 +76,11 @@ class DataContainer : public TObject {
  * @param axes vector of axes
  */
   void AddAxes(const std::vector<Axis> &axes) {
-    if (integrated_) this->Reset();
-    for (const auto &axis : axes) {
-      AddAxis(axis);
+    if (axes.size() != 0) {
+      if (integrated_) this->Reset();
+      for (const auto &axis : axes) {
+        AddAxis(axis);
+      }
     }
   }
 /**
@@ -631,7 +633,6 @@ class DataContainer : public TObject {
  * @return linear index
  */
   long GetLinearIndex(const std::vector<float> &coordinates) const {
-    SIZETYPE index;
     typename std::vector<SIZETYPE> indices;
     unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
