@@ -23,8 +23,7 @@ set(DIFF_SOURCES
         DifferentialCorrection/CorrectionManager.cpp
         DifferentialCorrection/Detector.cpp
         DifferentialCorrection/Interface/DataFiller.cpp
-        DifferentialCorrection/HistogramManager.cpp
-        )
+        DifferentialCorrection/QAHistogram.cpp DifferentialCorrection/QAHistogram.h)
 
 set(BASE_SOURCES
         Base/DataVector.cpp
