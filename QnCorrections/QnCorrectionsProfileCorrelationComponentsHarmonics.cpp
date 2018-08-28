@@ -333,7 +333,7 @@ Bool_t QnCorrectionsProfileCorrelationComponentsHarmonics::AttachHistograms(TLis
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfileCorrelationComponentsHarmonics::GetBin(const Float_t *variableContainer) {
+Long64_t QnCorrectionsProfileCorrelationComponentsHarmonics::GetBin(const double *variableContainer) {
   FillBinAxesValues(variableContainer);
   return fEntries->GetBin(fBinAxesValues);
 }
@@ -639,7 +639,7 @@ Float_t QnCorrectionsProfileCorrelationComponentsHarmonics::GetYYBinError(Int_t 
 /// \param harmonic the interested external harmonic number
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponentsHarmonics::FillXX(Int_t harmonic, const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponentsHarmonics::FillXX(Int_t harmonic, const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fXXValues[harmonic] == NULL) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in correlation component histogram %s. FIX IT, PLEASE.", harmonic, GetName()));
@@ -686,7 +686,7 @@ void QnCorrectionsProfileCorrelationComponentsHarmonics::FillXX(Int_t harmonic, 
 /// \param harmonic the interested external harmonic number
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponentsHarmonics::FillXY(Int_t harmonic, const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponentsHarmonics::FillXY(Int_t harmonic, const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fXYValues[harmonic] == NULL) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in correlation component histogram %s. FIX IT, PLEASE.", harmonic, GetName()));
@@ -733,7 +733,7 @@ void QnCorrectionsProfileCorrelationComponentsHarmonics::FillXY(Int_t harmonic, 
 /// \param harmonic the interested external harmonic number
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponentsHarmonics::FillYX(Int_t harmonic, const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponentsHarmonics::FillYX(Int_t harmonic, const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fYXValues[harmonic] == NULL) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in correlation component histogram %s. FIX IT, PLEASE.", harmonic, GetName()));
@@ -780,7 +780,7 @@ void QnCorrectionsProfileCorrelationComponentsHarmonics::FillYX(Int_t harmonic, 
 /// \param harmonic the interested external harmonic number
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponentsHarmonics::FillYY(Int_t harmonic, const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponentsHarmonics::FillYY(Int_t harmonic, const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fYYValues[harmonic] == NULL) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in correlation component histogram %s. FIX IT, PLEASE.", harmonic, GetName()));

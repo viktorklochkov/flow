@@ -47,7 +47,7 @@ class QnCorrectionsCutsBase: public TObject {
   ///
   /// \param variableContainer the current variables content addressed by var Id
   /// \return kTRUE if the actual value passes the cut else kFALSE
-  virtual Bool_t IsSelected(const Float_t *variableContainer) = 0;
+  virtual Bool_t IsSelected(const double *variableContainer) = 0;
  protected:
   Int_t         fVarId;   ///< The external Id for the variable in the data bank
 

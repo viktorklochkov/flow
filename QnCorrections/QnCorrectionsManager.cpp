@@ -232,7 +232,7 @@ const QnCorrectionsQnVector *QnCorrectionsManager::GetDetectorQnVector(
 void QnCorrectionsManager::InitializeQnCorrectionsFramework() {
 
   /* the data bank */
-  fDataContainer = new Float_t[nMaxNoOfDataVariables];
+  fDataContainer = new double[nMaxNoOfDataVariables];
 
   /* let's build the detectors map */
   fDetectorsIdMap = new QnCorrectionsDetector *[nMaxNoOfDetectors];

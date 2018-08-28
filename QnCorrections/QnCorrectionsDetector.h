@@ -59,8 +59,8 @@ public:
   Bool_t CreateNveQAHistograms(TList *list);
   Bool_t AttachCorrectionInputs(TList *list);
   virtual void AfterInputsAttachActions();
-  Bool_t ProcessCorrections(const Float_t *variableContainer);
-  Bool_t ProcessDataCollection(const Float_t *variableContainer);
+  Bool_t ProcessCorrections(const double *variableContainer);
+  Bool_t ProcessDataCollection(const double *variableContainer);
   void IncludeQnVectors(TList *list);
 
   /// Gets the name of the detector configuration at index that accepted last data vector
@@ -77,7 +77,7 @@ public:
   void FillOverallQnVectorCorrectionStepList(TList *list) const;
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
 
-  Int_t AddDataVector(const Float_t *variableContainer, Double_t phi, Double_t weight = 1.0, Int_t channelId = -1);
+  Int_t AddDataVector(const double *variableContainer, Double_t phi, Double_t weight = 1.0, Int_t channelId = -1);
 
   virtual void ClearDetector();
 
@@ -109,7 +109,7 @@ private:
 /// \param weight the weight of the data vector
 /// \param channelId the channel Id that originates the data vector
 /// \return the number of detector configurations that accepted and stored the data vector
-inline Int_t QnCorrectionsDetector::AddDataVector(const Float_t *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
+inline Int_t QnCorrectionsDetector::AddDataVector(const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
   fDataVectorAcceptedConfigurations.Clear();
   for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
     Bool_t ret = fConfigurations.At(ixConfiguration)->AddDataVector(variableContainer, phi, weight, channelId);
@@ -124,7 +124,7 @@ inline Int_t QnCorrectionsDetector::AddDataVector(const Float_t *variableContain
 ///
 /// The request is transmitted to the attached detector configurations
 /// \return kTRUE if everything went OK
-inline Bool_t QnCorrectionsDetector::ProcessCorrections(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsDetector::ProcessCorrections(const double *variableContainer) {
   Bool_t retValue = kTRUE;
 
   for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
@@ -138,7 +138,7 @@ inline Bool_t QnCorrectionsDetector::ProcessCorrections(const Float_t *variableC
 ///
 /// The request is transmitted to the attached detector configurations
 /// \return kTRUE if everything went OK
-inline Bool_t QnCorrectionsDetector::ProcessDataCollection(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsDetector::ProcessDataCollection(const double *variableContainer) {
   Bool_t retValue = kTRUE;
 
   for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {

@@ -105,12 +105,12 @@ public:
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessCorrections(const Float_t *variableContainer) = 0;
+  virtual Bool_t ProcessCorrections(const double *variableContainer) = 0;
   /// Processes the correction step data collection
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessDataCollection(const Float_t *variableContainer) = 0;
+  virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
   /// Include the new corrected Qn vector into the passed list
   ///
   /// Pure virtual function

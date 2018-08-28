@@ -388,7 +388,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateNveQAHistograms(TList *list) 
 ///
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessCorrections(const Float_t *variableContainer) {
+Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessCorrections(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
   case QCORRSTEP_calibration: {
@@ -567,7 +567,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessCorrections(const Float_t *v
 ///
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessDataCollection(const Float_t *variableContainer) {
+Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessDataCollection(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration: {
     /* logging */

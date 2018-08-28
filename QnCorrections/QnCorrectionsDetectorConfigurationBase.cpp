@@ -163,7 +163,7 @@ void QnCorrectionsDetectorConfigurationBase::ActivateHarmonic(Int_t harmonic) {
 ///
 /// \param variableContainer pointer to the variable content bank
 /// \return kTRUE if the current content applies to the configuration
-Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const Float_t *variableContainer) {
+Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const double *variableContainer) {
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a channelized detector configuration without passing the channel number. FIX IT, PLEASE.",
       "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
@@ -180,7 +180,7 @@ Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const Float_t *variabl
 /// \param variableContainer pointer to the variable content bank
 /// \param nChannel the interested external channel number
 /// \return kTRUE if the current content applies to the configuration
-Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const Float_t *variableContainer, Int_t nChannel) {
+Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const double *variableContainer, Int_t nChannel) {
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a non channelized detector configuration but passing a channel number. FIX IT, PLEASE.",
       "QnCorrectionsDetectorConfigurationBase::IsSelected()"));

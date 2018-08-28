@@ -38,7 +38,7 @@ class QnCorrectionsCutSetBit: public QnCorrectionsCutsBase {
   QnCorrectionsCutSetBit(Int_t varId, Int_t bitNo, Bool_t set);
   virtual ~QnCorrectionsCutSetBit();
 
-  virtual Bool_t IsSelected(const Float_t *variableContainer);
+  virtual Bool_t IsSelected(const double *variableContainer);
  private:
   UInt_t          fBitMask;   ///< The mask to apply to the variable value
   UInt_t          fExpectedResult; ///< The expected masked result to pass the cut
@@ -52,7 +52,7 @@ class QnCorrectionsCutSetBit: public QnCorrectionsCutsBase {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return kTRUE if the actual value is below the threshold else kFALSE
-inline Bool_t QnCorrectionsCutSetBit::IsSelected(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsCutSetBit::IsSelected(const double *variableContainer) {
   if ((UInt_t(variableContainer[fVarId]) & fBitMask) != fExpectedResult)
     return kFALSE;
   else

@@ -215,7 +215,7 @@ Bool_t QnCorrectionsQnVectorAlignment::CreateNveQAHistograms(TList *list) {
 ///
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorAlignment::ProcessCorrections(const Float_t *variableContainer) {
+Bool_t QnCorrectionsQnVectorAlignment::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -284,7 +284,7 @@ Bool_t QnCorrectionsQnVectorAlignment::ProcessCorrections(const Float_t *variabl
 ///
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorAlignment::ProcessDataCollection(const Float_t *variableContainer) {
+Bool_t QnCorrectionsQnVectorAlignment::ProcessDataCollection(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* logging */

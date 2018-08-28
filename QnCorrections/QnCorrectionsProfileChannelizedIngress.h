@@ -53,10 +53,10 @@ public:
   virtual Bool_t AttachHistograms(TList *histogramList)
   { return QnCorrectionsHistogramBase::AttachHistograms(histogramList); }
 
-  virtual Long64_t GetBin(const Float_t *variableContainer, Int_t nChannel);
-  virtual Long64_t GetGrpBin(const Float_t *variableContainer, Int_t nChannel);
+  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
+  virtual Long64_t GetGrpBin(const double *variableContainer, Int_t nChannel);
   /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const Float_t *variableContainer)
+  virtual Long64_t GetBin(const double *variableContainer)
   { return QnCorrectionsHistogramBase::GetBin(variableContainer); }
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetBinContent(Long64_t bin);

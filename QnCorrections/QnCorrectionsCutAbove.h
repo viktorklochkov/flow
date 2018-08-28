@@ -36,7 +36,7 @@ class QnCorrectionsCutAbove: public QnCorrectionsCutsBase {
   QnCorrectionsCutAbove(Int_t varId, Float_t threshold);
   virtual ~QnCorrectionsCutAbove();
 
-  virtual Bool_t IsSelected(const Float_t *variableContainer);
+  virtual Bool_t IsSelected(const double *variableContainer);
  private:
   Float_t         fThreshold;   ///< The value that must be surpassed
 
@@ -49,7 +49,7 @@ class QnCorrectionsCutAbove: public QnCorrectionsCutsBase {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return kTRUE if the actual value is above the threshold else kFALSE
-inline Bool_t QnCorrectionsCutAbove::IsSelected(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsCutAbove::IsSelected(const double *variableContainer) {
   if (variableContainer[fVarId] > fThreshold)
     return kTRUE;
   else

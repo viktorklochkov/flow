@@ -90,7 +90,11 @@ public:
 
   /// Gets a pointer to the data variables bank
   /// \return the pointer to the data container
-  Float_t *GetDataContainer() { return fDataContainer; }
+  double *GetDataContainer() { return fDataContainer; }
+
+  /// Gets a pointer to the data variables bank
+  /// \return the pointer to the data container
+  double **GetDataPointer() { return &fDataContainer; }
 
   /// Get whether the output histograms should be filled
   /// \return kTRUE if the output histograms should be filled
@@ -153,7 +157,7 @@ private:
   static const char *szAllProcessesListName;         ///< the name of the list that collects data from all concurrent processes
   TList fDetectorsSet;                  ///< the list of detectors
   QnCorrectionsDetector **fDetectorsIdMap; //!<! map between external detector Id and internal detector
-  Float_t *fDataContainer;              //!<! the data variables bank
+  double *fDataContainer;              //!<! the data variables bank
   TList *fCalibrationHistogramsList;    ///< the list of the input calibration histograms
   TList *fSupportHistogramsList;        //!<! the list of the support histograms
   TList *fQAHistogramsList;             //!<! the list of QA histograms

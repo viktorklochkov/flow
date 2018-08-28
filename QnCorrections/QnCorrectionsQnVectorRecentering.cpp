@@ -174,7 +174,7 @@ Bool_t QnCorrectionsQnVectorRecentering::CreateNveQAHistograms(TList *list) {
 ///
 /// Pure virtual function
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorRecentering::ProcessCorrections(const Float_t *variableContainer) {
+Bool_t QnCorrectionsQnVectorRecentering::ProcessCorrections(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
   case QCORRSTEP_calibration:
@@ -235,7 +235,7 @@ Bool_t QnCorrectionsQnVectorRecentering::ProcessCorrections(const Float_t *varia
 ///
 /// Pure virtual function
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorRecentering::ProcessDataCollection(const Float_t *variableContainer) {
+Bool_t QnCorrectionsQnVectorRecentering::ProcessDataCollection(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
   case QCORRSTEP_calibration:

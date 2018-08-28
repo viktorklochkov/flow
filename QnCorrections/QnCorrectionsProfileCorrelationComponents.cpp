@@ -238,7 +238,7 @@ Bool_t QnCorrectionsProfileCorrelationComponents::AttachHistograms(TList *histog
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfileCorrelationComponents::GetBin(const Float_t *variableContainer) {
+Long64_t QnCorrectionsProfileCorrelationComponents::GetBin(const double *variableContainer) {
   FillBinAxesValues(variableContainer);
   return fEntries->GetBin(fBinAxesValues);
 }
@@ -479,7 +479,7 @@ Float_t QnCorrectionsProfileCorrelationComponents::GetYYBinError(Long64_t bin) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponents::FillXX(const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponents::FillXX(const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fXXXYYXYYFillMask & correlationXXmask) {
     QnCorrectionsFatal(Form("Filling twice XX component before entries update in histogram %s.\n" \
@@ -515,7 +515,7 @@ void QnCorrectionsProfileCorrelationComponents::FillXX(const Float_t *variableCo
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponents::FillXY(const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponents::FillXY(const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fXXXYYXYYFillMask & correlationXYmask) {
     QnCorrectionsFatal(Form("Filling twice the XY component before entries update in histogram %s.\n" \
@@ -551,7 +551,7 @@ void QnCorrectionsProfileCorrelationComponents::FillXY(const Float_t *variableCo
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponents::FillYX(const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponents::FillYX(const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fXXXYYXYYFillMask & correlationYXmask) {
     QnCorrectionsFatal(Form("Filling twice the YX component before entries update in histogram %s.\n" \
@@ -587,7 +587,7 @@ void QnCorrectionsProfileCorrelationComponents::FillYX(const Float_t *variableCo
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileCorrelationComponents::FillYY(const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfileCorrelationComponents::FillYY(const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
   if (fXXXYYXYYFillMask & correlationYYmask) {
     QnCorrectionsFatal(Form("Filling twice the YY component before entries update in histogram %s.\n" \

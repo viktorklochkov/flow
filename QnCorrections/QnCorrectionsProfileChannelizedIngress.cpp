@@ -338,7 +338,7 @@ Bool_t QnCorrectionsProfileChannelizedIngress::AttachHistograms(TList *histogram
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfileChannelizedIngress::GetBin(const Float_t *variableContainer, Int_t nChannel) {
+Long64_t QnCorrectionsProfileChannelizedIngress::GetBin(const double *variableContainer, Int_t nChannel) {
 
   /* store also the channel number */
   FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
@@ -392,7 +392,7 @@ Float_t QnCorrectionsProfileChannelizedIngress::GetBinError(Long64_t bin) {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number which group number is asked
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfileChannelizedIngress::GetGrpBin(const Float_t *variableContainer, Int_t nChannel) {
+Long64_t QnCorrectionsProfileChannelizedIngress::GetGrpBin(const double *variableContainer, Int_t nChannel) {
 
   /* check the groups structures are in place */
   if (fUseGroups) {

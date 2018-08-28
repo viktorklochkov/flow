@@ -38,9 +38,9 @@ public:
   virtual Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup)
   { return QnCorrectionsHistogramBase::AttachHistograms(histogramList, bUsedChannel, nChannelGroup); }
 
-  virtual Long64_t GetBin(const Float_t *variableContainer);
+  virtual Long64_t GetBin(const double *variableContainer);
   /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const Float_t *variableContainer, Int_t nChannel)
+  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel)
   { return QnCorrectionsHistogramBase::GetBin(variableContainer, nChannel); }
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetXXBinContent(Long64_t bin);
@@ -52,10 +52,10 @@ public:
   virtual Float_t GetYXBinError(Long64_t bin);
   virtual Float_t GetYYBinError(Long64_t bin);
 
-  virtual void FillXX(const Float_t *variableContainer, Float_t weight);
-  virtual void FillXY(const Float_t *variableContainer, Float_t weight);
-  virtual void FillYX(const Float_t *variableContainer, Float_t weight);
-  virtual void FillYY(const Float_t *variableContainer, Float_t weight);
+  virtual void FillXX(const double *variableContainer, Float_t weight);
+  virtual void FillXY(const double *variableContainer, Float_t weight);
+  virtual void FillYX(const double *variableContainer, Float_t weight);
+  virtual void FillYY(const double *variableContainer, Float_t weight);
 
   /// wrong call for this class invoke base class behavior
   virtual Float_t GetXXBinContent(Int_t harmonic, Long64_t bin)
@@ -84,16 +84,16 @@ public:
 
 
   /// wrong call for this class invoke base class behavior
-  virtual void FillXX(Int_t harmonic, const Float_t *variableContainer, Float_t weight)
+  virtual void FillXX(Int_t harmonic, const double *variableContainer, Float_t weight)
   { return QnCorrectionsHistogramBase::FillXX(harmonic, variableContainer, weight); }
   /// wrong call for this class invoke base class behavior
-  virtual void FillXY(Int_t harmonic, const Float_t *variableContainer, Float_t weight)
+  virtual void FillXY(Int_t harmonic, const double *variableContainer, Float_t weight)
   { return QnCorrectionsHistogramBase::FillXY(harmonic, variableContainer, weight); }
   /// wrong call for this class invoke base class behavior
-  virtual void FillYX(Int_t harmonic, const Float_t *variableContainer, Float_t weight)
+  virtual void FillYX(Int_t harmonic, const double *variableContainer, Float_t weight)
   { return QnCorrectionsHistogramBase::FillYX(harmonic, variableContainer, weight); }
   /// wrong call for this class invoke base class behavior
-  virtual void FillYY(Int_t harmonic, const Float_t *variableContainer, Float_t weight)
+  virtual void FillYY(Int_t harmonic, const double *variableContainer, Float_t weight)
   { return QnCorrectionsHistogramBase::FillYY(harmonic, variableContainer, weight); }
 
 private:

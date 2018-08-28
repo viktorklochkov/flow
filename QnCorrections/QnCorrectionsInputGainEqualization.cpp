@@ -209,7 +209,7 @@ Bool_t QnCorrectionsInputGainEqualization::CreateNveQAHistograms(TList *list) {
 /// from correction processing. If so is required probably multiple equalization
 /// structures should be included.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsInputGainEqualization::ProcessCorrections(const Float_t *variableContainer) {
+Bool_t QnCorrectionsInputGainEqualization::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* collect the data needed to further produce equalization parameters */
@@ -328,7 +328,7 @@ Bool_t QnCorrectionsInputGainEqualization::ProcessCorrections(const Float_t *var
 /// structures should be included.
 /// So this function only retures the proper value according to the status.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsInputGainEqualization::ProcessDataCollection(const Float_t *variableContainer) {
+Bool_t QnCorrectionsInputGainEqualization::ProcessDataCollection(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* collect the data needed to further produce equalization parameters */

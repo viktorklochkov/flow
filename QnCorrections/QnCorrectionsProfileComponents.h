@@ -54,9 +54,9 @@ public:
   virtual Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup)
   { return QnCorrectionsHistogramBase::AttachHistograms(histogramList, bUsedChannel, nChannelGroup); }
 
-  virtual Long64_t GetBin(const Float_t *variableContainer);
+  virtual Long64_t GetBin(const double *variableContainer);
   /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const Float_t *variableContainer, Int_t nChannel)
+  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel)
   { return QnCorrectionsHistogramBase::GetBin(variableContainer, nChannel); }
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetXBinContent(Int_t harmonic, Long64_t bin);
@@ -64,8 +64,8 @@ public:
   virtual Float_t GetXBinError(Int_t harmonic, Long64_t bin);
   virtual Float_t GetYBinError(Int_t harmonic, Long64_t bin);
 
-  virtual void FillX(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
-  virtual void FillY(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
+  virtual void FillX(Int_t harmonic, const double *variableContainer, Float_t weight);
+  virtual void FillY(Int_t harmonic, const double *variableContainer, Float_t weight);
 
 private:
   THnF **fXValues;            //!<! X component histogram for each requested harmonic

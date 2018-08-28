@@ -116,8 +116,8 @@ public:
   virtual Bool_t CreateQAHistograms(TList *list);
   virtual Bool_t CreateNveQAHistograms(TList *list);
 
-  virtual Bool_t ProcessCorrections(const Float_t *variableContainer);
-  virtual Bool_t ProcessDataCollection(const Float_t *variableContainer);
+  virtual Bool_t ProcessCorrections(const double *variableContainer);
+  virtual Bool_t ProcessDataCollection(const double *variableContainer);
   virtual void ClearCorrectionStep();
   virtual Bool_t IsBeingApplied() const;
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);

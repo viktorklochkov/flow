@@ -59,8 +59,8 @@ public:
   virtual Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
 
 
-  virtual Long64_t GetBin(const Float_t *variableContainer);
-  virtual Long64_t GetBin(const Float_t *variableContainer, Int_t nChannel);
+  virtual Long64_t GetBin(const double *variableContainer);
+  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
   /// Check the validity of the content of the passed bin
   /// Pure virtual function
   /// \param bin the bin to check its content validity
@@ -94,21 +94,21 @@ public:
   virtual Float_t GetYXBinError(Int_t harmonic, Long64_t bin);
   virtual Float_t GetYYBinError(Int_t harmonic, Long64_t bin);
 
-  virtual void Fill(const Float_t *variableContainer, Float_t weight);
-  virtual void Fill(const Float_t *variableContainer, Int_t nChannel, Float_t weight);
-  virtual void FillX(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
-  virtual void FillY(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
-  virtual void FillXX(const Float_t *variableContainer, Float_t weight);
-  virtual void FillXY(const Float_t *variableContainer, Float_t weight);
-  virtual void FillYX(const Float_t *variableContainer, Float_t weight);
-  virtual void FillYY(const Float_t *variableContainer, Float_t weight);
-  virtual void FillXX(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
-  virtual void FillXY(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
-  virtual void FillYX(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
-  virtual void FillYY(Int_t harmonic, const Float_t *variableContainer, Float_t weight);
+  virtual void Fill(const double *variableContainer, Float_t weight);
+  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
+  virtual void FillX(Int_t harmonic, const double *variableContainer, Float_t weight);
+  virtual void FillY(Int_t harmonic, const double *variableContainer, Float_t weight);
+  virtual void FillXX(const double *variableContainer, Float_t weight);
+  virtual void FillXY(const double *variableContainer, Float_t weight);
+  virtual void FillYX(const double *variableContainer, Float_t weight);
+  virtual void FillYY(const double *variableContainer, Float_t weight);
+  virtual void FillXX(Int_t harmonic, const double *variableContainer, Float_t weight);
+  virtual void FillXY(Int_t harmonic, const double *variableContainer, Float_t weight);
+  virtual void FillYX(Int_t harmonic, const double *variableContainer, Float_t weight);
+  virtual void FillYY(Int_t harmonic, const double *variableContainer, Float_t weight);
 
 protected:
-  void FillBinAxesValues(const Float_t *variableContainer, Int_t chgrpId = -1);
+  void FillBinAxesValues(const double *variableContainer, Int_t chgrpId = -1);
   THnF* DivideTHnF(THnF* values, THnI* entries, THnC *valid = NULL);
   void CopyTHnF(THnF *hDest, THnF *hSource, Int_t *binsArray);
   void CopyTHnFDimension(THnF *hDest, THnF *hSource, Int_t *binsArray, Int_t dimension);
@@ -147,7 +147,7 @@ protected:
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param chgrpId additional optional channel or group Id
-inline void QnCorrectionsHistogramBase::FillBinAxesValues(const Float_t *variableContainer, Int_t chgrpId) {
+inline void QnCorrectionsHistogramBase::FillBinAxesValues(const double *variableContainer, Int_t chgrpId) {
   for (Int_t var = 0; var < fEventClassVariables.GetEntriesFast(); var++) {
     fBinAxesValues[var] = variableContainer[fEventClassVariables.At(var)->GetVariableId()];
   }

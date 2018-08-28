@@ -91,7 +91,7 @@ Bool_t QnCorrectionsHistogramSparse::CreateHistogram(TList *histogramList) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsHistogramSparse::GetBin(const Float_t *variableContainer) {
+Long64_t QnCorrectionsHistogramSparse::GetBin(const double *variableContainer) {
 
   FillBinAxesValues(variableContainer);
   /* store the channel number */
@@ -140,7 +140,7 @@ Float_t QnCorrectionsHistogramSparse::GetBinError(Long64_t bin) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsHistogramSparse::Fill(const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsHistogramSparse::Fill(const double *variableContainer, Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
 

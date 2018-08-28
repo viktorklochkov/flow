@@ -59,7 +59,7 @@ public:
   /// \return the event class variable object a position i
   virtual QnCorrectionsCutsBase *At(Int_t i) const { return (QnCorrectionsCutsBase *) TObjArray::At(i); }
 
-  Bool_t IsSelected(const Float_t *variableContainer);
+  Bool_t IsSelected(const double *variableContainer);
 
 /// \cond CLASSIMP
   ClassDef(QnCorrectionsCutsSet, 1);
@@ -71,7 +71,7 @@ public:
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return kTRUE if the actual values pass the set of cuts else kFALSE
-inline Bool_t QnCorrectionsCutsSet::IsSelected(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsCutsSet::IsSelected(const double *variableContainer) {
   for (Int_t icut = 0; icut < GetEntriesFast(); icut++) {
     if (!At(icut)->IsSelected(variableContainer)) {
       return kFALSE;

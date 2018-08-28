@@ -205,13 +205,13 @@ class QnCorrectionsDetectorConfigurationBase : public TNamed {
   /// Pure virtual function.
   /// The request is transmitted to the correction steps
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessCorrections(const Float_t *variableContainer) = 0;
+  virtual Bool_t ProcessCorrections(const double *variableContainer) = 0;
   /// Ask for processing corrections data collection for the involved detector configuration
   ///
   /// Pure virtual function.
   /// The request is transmitted to the correction steps
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessDataCollection(const Float_t *variableContainer) = 0;
+  virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
   virtual void ActivateHarmonic(Int_t harmonic);
   virtual void AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn);
   virtual void AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData);
@@ -252,13 +252,13 @@ class QnCorrectionsDetectorConfigurationBase : public TNamed {
   /// \param weight the weight of the data vector
   /// \param channelId the channel Id that originates the data vector
   /// \return kTRUE if the data vector was accepted and stored
-  virtual Bool_t AddDataVector(const Float_t *variableContainer,
+  virtual Bool_t AddDataVector(const double *variableContainer,
                                Double_t phi,
                                Double_t weight = 1.0,
                                Int_t channelId = -1) = 0;
 
-  virtual Bool_t IsSelected(const Float_t *variableContainer);
-  virtual Bool_t IsSelected(const Float_t *variableContainer, Int_t nChannel);
+  virtual Bool_t IsSelected(const double *variableContainer);
+  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel);
 
   /// Clean the configuration to accept a new event
   /// Pure virtual function

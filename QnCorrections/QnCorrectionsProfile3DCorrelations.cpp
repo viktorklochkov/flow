@@ -405,7 +405,7 @@ Bool_t QnCorrectionsProfile3DCorrelations::AttachHistograms(TList *histogramList
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfile3DCorrelations::GetBin(const Float_t *variableContainer) {
+Long64_t QnCorrectionsProfile3DCorrelations::GetBin(const double *variableContainer) {
   FillBinAxesValues(variableContainer);
   return fEntries->GetBin(fBinAxesValues);
 }
@@ -805,7 +805,7 @@ Float_t QnCorrectionsProfile3DCorrelations::GetYYBinError(const char *comb, Int_
 void QnCorrectionsProfile3DCorrelations::Fill(const QnCorrectionsQnVector *QnA,
     const QnCorrectionsQnVector *QnB,
     const QnCorrectionsQnVector *QnC,
-    const Float_t *variableContainer) {
+    const double *variableContainer) {
 
   /* first the sanity checks */
   if (!((QnA->IsGoodQuality()) && (QnB->IsGoodQuality()) && (QnC->IsGoodQuality()))) return;

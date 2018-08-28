@@ -59,9 +59,9 @@ public:
   virtual Bool_t AttachCorrectionInputs(TList *list);
   virtual void AfterInputsAttachActions();
 
-  virtual Bool_t ProcessCorrections(const Float_t *variableContainer);
-  virtual Bool_t ProcessDataCollection(const Float_t *variableContainer);
-  virtual Bool_t AddDataVector(const Float_t *variableContainer, Double_t phi, Double_t weight = 1.0, Int_t channelId = -1);
+  virtual Bool_t ProcessCorrections(const double *variableContainer);
+  virtual Bool_t ProcessDataCollection(const double *variableContainer);
+  virtual Bool_t AddDataVector(const double *variableContainer, Double_t phi, Double_t weight = 1.0, Int_t channelId = -1);
 
   virtual void BuildQnVector();
   virtual void IncludeQnVectors(TList *list);
@@ -73,17 +73,17 @@ public:
   /// the detector configuration
   /// \param variableContainer pointer to the variable content bank
   /// \return kTRUE if the current content applies to the configuration
-  virtual Bool_t IsSelected(const Float_t *variableContainer)
+  virtual Bool_t IsSelected(const double *variableContainer)
     { return ((fCuts != NULL) ? fCuts->IsSelected(variableContainer) : kTRUE); }
   /// wrong call for this class invoke base class behavior
-  virtual Bool_t IsSelected(const Float_t *variableContainer, Int_t nChannel)
+  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel)
   { return QnCorrectionsDetectorConfigurationBase::IsSelected(variableContainer,nChannel); }
 
   virtual void ClearConfiguration();
 
 private:
   /* QA section */
-  void FillQAHistograms(const Float_t *variableContainer);
+  void FillQAHistograms(const double *variableContainer);
   static const char *szQAQnAverageHistogramName; ///< name and title for plain Qn vector components average QA histograms
   QnCorrectionsProfileComponents *fQAQnAverageHistogram; //!<! the plain average Qn components QA histogram
 
@@ -101,7 +101,7 @@ private:
 /// \param id the Id associated to the data vector. For track detector configurations could represent the track id.
 /// \return kTRUE if the data vector was accepted and stored
 inline Bool_t QnCorrectionsDetectorConfigurationTracks::AddDataVector(
-    const Float_t *variableContainer, Double_t phi, Double_t weight, Int_t id) {
+    const double *variableContainer, Double_t phi, Double_t weight, Int_t id) {
   if (IsSelected(variableContainer)) {
     /// add the data vector to the bank
     new (fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
@@ -161,7 +161,7 @@ inline void QnCorrectionsDetectorConfigurationTracks::BuildQnVector() {
 /// The request is transmitted to the Q vector correction steps.
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t QnCorrectionsDetectorConfigurationTracks::ProcessCorrections(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsDetectorConfigurationTracks::ProcessCorrections(const double *variableContainer) {
   /* first we build the Q vector with the chosen calibration */
   BuildQnVector();
 
@@ -182,7 +182,7 @@ inline Bool_t QnCorrectionsDetectorConfigurationTracks::ProcessCorrections(const
 /// the request is transmitted to the Q vector correction steps.
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t QnCorrectionsDetectorConfigurationTracks::ProcessDataCollection(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsDetectorConfigurationTracks::ProcessDataCollection(const double *variableContainer) {
 
   /* fill QA information */
   FillQAHistograms(variableContainer);

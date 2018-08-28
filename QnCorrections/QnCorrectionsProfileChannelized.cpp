@@ -182,7 +182,7 @@ Bool_t QnCorrectionsProfileChannelized::CreateProfileHistograms(TList *histogram
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfileChannelized::GetBin(const Float_t *variableContainer, Int_t nChannel) {
+Long64_t QnCorrectionsProfileChannelized::GetBin(const double *variableContainer, Int_t nChannel) {
 
   FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
   /* store the channel number */
@@ -268,7 +268,7 @@ Float_t QnCorrectionsProfileChannelized::GetBinError(Long64_t bin) {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \param weight the increment in the bin content
-void QnCorrectionsProfileChannelized::Fill(const Float_t *variableContainer, Int_t nChannel, Float_t weight) {
+void QnCorrectionsProfileChannelized::Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
 

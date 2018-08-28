@@ -37,7 +37,7 @@ class QnCorrectionsCutOutside: public QnCorrectionsCutsBase {
   QnCorrectionsCutOutside(Int_t varId, Float_t min, Float_t max);
   virtual ~QnCorrectionsCutOutside();
 
-  virtual Bool_t IsSelected(const Float_t *variableContainer);
+  virtual Bool_t IsSelected(const double *variableContainer);
  private:
   Float_t         fMinThreshold;   ///< The lower limit
   Float_t         fMaxThreshold;   ///< The upper limit
@@ -51,7 +51,7 @@ class QnCorrectionsCutOutside: public QnCorrectionsCutsBase {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return kTRUE if the actual value is below the threshold else kFALSE
-inline Bool_t QnCorrectionsCutOutside::IsSelected(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsCutOutside::IsSelected(const double *variableContainer) {
   if ((fMinThreshold < variableContainer[fVarId]) && (variableContainer[fVarId] < fMaxThreshold))
     return kFALSE;
   else

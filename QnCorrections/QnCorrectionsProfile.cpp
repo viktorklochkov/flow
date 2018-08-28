@@ -133,7 +133,7 @@ Bool_t QnCorrectionsProfile::AttachHistograms(TList *histogramList) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t QnCorrectionsProfile::GetBin(const Float_t *variableContainer) {
+Long64_t QnCorrectionsProfile::GetBin(const double *variableContainer) {
   FillBinAxesValues(variableContainer);
   return fEntries->GetBin(fBinAxesValues);
 }
@@ -215,7 +215,7 @@ Float_t QnCorrectionsProfile::GetBinError(Long64_t bin) {
 ///
 /// \param variableContainer the current variables conten addressed by var Id
 /// \param weight the increment in the bin content
-void QnCorrectionsProfile::Fill(const Float_t *variableContainer, Float_t weight) {
+void QnCorrectionsProfile::Fill(const double *variableContainer, Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
 

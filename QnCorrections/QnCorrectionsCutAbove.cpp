@@ -8,7 +8,7 @@
  * Development:   2012-2016                                                                       *
  *                                                                                                *
  * This file is part of FlowVectorCorrections, a software package that corrects Q-vector          *
- * measurements for effects of nonuniform detector acceptance. The corrections in this package    *
+ *® measurements for effects of nonuniform detector acceptance. The corrections in this package    *
  * are based on publication:                                                                      *
  *                                                                                                *
  *  [1] "Effects of non-uniform acceptance in anisotropic flow measurements"                      *

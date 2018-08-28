@@ -63,17 +63,17 @@ public:
 
   Bool_t CreateProfileHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
 
-  virtual Long64_t GetBin(const Float_t *variableContainer, Int_t nChannel);
+  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
   /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const Float_t *variableContainer)
+  virtual Long64_t GetBin(const double *variableContainer)
   { return QnCorrectionsHistogramBase::GetBin(variableContainer); }
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetBinContent(Long64_t bin);
   virtual Float_t GetBinError(Long64_t bin);
 
-  virtual void Fill(const Float_t *variableContainer, Int_t nChannel, Float_t weight);
+  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
   /// wrong call for this class invoke base class behavior
-  virtual void Fill(const Float_t *variableContainer,Float_t weight)
+  virtual void Fill(const double *variableContainer,Float_t weight)
   { QnCorrectionsHistogramBase::Fill(variableContainer, weight); }
 private:
   THnF *fValues;              //!<! Cumulates values for each of the event classes

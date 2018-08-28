@@ -37,7 +37,7 @@ class QnCorrectionsCutValue: public QnCorrectionsCutsBase {
   QnCorrectionsCutValue(Int_t varId, Float_t value);
   virtual ~QnCorrectionsCutValue();
 
-  virtual Bool_t IsSelected(const Float_t *variableContainer);
+  virtual Bool_t IsSelected(const double *variableContainer);
  private:
   Float_t         fValue;   ///< The desired value
 
@@ -50,7 +50,7 @@ class QnCorrectionsCutValue: public QnCorrectionsCutsBase {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return kTRUE if the actual variable content is equal to the stored value else kFALSE
-inline Bool_t QnCorrectionsCutValue::IsSelected(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsCutValue::IsSelected(const double *variableContainer) {
   if (variableContainer[fVarId] != fValue)
     return kFALSE;
   else

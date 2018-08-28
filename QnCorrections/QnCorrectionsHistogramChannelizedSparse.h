@@ -44,17 +44,17 @@ public:
   Bool_t CreateChannelizedHistogram(TList *histogramList, const Bool_t *bUsedChannel);
 
   /// wrong call for this class invoke base class behaviour
-  virtual Long64_t GetBin(const Float_t *variableContainer)
+  virtual Long64_t GetBin(const double *variableContainer)
   { return QnCorrectionsHistogramBase::GetBin(variableContainer); }
-  virtual Long64_t GetBin(const Float_t *variableContainer, Int_t nChannel);
+  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetBinContent(Long64_t bin);
   virtual Float_t GetBinError(Long64_t bin);
 
   /// wrong call for this class invoke base class behavior
-  virtual void Fill(const Float_t *variableContainer, Float_t weight)
+  virtual void Fill(const double *variableContainer, Float_t weight)
   { QnCorrectionsHistogramBase::Fill(variableContainer, weight); }
-  virtual void Fill(const Float_t *variableContainer, Int_t nChannel, Float_t weight);
+  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
 private:
   THnSparseF *fValues;              //!<! Cumulates values for each of the event classes
   Bool_t *fUsedChannel;       //!<! array, which of the detector channels is used for this configuration

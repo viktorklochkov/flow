@@ -445,7 +445,7 @@ void QnCorrectionsDetectorConfigurationChannels::AddCorrectionOnInputData(QnCorr
 /// Fills the QA multiplicity histograms before and after input equalization
 /// and the plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
-void QnCorrectionsDetectorConfigurationChannels::FillQAHistograms(const Float_t *variableContainer) {
+void QnCorrectionsDetectorConfigurationChannels::FillQAHistograms(const double *variableContainer) {
   if (fQAMultiplicityBefore3D != NULL && fQAMultiplicityAfter3D != NULL) {
     for(Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++){
       QnCorrectionsDataVectorChannelized *dataVector =

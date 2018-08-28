@@ -225,7 +225,7 @@ void QnCorrectionsDetectorConfigurationTracks::AfterInputsAttachActions() {
 
 /// Fills the QA plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
-void QnCorrectionsDetectorConfigurationTracks::FillQAHistograms(const Float_t *variableContainer) {
+void QnCorrectionsDetectorConfigurationTracks::FillQAHistograms(const double *variableContainer) {
 
   if (fQAQnAverageHistogram != NULL) {
     Int_t harmonic = fPlainQnVector.GetFirstHarmonic();

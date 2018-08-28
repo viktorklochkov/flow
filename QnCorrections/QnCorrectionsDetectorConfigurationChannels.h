@@ -94,12 +94,12 @@ public:
   { QnCorrectionsDetectorConfigurationBase::ActivateHarmonic(harmonic); fRawQnVector.ActivateHarmonic(harmonic); }
   virtual Bool_t AttachCorrectionInputs(TList *list);
   virtual void AfterInputsAttachActions();
-  virtual Bool_t ProcessCorrections(const Float_t *variableContainer);
-  virtual Bool_t ProcessDataCollection(const Float_t *variableContainer);
+  virtual Bool_t ProcessCorrections(const double *variableContainer);
+  virtual Bool_t ProcessDataCollection(const double *variableContainer);
 
   virtual void AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData);
 
-  virtual Bool_t AddDataVector(const Float_t *variableContainer, Double_t phi, Double_t weight, Int_t channelId);
+  virtual Bool_t AddDataVector(const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId);
 
   virtual void BuildQnVector();
   void BuildRawQnVector();
@@ -113,10 +113,10 @@ public:
   /// \param variableContainer pointer to the variable content bank
   /// \param nChannel the interested external channel number
   /// \return kTRUE if the current content applies to the configuration
-  virtual Bool_t IsSelected(const Float_t *variableContainer, Int_t nChannel)
+  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel)
     { return ((fUsedChannel[nChannel]) ? ((fCuts != NULL) ? fCuts->IsSelected(variableContainer) : kTRUE) : kFALSE); }
   /// wrong call for this class invoke base class behavior
-  virtual Bool_t IsSelected(const Float_t *variableContainer)
+  virtual Bool_t IsSelected(const double *variableContainer)
   { return QnCorrectionsDetectorConfigurationBase::IsSelected(variableContainer); }
 
   virtual void ClearConfiguration();
@@ -136,7 +136,7 @@ private:
   QnCorrectionsCorrectionsSetOnInputData fInputDataCorrections; ///< set of corrections to apply on input data vectors
 
   /* QA section */
-  void FillQAHistograms(const Float_t *variableContainer);
+  void FillQAHistograms(const double *variableContainer);
   static const char *szQAMultiplicityHistoName; ///< QA multiplicity histograms name
   static const char *szQAQnAverageHistogramName; ///< name and title for plain Qn vector components average QA histograms
   Int_t fQACentralityVarId;   ///< the id of the variable used for centrality in QA histograms
@@ -171,7 +171,7 @@ private:
 /// \param channelId the channel Id that originates the data vector. Ignored for track detector configurations.
 /// \return kTRUE if the data vector was accepted and stored
 inline Bool_t QnCorrectionsDetectorConfigurationChannels::AddDataVector(
-    const Float_t *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
+    const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
   if (IsSelected(variableContainer, channelId)) {
     /// add the data vector to the bank
     new (fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
@@ -227,7 +227,7 @@ inline void QnCorrectionsDetectorConfigurationChannels::BuildQnVector() {
 /// and then to Q vector correction steps.
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t QnCorrectionsDetectorConfigurationChannels::ProcessCorrections(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsDetectorConfigurationChannels::ProcessCorrections(const double *variableContainer) {
 
   /* first we build the raw Q vector with the chosen calibration */
   BuildRawQnVector();
@@ -260,7 +260,7 @@ inline Bool_t QnCorrectionsDetectorConfigurationChannels::ProcessCorrections(con
 /// and then to Q vector correction steps.
 /// The first not applied correction step should break the loop after collecting the data and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t QnCorrectionsDetectorConfigurationChannels::ProcessDataCollection(const Float_t *variableContainer) {
+inline Bool_t QnCorrectionsDetectorConfigurationChannels::ProcessDataCollection(const double *variableContainer) {
 
   /* we transfer the request to the input data correction steps */
   for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
