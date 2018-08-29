@@ -14,6 +14,7 @@
 #include "Base/Axis.h"
 #include "EventInfo.h"
 #include "DifferentialCorrection/Interface/DataFiller.h"
+#include "VariableCutBase.h"
 namespace Qn {
 class CorrectionManager {
  public:
@@ -26,29 +27,13 @@ class CorrectionManager {
     var_manager_->CreateVariable(name, id, length);
   }
 
-  void AddChannelVariable(const std::string &name, const int size) {
-    var_manager_->CreateChannelVariable(name, size);
-  }
-
   void AddCorrectionAxis(const Qn::Axis &variable) { qncorrections_axis_.push_back(variable); }
 
   void SetEventVariable(const std::string &name) { event_variables_->AddVariable(name); }
 
-  void AddDetector(const std::string &name,
-                   DetectorType type,
-                   const std::string &phi_name,
-                   const std::string &weight_name = "Ones",
-                   const std::vector<Qn::Axis> &axes = {}) {
-    Variable phi = var_manager_->FindVariable(phi_name);
-    Variable weight = var_manager_->FindVariable(weight_name);
-    std::vector<Variable> vars;
-    for (const auto &axis : axes) {
-      vars.push_back(var_manager_->FindVariable(axis.Name()));
-    }
-    Detector det(type, axes, phi, weight, vars);
-    if (type==DetectorType::Channel) detectors_channel.emplace(std::make_pair(name, std::move(det)));
-//    if (type == DetectorType::Track) detectors_track.emplace(std::move(name), std::move(det));
-  }
+  void AddDetector(const std::string &name, DetectorType type, const std::string &phi_name,
+                   const std::string &weight_name = "Ones", const std::vector<Qn::Axis> &axes = {});
+
   template<typename FUNCTION>
   void AddCut(const std::string &name, const std::string &var_name, FUNCTION lambda) {
     auto variable = var_manager_->FindVariable(var_name);
@@ -61,42 +46,34 @@ class CorrectionManager {
       }
     }
   }
-
-  void AddHisto1D(const std::string &name, std::vector<Qn::Axis> axes, const std::string &weightname) {
-    std::string spacer("_");
-    auto hist_name = (name + spacer + axes[0].Name() + spacer + weightname);
-    const int size = axes[0].size();
-    Variable var;
-    try { var = var_manager_->FindVariable(axes[0].Name()); }
-    catch (std::out_of_range &) {
-      std::cout << "QAHistogram "<< name << ": Variable " << axes[0].Name() << " not found. Creating new channel variable." << std::endl;
-      var_manager_->CreateChannelVariable(axes[0].Name(), size);
+  template<std::size_t N, typename FUNCTION>
+  auto AddEventCut(std::string const (&name_arr)[N], FUNCTION &&func) {
+    Variable arr[N];
+    int i = 0;
+    for (auto &name : name_arr) {
+      arr[i] = var_manager_->FindVariable(name);
+      ++i;
     }
-    float upper_edge = axes[0].GetUpperBinEdge(size - 1);
-    float lower_edge = axes[0].GetLowerBinEdge(0);
-    TH1F histo(hist_name.data(), (std::string(";")+axes[0].Name()).data(), size, lower_edge, upper_edge);
-    std::array<Variable, 2> arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(weightname)}};
-    try { detectors_track.at(name).AddHistogram(arr, histo); }
-    catch (std::out_of_range &) {
-      try { detectors_channel.at(name).AddHistogram(arr, histo); }
-      catch (std::out_of_range &) {
-        throw std::out_of_range(
-            name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
-      }
-    }
+    event_cuts_.push_back(MakeUniqueNDimCut(arr, func));
   }
 
-  void AddHisto1D(const std::string &name, const std::string &varname, const std::string &weightname, TH1F histo) {
-    std::array<Variable, 2> arr = {{var_manager_->FindVariable(varname), var_manager_->FindVariable(weightname)}};
-    try { detectors_track.at(name).AddHistogram(arr, histo); }
-    catch (std::out_of_range &) {
-      try { detectors_channel.at(name).AddHistogram(arr, histo); }
-      catch (std::out_of_range &) {
-        throw std::out_of_range(
-            name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
-      }
-    }
+  void AddEventHisto1D(std::vector<Qn::Axis> axes, const std::string &weightname = "Ones") {
+    std::string name("Ev");
+    auto pair = Create1DHisto(name,axes,weightname);
+    event_histograms_.push_back(std::make_unique<QAHisto1D>(pair.first,pair.second));
   }
+
+  void AddEventHisto2D(std::vector<Qn::Axis> axes, const std::string &weightname = "Ones") {
+    std::string name("Ev");
+    auto pair = Create2DHisto(name,axes,weightname);
+    event_histograms_.push_back(std::make_unique<QAHisto2D>(pair.first,pair.second));
+  }
+
+  void AddHisto1D(const std::string &name, std::vector<Qn::Axis> axes, const std::string &weightname);
+
+  void AddHisto2D(const std::string &name, std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+
+  void AddHisto1D(const std::string &name, const std::string &varname, const std::string &weightname, TH1F histo);
 
   void SetCorrectionSteps(const std::string &name,
                           std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config);
@@ -105,10 +82,7 @@ class CorrectionManager {
 
   void SaveEventVariablesToTree(TTree &tree);
 
-  void FillData(Qn::DataFiller filler) {
-    filler.Fill(detectors_channel, detectors_track, var_manager_);
-    var_manager_->FillToQnCorrections(qncorrections_manager_.GetDataPointer());
-  }
+  void FillData(Qn::DataFiller filler);
 
   void SaveCorrectionHistograms(std::shared_ptr<TFile> file);
 
@@ -121,6 +95,15 @@ class CorrectionManager {
   void Reset();
 
  private:
+
+  std::pair<std::array<Variable,2>,TH1F> Create1DHisto(const std::string &name,
+                     std::vector<Qn::Axis> axes,
+                     const std::string &weightname);
+
+  std::pair<std::array<Variable,3>,TH2F> Create2DHisto(const std::string &name,
+                     std::vector<Qn::Axis> axes,
+                     const std::string &weightname);
+
   int kMaxCorrectionArrayLength = 200;
 
   void CreateDetectors();
@@ -154,6 +137,8 @@ class CorrectionManager {
   std::shared_ptr<VariableManager> var_manager_;
   std::map<std::string, Detector> detectors_track;
   std::map<std::string, Detector> detectors_channel;
+  std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_;
+  std::vector<std::unique_ptr<Qn::VariableCutBase>> event_cuts_;
 };
 }
 

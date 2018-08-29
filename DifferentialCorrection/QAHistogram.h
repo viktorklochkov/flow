@@ -46,8 +46,7 @@ class QAHisto : public QAHistoBase {
   HISTO histo_;
 };
 
-using QAHisto1DW = QAHisto<TH1F, 2, Variable>;
-using QAHisto1D = QAHisto<TH1F, 1, Variable>;
+using QAHisto1D = QAHisto<TH1F, 2, Variable>;
 using QAHisto2D = QAHisto<TH2F, 3, Variable>;
 
 }

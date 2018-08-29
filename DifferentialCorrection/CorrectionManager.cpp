@@ -129,13 +129,22 @@ void Qn::CorrectionManager::SaveCorrectionHistograms(std::shared_ptr<TFile> file
                                                           TObject::kSingleKey);
   qncorrections_manager_.GetQAHistogramsList()->Write(qncorrections_manager_.GetQAHistogramsList()->GetName(),
                                                       TObject::kSingleKey);
-  TDirectory *dir = file->mkdir("Cut_Reports");
+  TDirectory *dir = file->mkdir("DetectorQA");
   dir->cd();
   for (auto &det: detectors_channel) {
+    auto detdir = dir->mkdir(det.first.data());
+    detdir->cd();
     det.second.SaveReport();
   }
   for (auto &det: detectors_track) {
+    auto detdir = dir->mkdir(det.first.data());
+    detdir->cd();
     det.second.SaveReport();
+  }
+  TDirectory *evdir = file->mkdir("EventQA");
+  evdir->cd();
+  for (auto &histo : event_histograms_) {
+    histo->Write(histo->Name());
   }
 }
 void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_file_) {
@@ -155,8 +164,12 @@ void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_fi
 }
 void Qn::CorrectionManager::Process(Qn::DataFiller filler) {
   FillData(filler);
+  if (!std::all_of(event_cuts_.begin(),event_cuts_.end(),[](std::unique_ptr<VariableCutBase> &base){return base->Check(0);})) return;
   for (auto &event_var : *event_variables_) {
     event_var.second.SetValue(*(var_manager_->FindVariable(event_var.first).begin()));
+  }
+  for (auto & histo : event_histograms_) {
+    histo->Fill();
   }
   FillDataToFramework();
   qncorrections_manager_.ProcessEvent();
@@ -186,4 +199,116 @@ void Qn::CorrectionManager::CalculateCorrectionAxis() {
         new QnCorrectionsEventClassVariable(var_manager_->FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
     qncorrections_varset_->Add(variable);
   }
+}
+void Qn::CorrectionManager::AddDetector(const std::string &name,
+                                        Qn::DetectorType type,
+                                        const std::string &phi_name,
+                                        const std::string &weight_name,
+                                        const std::vector<Qn::Axis> &axes) {
+  Variable phi = var_manager_->FindVariable(phi_name);
+  Variable weight = var_manager_->FindVariable(weight_name);
+  std::vector<Variable> vars;
+  for (const auto &axis : axes) {
+    vars.push_back(var_manager_->FindVariable(axis.Name()));
+  }
+  Detector det(type, axes, phi, weight, vars);
+  if (type==DetectorType::Channel) detectors_channel.emplace(std::make_pair(name, std::move(det)));
+  if (type==DetectorType::Track) detectors_track.emplace(std::move(name), std::move(det));
+}
+
+void Qn::CorrectionManager::AddHisto1D(const std::string &name,
+                                       std::vector<Qn::Axis> axes,
+                                       const std::string &weightname) {
+  auto pair = Create1DHisto(name, axes, weightname);
+  try { detectors_track.at(name).AddHistogram(pair.first, pair.second); }
+  catch (std::out_of_range &) {
+    try { detectors_channel.at(name).AddHistogram(pair.first, pair.second); }
+    catch (std::out_of_range &) {
+      throw std::out_of_range(
+          name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
+    }
+  }
+}
+
+void Qn::CorrectionManager::AddHisto2D(const std::string &name,
+                                       std::vector<Qn::Axis> axes,
+                                       const std::string &weightname) {
+  auto pair = Create2DHisto(name, axes, weightname);
+  try { detectors_track.at(name).AddHistogram(pair.first, pair.second); }
+  catch (std::out_of_range &) {
+    try { detectors_channel.at(name).AddHistogram(pair.first, pair.second); }
+    catch (std::out_of_range &) {
+      throw std::out_of_range(
+          name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
+    }
+  }
+}
+
+void Qn::CorrectionManager::AddHisto1D(const std::string &name,
+                                       const std::string &varname,
+                                       const std::string &weightname,
+                                       TH1F histo) {
+  std::array<Variable, 2> arr = {{var_manager_->FindVariable(varname), var_manager_->FindVariable(weightname)}};
+  try { detectors_track.at(name).AddHistogram(arr, histo); }
+  catch (std::out_of_range &) {
+    try { detectors_channel.at(name).AddHistogram(arr, histo); }
+    catch (std::out_of_range &) {
+      throw std::out_of_range(
+          name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
+    }
+  }
+}
+
+void Qn::CorrectionManager::FillData(Qn::DataFiller filler) {
+  filler.Fill(detectors_channel, detectors_track, var_manager_);
+  var_manager_->FillToQnCorrections(qncorrections_manager_.GetDataPointer());
+}
+std::pair<std::array<Qn::Variable,2>,TH1F> Qn::CorrectionManager::Create1DHisto(const std::string &name,
+                                          std::vector<Qn::Axis> axes,
+                                          const std::string &weightname) {
+  std::string spacer("_");
+  auto hist_name = (name + spacer + axes[0].Name() + spacer + weightname);
+  const int size = axes[0].size();
+  try { var_manager_->FindVariable(axes[0].Name()); }
+  catch (std::out_of_range &) {
+    std::cout << "QAHistogram " << name << ": Variable " << axes[0].Name()
+              << " not found. Creating new channel variable." << std::endl;
+    var_manager_->CreateChannelVariable(axes[0].Name(), size);
+  }
+  float upper_edge = axes[0].GetUpperBinEdge(size - 1);
+  float lower_edge = axes[0].GetLowerBinEdge(0);
+  TH1F histo(hist_name.data(), (std::string(";") + axes[0].Name()).data(), size, lower_edge, upper_edge);
+  std::array<Variable, 2>
+      arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(weightname)}};
+  return std::make_pair(arr, histo);
+}
+std::pair<std::array<Qn::Variable,3>,TH2F> Qn::CorrectionManager::Create2DHisto(const std::string &name,
+                                          std::vector<Qn::Axis> axes,
+                                          const std::string &weightname) {
+  std::string spacer("_");
+  auto hist_name = (name + spacer + axes[0].Name() + spacer + axes[1].Name() + spacer + weightname);
+  const int size_x = axes[0].size();
+  const int size_y = axes[1].size();
+  try { var_manager_->FindVariable(axes[0].Name()); }
+  catch (std::out_of_range &) {
+    std::cout << "QAHistogram " << name << ": Variable " << axes[0].Name()
+              << " not found. Creating new channel variable." << std::endl;
+    var_manager_->CreateChannelVariable(axes[0].Name(), size_x);
+  }
+  try { var_manager_->FindVariable(axes[1].Name()); }
+  catch (std::out_of_range &) {
+    std::cout << "QAHistogram " << name << ": Variable " << axes[1].Name()
+              << " not found. Creating new channel variable." << std::endl;
+    var_manager_->CreateChannelVariable(axes[1].Name(), size_y);
+  }
+  float upper_edge_x = axes[0].GetUpperBinEdge(size_x - 1);
+  float lower_edge_x = axes[0].GetLowerBinEdge(0);
+  float upper_edge_y = axes[1].GetUpperBinEdge(size_y - 1);
+  float lower_edge_y = axes[1].GetLowerBinEdge(0);
+  TH2F histo(hist_name.data(), (std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name()).data(),
+             size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
+  std::array<Variable, 3>
+      arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(axes[1].Name()),
+              var_manager_->FindVariable(weightname)}};
+  return std::make_pair(arr, histo);
 }

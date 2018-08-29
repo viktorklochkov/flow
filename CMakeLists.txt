@@ -23,7 +23,9 @@ set(DIFF_SOURCES
         DifferentialCorrection/CorrectionManager.cpp
         DifferentialCorrection/Detector.cpp
         DifferentialCorrection/Interface/DataFiller.cpp
-        DifferentialCorrection/QAHistogram.cpp DifferentialCorrection/QAHistogram.h)
+        DifferentialCorrection/QAHistogram.cpp 
+        DifferentialCorrection/VariableCutBase.cpp
+        )
 
 set(BASE_SOURCES
         Base/DataVector.cpp
@@ -35,9 +37,7 @@ set(BASE_SOURCES
         Base/Efficiency.cpp
         Base/Sample.cpp
         Base/Hist.cpp
-        Base/Hist.h
         Base/EventShape.cpp
-        Base/EventShape.h
         )
 
 string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")

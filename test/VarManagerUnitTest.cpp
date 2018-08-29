@@ -6,12 +6,13 @@
 #include <TMath.h>
 #include <DifferentialCorrection/Detector.h>
 #include <DifferentialCorrection/QAHistogram.h>
+#include <DifferentialCorrection/VariableCutBase.h>
 #include "DifferentialCorrection/VariableManager.h"
 
 TEST(VarManagerUnitTest, test) {
   using namespace Qn;
   VariableManager a;
-  float *vars = new float[10];
+  double *vars = new double[10];
   a.SetVariables(vars);
   a.CreateVariable("i=1,2", 1, 2);
   for (int i = 0; i < 10; i++) {
@@ -24,10 +25,12 @@ TEST(VarManagerUnitTest, test) {
   std::cout << *(variable.begin() + 1) << std::endl;
 }
 
+
+
 TEST(VarManagerUnitTest, dettest) {
   using namespace Qn;
   VariableManager a;
-  float *vars = new float[100];
+  double *vars = new double[100];
   a.SetVariables(vars);
   a.CreateVariable("weight", 0, 4);
   a.CreateVariable("phi", 5, 4);
@@ -50,7 +53,7 @@ TEST(VarManagerUnitTest, dettest) {
   auto eta = a.FindVariable("eta");
   auto ev = a.FindVariable("ev");
   Detector det(DetectorType::Channel, {}, phi, weight, {});
-  det.AddCut(eta, [](float eta) { return eta < 0; });
+  det.AddCut(eta, [](double eta) { return eta < 0; });
   det.Initialize("Test", a);
   det.FillData();
   vars[13] = 6;
@@ -62,11 +65,36 @@ TEST(VarManagerUnitTest, dettest) {
   test->cd();
   det.SaveReport();
   file->Close();
+}
+
+TEST(VarManagerUnitTest, cuttest) {
+  using namespace Qn;
+  VariableManager a;
+  double *vars = new double[100];
+  a.SetVariables(vars);
+  a.CreateVariable("weight", 0, 4);
+  a.CreateVariable("mass", 5, 4);
+  for (int i = 0; i < 5; i++) {
+    vars[i] = i;
+  }
+  for (int i = 5; i < 10; i++) {
+    vars[i] = 10-i;
+  }
+  auto weight = a.FindVariable("weight");
+  auto mass = a.FindVariable("weight");
+  Qn::VariableCutNDim<double&, double&> cut({weight,mass},[](double& w, double&m){return w>1 && m <8;});
+  auto a0 = cut.Check(0);
+  auto a1 = cut.Check(1);
+  auto a2 = cut.Check(2);
+  auto a3 = cut.Check(3);
+
+  auto cutN = MakeNDimCut({weight,mass}, [](double& w, double&m){return w>1 && m <8;});
 
 }
 
-TEST(VarManagerUnitTest, testtest) {
 
+
+TEST(VarManagerUnitTest, testtest) {
   using namespace Qn;
   VariableManager a;
   double vars[4];
@@ -76,7 +104,7 @@ TEST(VarManagerUnitTest, testtest) {
   std::array<double,4> weight;
   std::copy(std::begin(vars),std::end(vars),std::begin(weight));
   std::vector<std::unique_ptr<QAHistoBase>> vector;
-  vector.emplace_back( new QAHisto<TH2F,3,std::array<double,4>>({weight,weight,weight},{"a","a",10,0,10,10,0,10}));
+  vector.emplace_back( new QAHisto<TH2F,3,std::array<double,4>>({{weight,weight,weight}},{"a","a",10,0,10,10,0,10}));
   vector.push_back(std::make_unique<QAHisto<TH1F,2,std::array<double,4>>>(std::array<std::array<double,4>,2>{{weight,weight}},TH1F("a","a",10,0,10)));
   for (auto& hist : vector) {
     hist->Fill();
