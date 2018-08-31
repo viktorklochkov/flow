@@ -13,7 +13,13 @@ QVector operator+(const QVector a, const QVector b) {
                  at.q_.end(),
                  bt.q_.begin(),
                  c.q_.begin(),
-                 [](const QVec qa, const QVec qb) { return qa + qb; });
+                 [](const QVec qa, const QVec qb) {
+                   QVec ta = {0.0,0.0};
+                   QVec tb = {0.0,0.0};
+                   if (!(isnan(qa.x)||isnan(qa.y))) ta = qa;
+                   if (!(isnan(qb.x)||isnan(qb.y))) tb = qb;
+                   return ta + tb;
+                 });
   c.n_ = at.n_ + bt.n_;
   c.sum_weights_ = at.sum_weights_ + bt.sum_weights_;
   return c;

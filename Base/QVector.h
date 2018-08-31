@@ -17,8 +17,8 @@ namespace Qn {
 struct QVec {
   QVec() = default;
   QVec(float x, float y) : x(x), y(y) {}
-  float x{0};
-  float y{0};
+  float x{NAN};
+  float y{NAN};
   friend QVec operator+(QVec a, QVec b);
   friend QVec operator-(QVec a, QVec b);
   friend QVec operator/(QVec a, float s);
@@ -53,12 +53,15 @@ class QVector {
       sum_weights_(sum),
       q_(q) {}
 
-  QVector(Normalization norm, const QnCorrectionsQnVector &vector) :
-      norm_(norm),
-      n_(vector.GetN()),
-      sum_weights_(vector.GetSumOfWeights()) {
-    for (int i = 0; i < 4; i++) {
-      q_[i] = isnan(vector.Qx(i)) || isnan(vector.Qy(i)) ? QVec(0, 0) : QVec(vector.Qx(i), vector.Qy(i));
+  QVector(Normalization norm, const QnCorrectionsQnVector *vector) :
+      norm_(norm) {
+    if (vector) {
+      n_ = vector->GetN();
+      sum_weights_ = vector->GetSumOfWeights();
+      for (int i = 0; i < 4; i++) {
+        q_[i] =
+            n_==0 || isnan(vector->Qx(i)) || isnan(vector->Qy(i)) ? QVec(NAN, NAN) : QVec(vector->Qx(i), vector->Qy(i));
+      }
     }
   }
 
@@ -67,6 +70,7 @@ class QVector {
   float y(const int i) const { return q_[i].y; }
   float mag(const int i) const { return sqrt(q_[i].x*q_[i].x + q_[i].y*q_[i].y); }
   float sumweights() const { return sum_weights_; }
+  Normalization GetNorm() const { return norm_; }
 
   friend QVector operator+(QVector a, QVector b);
 

@@ -38,7 +38,7 @@ void Qn::CorrectionManager::CreateDetectors() {
 }
 void Qn::CorrectionManager::FillDataToFramework() {
   int nbinsrunning = 0;
-  for (auto &pair : detectors_channel) {
+  for (auto &pair : detectors_track) {
     auto &detector = pair.second.GetDataContainer();
     int ibin = 0;
     for (const std::vector<DataVector> &bin : *detector) {
@@ -52,7 +52,7 @@ void Qn::CorrectionManager::FillDataToFramework() {
     }
     nbinsrunning += detector->size();
   }
-  for (auto &pair : detectors_track) {
+  for (auto &pair : detectors_channel) {
     auto &detector = pair.second.GetDataContainer();
     int ibin = 0;
     for (const std::vector<DataVector> &bin : *detector) {
@@ -81,10 +81,10 @@ void Qn::CorrectionManager::GetQnFromFramework(const std::string &step) {
       }
       ++ibin;
       auto vector = qncorrections_manager_.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
-      if (!vector) continue;
+//      if (!vector) continue;
       auto method =
           qncorrections_manager_.FindDetector(name.data())->FindDetectorConfiguration(name.data())->GetQVectorNormalizationMethod();
-      QVector temp(GetNormalization(method), *vector);
+      QVector temp(GetNormalization(method), vector);
       bin = temp;
     }
     nbinsrunning += detector->size();
@@ -101,29 +101,29 @@ void Qn::CorrectionManager::GetQnFromFramework(const std::string &step) {
       }
       ++ibin;
       auto vector = qncorrections_manager_.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
-      if (!vector) continue;
+//      if (!vector) continue;
       auto method =
           qncorrections_manager_.FindDetector(name.data())->FindDetectorConfiguration(name.data())->GetQVectorNormalizationMethod();
-      QVector temp(GetNormalization(method), *vector);
+      QVector temp(GetNormalization(method), vector);
       bin = temp;
     }
     nbinsrunning += detector->size();
   }
 }
-void Qn::CorrectionManager::SaveQVectorsToTree(TTree &tree) {
+void Qn::CorrectionManager::SetQVectorsToTree() {
   for (auto &pair : detectors_track) {
-    tree.Branch(pair.first.data(), pair.second.GetQnDataContainer().get());
+    out_tree_->Branch(pair.first.data(), pair.second.GetQnDataContainer().get());
   }
   for (auto &pair : detectors_channel) {
-    tree.Branch(pair.first.data(), pair.second.GetQnDataContainer().get());
+    out_tree_->Branch(pair.first.data(), pair.second.GetQnDataContainer().get());
   }
 }
 
-void Qn::CorrectionManager::SaveEventVariablesToTree(TTree &tree) {
-  event_variables_->SetToTree(tree);
+void Qn::CorrectionManager::SetEventVariablesToTree() {
+  event_variables_->SetToTree(*out_tree_);
 }
 
-void Qn::CorrectionManager::SaveCorrectionHistograms(std::shared_ptr<TFile> file) {
+void Qn::CorrectionManager::SaveHistograms(std::shared_ptr<TFile> file) {
   file->cd();
   qncorrections_manager_.GetOutputHistogramsList()->Write(qncorrections_manager_.GetOutputHistogramsList()->GetName(),
                                                           TObject::kSingleKey);
@@ -143,38 +143,47 @@ void Qn::CorrectionManager::SaveCorrectionHistograms(std::shared_ptr<TFile> file
   }
   TDirectory *evdir = file->mkdir("EventQA");
   evdir->cd();
+  event_cuts_->Write("");
   for (auto &histo : event_histograms_) {
     histo->Write(histo->Name());
   }
 }
 void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_file_) {
+  SetQVectorsToTree();
+  SetEventVariablesToTree();
   CalculateCorrectionAxis();
   CreateDetectors();
-  for (auto &det : detectors_channel) {
-    det.second.Initialize(det.first, *var_manager_);
-  }
   for (auto &det : detectors_track) {
     det.second.Initialize(det.first, *var_manager_);
   }
+  for (auto &det : detectors_channel) {
+    det.second.Initialize(det.first, *var_manager_);
+  }
+  event_cuts_->CreateCutReport("Event",1);
   qncorrections_manager_.SetCalibrationHistogramsList(in_calibration_file_.get());
   qncorrections_manager_.SetShouldFillQAHistograms();
   qncorrections_manager_.SetShouldFillOutputHistograms();
   qncorrections_manager_.InitializeQnCorrectionsFramework();
   qncorrections_manager_.SetCurrentProcessListName("correction");
 }
+
 void Qn::CorrectionManager::Process(Qn::DataFiller filler) {
-  FillData(filler);
-  if (!std::all_of(event_cuts_.begin(),event_cuts_.end(),[](std::unique_ptr<VariableCutBase> &base){return base->Check(0);})) return;
+  FillEventData(filler);
+  if(!event_cuts_->CheckCuts(0)) return;
+  event_cuts_->FillReport();
   for (auto &event_var : *event_variables_) {
     event_var.second.SetValue(*(var_manager_->FindVariable(event_var.first).begin()));
   }
   for (auto & histo : event_histograms_) {
     histo->Fill();
   }
+  FillData(filler);
   FillDataToFramework();
   qncorrections_manager_.ProcessEvent();
   GetQnFromFramework("latest");
+  out_tree_->Fill();
 }
+
 void Qn::CorrectionManager::Reset() {
   qncorrections_manager_.ClearEvent();
   for (auto &det : detectors_channel) {
@@ -185,10 +194,12 @@ void Qn::CorrectionManager::Reset() {
   }
   event_variables_->Reset();
 }
+
 void Qn::CorrectionManager::Finalize() { qncorrections_manager_.FinalizeQnCorrectionsFramework(); }
 
 void Qn::CorrectionManager::CalculateCorrectionAxis() {
   qncorrections_varset_ = new QnCorrectionsEventClassVariablesSet(qncorrections_axis_.size());
+  int kMaxCorrectionArrayLength = 200;
   for (const auto &axis : qncorrections_axis_) {
     double axisbins[kMaxCorrectionArrayLength];
     auto nbins = axis.size();
@@ -213,16 +224,17 @@ void Qn::CorrectionManager::AddDetector(const std::string &name,
   }
   Detector det(type, axes, phi, weight, vars);
   if (type==DetectorType::Channel) detectors_channel.emplace(std::make_pair(name, std::move(det)));
-  if (type==DetectorType::Track) detectors_track.emplace(std::move(name), std::move(det));
+  if (type==DetectorType::Track) detectors_track.emplace(std::make_pair(name,std::move(det)));
 }
 
 void Qn::CorrectionManager::AddHisto1D(const std::string &name,
                                        std::vector<Qn::Axis> axes,
                                        const std::string &weightname) {
   auto pair = Create1DHisto(name, axes, weightname);
-  try { detectors_track.at(name).AddHistogram(pair.first, pair.second); }
+  auto histo = std::make_unique<QAHisto1D>(pair.first, pair.second);
+  try { detectors_track.at(name).AddHistogram(std::move(histo)); }
   catch (std::out_of_range &) {
-    try { detectors_channel.at(name).AddHistogram(pair.first, pair.second); }
+    try { detectors_channel.at(name).AddHistogram(std::move(histo)); }
     catch (std::out_of_range &) {
       throw std::out_of_range(
           name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
@@ -234,9 +246,10 @@ void Qn::CorrectionManager::AddHisto2D(const std::string &name,
                                        std::vector<Qn::Axis> axes,
                                        const std::string &weightname) {
   auto pair = Create2DHisto(name, axes, weightname);
-  try { detectors_track.at(name).AddHistogram(pair.first, pair.second); }
+  auto histo = std::make_unique<QAHisto2D>(pair.first, pair.second);
+  try { detectors_track.at(name).AddHistogram(std::move(histo)); }
   catch (std::out_of_range &) {
-    try { detectors_channel.at(name).AddHistogram(pair.first, pair.second); }
+    try { detectors_channel.at(name).AddHistogram(std::move(histo)); }
     catch (std::out_of_range &) {
       throw std::out_of_range(
           name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
@@ -244,25 +257,17 @@ void Qn::CorrectionManager::AddHisto2D(const std::string &name,
   }
 }
 
-void Qn::CorrectionManager::AddHisto1D(const std::string &name,
-                                       const std::string &varname,
-                                       const std::string &weightname,
-                                       TH1F histo) {
-  std::array<Variable, 2> arr = {{var_manager_->FindVariable(varname), var_manager_->FindVariable(weightname)}};
-  try { detectors_track.at(name).AddHistogram(arr, histo); }
-  catch (std::out_of_range &) {
-    try { detectors_channel.at(name).AddHistogram(arr, histo); }
-    catch (std::out_of_range &) {
-      throw std::out_of_range(
-          name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
-    }
-  }
+void Qn::CorrectionManager::FillEventData(Qn::DataFiller filler) {
+  filler.FillEventInfo(var_manager_);
 }
 
 void Qn::CorrectionManager::FillData(Qn::DataFiller filler) {
-  filler.Fill(detectors_channel, detectors_track, var_manager_);
+  filler.FillDetectors(detectors_channel, detectors_track, var_manager_);
   var_manager_->FillToQnCorrections(qncorrections_manager_.GetDataPointer());
+  for (auto &dp : detectors_channel) {dp.second.FillReport();}
+  for (auto &dp : detectors_track) {dp.second.FillReport();}
 }
+
 std::pair<std::array<Qn::Variable,2>,TH1F> Qn::CorrectionManager::Create1DHisto(const std::string &name,
                                           std::vector<Qn::Axis> axes,
                                           const std::string &weightname) {
@@ -311,4 +316,14 @@ std::pair<std::array<Qn::Variable,3>,TH2F> Qn::CorrectionManager::Create2DHisto(
       arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(axes[1].Name()),
               var_manager_->FindVariable(weightname)}};
   return std::make_pair(arr, histo);
+}
+void Qn::CorrectionManager::AddEventHisto2D(std::vector<Qn::Axis> axes, const std::string &weightname) {
+  std::string name("Ev");
+  auto pair = Create2DHisto(name, std::move(axes), weightname);
+  event_histograms_.push_back(std::make_unique<QAHisto2D>(pair.first, pair.second));
+}
+void Qn::CorrectionManager::AddEventHisto1D(std::vector<Qn::Axis> axes, const std::string &weightname) {
+  std::string name("Ev");
+  auto pair = Create1DHisto(name, std::move(axes), weightname);
+  event_histograms_.push_back(std::make_unique<QAHisto1D>(pair.first, pair.second));
 }

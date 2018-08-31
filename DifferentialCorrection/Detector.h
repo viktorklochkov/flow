@@ -15,23 +15,48 @@
 #include "Base/QVector.h"
 #include "Base/DataVector.h"
 #include "QAHistogram.h"
+#include "VariableCutBase.h"
 
 namespace Qn {
 enum class DetectorType {
   Track,
   Channel
 };
-class Detector {
+
+class DetectorBase {
+ public:
+  virtual ~DetectorBase() = default;
+
+  virtual std::unique_ptr<DataContainerDataVector> &GetDataContainer() = 0;
+  virtual std::unique_ptr<DataContainerQVector> &GetQnDataContainer() = 0;
+
+  virtual QnCorrectionsDetector *GenerateDetector(const std::string &detname, int globalid, int binid,
+                                                  QnCorrectionsEventClassVariablesSet *set) = 0;
+  virtual QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name,
+                                                                              QnCorrectionsEventClassVariablesSet *set) = 0;
+  virtual void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) = 0;
+  virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
+  virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
+  virtual void Initialize(const std::string &name, const VariableManager &man) = 0;
+  virtual void FillData() = 0;
+  virtual void ClearData() = 0;
+  virtual void SaveReport() = 0;
+
+};
+
+class Detector : DetectorBase {
  public:
   Detector(const DetectorType type,
            const std::vector<Qn::Axis> &axes,
            const Variable phi,
            const Variable weight,
            const std::vector<Variable> &vars) :
-      nchannels_(weight.length()),
+      nchannels_(phi.length()),
       type_(type),
       phi_(phi), weight_(weight),
       vars_(vars),
+      cuts_(new Qn::Cuts),
+      int_cuts_(new Qn::Cuts),
       datavector_(new Qn::DataContainerDataVector()),
       qvector_(new Qn::DataContainerQVector()) {
     coordinates_.resize(vars.size());
@@ -86,56 +111,41 @@ class Detector {
   std::unique_ptr<DataContainerQVector> &GetQnDataContainer() { return qvector_; }
   void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) { configuration_ = conf; }
 
-  template<typename FUNCTION>
-  void AddCut(Variable var, FUNCTION lambda) {
-    if (var.length()==weight_.length()) {
-      cuts_.emplace_back(var, lambda);
-    }
-    if (var.length()==1) {
-      cuts_int_.emplace_back(var, lambda);
+  void AddCut(std::unique_ptr<VariableCutBase> cut) {
+    if (cut->GetVariableLength()==1) {
+      int_cuts_->AddCut(std::move(cut));
+    } else {
+      cuts_->AddCut(std::move(cut));
     }
   }
 
   void FillData() {
     long i = 0;
-    int icut = 1;
-    int icut_ch = 1;
-    if (cut_report_) cut_report_->Fill(0);
-    if (!std::all_of(cuts_int_.begin(), cuts_int_.end(), [&icut, this](VariableCut cut) {
-      auto check = cut.Check();
-      if (check && cut_report_) cut_report_->Fill(icut);
-      icut++;
-      return check;
-    }))
-      return;
+    if (!int_cuts_->CheckCuts(0)) return;
     for (auto &histo : histograms_) {
       histo->Fill();
     }
-    for (auto weight : weight_) {
-      if (cut_report_channels_) cut_report_channels_->Fill(0., i);
-      icut_ch = 1;
-      if (!std::all_of(cuts_.begin(), cuts_.end(), [&icut_ch, this, i](VariableCut cut) {
-        auto check = cut.Check(i);
-        if (check && cut_report_channels_) cut_report_channels_->Fill(icut_ch, i);
-        icut_ch++;
-        return check;
-      }))
+    for (auto phi : phi_) {
+      if (!cuts_->CheckCuts(i)) {
+        ++i;
         continue;
+      }
       if (vars_.size()!=0) {
         long icoord = 0;
         for (const auto var : vars_) {
           coordinates_.at(icoord) = *(var.begin() + i);
           ++icoord;
         }
-        datavector_->CallOnElement(datavector_->GetLinearIndex(coordinates_),
-                                   [&](std::vector<DataVector> &vector) {
-                                     vector.emplace_back(*(phi_.begin() + i),
-                                                         weight);
-                                   });
+        try {
+          datavector_->CallOnElement(datavector_->GetLinearIndex(coordinates_),
+                                     [&](std::vector<DataVector> &vector) {
+                                       vector.emplace_back(phi, *(weight_.begin() + i));
+                                     });
+        }
+        catch (std::exception &) { ++i; continue; }
       } else {
         datavector_->CallOnElement(0, [&](std::vector<DataVector> &vector) {
-          vector.emplace_back(*(phi_.begin() + i),
-                              weight);
+          vector.emplace_back(phi, *(weight_.begin() + i));
         });
       }
       ++i;
@@ -145,46 +155,25 @@ class Detector {
   const DetectorType Type() const { return type_; }
 
   void Initialize(const std::string &name, const VariableManager &man) {
-    // cuts int
-    const char *charname = (name + std::string("_cut_report")).data();
-    int size = cuts_int_.size();
-    if (size!=0) {
-      cut_report_ = std::make_shared<TH1I>(charname, charname, size + 1, 0, size + 1);
-      cut_report_->GetXaxis()->SetBinLabel(1, "all");
-      for (int i = 2; i < cuts_int_.size() + 2; ++i) {
-        cut_report_->GetXaxis()->SetBinLabel(i, man.FindName(cuts_int_.at(i - 2).GetVariable()).data());
-      }
-    }
-    // cuts channels
-    int size_channels = cuts_.size();
-    if (size_channels!=0) {
-      cut_report_channels_ =
-          std::make_shared<TH2I>(charname,
-                                 charname,
-                                 size_channels + 1,
-                                 0,
-                                 size_channels + 1,
-                                 nchannels_,
-                                 0,
-                                 nchannels_);
-      cut_report_channels_->GetXaxis()->SetBinLabel(1, "all");
-      for (int i = 2; i < cuts_.size() + 2; ++i) {
-        cut_report_channels_->GetXaxis()->SetBinLabel(i, man.FindName(cuts_.at(i - 2).GetVariable()).data());
-      }
-    }
+    int_cuts_->CreateCutReport(name, 1);
+    cuts_->CreateCutReport(name, phi_.length());
   }
 
   void SaveReport() {
-    if (cut_report_) cut_report_->Write(cut_report_->GetName(), TObject::kSingleKey);
-    if (cut_report_channels_) cut_report_channels_->Write(cut_report_channels_->GetName(), TObject::kSingleKey);
+    int_cuts_->Write("");
+    cuts_->Write("Channel");
     for (auto &histo : histograms_) {
       histo->Write(histo->Name());
     }
   }
 
-  template <typename HISTO, unsigned long N>
-  void AddHistogram(std::array<Variable,N> vars, const HISTO &histo) {
-    histograms_.push_back(std::make_unique<QAHisto<HISTO,N,Variable>>(vars,histo));
+  void FillReport() {
+    int_cuts_->FillReport();
+    cuts_->FillReport();
+  }
+
+  void AddHistogram(std::unique_ptr<QAHistoBase> histo) {
+    histograms_.push_back(std::move(histo));
   }
 
  private:
@@ -195,10 +184,8 @@ class Detector {
   Variable weight_;
   std::vector<Variable> vars_;
   std::vector<float> coordinates_;
-  std::vector<VariableCut> cuts_;
-  std::vector<VariableCut> cuts_int_;
-  std::shared_ptr<TH1I> cut_report_ = nullptr;
-  std::shared_ptr<TH2I> cut_report_channels_ = nullptr;
+  std::unique_ptr<Cuts> cuts_;
+  std::unique_ptr<Cuts> int_cuts_;
   std::vector<std::unique_ptr<QAHistoBase>> histograms_;
   std::unique_ptr<DataContainerDataVector> datavector_;
   std::unique_ptr<DataContainerQVector> qvector_;

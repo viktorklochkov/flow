@@ -112,10 +112,9 @@ class CorrelationManager {
     for (const auto &projection : projections_) {
       qvectors_.at(projection.first) =
           qvectors_.at(std::get<0>(projection.second)).Projection(std::get<1>(projection.second),
-                                                                  [](const Qn::QVector &a,
-                                                                     const Qn::QVector &b) {
-                                                                    return (a
-                                                                        + b).Normal(Qn::QVector::Normalization::QOVERM);
+                                                                  [](const Qn::QVector &a, const Qn::QVector &b) {
+                                                                    auto norm = b.GetNorm();
+                                                                    return (a + b).Normal(norm);
                                                                   });
     }
   }

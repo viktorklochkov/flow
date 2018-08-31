@@ -544,8 +544,9 @@ class DataContainer : public TObject {
    */
   void ClearData() {
     auto size = data_.size();
-    data_.clear();
-    data_.resize(size);
+//    data_.clear();
+//    data_.resize(size);
+    data_.assign(size,T());
   }
 /**
  * Calculates one dimensional index from a vector of indices.

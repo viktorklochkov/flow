@@ -12,19 +12,24 @@ namespace Qn {
 
 class Variable {
  private:
-  Variable(const int id, const int length) : id_(id), length_(length) {}
+  Variable(const int id, const int length) : id_(id), length_(length), name_("") {}
+  Variable(const int id, const int length, std::string name) : id_(id), length_(length), name_(name) {}
   int id_;
   int length_;
   double *var_container = nullptr;
+  std::string name_;
   friend class VariableManager;
   friend struct std::less<Qn::Variable>;
+  friend class Cuts;
  public:
   Variable() = default;
+  double *at(int i) noexcept {return &var_container[id_+i];}
   double *begin() noexcept { return &var_container[id_]; }
   double *end() noexcept { return &var_container[id_ + length_]; }
   double *begin() const noexcept { return &var_container[id_]; }
   double *end() const noexcept { return &var_container[id_ + length_]; }
   int length() const noexcept { return length_; }
+  std::string Name() const {return name_;}
 };
 }
 
@@ -56,13 +61,13 @@ class VariableCut {
 class VariableManager {
  public:
   void CreateVariable(std::string name, const int id, const int length) {
-    Variable var(id, length);
+    Variable var(id, length, name);
     var.var_container = var_container;
     name_var_map_.emplace(name, var);
     var_name_map_.emplace(var, name);
   }
   void CreateVariableOnes() {
-    Variable var(0, 1000);
+    Variable var(0, 1000, "Ones");
     for (int i = 0; i < 1000; ++i) { var_ones[i] = 1.0; }
     var.var_container = var_ones;
     name_var_map_.emplace("Ones", var);
@@ -70,7 +75,7 @@ class VariableManager {
   }
 
   void CreateChannelVariable(std::string name, const int size) {
-    Variable var(0,size);
+    Variable var(0,size, name);
     auto *arr = new double[size];
     for (int i = 0; i < size; ++i) { arr[i] = i; }
     var.var_container = arr;

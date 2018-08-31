@@ -10,15 +10,17 @@
 namespace Qn {
 class DataFiller {
  public:
-  explicit DataFiller() {}
-  void Fill(std::map<std::string, Detector> &channel, std::map<std::string, Detector> &tracking, const std::shared_ptr<VariableManager> &var_manager) {
-    for (auto &dp : channel) {
-      dp.second.FillData();
-    }
+  using MapDetectors = std::map<std::string, Detector>;
+  explicit DataFiller()  {}
+  void FillEventInfo(const std::shared_ptr<VariableManager> &var_manager) {
+    //Fill event info into variable manager here.
+  }
+  void FillDetectors(MapDetectors &channel, MapDetectors  &tracking,
+            const std::shared_ptr<VariableManager> &var_manager) {
+    for (auto &dp : channel) { dp.second.FillData(); }
     for (int i= 0; i < 100;++i) {
-      for (auto &dp : tracking) {
-        dp.second.FillData();
-      }
+    //Fill Track info into variable manager here.
+      for (auto &dp : tracking) { dp.second.FillData(); }
     }
   }
  private:
