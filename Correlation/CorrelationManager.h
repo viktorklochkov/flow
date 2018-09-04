@@ -31,6 +31,19 @@ class CorrelationManager {
   void AddDataContainer(const std::string &name);
 
   /**
+   * Adds a list of detectors to the correlation manager.
+   * The actual values are retrieved when the tree is read from the file.
+   * @param name
+   */
+  void AddQVectors(const std::string &namelist) {
+    std::vector<std::string> names;
+    tokenize(namelist, names, ", ", true);
+    for (const auto & name : names) {
+      AddDataContainer(name);
+    }
+  }
+
+  /**
    * Adds new Projection to the correlation manager.
    * Projects the DataContainer on the specified axes and creates a new Datacontainer with a new name.
    * @param input_name Name of the input datacontainer.
@@ -68,6 +81,9 @@ class CorrelationManager {
   void AddCorrelation(std::string name,
                       const std::string &containernames,
                       FUNCTION &&lambda);
+
+  void AddInversion(std::string name, std::string input_name) {
+  }
 
   /**
    * Adds a ESE axis to all correlations

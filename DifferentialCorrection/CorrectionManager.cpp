@@ -223,8 +223,8 @@ void Qn::CorrectionManager::AddDetector(const std::string &name,
     vars.push_back(var_manager_->FindVariable(axis.Name()));
   }
   Detector det(type, axes, phi, weight, vars);
-  if (type==DetectorType::Channel) detectors_channel.emplace(std::make_pair(name, std::move(det)));
-  if (type==DetectorType::Track) detectors_track.emplace(std::make_pair(name,std::move(det)));
+  if (type==DetectorType::CHANNEL) detectors_channel.emplace(std::make_pair(name, std::move(det)));
+  if (type==DetectorType::TRACK) detectors_track.emplace(std::make_pair(name,std::move(det)));
 }
 
 void Qn::CorrectionManager::AddHisto1D(const std::string &name,

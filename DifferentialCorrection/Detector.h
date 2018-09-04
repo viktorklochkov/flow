@@ -19,8 +19,8 @@
 
 namespace Qn {
 enum class DetectorType {
-  Track,
-  Channel
+  TRACK,
+  CHANNEL
 };
 
 class DetectorBase {
@@ -98,11 +98,11 @@ class Detector : DetectorBase {
   QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name,
                                                                       QnCorrectionsEventClassVariablesSet *set) {
     QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
-    if (type_==DetectorType::Channel) {
+    if (type_==DetectorType::CHANNEL) {
       configuration =
           new QnCorrectionsDetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_);
     }
-    if (type_==DetectorType::Track)
+    if (type_==DetectorType::TRACK)
       configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), set, nharmonics_);
     return configuration;
   }

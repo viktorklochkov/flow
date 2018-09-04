@@ -5,38 +5,41 @@
 ##v_n calculation
 
 
-##stability checks
-* R_A[B,C] under different B and C
+-  systematics axes... created from cuts...
+   not true axis correlated bins... introduce category axis and fill with phi[N]
+   where N is the number of variations... 
+   Apply cut which modifies category variable and assigns to bin number
 
-##comparison to published
-* rewrite macros to produce nice plots
-
-## Profile
+##### Profile
 * fix variance calculation; naive version is not stable.
 * add histogram feature
 
-##Find invalid bins
-
-## Save correlations to file
-
-## XeXe train reduced tree
+##### XeXe train reduced tree
 * no fmd information inside the AOD
 
 
-## special functions for adding mult scaling ...
+##### special functions for adding mult scaling ...
 
 
 victor synchronizing qncorrectionsframework
 
-cut functionality for detectors
-
 correction histograms with enough entries for correction?
 check in framework
 
-## Random subevent anti Q implementation
+##### Random subevent anti Q implementation
 Anti Q
 
 #DONE
+
+
+##comparison to published
+* rewrite macros to produce nice plots
+
+cut functionality for detectors
+
+## Add track histograms to histogram manager
+
+## Better filling of detectors using one values array
 
 remove autocorrelation select and integrate other components
 
