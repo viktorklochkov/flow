@@ -28,7 +28,7 @@ class QAHisto : public QAHistoBase {
 
   template<typename array, std::size_t... I>
   auto FillImpl(const array a, std::index_sequence<I...>) {
-    histo_.FillN(std::size(a[0]), (a[I].begin())...);
+    histo_.FillN(a[0].length(), (a[I].begin())...);
   }
 
   void Fill() override {

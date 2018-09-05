@@ -59,8 +59,9 @@ class Sampler {
     for (unsigned int i = 0; i < n_events_; ++i) {
       event_vector.push_back(i);
     }
-    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::shuffle(event_vector.begin(), event_vector.end(), std::default_random_engine(seed));
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(event_vector.begin(), event_vector.end(), g);
     auto div = n_events_/n_samples_;
     for (unsigned int i = 0; i < n_events_ - (n_events_%n_samples_); ++i) {
       samples_[event_vector[i]].push_back(i/(div));

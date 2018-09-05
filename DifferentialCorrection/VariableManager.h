@@ -14,8 +14,8 @@ class Variable {
  private:
   Variable(const int id, const int length) : id_(id), length_(length), name_("") {}
   Variable(const int id, const int length, std::string name) : id_(id), length_(length), name_(name) {}
-  int id_;
-  int length_;
+  int id_{};
+  int length_{};
   double *var_container = nullptr;
   std::string name_;
   friend class VariableManager;
@@ -23,13 +23,13 @@ class Variable {
   friend class Cuts;
  public:
   Variable() = default;
-  double *at(int i) noexcept {return &var_container[id_+i];}
+  double *at(int i) noexcept { return &var_container[id_ + i]; }
   double *begin() noexcept { return &var_container[id_]; }
   double *end() noexcept { return &var_container[id_ + length_]; }
   double *begin() const noexcept { return &var_container[id_]; }
   double *end() const noexcept { return &var_container[id_ + length_]; }
   int length() const noexcept { return length_; }
-  std::string Name() const {return name_;}
+  std::string Name() const { return name_; }
 };
 }
 
@@ -41,22 +41,12 @@ struct less<Qn::Variable> {
   }
 };
 
-constexpr auto size(const Qn::Variable &var) -> decltype(var.length()) {
+constexpr int size(const Qn::Variable &var) {
   return var.length();
 }
 }
 
 namespace Qn {
-
-class VariableCut {
- public:
-  VariableCut(Variable var, std::function<bool(double &)> lambda) : lambda_(std::move(lambda)), var_(std::move(var)) {}
-  bool Check(int i = 0) { return lambda_(*(var_.begin() + i)); }
-  Variable GetVariable() { return var_; }
- private:
-  std::function<bool(double &)> lambda_;
-  Variable var_;
-};
 
 class VariableManager {
  public:
@@ -75,7 +65,7 @@ class VariableManager {
   }
 
   void CreateChannelVariable(std::string name, const int size) {
-    Variable var(0,size, name);
+    Variable var(0, size, name);
     auto *arr = new double[size];
     for (int i = 0; i < size; ++i) { arr[i] = i; }
     var.var_container = arr;
