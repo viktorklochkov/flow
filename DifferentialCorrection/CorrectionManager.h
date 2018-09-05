@@ -88,7 +88,7 @@ class CorrectionManager {
    *             The number of double& corresponds to the number of variables
    */
   template<std::size_t N, typename FUNCTION>
-  void AddEventCut(std::string const (&name_arr)[N], FUNCTION &&func) {
+  void AddEventCut(const char* const (&name_arr)[N], FUNCTION &&func) {
     Variable arr[N];
     int i = 0;
     for (auto &name : name_arr) {

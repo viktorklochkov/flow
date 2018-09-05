@@ -638,7 +638,7 @@ class DataContainer : public TObject {
     unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
       auto bin = axis.FindBin(coordinates[axisindex]);
-      if (bin >= axis.size() || bin < 0) {
+      if (bin >= (unsigned int) axis.size() || bin < 0) {
         return -1;
       } else {
         indices.push_back(bin);

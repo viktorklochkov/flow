@@ -95,18 +95,18 @@ class Cuts {
 
   void FillReport() {
     if (report_) report_->Fill();
-    int offset = nchannels_*(cuts_.size() + 1);
-    for (int i = 0; i < nchannels_; ++i) {
-      for (int j = 0; j < (cuts_.size() + 1); ++j) {
+    auto offset = nchannels_*(cuts_.size() + 1);
+    for (std::size_t i = 0; i < nchannels_; ++i) {
+      for (std::size_t j = 0; j < (cuts_.size() + 1); ++j) {
         var_values_[2*offset + i + nchannels_*j] = 0;
       }
     }
   }
 
   void CreateCutReport(std::string detname, int nchannels = 1) {
-    if (cuts_.size() > 0) {
+    if (!cuts_.empty()) {
       nchannels_ = nchannels;
-      int offset = nchannels*(cuts_.size() + 1);
+      auto offset = nchannels*(cuts_.size() + 1);
       cut_i_ = Variable(0, offset);
       cut_channel_ = Variable(offset, offset);
       cut_weight_ = Variable(2*offset, offset);
@@ -114,8 +114,8 @@ class Cuts {
       cut_weight_.var_container = var_values_;
       cut_i_.var_container = var_values_;
       cut_channel_.var_container = var_values_;
-      for (int i = 0; i < nchannels; ++i) {
-        for (int j = 0; j < (cuts_.size() + 1); ++j) {
+      for (std::size_t i = 0; i < nchannels; ++i) {
+        for (std::size_t j = 0; j < (cuts_.size() + 1); ++j) {
           var_values_[i + nchannels*j] = j;
           var_values_[offset + i + nchannels*j] = i;
           var_values_[2*offset + i + nchannels*j] = 0;
@@ -124,7 +124,7 @@ class Cuts {
       if (nchannels==1) {
         std::string name = detname + "Cut_Report";
         std::string title = std::string(";cuts;entries");
-        int nbins = cuts_.size() + 1;
+        auto nbins = cuts_.size() + 1;
         float low = 0.;
         float high = cuts_.size() + 1;
         TH1F histo(name.data(), title.data(), nbins, low, high);
@@ -157,7 +157,7 @@ class Cuts {
     }
   }
 
-  void Write(std::string name) {
+  void Write(const std::string &name) {
     if (report_) report_->Write((name + std::string(report_->Name())).data());
     report_.release();
   }

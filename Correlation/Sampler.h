@@ -59,7 +59,7 @@ class Sampler {
     for (unsigned int i = 0; i < n_events_; ++i) {
       event_vector.push_back(i);
     }
-    std::random_device rd;
+   std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(event_vector.begin(), event_vector.end(), g);
     auto div = n_events_/n_samples_;

@@ -40,10 +40,6 @@ struct less<Qn::Variable> {
     return lhs.id_ < rhs.id_;
   }
 };
-
-constexpr int size(const Qn::Variable &var) {
-  return var.length();
-}
 }
 
 namespace Qn {
