@@ -18,9 +18,10 @@ namespace Qn {
  * @tparam T type of event information
  */
 template<typename T>
-class EventInfoValue  {
+class EventInfoValue {
   template<typename TT>
-  friend class EventInfo;
+  friend
+  class EventInfo;
  public:
   /**
    * Checks if stored value is valid.
@@ -110,10 +111,6 @@ class EventInfo {
   }
   std::vector<T> GetVector() {
     std::vector<T> vector;
-//    auto addtovector = [&vector] (std::pair<std::string, EventInfoValue<T>> pair) {
-//      T value = pair.second.Get();
-//      vector.emplace_back(value);};
-//    std::for_each(map_.begin(),map_.end(),addtovector);
     for (auto &pair : map_) {
       vector.emplace_back(pair.second.Get());
     }

@@ -16,7 +16,6 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
   if (iteration + 1==input.size()) {
     int ibin = 0;
     for (auto &bin : datacontainer) {
-//      if (bin.n()==0) continue;
       if (!datacontainer.IsIntegrated()) {
         int i_index = 0;
         for (auto index : index_[iteration][ibin]) {
@@ -36,7 +35,6 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
   int ibin = 0;
   for (const auto &bin : datacontainer) {
     int offset = iterationoffset;
-//    if (bin.n()==0) continue;
     if (!datacontainer.IsIntegrated()) {
       int i_index = 0;
       for (auto index : index_[iteration][ibin]) {
@@ -53,11 +51,10 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
 
 void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const std::vector<unsigned long> &eventindex) {
   data_correlation_.ClearData();
-//  data_correlation_.Map([](std::pair<bool,float> &pair) {pair.first = false; return pair;});
   std::vector<QVector> contents;
   contents.resize(input.size());
   uint iteration = 0;
-  int size = eventindex.size();
+  auto size = eventindex.size();
   for (const auto &i : input) {
     size += i.GetAxes().size();
   }
@@ -72,13 +69,13 @@ void Correlation::Fill(const std::vector<Correlation::CONTAINERS> &input, const 
 void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONTAINERS> &inputs) {
   int i = 0;
   data_correlation_.AddAxes(axes_event_);
-  int size = axes_event_.size();
+  auto size = axes_event_.size();
   for (auto &input : inputs) {
     size += input.GetAxes().size();
     std::vector<std::vector<unsigned long>> indexmap;
-    for (int i = 0; i < input.size(); ++i) {
+    for (std::size_t j = 0; j < input.size(); ++j) {
       std::vector<unsigned long> indices;
-      input.GetIndex(indices, i);
+      input.GetIndex(indices, j);
       indexmap.push_back(indices);
     }
     index_.push_back(indexmap);
@@ -86,7 +83,7 @@ void Correlation::CreateCorrelationContainer(const std::vector<Correlation::CONT
       auto axes = input.GetAxes();
       for (auto &axis : axes) {
         auto original_name = axis.Name();
-        if (names_.size()!=0) {axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name);}
+        if (!names_.empty()) {axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name);}
         else {axis.SetName(std::to_string(i) + "_" + original_name);}
         data_correlation_.AddAxis(axis);
       }

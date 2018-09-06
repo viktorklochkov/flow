@@ -70,16 +70,13 @@ auto MakeUniqueNDimCut(Variable const (&arr)[N], FUNC &&func) {
 class Cuts {
  public:
   ~Cuts() { delete[] var_values_; }
-  template<std::size_t N, typename FUNC>
-  void AddCut(Variable const (&arr)[N], FUNC &&func) {
-    cuts_.push_back(MakeUniqueNDimCut(arr, func));
-  }
+
   void AddCut(std::unique_ptr<VariableCutBase> cut) {
     cuts_.push_back(std::move(cut));
   }
   bool CheckCuts(int i) {
     int icut = 1;
-    if (cuts_.size()==0) return true;
+    if (cuts_.empty()) return true;
     *((cut_weight_).begin() + i) = *((cut_weight_).begin() + i) + 1.0;
     bool passed = true;
     for (auto &cut : cuts_) {
@@ -103,7 +100,7 @@ class Cuts {
     }
   }
 
-  void CreateCutReport(std::string detname, int nchannels = 1) {
+  void CreateCutReport(std::string detname, std::size_t nchannels = 1) {
     if (!cuts_.empty()) {
       nchannels_ = nchannels;
       auto offset = nchannels*(cuts_.size() + 1);
@@ -139,8 +136,8 @@ class Cuts {
       } else {
         std::string name = detname + "Cut_Report";
         std::string title = std::string(";cuts;channels");
-        int x_nbins = cuts_.size() + 1;
-        int y_nbins = nchannels_;
+        auto x_nbins = cuts_.size() + 1;
+        auto y_nbins = nchannels_;
         float low = 0.;
         float x_high = cuts_.size() + 1;
         float y_high = nchannels_;
@@ -163,7 +160,7 @@ class Cuts {
   }
 
  private:
-  int nchannels_ = 0;
+  std::size_t nchannels_ = 0;
   double *var_values_ = nullptr;
   Variable cut_i_;
   Variable cut_weight_;

@@ -141,7 +141,7 @@ class CorrectionManager {
 
   void SaveTree(std::shared_ptr<TFile> file) {
     file->cd();
-    out_tree_->Write("flow");
+    out_tree_->Write();
     out_tree_.release();
   }
 
