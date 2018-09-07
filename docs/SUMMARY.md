@@ -1,7 +1,6 @@
 # Table of contents
 
-* [README](README.md)
-* [TODO](todo.md)
+* [Flow Vector Library](README.md)
 * [Building flow](building-flow.md)
 * [Using Flow](using-flow.md)
 

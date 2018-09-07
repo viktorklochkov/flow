@@ -1,7 +1,3 @@
----
-description: Instruction on how to build the flow vector framework
----
-
 # Building flow
 
 ## Prerequisites
