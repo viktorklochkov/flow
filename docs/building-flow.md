@@ -6,50 +6,52 @@
 * gcc or clang with C++14 support
 * cmake 2.8
 
+{% hint style="info" %}
+For Building on GSI kronos please see [below](building-flow.md#building-on-kronos).
+{% endhint %}
+
 ##  Building
 
-To build please read the follow steps
-
-[If you plan to build on GSI kronos please look below](building-flow.md#building-on-kronos)
-
-{% hint style="warning" %}
-C++14 support is required.
-{% endhint %}
+To build please read the follow steps:
 
 #### Load ROOT6 in the terminal
 
-`$source /path/to/root/bin/thisroot.sh`
+```bash
+$ source /path/to/root/bin/thisroot.sh
+```
 
 #### Configure with cmake
 
-```text
-$cmake ../path/to/source/
+```bash
+$ cmake ../path/to/source/
 ```
 
 {% hint style="info" %}
-To configure the install path usage of the cmake option
+To configure the install path the usage of the cmake option
 
 **CMAKE\_INSTALL\_PREFIX** is recommended.
 
-`$cmake -DCMAKE_INSTALL_PREFIX=/path/to/install/ /path/to/source`
+`$ cmake -DCMAKE_INSTALL_PREFIX=/path/to/install/ /path/to/source`
 {% endhint %}
 
 #### Build with make
 
-```text
-$make -jN
+```bash
+$ make -jN
 ```
 
  where N is the number of parallel jobs.
 
 #### Install with make
 
-`$make install -jN`
+```bash
+$ make install -jN
+```
 
 ### Building on kronos
 
 {% hint style="danger" %}
-  
+**Prerequisites on kronos**  
 please be advised that the default gcc on kronos is not sufficient to build the library. A newer version is available on cvmfs.
 {% endhint %}
 
