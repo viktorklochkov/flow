@@ -81,6 +81,7 @@ void Qn::CorrectionManager::GetQnFromFramework(const std::string &step) {
       }
       ++ibin;
       auto vector = qncorrections_manager_.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
+      if (vector==nullptr) continue;
       auto method =
           qncorrections_manager_.FindDetector(name.data())->FindDetectorConfiguration(name.data())->GetQVectorNormalizationMethod();
       QVector temp(GetNormalization(method), vector);

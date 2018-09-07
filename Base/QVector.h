@@ -59,8 +59,19 @@ class QVector {
       n_ = vector->GetN();
       sum_weights_ = vector->GetSumOfWeights();
       for (int i = 0; i < 4; i++) {
-        q_[i] =
-            n_==0 || isnan(vector->Qx(i)) || isnan(vector->Qy(i)) ? QVec(NAN, NAN) : QVec(vector->Qx(i), vector->Qy(i));
+        if (n_==0 || isnan(vector->Qx(i)) || isnan(vector->Qy(i))) {
+          q_[i] = QVec(NAN, NAN);
+          n_ = 0;
+          sum_weights_ = 0;
+        } else {
+          q_[i] = QVec(vector->Qx(i), vector->Qy(i));
+        }
+      }
+    } else {
+      n_ = 0;
+      sum_weights_ = 0;
+      for (int i = 0; i < 4; i++) {
+        q_[i] = QVec(NAN, NAN);
       }
     }
   }

@@ -65,10 +65,15 @@ class CorrectionManager {
    * @param var_name
    * @param lambda
    */
-  template<typename FUNCTION>
-  void AddCut(const std::string &name, const std::string &var_name, FUNCTION lambda) {
-    auto variable = var_manager_->FindVariable(var_name);
-    auto cut = MakeUniqueNDimCut({variable}, lambda);
+  template<std::size_t N, typename FUNCTION>
+  void AddCut(const std::string &name, const char* const (&name_arr)[N], FUNCTION lambda) {
+    Variable arr[N];
+    int i = 0;
+    for (auto &name : name_arr) {
+      arr[i] = var_manager_->FindVariable(name);
+      ++i;
+    }
+    auto cut = MakeUniqueNDimCut(arr, lambda);
     try { detectors_track.at(name).AddCut(std::move(cut)); }
     catch (std::out_of_range &) {
       try { detectors_channel.at(name).AddCut(std::move(cut)); }

@@ -492,7 +492,7 @@ class DataContainer : public TObject {
      * Check if axis to be rebinned is found in the datacontainer.
      */
     for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
-      if (axis->Name()==rebinaxis.Name()) {
+      if (axis.Name()==rebinaxis.Name()) {
         rebinned.AddAxis(rebinaxis);
         axisposition = static_cast<unsigned long>(std::distance(axes_.begin(), axis));
         axisfound = true;

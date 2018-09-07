@@ -16,7 +16,7 @@ class DataFiller {
     //Fill event info into variable manager here.
   }
   void FillDetectors(MapDetectors &channel, MapDetectors  &tracking,
-            const std::shared_ptr<VariableManager> &var_manager) {
+                     const std::shared_ptr<VariableManager> &var_manager) {
     for (auto &dp : channel) { dp.second.FillData(); }
     for (int i= 0; i < 100;++i) {
     //Fill Track info into variable manager here.

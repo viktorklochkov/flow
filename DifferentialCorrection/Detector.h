@@ -68,7 +68,7 @@ class Detector : DetectorBase {
       type_(type), datavector_(new Qn::DataContainerDataVector()),
       qvector_(new Qn::DataContainerQVector()) {}
 
-  void ClearData() {
+  void ClearData() override {
     datavector_->ClearData();
     qvector_->ClearData();
   }
@@ -76,14 +76,13 @@ class Detector : DetectorBase {
   QnCorrectionsDetector *GenerateDetector(const std::string &detname,
                                           int globalid,
                                           int binid,
-                                          QnCorrectionsEventClassVariablesSet *set) {
+                                          QnCorrectionsEventClassVariablesSet *set) override {
     if (!configuration_) {
       throw (std::runtime_error("No Qn correction configuration found for " + detname));
     }
     std::string name;
     if (datavector_->IsIntegrated()) {
       name = detname;
-
     } else {
       auto binname = datavector_->GetBinDescription(binid);
       name = detname + std::to_string(binid);
@@ -96,7 +95,7 @@ class Detector : DetectorBase {
   }
 
   QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name,
-                                                                      QnCorrectionsEventClassVariablesSet *set) {
+                                                                      QnCorrectionsEventClassVariablesSet *set) override {
     QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
     if (type_==DetectorType::CHANNEL) {
       configuration =
@@ -107,11 +106,13 @@ class Detector : DetectorBase {
     return configuration;
   }
 
-  std::unique_ptr<DataContainerDataVector> &GetDataContainer() { return datavector_; }
-  std::unique_ptr<DataContainerQVector> &GetQnDataContainer() { return qvector_; }
-  void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) { configuration_ = conf; }
+  std::unique_ptr<DataContainerDataVector> &GetDataContainer() override { return datavector_; }
+  std::unique_ptr<DataContainerQVector> &GetQnDataContainer() override { return qvector_; }
+  void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) override {
+    configuration_ = conf;
+  }
 
-  void AddCut(std::unique_ptr<VariableCutBase> cut) {
+  void AddCut(std::unique_ptr<VariableCutBase> cut) override {
     if (cut->GetVariableLength()==1) {
       int_cuts_->AddCut(std::move(cut));
     } else {
@@ -119,7 +120,7 @@ class Detector : DetectorBase {
     }
   }
 
-  void FillData() {
+  void FillData() override {
     long i = 0;
     if (!int_cuts_->CheckCuts(0)) return;
     for (auto &histo : histograms_) {
@@ -130,9 +131,14 @@ class Detector : DetectorBase {
         ++i;
         continue;
       }
-      if (vars_.size()!=0) {
+      if (vars_.empty()) {
+//        if (i == 0 && type_ == DetectorType::TRACK) {std::cout << phi << std::endl;}
+        datavector_->CallOnElement(0, [&](std::vector<DataVector> &vector) {
+          vector.emplace_back(phi, *(weight_.begin() + i));
+        });
+      } else {
         long icoord = 0;
-        for (const auto var : vars_) {
+        for (const auto &var : vars_) {
           coordinates_.at(icoord) = *(var.begin() + i);
           ++icoord;
         }
@@ -142,11 +148,7 @@ class Detector : DetectorBase {
                                        vector.emplace_back(phi, *(weight_.begin() + i));
                                      });
         }
-        catch (std::exception &) { ++i; continue; }
-      } else {
-        datavector_->CallOnElement(0, [&](std::vector<DataVector> &vector) {
-          vector.emplace_back(phi, *(weight_.begin() + i));
-        });
+        catch (std::exception &) {}
       }
       ++i;
     }
@@ -154,12 +156,12 @@ class Detector : DetectorBase {
 
   const DetectorType Type() const { return type_; }
 
-  void Initialize(const std::string &name, const VariableManager &man) {
+  void Initialize(const std::string &name, const VariableManager &man) override {
     int_cuts_->CreateCutReport(name, 1);
     cuts_->CreateCutReport(name, phi_.length());
   }
 
-  void SaveReport() {
+  void SaveReport() override {
     int_cuts_->Write("");
     cuts_->Write("Channel");
     for (auto &histo : histograms_) {
@@ -172,7 +174,7 @@ class Detector : DetectorBase {
     cuts_->FillReport();
   }
 
-  void AddHistogram(std::unique_ptr<QAHistoBase> histo) {
+  void AddHistogram(std::unique_ptr<QAHistoBase> histo) override {
     histograms_.push_back(std::move(histo));
   }
 

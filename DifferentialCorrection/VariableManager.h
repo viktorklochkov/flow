@@ -13,7 +13,7 @@ namespace Qn {
 class Variable {
  private:
   Variable(const int id, const int length) : id_(id), length_(length), name_("") {}
-  Variable(const int id, const int length, std::string name) : id_(id), length_(length), name_(name) {}
+  Variable(const int id, const int length, std::string name) : id_(id), length_(length), name_(std::move(name)) {}
   int id_{};
   int length_{};
   double *var_container = nullptr;
@@ -74,7 +74,7 @@ class VariableManager {
     var_name_map_.insert(std::make_pair(var, name));
   }
   Variable FindVariable(const std::string &name) const { return name_var_map_.at(name); }
-  std::string FindName(const Variable var) const { return var_name_map_.at(var); }
+  std::string FindName(const Variable &var) const { return var_name_map_.at(var); }
   int FindNum(const std::string &name) const { return name_var_map_.at(name).id_; }
   void SetVariables(double *vars) { var_container = vars; }
   double *GetVariableContainer() { return var_container; }

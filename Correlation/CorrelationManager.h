@@ -213,7 +213,7 @@ class CorrelationManager {
 
   bool CheckESEEvent() {
     if (use_ese_) {
-      for (auto bin : ese_correlations_) {
+      for (const auto &bin : ese_correlations_) {
         auto ese = bin.second.GetCorrelation().GetCorrelation();
         auto pair = ese.At(eventbin_);
         float value = -999.;
