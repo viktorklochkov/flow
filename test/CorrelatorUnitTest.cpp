@@ -64,9 +64,7 @@ TEST(CorrelatorUnitTest, AutoCorrelation) {
 }
 
 TEST(CorrelatorUnitTest, OneDataContainerOnly) {
-
   int nevents = 100;
-  int nsamples = 1;
   Qn::DataContainer<Qn::QVector> container_a;
   for (auto &bin : container_a) {
     Qn::QVec qvec(1.0, 1.0);

@@ -531,8 +531,8 @@ class DataContainer : public TObject {
       auto binlow = axes_[axisposition].GetLowerBinEdge(indices[axisposition]);
       auto binhigh = axes_[axisposition].GetUpperBinEdge(indices[axisposition]);
       auto binmid = binlow + (binhigh - binlow)/2;
-      unsigned long rebinnedindex = static_cast<unsigned long>(rebinaxis.FindBin(binmid));
-      indices[axisposition] = rebinnedindex;
+      auto rebinnedindex = rebinaxis.FindBin(binmid);
+      indices[axisposition] = static_cast<unsigned long>(rebinnedindex);
       if (rebinnedindex!=-1) rebinned.At(indices) = lambda(rebinned.At(indices), bin);
       ++ibin;
     }

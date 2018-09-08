@@ -16,7 +16,7 @@ TEST(BootStrapSamplerTest, Constructor) {
   for (auto vec : test.GetSamples()) {
     for (auto b : vec) {
       for (int i = 0; i < nsamples; ++i) {
-        if (b==i) size_of_sample[i] = size_of_sample[i] + 1;
+        if ((int)b==i) size_of_sample[i] = size_of_sample[i] + 1;
       }
     }
   }
@@ -34,7 +34,7 @@ TEST(BootStrapSamplerTest, Constructor3) {
   for (auto vec : test.GetSamples()) {
     for (auto b : vec) {
       for (int i = 0; i < nsamples; ++i) {
-        if (b==i) size_of_sample[i] = size_of_sample[i] + 1;
+        if ((int)  b==i) size_of_sample[i] = size_of_sample[i] + 1;
       }
     }
   }
