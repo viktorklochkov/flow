@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <memory>
 #include <TCollection.h>
+#include <iostream>
 
 #include "DataVector.h"
 #include "QVector.h"

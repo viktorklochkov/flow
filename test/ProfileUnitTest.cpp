@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 #include <Base/DataContainer.h>
+#include <TProfile.h>
 #include "Base/Profile.h"
 
 TEST(ProfileTest, Trivial) {
@@ -95,26 +96,6 @@ TEST(ProfileTest, DataContainerAdding) {
   }
 }
 
-TEST(ProfileTest, AdditionSubSamples) {
-  Qn::Profile a;
-  a.Update(1.);
-  a.Update(2.);
-  a.Update(3.);
-  Qn::Profile b;
-  b.Update(1.);
-  b.Update(2.);
-  b.Update(3.);
-  auto c = Qn::Add(a,b);
-  Qn::Profile d;
-  d.Update(1.);
-  d.Update(2.);
-  d.Update(3.);
-  d.Update(1.);
-  d.Update(2.);
-  d.Update(3.);
-  EXPECT_FLOAT_EQ(d.Error(),c.Error());
-
-}
 
 TEST(ProfileTest, ErrorCalculation) {
   Qn::Profile b;
@@ -122,4 +103,53 @@ TEST(ProfileTest, ErrorCalculation) {
   b.Update(2.);
   b.Update(3.);
   EXPECT_FLOAT_EQ(0.47140452,b.Error());
+}
+
+TEST(ProfileTest, Addition) {
+  Qn::Profile b;
+  b.Update(1.);
+  b.Update(2.);
+  b.Update(3.);
+  Qn::Profile a;
+  a.Update(2.);
+  a.Update(4.);
+  a.Update(6.);
+  auto c = a + b;
+  TProfile pa("pa","pa",1,0,1);
+  TProfile pb("pb","pb",1,0,1);
+  pa.Fill(0.5,1.);
+  pa.Fill(0.5,2.);
+  pa.Fill(0.5,3.);
+  pb.Fill(0.5,2);
+  pb.Fill(0.5,4.);
+  pb.Fill(0.5,6.);
+  pa.Add(&pb);
+  EXPECT_FLOAT_EQ(c.Mean(),pa.GetBinContent(1));
+  EXPECT_FLOAT_EQ(c.Error(),pa.GetBinError(1));
+}
+
+TEST(ProfileTest, Division) {
+  Qn::Profile b;
+  b.Update(1.);
+  b.Update(2.);
+  b.Update(3.);
+  Qn::Profile a;
+  a.Update(2.);
+  a.Update(4.);
+//  a.Update(6.);
+  auto c = b / a;
+  c = c / a;
+  TProfile pa("pa","pa",1,0,1);
+  TProfile pb("pb","pb",1,0,1);
+  pa.Fill(0.5,1.);
+  pa.Fill(0.5,2.);
+  pa.Fill(0.5,3.);
+  pb.Fill(0.5,2);
+  pb.Fill(0.5,4.);
+//  pb.Fill(0.5,6.);
+  pa.Divide(&pb);
+  pa.Divide(&pb);
+  EXPECT_FLOAT_EQ(c.Mean(),pa.GetBinContent(1));
+  auto err = pa.GetBinError(1);
+  EXPECT_FLOAT_EQ(c.Error(),pa.GetBinError(1));
 }

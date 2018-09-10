@@ -40,5 +40,6 @@
 
 #pragma link C++ function Qn::DataToProfileGraph;
 #pragma link C++ function Qn::DataToMultiGraph;
+#pragma link C++ function Qn::Sqrt;
 
 #endif

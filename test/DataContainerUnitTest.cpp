@@ -9,6 +9,8 @@
 #include "Base/DataContainer.h"
 #include <TList.h>
 #include <TFile.h>
+#include <TRandom3.h>
+#include <TProfile.h>
 
 TEST(DataContainerTest, Copy) {
   Qn::DataContainer<Qn::QVector> container;
@@ -37,6 +39,39 @@ TEST(DataContainerTest, Projection) {
   for (const auto &bin : projection) {
     EXPECT_EQ(1000, bin);
   }
+}
+
+TEST(DataContainerTest, ProjectionProfile) {
+  Qn::DataContainerSample a;
+  a.AddAxes({{"a1",2,0,2},{"b1",2,0,2}});
+  TRandom3 rndm;
+  TProfile pa("pa","pa",1,0,1);
+  TProfile pb("pb","pb",1,0,1);
+  int j = 0;
+  std::vector<float> vec;
+  std::vector<float> vec2;
+  for (int i = 0; i < 100000; ++i) {
+    vec.push_back(rndm.Gaus());
+    vec2.push_back(rndm.Gaus());
+  }
+  for (auto &bin : a) {
+    for (int i = 0; i < 100000; ++i) {
+      if (j==0 || j==2) bin.Update(vec.at(i));
+      if (j==1 || j==3) bin.Update(vec2.at(i));
+      if (j==0) pa.Fill(0.5, vec.at(i));
+      if (j==1) pb.Fill(0.5, vec2.at(i));
+    }
+    j++;
+    std::cout <<"ibin" << j << ": "<< bin.Mean() << " " << bin.Error() << std::endl;
+  }
+  std::cout << "pa" << pa.GetBinContent(1) << " " << pa.GetBinError(1) << std::endl;
+  std::cout << "pb" << pb.GetBinContent(1) << " " << pb.GetBinError(1) << std::endl;
+  auto proj = a.Projection({"a1"},[](const Qn::Sample &a, const Qn::Sample &b){return a+b;});
+  for (auto &bin : proj) {
+    std::cout << bin.Mean() << " " << bin.Error() << std::endl;
+  }
+  pa.Add(&pb);
+  std::cout << pa.GetBinContent(1) << " " << pa.GetBinError(1) << std::endl;
 }
 
 TEST(DataContainerTest, Rebin) {

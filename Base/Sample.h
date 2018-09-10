@@ -102,7 +102,7 @@ class Sample : public Profile {
     a.mean_ = std::sqrt(std::abs(mean_));
     a.sum_ = std::sqrt(std::abs(sum_));
     a.sum2_ = std::sqrt(std::abs(sum2_));
-    a.error_ = 1./2.*a.error_/a.mean_;
+//    a.error_ = 1./2.*a.error_/a.mean_;
     return a;
   }
 
@@ -120,9 +120,11 @@ class Sample : public Profile {
 inline Sample operator+(const Sample &a, const Sample &b) {
   std::vector<StatisticMean> sums(a.samples_stat_);
   int i = 0;
-  for (auto &sum : sums) {
-    sum += b.samples_stat_[i];
-    ++i;
+  if (!b.samples_stat_.empty()) {
+    for (auto &sum : sums) {
+      sum += b.samples_stat_[i];
+      ++i;
+    }
   }
   Sample c(operator+((Profile) a, (Profile) b), sums);
   c.CalculateCorrelatedError();
@@ -132,9 +134,11 @@ inline Sample operator+(const Sample &a, const Sample &b) {
 inline Sample operator-(const Sample &a, const Sample &b) {
   std::vector<StatisticMean> sums(a.samples_stat_);
   int i = 0;
-  for (auto &sum : sums) {
-    sum -= b.samples_stat_[i];
-    ++i;
+  if (!b.samples_stat_.empty()) {
+    for (auto &sum : sums) {
+      sum -= b.samples_stat_[i];
+      ++i;
+    }
   }
   Sample c(operator-((Profile) a, (Profile) b), sums);
   c.CalculateCorrelatedError();
@@ -144,9 +148,11 @@ inline Sample operator-(const Sample &a, const Sample &b) {
 inline Sample operator*(const Sample &a, const Sample &b) {
   std::vector<StatisticMean> sums(a.samples_stat_);
   int i = 0;
-  for (auto &sum : sums) {
-    sum *= b.samples_stat_[i];
-    ++i;
+  if (!b.samples_stat_.empty()) {
+    for (auto &sum : sums) {
+      sum *= b.samples_stat_[i];
+      ++i;
+    }
   }
   Sample c(operator*((Profile) a, (Profile) b), sums);
   c.CalculateCorrelatedError();
@@ -156,9 +162,11 @@ inline Sample operator*(const Sample &a, const Sample &b) {
 inline Sample operator/(const Sample &a, const Sample &b) {
   std::vector<StatisticMean> sums(a.samples_stat_);
   int i = 0;
-  for (auto &sum : sums) {
-    sum /= b.samples_stat_[i];
-    ++i;
+  if (!b.samples_stat_.empty()) {
+    for (auto &sum : sums) {
+      sum /= b.samples_stat_[i];
+      ++i;
+    }
   }
   Sample c(operator/((Profile) a, (Profile) b), sums);
   c.CalculateCorrelatedError();
