@@ -299,13 +299,18 @@ class DataContainer : public TObject {
         projection.At(0) = lambda(projection.At(0), bin);
 
       }
+    } else if(!names.empty() && isprojected.empty()) {
+      std::string errormsg = "Axes not found cannot project.";
+      throw std::logic_error(errormsg);
     } else {
       std::vector<unsigned long> indices;
       indices.reserve(dimension_);
       for (const auto &bin : data_) {
         this->GetIndex(indices, linearindex);
-        for (auto index = indices.begin(); index < indices.end(); ++index) {
-          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        for (int i = indices.size() - 1; i >= 0; --i) {
+          if (isprojected[i]) {
+            indices.erase(indices.begin() + i);
+        }
         }
         projection.At(indices) = lambda(projection.At(indices), bin);
         ++linearindex;
