@@ -47,15 +47,15 @@ class DataContainer : public TObject {
     stride_.resize(1);
     CalculateStride();
   };
-  /**
-   * Constructor
-   * @param axes vector of axes of the datacontainer.
-   */
+/**
+ * Constructor
+ * @param axes vector of axes of the datacontainer.
+ */
   explicit DataContainer(std::vector<Axis> axes) {
     AddAxes(axes);
   }
   virtual ~DataContainer() {
-      if (list_) delete list_;
+    if (list_) delete list_;
   };
 
   using QnAxes = typename std::vector<Axis>;
@@ -296,13 +296,9 @@ class DataContainer : public TObject {
         }
         iaxis++;
       }
-      if (bproj) {
-        isprojected.at(iaxis) = true;
-      } else {
-        isprojected.at(iaxis) = false;
-      }
+      isprojected.at(iaxis) = bproj ? true : false;
     }
-    size_type iaxis =0;
+    size_type iaxis = 0;
     for (const auto proj : isprojected) {
       if (proj) projection.AddAxis(axes_.at(iaxis));
       ++iaxis;
@@ -460,9 +456,7 @@ class DataContainer : public TObject {
     DataContainer<T> rebinned;
     unsigned long axisposition = 0;
     bool axisfound = false;
-    /*
-     * Check if axis to be rebinned is found in the datacontainer.
-     */
+    // Check if axis to be rebinned is found in the datacontainer.
     for (auto axis = std::begin(axes_); axis < std::end(axes_); ++axis) {
       if (axis->Name()==rebinaxis.Name()) {
         rebinned.AddAxis(rebinaxis);
@@ -476,9 +470,7 @@ class DataContainer : public TObject {
       std::string errormsg = "Datacontainer does not have axis of name " + rebinaxis.Name();
       throw std::logic_error(errormsg);
     }
-    /*
-     * Check if there is no overlap in the bin edges.
-     */
+    //Check if there is no overlap in the bin edges.
     bool rebin_ok = true;
     for (const auto &rebinedge : rebinaxis) {
       bool found = false;
@@ -512,14 +504,25 @@ class DataContainer : public TObject {
   }
 
 /**
-* Apply function to two datacontainers.
-* The axes need to have the same order.
-* Elements in datacontainer with smaller dimensions are used as "integrated bins".
-* @tparam Function type of function
-* @param data Datacontainer
-* @param lambda function to be applied on both elements
-* @return resulting datacontainer.
-*/
+ * Rebins the Datacontainer to the new bin entries of the specified axis.
+ * Using default addition method.
+ * @param rebinaxis axis to be rebinned.
+ * @return rebinned datacontainer.
+ */
+  DataContainer<T> Rebin(const Axis &rebinaxis) const {
+    auto lambda = [] (const T& a, const T&b) {return a + b;};
+    return Rebin(rebinaxis,lambda);
+  }
+
+/**
+ * Apply function to two datacontainers.
+ * The axes need to have the same order.
+ * Elements in datacontainer with smaller dimensions are used as "integrated bins".
+ * @tparam Function type of function
+ * @param data Datacontainer
+ * @param lambda function to be applied on both elements
+ * @return resulting datacontainer.
+ */
   template<typename Function>
   DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
     DataContainer<T> result;
@@ -602,6 +605,7 @@ class DataContainer : public TObject {
   QnAxes axes_;      ///< Vector of axes
   std::vector<long> stride_;    ///< Offset for conversion into one dimensional vector.
   TList *list_ = nullptr; ///!<!
+  friend Qn::Internal::DataContainerHelper;
 
   void Reset() {
     integrated_ = false;
@@ -611,10 +615,10 @@ class DataContainer : public TObject {
     stride_.clear();
   }
 /**
-* Calculates one dimensional index from a vector of indices.
-* @param index vector of indices in multiple dimensions
-* @return      index in one dimension
-*/
+ * Calculates one dimensional index from a vector of indices.
+ * @param index vector of indices in multiple dimensions
+ * @return      index in one dimension
+ */
   size_type GetLinearIndex(const std::vector<size_type> &index) const {
     size_type offset = (index[dimension_ - 1]);
     for (unsigned int i = 0; i < dimension_ - 1; ++i) {
@@ -637,7 +641,7 @@ class DataContainer : public TObject {
       if (bin >= (unsigned int) axis.size() || bin < 0) {
         return -1;
       } else {
-        indices.push_back(bin);
+        indices.push_back(static_cast<unsigned long &&>(bin));
         axisindex++;
       }
     }
@@ -656,15 +660,15 @@ class DataContainer : public TObject {
       auto bin = axis.FindBin(coordinates[axisindex]);
       if (bin < 0 || bin > axis.size())
         throw std::out_of_range("bin out of specified range");
-      indices.push_back(bin);
+      indices.push_back(static_cast<unsigned long &&>(bin));
       axisindex++;
     }
     return indices;
   }
 
 /**
-  * Calculates offset for transformation into one dimensional vector.
-  */
+ * Calculates offset for transformation into one dimensional vector.
+ */
   void CalculateStride() {
     stride_[dimension_] = 1;
     for (unsigned int i = 0; i < dimension_; ++i) {
@@ -673,7 +677,23 @@ class DataContainer : public TObject {
   }
 
  public:
-  void NDraw(Option_t *option, std::string axis_name = "") {}
+//--------------------------------//
+// Visualization methods for ROOT //
+// Template specialization needed //
+//--------------------------------//
+/**
+ * Can draw the DataContainer with up to two dimensions.
+ * Implementration for template specializations please see below
+ * @param option draw option
+ * @param axis_name name of axis used for second dimension.
+ */
+  void NDraw(Option_t *option, const std::string &axis_name = "") {}
+
+/**
+ * Display contents of DataContainer in TBrowser.
+ * Implementation for template specializations please see below.
+ * @param b TBrowser
+ */
   void Browse(TBrowser *b) {}
 
 /// \cond CLASSIMP
@@ -694,61 +714,20 @@ using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerTH1F = DataContainer<TH1F>;
 using DataContainerESE = DataContainer<Qn::EventShape>;
 
-//--------------------------------------------------//
-// Template specializations for Qn::Sample drawing  //
-//--------------------------------------------------//
+//--------------------------------------------//
+// Template specializations for visualisation //
+//--------------------------------------------//
 template<>
 inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
-  TString opt = gEnv->GetValue("TGraph.BrowseOption", "");
-  if (opt.IsNull()) {
-    opt = b ? b->GetDrawOption() : "AlP PLC PMC Z";
-    opt = (opt=="") ? "ALP PMC PLC Z" : opt.Data();
-    gEnv->SetValue("TGraph.BrowseOption", opt.Data());
-  }
-  if (!list_) list_ = new TList();
-  list_->SetOwner(true);
-  for (auto &axis : axes_) {
-    auto proj = this->Projection({axis.Name()});
-    auto graph = Qn::Internal::DataContainerHelper::DataToProfileGraph(proj);
-    graph->SetName(axis.Name().data());
-    graph->SetTitle(axis.Name().data());
-    list_->Add(graph);
-  }
-  if (dimension_ > 1) {
-    auto list = new TList();
-    for (auto iaxis = std::begin(axes_); iaxis < std::end(axes_); ++iaxis) {
-      for (auto jaxis = std::begin(axes_); jaxis < std::end(axes_); ++jaxis) {
-        if (iaxis != jaxis) {
-          auto proj = this->Projection({iaxis->Name(), jaxis->Name()});
-          auto mgraph = Qn::Internal::DataContainerHelper::DataToMultiGraph(proj, iaxis->Name());
-          auto name = (jaxis->Name() + ":" + iaxis->Name());
-          mgraph->SetName(name.data());
-          mgraph->SetTitle(name.data());
-          mgraph->GetXaxis()->SetTitle(jaxis->Name().data());
-          mgraph->GetYaxis()->SetTitle("Correlation");
-          list->Add(mgraph);
-        }
-      }
-    }
-    list->SetName("2D");
-    list->SetOwner(true);
-    list_->Add(list);
-  }
-  for (int i = 0; i<list_->GetSize(); ++i) {
-    b->Add(list_->At(i));
-  }
+  Qn::Internal::DataContainerHelper::SampleBrowse(*this, b);
 }
-
 template<>
-inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, std::string axis_name) {
-  if (axes_.size()==1) {
-    auto graph = Qn::Internal::DataContainerHelper::DataToProfileGraph(*this);
-    graph->SetTitle(this->GetName());
-    graph->Draw(option);
-  } else if (axes_.size()==2) {
-    auto mgraph = Qn::Internal::DataContainerHelper::DataToMultiGraph(*this, axis_name);
-    mgraph->Draw(option);
-  }
+inline void DataContainer<Qn::EventShape>::Browse(TBrowser *b) {
+  Qn::Internal::DataContainerHelper::EventShapeBrowse(*this, b);
+}
+template<>
+inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, const std::string &axis_name) {
+  Qn::Internal::DataContainerHelper::NDraw(*this, option, axis_name);
 }
 
 //-----------------------------------------//
