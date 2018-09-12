@@ -5,12 +5,11 @@
 #ifndef FLOW_DATAVECTOR_H
 #define FLOW_DATAVECTOR_H
 
-#include "Rtypes.h"
-//#include "Base/DataContainer.h"
 #include <math.h>
 
-namespace Qn {
+#include "Rtypes.h"
 
+namespace Qn {
 /**
  * simple struct containing information of the raw data for the use in the DataContainer.
  */

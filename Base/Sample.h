@@ -6,6 +6,7 @@
 #define FLOW_SAMPLE_H
 
 #include <utility>
+
 #include "Profile.h"
 
 namespace Qn {

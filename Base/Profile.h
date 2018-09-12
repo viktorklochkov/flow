@@ -45,6 +45,7 @@ class Profile {
       entries_(entries),
       binentries_(binentries),
       error_(error) {}
+  virtual ~Profile() = default;
 
   inline void Update(double value) {
     sum_ = sum_ + value;
@@ -84,6 +85,10 @@ class Profile {
   int entries_ = 0;
   double binentries_ = 0;
   double error_ = 0;
+
+  /// \cond CLASSIMP
+ ClassDef(Profile, 1);
+/// \endcond
 };
 
 inline void SetToZero(Qn::Profile &a) {
@@ -153,8 +158,8 @@ inline Qn::Profile operator*(Qn::Profile a, Qn::Profile b) {
   int nentries = a.entries_;
   double binentries = a.binentries_*b.binentries_;
 //  double nsum2 = a.sum2_*b.sum_*b.sum_ + b.sum2_*a.sum_*a.sum_;
-  double nsum2 = a.mean_ * a.mean_ * b.error_ * b.error_ + b.mean_ * b.mean_ * a.error_ * a.error_;
-  double nerror = std::sqrt(a.mean_ * a.mean_ * b.error_ * b.error_ + b.mean_ * b.mean_ * a.error_ * a.error_);
+  double nsum2 = a.mean_*a.mean_*b.error_*b.error_ + b.mean_*b.mean_*a.error_*a.error_;
+  double nerror = std::sqrt(a.mean_*a.mean_*b.error_*b.error_ + b.mean_*b.mean_*a.error_*a.error_);
 //  double nerror = Qn::Statistics::Sigma(nmean, nsum2, binentries);
   double nsum = a.sum_*b.sum_;
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries, binentries);
@@ -176,7 +181,8 @@ inline Qn::Profile operator/(Qn::Profile a, Qn::Profile b) {
   double binentries = a.binentries_/b.binentries_;
   double nsum = a.sum_/b.sum_;
 //  double nerror = Qn::Statistics::Sigma(nmean, nsum2, binentries);
-  double nerror = sqrt((a.error_*a.error_*b.mean_*b.mean_+b.error_*b.error_*a.mean_*a.mean_)/(b.mean_*b.mean_*b.mean_*b.mean_));
+  double nerror =
+      sqrt((a.error_*a.error_*b.mean_*b.mean_ + b.error_*b.error_*a.mean_*a.mean_)/(b.mean_*b.mean_*b.mean_*b.mean_));
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries, binentries);
   return c;
 }

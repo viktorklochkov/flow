@@ -36,7 +36,6 @@ set(BASE_SOURCES
         Base/DataContainerHelper.cpp
         Base/Efficiency.cpp
         Base/Sample.cpp
-        Base/Hist.cpp
         Base/EventShape.cpp
         )
 

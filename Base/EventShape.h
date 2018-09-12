@@ -52,7 +52,11 @@ class EventShape : public TObject {
   void SetName(const std::string &name) {name_ = name;}
   std::string Name() const {return name_;}
 
-  ~EventShape() { delete spline_; }
+  ~EventShape() {
+    delete spline_;
+    delete histo_;
+    delete integral_;
+  }
 
   bool ready_ = false;
   std::string name_;

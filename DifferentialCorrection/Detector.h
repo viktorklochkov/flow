@@ -143,7 +143,7 @@ class Detector : DetectorBase {
           ++icoord;
         }
         try {
-          datavector_->CallOnElement(datavector_->GetLinearIndex(coordinates_),
+          datavector_->CallOnElement(coordinates_,
                                      [&](std::vector<DataVector> &vector) {
                                        vector.emplace_back(phi, *(weight_.begin() + i));
                                      });

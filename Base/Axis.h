@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+
 #include "Rtypes.h"
 
 namespace Qn {

@@ -5,37 +5,30 @@
 #ifndef QNDATACONTAINER_H
 #define QNDATACONTAINER_H
 
-#include "Axis.h"
-#include "Rtypes.h"
-#include "TMath.h"
-#include "TObject.h"
-#include "TH1F.h"
-#include "TGraphErrors.h"
-
-#include <map>
 #include <vector>
 #include <string>
 #include <stdexcept>
-#include <memory>
-#include <TCollection.h>
 #include <iostream>
-#include <TMultiGraph.h>
-#include <TBrowser.h>
+#include <TEnv.h>
 
+#include "TObject.h"
+#include "TMath.h"
+#include "Rtypes.h"
+#include "TH1F.h"
+#include "TBrowser.h"
+#include "TCollection.h"
+
+#include "Axis.h"
 #include "DataVector.h"
 #include "QVector.h"
 #include "Sample.h"
 #include "EventShape.h"
+#include "DataContainerHelper.h"
 
 /**
  * QnCorrectionsframework
  */
 namespace Qn {
-
-inline void SetToZero(float &a) {
-  a = 0;
-}
-
 /**
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
@@ -44,8 +37,8 @@ template<typename T>
 class DataContainer : public TObject {
  public:
 /**
- * Constructor
- * @param name Name of data container.
+ * Default constructor
+ * Axes can be added later. If no axes are added the DataContainer is integrated with only one entry.
  */
   DataContainer() : integrated_(true) {
     axes_.push_back({"integrated", 1, 0, 1});
@@ -54,14 +47,19 @@ class DataContainer : public TObject {
     stride_.resize(1);
     CalculateStride();
   };
-
-  explicit DataContainer(std::vector<Qn::Axis> axes) {
+  /**
+   * Constructor
+   * @param axes vector of axes of the datacontainer.
+   */
+  explicit DataContainer(std::vector<Axis> axes) {
     AddAxes(axes);
   }
+  virtual ~DataContainer() {
+      if (list_) delete list_;
+  };
 
-  virtual ~DataContainer() = default;
-
-  using SIZETYPE = typename std::vector<T>::size_type;
+  using QnAxes = typename std::vector<Axis>;
+  using size_type = typename std::size_t;
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
   const_iterator begin() const { return data_.cbegin(); } ///< iterator for external use
@@ -69,17 +67,17 @@ class DataContainer : public TObject {
   iterator begin() { return data_.begin(); } ///< iterator for external use
   iterator end() { return data_.end(); } ///< iterator for external use
 
-  /**
+/**
  * Size of data container
  * @return number of entries in the container
  */
-  SIZETYPE size() const { return data_.size(); }
+  size_type size() const { return data_.size(); }
 
 /**
  * Adds axes for storing data
  * @param axes vector of axes
  */
-  void AddAxes(const std::vector<Axis> &axes) {
+  void AddAxes(const QnAxes &axes) {
     if (axes.size()!=0) {
       if (integrated_) this->Reset();
       for (const auto &axis : axes) {
@@ -87,6 +85,7 @@ class DataContainer : public TObject {
       }
     }
   }
+
 /**
  * Adds existing axis for storing the data with variable binning
  * @param axis Axis to be added.
@@ -98,15 +97,18 @@ class DataContainer : public TObject {
       throw std::runtime_error("Axis already defined in vector.");
     axes_.push_back(axis);
     dimension_++;
-    SIZETYPE totalbins = 1;
+    size_type totalbins = 1;
     for (const auto &iaxis : axes_) {
       totalbins *= iaxis.size();
     }
     data_.resize(totalbins);
-    stride_.resize((SIZETYPE) dimension_ + 1);
+    stride_.resize((size_type) dimension_ + 1);
     CalculateStride();
   }
-
+/**
+ * Initialized the object in the histogram to a given object
+ * @param obj Object to be intialized to
+ */
   void InitializeEntries(const T obj) {
     for (auto &bin : data_) {
       bin = obj;
@@ -114,18 +116,47 @@ class DataContainer : public TObject {
   }
 
 /**
- * Get element in the specified bin
- * @param bins Vector of bin indices of the desired element
- * @return     Element
+ * Calculates the diagonal indices of a given number of axes.
+ * @param axes vector of axes.
+ * @return vector of linear indices in the diagonal.
  */
-  inline T const &At(const typename std::vector<SIZETYPE> &bins) const { return data_.at(GetLinearIndex(bins)); }
+  std::vector<int> GetDiagonal(const QnAxes &axes) {
+    std::vector<int> diagonal;
+    int stride_sum = 0;
+    int nbins_diagonal = 1;
+    int iaxis = 0;
+    for (const auto &ref_axis : axes_) {
+      bool found = false;
+      for (const auto &axis : axes) {
+        if (ref_axis==axis) {
+          stride_sum += stride_[iaxis];
+          found = true;
+        }
+      }
+      if (!found) nbins_diagonal *= ref_axis.size();
+      ++iaxis;
+    }
+    for (unsigned int ibin = 0; ibin < axes[0].size(); ++ibin) {
+      for (int idiag = 0; idiag < nbins_diagonal; ++idiag) {
+        diagonal.push_back(ibin*stride_sum + idiag);
+      }
+    }
+    return diagonal;
+  }
 
 /**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  inline T &At(const typename std::vector<SIZETYPE> &bins) { return data_.at(GetLinearIndex(bins)); }
+  inline T const &At(const typename std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+
+/**
+ * Get element in the specified bin
+ * @param bins Vector of bin indices of the desired element
+ * @return     Element
+ */
+  inline T &At(const typename std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
@@ -133,6 +164,7 @@ class DataContainer : public TObject {
  * @return      Element
  */
   inline T &At(const long index) { return data_.at(index); }
+
 /**
  * Calls function on element specified by indices.
  * @tparam Function type of function to be called on the object
@@ -140,7 +172,7 @@ class DataContainer : public TObject {
  * @param lambda function to be called on the element. Takes element of type T as an argument.
  */
   template<typename Function>
-  void CallOnElement(const typename std::vector<SIZETYPE> &indices, Function &&lambda) {
+  void CallOnElement(const typename std::vector<size_type> &indices, Function &&lambda) {
     lambda(data_[GetLinearIndex(indices)]);
   }
 
@@ -176,17 +208,19 @@ class DataContainer : public TObject {
   inline void CallOnElement(const long index, Function &&lambda) {
     lambda(data_[index]);
   }
+
 /**
  * Get vector of axes
  * @return Vector of axes
  */
-  inline const std::vector<Axis> &GetAxes() const { return axes_; }
+  inline const QnAxes &GetAxes() const { return axes_; }
 
   /**
  * Get vector of axes
  * @return Vector of axes
  */
-  inline std::vector<Axis> &GetAxes() { return axes_; }
+  inline QnAxes &GetAxes() { return axes_; }
+
 /**
  * Get Axis with the given name.
  * Throws exception when not found.
@@ -205,7 +239,7 @@ class DataContainer : public TObject {
  * @param indices Outparameter for the indices
  * @param offset Index of linearized vector
  */
-  void GetIndex(typename std::vector<SIZETYPE> &indices, const unsigned long offset) const {
+  void GetIndex(typename std::vector<size_type> &indices, const unsigned long offset) const {
     unsigned long temp = offset;
     if (offset < data_.size()) {
       indices.resize(dimension_);
@@ -241,88 +275,76 @@ class DataContainer : public TObject {
 /**
  * Projects datacontainer on a subset of axes
  * @tparam Function typename of function.
- * @param axes subset of axes used for the projection.
+ * @param axis_names subset of axes used for the projection.
  * @param lambda Function used to add two entries.
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Projection(const std::vector<std::string> names,
+  DataContainer<T> Projection(const std::vector<std::string> axis_names,
                               Function &&lambda) const {
     DataContainer<T> projection;
     unsigned long linearindex = 0;
     std::vector<bool> isprojected;
-    auto originalaxes = this->GetAxes();
-    for (const auto &originalaxis : originalaxes) {
-      for (const auto &name : names) {
-        isprojected.push_back((originalaxis.Name()==name)==0);
-        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
-      }
-    }
-    if (names.empty()) {
-      for (const auto &bin : data_) {
-        projection.At(0) = lambda(projection.At(0), bin);
-
-      }
-    } else {
-      std::vector<unsigned long> indices;
-      indices.reserve(dimension_);
-      for (const auto &bin : data_) {
-        this->GetIndex(indices, linearindex);
-        for (auto index = indices.begin(); index < indices.end(); ++index) {
-          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+    isprojected.resize(axes_.size());
+    for (const auto &name : axis_names) {
+      bool bproj = false;
+      size_type iaxis = 0;
+      for (const auto &originalaxis : axes_) {
+        if (originalaxis.Name()==name) {
+          bproj = true;
+          break;
         }
-        projection.At(indices) = lambda(projection.At(indices), bin);
-        ++linearindex;
+        iaxis++;
+      }
+      if (bproj) {
+        isprojected.at(iaxis) = true;
+      } else {
+        isprojected.at(iaxis) = false;
       }
     }
-    return projection;
-  }
-
-  /**
- * Projects datacontainer on a subset of axes
- * @tparam Function typename of function.
- * @param axes subset of axes used for the projection.
- * @param lambda Function used to add two entries.
- * @return projected datacontainer.
- */
-  DataContainer<T> Projection(const std::vector<std::string> names) const {
-    DataContainer<T> projection;
-    unsigned long linearindex = 0;
-    std::vector<bool> isprojected;
-    auto originalaxes = this->GetAxes();
-    auto lambda = [](const T &a, const T &b) { return a + b; };
-    for (const auto &originalaxis : originalaxes) {
-      for (const auto &name : names) {
-        isprojected.push_back((originalaxis.Name()==name)==0);
-        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
-      }
+    size_type iaxis =0;
+    for (const auto proj : isprojected) {
+      if (proj) projection.AddAxis(axes_.at(iaxis));
+      ++iaxis;
     }
-    if (names.empty()) {
+    if (axis_names.empty()) {
       for (const auto &bin : data_) {
         projection.At(0) = lambda(projection.At(0), bin);
 
       }
-    } else if(!names.empty() && isprojected.empty()) {
-      std::string errormsg = "Axes not found cannot project.";
-      throw std::logic_error(errormsg);
     } else {
-      std::vector<unsigned long> indices;
+      std::vector<size_type> indices;
+      std::vector<size_type> projindices;
       indices.reserve(dimension_);
+      projindices.resize(projection.dimension_);
       for (const auto &bin : data_) {
         this->GetIndex(indices, linearindex);
-        for (int i = indices.size() - 1; i >= 0; --i) {
-          if (isprojected[i]) {
-            indices.erase(indices.begin() + i);
+        size_type iprojbin = 0;
+        for (size_type i = 0; i < indices.size(); ++i) {
+          if (isprojected.at(i)) {
+            projindices.at(iprojbin) = indices.at(i);
+            ++iprojbin;
           }
         }
-        projection.At(indices) = lambda(projection.At(indices), bin);
+        projection.At(projindices) = lambda(projection.At(projindices), bin);
         ++linearindex;
       }
     }
     return projection;
   }
 
-  /**
+/**
+ * Projects datacontainer on a subset of axes
+ * @param axis_names subset of axes used for the projection.
+ * @return projected datacontainer.
+ */
+  DataContainer<T>
+  Projection(const std::vector<std::string> axis_names = {}) const {
+    auto lambda = [](const T &a, const T &b) { return a + b; };
+    return Projection(axis_names, lambda);
+  }
+
+/**
  * Projects datacontainer on a subset of axes
  * @tparam Function typename of function.
  * @param axes subset of axes used for the projection.
@@ -356,8 +378,10 @@ class DataContainer : public TObject {
           continue;
         }
         this->GetIndex(indices, linearindex);
-        for (auto index = indices.begin(); index < indices.end(); ++index) {
-          if (isprojected[std::distance(indices.begin(), index)]) indices.erase(index);
+        for (int i = indices.size() - 1; i >= 0; --i) {
+          if (isprojected[i]) {
+            indices.erase(indices.begin() + i);
+          }
         }
         projection.At(indices) = lambda(projection.At(indices), bin);
         ++linearindex;
@@ -366,21 +390,6 @@ class DataContainer : public TObject {
     return projection;
   }
 
-/**
- * "Integrates" container
- * @tparam Function typename of function.
- * @param axes subset of axes used for the projection.
- * @param lambda Function used to add two entries.
- * @return integrated container
- */
-  template<typename Function>
-  DataContainer<T> ProjectionInt(Function &&lambda) const {
-    DataContainer<T> projection;
-    for (const auto &bin : data_) {
-      projection.data_[0] = lambda(projection.data_[0], bin);
-    }
-    return projection;
-  }
 /**
  * Map function to datacontainer. Does not modify the original container.
  * @tparam Function function
@@ -402,7 +411,7 @@ class DataContainer : public TObject {
  * @param axis subrange of axis to perform selection
  * @return
  */
-  DataContainer<T> Select(const Qn::Axis &axis) const {
+  DataContainer<T> Select(const Axis &axis) const {
     DataContainer<T> selected;
     long axisposition = 0;
     long tmpaxisposition = 0;
@@ -437,52 +446,6 @@ class DataContainer : public TObject {
       selected.CalculateStride();
     }
     return selected;
-  }
-
-/**
- * Apply function to two datacontainers.
- * The axes need to have the same order.
- * Elements in datacontainer with smaller dimensions are used as "integrated bins".
- * @tparam Function type of function
- * @param data Datacontainer
- * @param lambda function to be applied on both elements
- * @return resulting datacontainer.
- */
-  template<typename Function>
-  DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
-    DataContainer<T> result;
-    std::vector<SIZETYPE> indices;
-    unsigned long index = 0;
-    if (axes_.size() > data.axes_.size()) {
-      for (unsigned long iaxis = 0; iaxis < data.axes_.size() - 1; ++iaxis) {
-        if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
-          std::string errormsg = "Axes do not match.";
-          throw std::logic_error(errormsg);
-        }
-      }
-      result.AddAxes(axes_);
-      indices.reserve(dimension_);
-      for (const auto &bin_a : data_) {
-        GetIndex(indices, index);
-        result.data_[index] = lambda(bin_a, data.At(indices));
-        ++index;
-      }
-    } else {
-      for (unsigned long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
-        if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
-          std::string errormsg = "Axes do not match.";
-          throw std::logic_error(errormsg);
-        }
-      }
-      result.AddAxes(data.axes_);
-      indices.reserve(data.dimension_);
-      for (const auto &bin_b : data.data_) {
-        data.GetIndex(indices, index);
-        result.data_[index] = lambda(At(indices), bin_b);
-        ++index;
-      }
-    }
-    return result;
   }
 
 /**
@@ -533,7 +496,7 @@ class DataContainer : public TObject {
       throw std::logic_error(errormsg);
     }
     unsigned long ibin = 0;
-    std::vector<SIZETYPE> indices;
+    std::vector<size_type> indices;
     indices.reserve(dimension_);
     for (const auto &bin : data_) {
       GetIndex(indices, ibin);
@@ -548,33 +511,74 @@ class DataContainer : public TObject {
     return rebinned;
   }
 
-  /*
-   * Clears data to be filled. To be called after one event.
-   */
+/**
+* Apply function to two datacontainers.
+* The axes need to have the same order.
+* Elements in datacontainer with smaller dimensions are used as "integrated bins".
+* @tparam Function type of function
+* @param data Datacontainer
+* @param lambda function to be applied on both elements
+* @return resulting datacontainer.
+*/
+  template<typename Function>
+  DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
+    DataContainer<T> result;
+    std::vector<size_type> indices;
+    unsigned long index = 0;
+    if (axes_.size() > data.axes_.size()) {
+      for (unsigned long iaxis = 0; iaxis < data.axes_.size() - 1; ++iaxis) {
+        if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
+          std::string errormsg = "Axes do not match.";
+          throw std::logic_error(errormsg);
+        }
+      }
+      result.AddAxes(axes_);
+      indices.reserve(dimension_);
+      for (const auto &bin_a : data_) {
+        GetIndex(indices, index);
+        result.data_[index] = lambda(bin_a, data.At(indices));
+        ++index;
+      }
+    } else {
+      for (unsigned long iaxis = axes_.size() - 1; iaxis > 0; --iaxis) {
+        if (axes_[iaxis].Name()!=data.axes_[iaxis].Name()) {
+          std::string errormsg = "Axes do not match.";
+          throw std::logic_error(errormsg);
+        }
+      }
+      result.AddAxes(data.axes_);
+      indices.reserve(data.dimension_);
+      for (const auto &bin_b : data.data_) {
+        data.GetIndex(indices, index);
+        result.data_[index] = lambda(At(indices), bin_b);
+        ++index;
+      }
+    }
+    return result;
+  }
+
+/**
+ * Clears data to be filled. To be called after one event.
+ */
   void ClearData() {
     auto size = data_.size();
-//    data_.clear();
-//    data_.resize(size);
     data_.assign(size, T());
   }
 /**
- * Calculates one dimensional index from a vector of indices.
- * @param index vector of indices in multiple dimensions
- * @return      index in one dimension
+ * Clear data at the specified postion.
+ * @param position position at which to clear the data.
  */
-  SIZETYPE GetLinearIndex(const std::vector<SIZETYPE> &index) const {
-    SIZETYPE offset = (index[dimension_ - 1]);
-    for (unsigned int i = 0; i < dimension_ - 1; ++i) {
-      offset += stride_[i + 1]*(index[i]);
-    }
-    return offset;
+  void ClearDataAt(size_type position) {
+    data_.at(position) = T();
   }
+
 /**
  * Checks if datacontainer is integrated.
  * It is integrated if first axis is the integrated axis with Id == -1;
  * @return true if integrated, else false.
  */
   inline bool IsIntegrated() const { return integrated_; }
+
 /**
  * Merges DataContainer with DataContainers in TCollection.
  * Function used in "hadd"
@@ -592,11 +596,12 @@ class DataContainer : public TObject {
   }
 
  private:
-  bool integrated_ = true;
+  bool integrated_ = true;      ///< Flag to show if container is integrated (only one bin)
   unsigned long dimension_ = 0; ///< dimensionality of data
-  std::vector<T> data_; ///< linearized vector of data
-  std::vector<Axis> axes_; ///< Vector of axes
-  std::vector<long> stride_; ///< Offset for conversion into one dimensional vector.
+  std::vector<T> data_;         ///< linearized vector of data
+  QnAxes axes_;      ///< Vector of axes
+  std::vector<long> stride_;    ///< Offset for conversion into one dimensional vector.
+  TList *list_ = nullptr; ///!<!
 
   void Reset() {
     integrated_ = false;
@@ -605,39 +610,18 @@ class DataContainer : public TObject {
     axes_.clear();
     stride_.clear();
   }
-
 /**
- * Calculates multidimensional index from coordinates
- * @param coordinates floating point coordinates
- * @return index belonging to coordinates
- */
-  typename std::vector<SIZETYPE> GetIndex(const std::vector<float> &coordinates) const {
-    typename std::vector<SIZETYPE> indices;
-    unsigned long axisindex = 0;
-    for (const auto &axis : axes_) {
-      auto bin = axis.FindBin(coordinates[axisindex]);
-      if (bin < 0 || bin > axis.size())
-        throw std::out_of_range("bin out of specified range");
-      indices.push_back(bin);
-      axisindex++;
+* Calculates one dimensional index from a vector of indices.
+* @param index vector of indices in multiple dimensions
+* @return      index in one dimension
+*/
+  size_type GetLinearIndex(const std::vector<size_type> &index) const {
+    size_type offset = (index[dimension_ - 1]);
+    for (unsigned int i = 0; i < dimension_ - 1; ++i) {
+      offset += stride_[i + 1]*(index[i]);
     }
-    return indices;
+    return offset;
   }
-
-/**
- * Calculates offset for transformation into one dimensional vector.
- */
-  void CalculateStride() {
-    stride_[dimension_] = 1;
-    for (unsigned int i = 0; i < dimension_; ++i) {
-      stride_[dimension_ - i - 1] = stride_[dimension_ - i]*axes_[dimension_ - i - 1].size();
-    }
-  }
-
- public:
-
-  void NDraw(Option_t *option, std::string axis_name ="") {}
-  void Browse(TBrowser *b) {}
 
 /**
  * Calculates linear index from coordinates
@@ -646,7 +630,7 @@ class DataContainer : public TObject {
  * @return linear index
  */
   long GetLinearIndex(const std::vector<float> &coordinates) const {
-    typename std::vector<SIZETYPE> indices;
+    typename std::vector<size_type> indices;
     unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
       auto bin = axis.FindBin(coordinates[axisindex]);
@@ -660,126 +644,47 @@ class DataContainer : public TObject {
     return GetLinearIndex(indices);
   }
 
-  std::vector<int> GetDiagonal(const std::vector<Axis> &axes) {
-    std::vector<int> diagonal;
-    int stride_sum = 0;
-    int nbins_diagonal = 1;
-    int iaxis = 0;
-    for (const auto &ref_axis : axes_) {
-      bool found = false;
-      for (const auto &axis : axes) {
-        if (ref_axis==axis) {
-          stride_sum += stride_[iaxis];
-          found = true;
-        }
-      }
-      if (!found) nbins_diagonal *= ref_axis.size();
-      ++iaxis;
+/**
+ * Calculates multidimensional index from coordinates
+ * @param coordinates floating point coordinates
+ * @return index belonging to coordinates
+ */
+  typename std::vector<size_type> GetIndex(const std::vector<float> &coordinates) const {
+    typename std::vector<size_type> indices;
+    unsigned long axisindex = 0;
+    for (const auto &axis : axes_) {
+      auto bin = axis.FindBin(coordinates[axisindex]);
+      if (bin < 0 || bin > axis.size())
+        throw std::out_of_range("bin out of specified range");
+      indices.push_back(bin);
+      axisindex++;
     }
-    for (unsigned int ibin = 0; ibin < axes[0].size(); ++ibin) {
-      for (int idiag = 0; idiag < nbins_diagonal; ++idiag) {
-        diagonal.push_back(ibin*stride_sum + idiag);
-      }
-    }
-    return diagonal;
+    return indices;
   }
 
+/**
+  * Calculates offset for transformation into one dimensional vector.
+  */
+  void CalculateStride() {
+    stride_[dimension_] = 1;
+    for (unsigned int i = 0; i < dimension_; ++i) {
+      stride_[dimension_ - i - 1] = stride_[dimension_ - i]*axes_[dimension_ - i - 1].size();
+    }
+  }
+
+ public:
+  void NDraw(Option_t *option, std::string axis_name = "") {}
+  void Browse(TBrowser *b) {}
+
 /// \cond CLASSIMP
- ClassDef(DataContainer, 11);
+ ClassDef(DataContainer, 12);
 /// \endcond
 };
 
-template<>
-inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
-  for (auto &axis : axes_) {
-    auto proj = this->Projection({axis.Name()});
-    auto graph = new TGraphErrors((int) proj.size());
-    unsigned int ibin = 0;
-    for (auto &bin : proj) {
-      float xhi = proj.axes_.front().GetUpperBinEdge(ibin);
-      float xlo = proj.axes_.front().GetLowerBinEdge(ibin);
-      float x = xlo + ((xhi - xlo)/2);
-      graph->SetPoint(ibin, x, bin.Mean());
-      graph->SetPointError(ibin, 0, bin.Error());
-      ibin++;
-    }
-    graph->SetName(axis.Name().data());
-    graph->SetTitle(axis.Name().data());
-    b->Add(graph);
-//    graph->SetTitle(this->GetName());
-//    browsables.AddAtAndExpand(graph,i);
-//    browsables->SetOwner(true);
-  }
-}
-
-template<>
-inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, std::string axis_name) {
-  if (axes_.size()==1) {
-    auto graph = new TGraphErrors((int) data_.size());
-    unsigned int ibin = 0;
-    for (auto &bin : data_) {
-      float xhi = axes_.front().GetUpperBinEdge(ibin);
-      float xlo = axes_.front().GetLowerBinEdge(ibin);
-      float x = xlo + ((xhi - xlo)/2);
-      graph->SetPoint(ibin, x, bin.Mean());
-      graph->SetPointError(ibin, 0, bin.Error());
-      ibin++;
-    }
-    graph->SetTitle(this->GetName());
-    graph->Draw(option);
-  } else if (axes_.size()==2) {
-    auto multigraph = new TMultiGraph();
-    Qn::Axis axis = this->GetAxis(axis_name);
-    for (unsigned int ibin = 0; ibin < axis.size(); ++ibin) {
-      auto subdata = this->Select({axis.Name(), {axis.GetLowerBinEdge(ibin), axis.GetUpperBinEdge(ibin)}});
-      auto subgraph = new TGraphErrors((int) subdata.size());
-      unsigned int jbin = 0;
-      for (auto &bin : subdata) {
-        float xhi = subdata.axes_.front().GetUpperBinEdge(jbin);
-        float xlo = subdata.axes_.front().GetLowerBinEdge(jbin);
-        float x = xlo + ((xhi - xlo)/2);
-        subgraph->SetPoint(jbin, x, bin.Mean());
-        subgraph->SetPointError(jbin, 0, bin.Error());
-        jbin++;
-      }
-      subgraph->SetTitle(Form("%.2f - %.2f", axis.GetLowerBinEdge(ibin), axis.GetUpperBinEdge(ibin)));
-      subgraph->SetMarkerStyle(kFullCircle);
-      multigraph->Add(subgraph);
-    }
-    multigraph->Draw(option);
-  }
-}
-
-template<typename T>
-DataContainer<T> operator+(DataContainer<T> a, const DataContainer<T> &b) {
-  return a.Apply(b, [](const T &a, const T &b) { return a + b; });
-}
-
-template<typename T>
-DataContainer<T> operator-(DataContainer<T> a, const DataContainer<T> &b) {
-  return a.Apply(b, [](const T &a, const T &b) { return a - b; });
-}
-
-template<typename T>
-DataContainer<T> operator*(DataContainer<T> a, const DataContainer<T> &b) {
-  return a.Apply(b, [](const T &a, const T &b) { return a*b; });
-}
-
-template<typename T>
-DataContainer<T> operator/(DataContainer<T> a, const DataContainer<T> &b) {
-  return a.Apply(b, [](const T &a, const T &b) { return a/b; });
-}
-
-template<typename T>
-DataContainer<T> operator*(DataContainer<T> a, double b) {
-  return a.Map([b](T &a) { return a*b; });
-}
-
-template<typename T>
-DataContainer<T> Sqrt(DataContainer<T> a) {
-  return a.Map([](T &x) { return x.Sqrt(); });
-}
-
+//-----------------------------------------//
+// Common alias for types of DataContainer //
+// needed for ROOT IO                      //
+//-----------------------------------------//
 using DataContainerF = DataContainer<float>;
 using DataContainerFB = DataContainer<std::pair<bool, float>>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
@@ -789,5 +694,89 @@ using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerTH1F = DataContainer<TH1F>;
 using DataContainerESE = DataContainer<Qn::EventShape>;
 
+//--------------------------------------------------//
+// Template specializations for Qn::Sample drawing  //
+//--------------------------------------------------//
+template<>
+inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
+  TString opt = gEnv->GetValue("TGraph.BrowseOption", "");
+  if (opt.IsNull()) {
+    opt = b ? b->GetDrawOption() : "AlP PLC PMC Z";
+    opt = (opt=="") ? "ALP PMC PLC Z" : opt.Data();
+    gEnv->SetValue("TGraph.BrowseOption", opt.Data());
+  }
+  if (!list_) list_ = new TList();
+  list_->SetOwner(true);
+  for (auto &axis : axes_) {
+    auto proj = this->Projection({axis.Name()});
+    auto graph = Qn::Internal::DataContainerHelper::DataToProfileGraph(proj);
+    graph->SetName(axis.Name().data());
+    graph->SetTitle(axis.Name().data());
+    list_->Add(graph);
+  }
+  if (dimension_ > 1) {
+    auto list = new TList();
+    for (auto iaxis = std::begin(axes_); iaxis < std::end(axes_); ++iaxis) {
+      for (auto jaxis = std::begin(axes_); jaxis < std::end(axes_); ++jaxis) {
+        if (iaxis != jaxis) {
+          auto proj = this->Projection({iaxis->Name(), jaxis->Name()});
+          auto mgraph = Qn::Internal::DataContainerHelper::DataToMultiGraph(proj, iaxis->Name());
+          auto name = (jaxis->Name() + ":" + iaxis->Name());
+          mgraph->SetName(name.data());
+          mgraph->SetTitle(name.data());
+          mgraph->GetXaxis()->SetTitle(jaxis->Name().data());
+          mgraph->GetYaxis()->SetTitle("Correlation");
+          list->Add(mgraph);
+        }
+      }
+    }
+    list->SetName("2D");
+    list->SetOwner(true);
+    list_->Add(list);
+  }
+  for (int i = 0; i<list_->GetSize(); ++i) {
+    b->Add(list_->At(i));
+  }
+}
+
+template<>
+inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, std::string axis_name) {
+  if (axes_.size()==1) {
+    auto graph = Qn::Internal::DataContainerHelper::DataToProfileGraph(*this);
+    graph->SetTitle(this->GetName());
+    graph->Draw(option);
+  } else if (axes_.size()==2) {
+    auto mgraph = Qn::Internal::DataContainerHelper::DataToMultiGraph(*this, axis_name);
+    mgraph->Draw(option);
+  }
+}
+
+//-----------------------------------------//
+// Operations for DataContainer arithmetic //
+//-----------------------------------------//
+template<typename T>
+DataContainer<T> operator+(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a + b; });
+}
+template<typename T>
+DataContainer<T> operator-(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a - b; });
+}
+template<typename T>
+DataContainer<T> operator*(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a*b; });
+}
+template<typename T>
+DataContainer<T> operator/(DataContainer<T> a, const DataContainer<T> &b) {
+  return a.Apply(b, [](const T &a, const T &b) { return a/b; });
+}
+template<typename T>
+DataContainer<T> operator*(DataContainer<T> a, double b) {
+  return a.Map([b](T &a) { return a*b; });
+}
+template<typename T>
+DataContainer<T> Sqrt(DataContainer<T> a) {
+  return a.Map([](T &x) { return x.Sqrt(); });
+}
 }
 #endif
