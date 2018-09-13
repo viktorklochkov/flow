@@ -17,7 +17,7 @@ TGraphErrors *DataContainerHelper::DataToProfileGraph(const Qn::DataContainerSam
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
     return nullptr;
   }
-  auto graph = new TGraphErrors((int) data.size());
+  auto graph =  new TGraphErrors((int) data.size());
   unsigned int ibin = 0;
   for (auto &bin : data) {
     float xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
@@ -53,28 +53,24 @@ TMultiGraph *DataContainerHelper::DataToMultiGraph(const Qn::DataContainerSample
   return multigraph;
 }
 
-void DataContainerHelper::SampleBrowse(DataContainer<Sample> *data, TBrowser *b) {
-  TString opt = gEnv->GetValue("TGraph.BrowseOption", "");
-  if (opt.IsNull()) {
-    opt = b ? b->GetDrawOption() : "AlP PLC PMC Z";
-    opt = (opt=="") ? "ALP PMC PLC Z" : opt.Data();
-    gEnv->SetValue("TGraph.BrowseOption", opt.Data());
-  }
-  if (!data->list_) data->list_ = new TList();
-  data->list_->SetOwner(true);
-  for (auto &axis : data->axes_) {
-    auto proj = data->Projection({axis.Name()});
+void DataContainerHelper::SampleBrowse(Qn::DataContainer<Qn::Sample> &data, TBrowser *b) {
+  using DrawErrorGraph = ProjectionDrawable<TGraphErrors*>;
+  using DrawMultiGraph = ProjectionDrawable<TMultiGraph*>;
+  if (!data.list_) data.list_ = new TList();
+  data.list_->SetOwner(true);
+  for (auto &axis : data.axes_) {
+    auto proj = data.Projection({axis.Name()});
     auto graph = Qn::Internal::DataContainerHelper::DataToProfileGraph(proj);
-//    graph->SetName(data->GetName());
-//    graph->SetTitle(data->GetName());
+    graph->SetName(axis.Name().data());
+    graph->SetTitle(axis.Name().data());
     graph->GetXaxis()->SetTitle(axis.Name().data());
-    graph->GetYaxis()->SetTitle("Correlation");
-    data->list_->Add(graph);
+    DrawErrorGraph *drawable = new DrawErrorGraph(graph);
+    data.list_->Add(drawable);
   }
-  if (data->dimension_ > 1) {
-    auto list = new TList();
-    for (auto iaxis = std::begin(data->axes_); iaxis < std::end(data->axes_); ++iaxis) {
-      for (auto jaxis = std::begin(data->axes_); jaxis < std::end(data->axes_); ++jaxis) {
+  if (data.dimension_ > 1) {
+    auto list2d = new TList();
+    for (auto iaxis = std::begin(data.axes_); iaxis < std::end(data.axes_); ++iaxis) {
+      for (auto jaxis = std::begin(data.axes_); jaxis < std::end(data.axes_); ++jaxis) {
         if (iaxis != jaxis) {
           auto proj = data->Projection({iaxis->Name(), jaxis->Name()});
           auto mgraph = Qn::Internal::DataContainerHelper::DataToMultiGraph(proj, iaxis->Name());
@@ -83,13 +79,14 @@ void DataContainerHelper::SampleBrowse(DataContainer<Sample> *data, TBrowser *b)
           mgraph->SetTitle(name.data());
           mgraph->GetXaxis()->SetTitle(jaxis->Name().data());
           mgraph->GetYaxis()->SetTitle("Correlation");
-          list->Add(mgraph);
+          DrawMultiGraph *drawable = new DrawMultiGraph(mgraph);
+          list2d->Add(drawable);
         }
       }
     }
-    list->SetName("2D");
-    list->SetOwner(true);
-    data->list_->Add(list);
+    list2d->SetName("2D");
+    list2d->SetOwner(true);
+    data.list_->Add(list2d);
   }
   for (int i = 0; i<data->list_->GetSize(); ++i) {
     b->Add(data->list_->At(i));

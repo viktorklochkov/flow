@@ -14,19 +14,29 @@ namespace Qn {
  * simple struct containing information of the raw data for the use in the DataContainer.
  */
 struct DataVector {
-  DataVector() : phi(NAN), weight(NAN) {}
+  /**
+   * Default constructor
+   */
+  DataVector() = default;
+/**
+ * Constructor with default weight 0.
+ * @param phi azimuthal angle
+ */
   DataVector(float phi) : phi(phi), weight(1.0) {}
+  /**
+   * Constructor
+   * @param phi azimuthal angle
+   * @param weight
+   */
   DataVector(float phi, float weight) : phi(phi), weight(weight) {}
   virtual ~DataVector() = default;
-  float phi; ///< Azimuthal angle of signal
-  float weight; ///< weight of signal
-  
+  float phi{NAN}; ///< Azimuthal angle of signal
+  float weight{NAN}; ///< weight of signal
+
   /// \cond CLASSIMP
  ClassDef(DataVector, 2);
   /// \endcond
 };
-
-
 
 }
 

@@ -7,6 +7,8 @@
 
 #include "TGraphErrors.h"
 #include "TMultiGraph.h"
+#include "TBrowser.h"
+#include "TEnv.h"
 
 #include "Profile.h"
 #include "Sample.h"
@@ -17,6 +19,37 @@ namespace Qn {
 template<typename T>
 class DataContainer;
 namespace Internal {
+
+/**
+ * @brief       Template class to facilitate the drawing of Projections of DataContainer.
+ * @attention   Takes ownership of graph and will delete it at the end of the lifetime.
+ * @tparam T    Type of Graph to draw.
+ */
+template <typename T>
+struct ProjectionDrawable : public TNamed {
+
+  ProjectionDrawable() = default;
+  ~ProjectionDrawable() override {
+    delete graph;
+  }
+  explicit ProjectionDrawable(T projection) :
+      graph(std::move(projection))  {
+    SetName(projection->GetName());
+    SetTitle(projection->GetTitle());
+  }
+
+  void Browse(TBrowser *b) override {
+    TString opt = gEnv->GetValue("TGraph.BrowseOption", "");
+    if (opt.IsNull()) {
+      opt = b ? b->GetDrawOption() : "AlP PLC PMC Z";
+      opt = (opt=="") ? "ALP PMC PLC Z" : opt.Data();
+    }
+    graph->Draw(opt);
+    gPad->Update();
+  }
+  T graph = nullptr;
+};
+
 /**
  * Helper class for DataContainer used for visualization.
  */
@@ -26,14 +59,14 @@ struct DataContainerHelper {
  * @param data Datacontainer with one Axis to plot as a TGraphErrors.
  * @return A graph with errors corresponding to the standard error of the mean.
  */
-  static TGraphErrors *DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data);
+  static TGraphErrors* DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data);
 /**
  * Create a TMultiGraph containing profile graphs for each bin of the specified axis.
  * @param data datacontainer to be graphed.
  * @param axisname name of the axis which is used for the multigraph.
  * @return graph containing a profile graph for each bin.
  */
-  static TMultiGraph *DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data, const std::string &axisname);
+  static TMultiGraph* DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data, const std::string &axisname);
 
   static void SampleBrowse(Qn::DataContainer<Qn::Sample> *data, TBrowser *b);
 
