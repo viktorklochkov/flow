@@ -52,53 +52,29 @@ class QVector {
       norm_(norm),
       n_(n),
       sum_weights_(sum),
-      q_(q) {}
-
-  QVector(Normalization norm, const QnCorrectionsQnVector *vector) :
-      norm_(norm) {
-    if (vector) {
-      n_ = vector->GetN();
-      sum_weights_ = vector->GetSumOfWeights();
-      for (int i = 0; i < 4; i++) {
-        if (n_==0 || isnan(vector->Qx(i)) || isnan(vector->Qy(i))) {
-          q_[i] = QVec(0, 0);
-//          n_ = 0;
-//          sum_weights_ = 0;
-        } else {
-          q_[i] = QVec(vector->Qx(i), vector->Qy(i));
-        }
-      }
-    } else {
-      n_ = 0;
-      sum_weights_ = 0;
-      for (int i = 0; i < 4; i++) {
-        q_[i] = QVec(NAN, NAN);
-      }
-    }
+      q_(q) {
   }
 
-  float x(const int i) const { return q_[i].x; }
-  float n() const { return n_; }
-  float y(const int i) const { return q_[i].y; }
-  float mag(const int i) const { return sqrt(q_[i].x*q_[i].x + q_[i].y*q_[i].y); }
-  float sumweights() const { return sum_weights_; }
-  Normalization GetNorm() const { return norm_; }
+  QVector(Normalization norm, const QnCorrectionsQnVector *vector);
+
+  inline float x(const int i) const { return q_[i].x; }
+  inline float n() const { return n_; }
+  inline float y(const int i) const { return q_[i].y; }
+  inline float mag(const int i) const { return sqrt(q_[i].x*q_[i].x + q_[i].y*q_[i].y); }
+  inline float sumweights() const { return sum_weights_; }
+  inline Normalization GetNorm() const { return norm_; }
 
   friend QVector operator+(QVector a, QVector b);
 
-  void Add(const QVector &a) {
-    *this + a;
-  }
-
+  inline void Add(const QVector &a) { *this + a; }
   QVector Normal(Normalization norm) const;
-
   QVector DeNormal() const;
 
  private:
-  Normalization norm_ = Normalization::NOCALIB;
-  int n_ = 0;
-  float sum_weights_ = 0.0;
-  std::array<QVec, 4> q_;
+  Normalization norm_ = Normalization::NOCALIB; ///< normalization method
+  int n_ = 0;                                   ///< number of data vectors contributing to the q vector
+  float sum_weights_ = 0.0;                     ///< sum of weights
+  std::array<QVec, 4> q_;                       ///< array of qvectors for the different harmonics
   /// \cond CLASSIMP
  ClassDef(QVector, 6);
   /// \endcond

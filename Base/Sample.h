@@ -56,26 +56,27 @@ struct StatisticMean {
 
 class Sample : public Profile {
  public:
+  using size_type = std::size_t;
   Sample() = default;
 
   virtual ~Sample() = default;
 
-  explicit Sample(int n_samples) { samples_stat_.resize(n_samples); }
+  explicit Sample(std::size_t n_samples) { samples_stat_.resize(n_samples); }
 
   Sample(Profile a, std::vector<StatisticMean> means) :
       Profile(a),
       samples_stat_(std::move(means)) {}
 
-  void Fill(const double value, const std::vector<unsigned int> &samples) {
+  void Fill(const double value, const std::vector<size_type> &samples) {
     Profile::Update(value);
     for (const auto sample : samples) {
       samples_stat_[sample].Update(value);
     }
   }
 
-  void SetNumberOfSamples(int nsamples) { samples_stat_.resize(nsamples); }
+  void SetNumberOfSamples(size_type nsamples) { samples_stat_.resize(nsamples); }
 
-  double SampleMean(int isample) const { return samples_stat_[isample].mean; }
+  inline  double SampleMean(size_type isample) const { return samples_stat_[isample].mean; }
 //
   void CalculateCorrelatedError() {
     subsample_sum = 0;

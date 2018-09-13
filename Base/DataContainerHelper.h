@@ -35,9 +35,9 @@ struct DataContainerHelper {
  */
   static TMultiGraph *DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data, const std::string &axisname);
 
-  static void SampleBrowse(Qn::DataContainer<Qn::Sample> &data, TBrowser *b);
+  static void SampleBrowse(Qn::DataContainer<Qn::Sample> *data, TBrowser *b);
 
-  static void EventShapeBrowse(Qn::DataContainer<Qn::EventShape> &data, TBrowser *b);
+  static void EventShapeBrowse(Qn::DataContainer<Qn::EventShape> *data, TBrowser *b);
 
   static void NDraw(Qn::DataContainer<Qn::Sample> &data, Option_t *option, std::string axis_name);
 

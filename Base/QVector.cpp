@@ -4,7 +4,39 @@
 
 #include "QVector.h"
 namespace Qn {
-
+/**
+ * Constructor
+ * @param norm normalisation method
+ * @param vector QnCorrectionsQnVector to construct the QVector from. It is used internally by the framework but not exposed to the user.
+ */
+QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vector) :
+    norm_(norm) {
+  if (vector) {
+    n_ = vector->GetN();
+    sum_weights_ = vector->GetSumOfWeights();
+    for (int i = 0; i < 4; i++) {
+      if (n_==0 || isnan(vector->Qx(i)) || isnan(vector->Qy(i))) {
+        q_[i] = QVec(0, 0);
+//          n_ = 0;
+//          sum_weights_ = 0;
+      } else {
+        q_[i] = QVec(vector->Qx(i), vector->Qy(i));
+      }
+    }
+  } else {
+    n_ = 0;
+    sum_weights_ = 0;
+    for (int i = 0; i < 4; i++) {
+      q_[i] = QVec(NAN, NAN);
+    }
+  }
+}
+/**
+ * Adds two Q vectors taking into account for the normalizations
+ * @param a Q vector
+ * @param b Q vector
+ * @return unnormalized sum of the two QVectors
+ */
 QVector operator+(const QVector a, const QVector b) {
   QVector at = a.DeNormal();
   QVector bt = b.DeNormal();
@@ -24,7 +56,11 @@ QVector operator+(const QVector a, const QVector b) {
   c.sum_weights_ = at.sum_weights_ + bt.sum_weights_;
   return c;
 }
-
+/**
+ * Normalize the Q vector with a given normalization method.
+ * @param norm normalization method
+ * @return normalized Q vector
+ */
 QVector QVector::Normal(const QVector::Normalization norm) const {
   QVector c(*this);
   if (norm_!=Normalization::NOCALIB) {
@@ -63,7 +99,10 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
   c.norm_ = norm;
   return c;
 }
-
+/**
+ * Remove normalization of Q vector
+ * @return unnormalized Q vector
+ */
 QVector QVector::DeNormal() const {
   QVector c(*this);
   switch (norm_) {

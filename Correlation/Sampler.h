@@ -15,6 +15,7 @@
 namespace Qn {
 class Sampler {
  public:
+  using size_type = std::size_t;
   enum class Method {
     NONE,
     BOOTSTRAP,
@@ -23,24 +24,24 @@ class Sampler {
 
   Sampler() = default;
 
-  explicit Sampler(unsigned int nevents, unsigned int nsamples) :
+  explicit Sampler(size_type nevents, size_type nsamples) :
       n_events_(nevents),
       n_samples_(nsamples) {
     samples_.resize(nevents);
     if (nevents < nsamples) n_samples_ = 1;
   }
-  explicit Sampler(unsigned int nsamples, Method met) :
+  explicit Sampler(size_type nsamples, Method met) :
       method_(met),
       n_events_(0),
       n_samples_(nsamples) {
     samples_.resize(0);
   }
 
-  void Configure(Method method, unsigned int nsamples) {
+  void Configure(Method method, size_type nsamples) {
     method_ = method;
     n_samples_ = nsamples;
   }
-  void SetNumberOfEvents(unsigned long num) {
+  void SetNumberOfEvents(size_type num) {
     n_events_ = num;
     samples_.resize(num);
   }
@@ -50,94 +51,28 @@ class Sampler {
     if (method_==Method::SUBSAMPLING) CreateSubSamples();
   }
 
-  int GetNumSamples() const { return n_samples_; }
+  inline size_type GetNumSamples() const { return n_samples_; }
 
-  void CreateSubSamples() {
-    TRandom3 random;
-    std::vector<int> event_vector;
-    event_vector.reserve(n_events_);
-    for (unsigned int i = 0; i < n_events_; ++i) {
-      event_vector.push_back(i);
-    }
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(event_vector.begin(), event_vector.end(), g);
-    auto div = n_events_/n_samples_;
-    for (unsigned int i = 0; i < n_events_ - (n_events_%n_samples_); ++i) {
-      samples_[event_vector[i]].push_back(i/(div));
-    }
-    for (unsigned long i = n_events_ - (n_events_%n_samples_); i < n_events_; ++i) {
-      samples_[event_vector[i]].push_back((n_samples_ - 1));
-    }
-  }
+  void CreateSubSamples();
 
-  void CreateBootstrapSamples() {
-    TRandom3 random;
-    for (unsigned int isample = 0; isample < n_samples_; ++isample) {
-      for (unsigned int ievent = 0; ievent < n_events_; ++ievent) {
-        samples_[(int) (random.Rndm()*n_events_)].push_back(isample);
-      }
-    }
-  }
+  void CreateBootstrapSamples();
 
-  void CreateDividedBootstrapSamples(const unsigned int ndivisions) {
-    TRandom3 random;
-    std::vector<unsigned long> divisions = {0};
-    divisions.resize(ndivisions + 1);
-    std::vector<std::vector<std::vector<int>>> chunks = {{{0}}};
-    auto chunk = n_events_/ndivisions;
-    auto remainder = n_events_%ndivisions;
-    for (unsigned int i = 1; i < ndivisions; ++i) {
-      divisions[i] = i*chunk;
-    }
-    divisions[0] = 0;
-    divisions[ndivisions] += n_events_;
-    unsigned int isa;
-    for (isa = 0; isa < ndivisions - 1; ++isa) {
-      for (unsigned int isample = 0; isample < n_samples_; ++isample) {
-        for (unsigned long ievent = divisions[isa]; ievent < divisions[isa + 1]; ++ievent) {
-          samples_[(int) (random.Rndm()*chunk + divisions[isa])].push_back(isample);
-        }
-      }
-    }
-    isa = ndivisions - 1;
-    for (unsigned int isample = 0; isample < n_samples_; ++isample) {
-      for (unsigned long ievent = divisions[isa]; ievent < divisions[isa + 1]; ++ievent) {
-        samples_[(int) (random.Rndm()*(chunk + remainder) + divisions[isa])].push_back(isample);
-      }
-    }
-  }
+  void CreateDividedBootstrapSamples(size_type ndivisions);
 
-  void CreateResamples() {
-    TRandom3 random;
-    for (unsigned int ievent = 0; ievent < n_events_; ++ievent) {
-      samples_[ievent].push_back((unsigned int) (random.Rndm()*n_samples_));
-    }
-  }
+  void CreateResamples();
 
-  const std::vector<unsigned int> &GetFillVector(const int ievent) const {
-    return samples_[ievent];
-  }
-
-  void GetFillVector(std::vector<unsigned int> &vector) {
-    vector = samples_[ievent_];
-  }
-
-  void UpdateEvent() {
-    ievent_++;
-  }
-
-  void ResetEvent() {
-    ievent_ = 0;
-  }
-  std::vector<std::vector<unsigned int>> GetSamples() const { return samples_; }
+  inline const std::vector<size_type> &GetFillVector(size_type ievent) const { return samples_[ievent]; }
+  inline void GetFillVector(std::vector<size_type> &vector) { vector = samples_[ievent_]; }
+  inline void UpdateEvent() { ievent_++; }
+  inline void ResetEvent() { ievent_ = 0; }
+  inline std::vector<std::vector<size_type>> GetSamples() const { return samples_; }
 
  private:
   Method method_ = Method::NONE;
-  unsigned long ievent_ = 0;
-  unsigned long n_events_ = 0;
-  unsigned int n_samples_ = 0;
-  std::vector<std::vector<unsigned int>> samples_;
+  size_type ievent_ = 0;
+  size_type n_events_ = 0;
+  size_type n_samples_ = 0;
+  std::vector<std::vector<size_type>> samples_;
 };
 }
 #endif //FLOW_BOOTSTRAPSAMPLER_H

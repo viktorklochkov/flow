@@ -120,11 +120,11 @@ class DataContainer : public TObject {
  * @param axes vector of axes.
  * @return vector of linear indices in the diagonal.
  */
-  std::vector<int> GetDiagonal(const QnAxes &axes) {
-    std::vector<int> diagonal;
-    int stride_sum = 0;
-    int nbins_diagonal = 1;
-    int iaxis = 0;
+  std::vector<size_type> GetDiagonal(const QnAxes &axes) {
+    std::vector<size_type> diagonal;
+    size_type stride_sum = 0;
+    size_type nbins_diagonal = 1;
+    size_type iaxis = 0;
     for (const auto &ref_axis : axes_) {
       bool found = false;
       for (const auto &axis : axes) {
@@ -136,8 +136,8 @@ class DataContainer : public TObject {
       if (!found) nbins_diagonal *= ref_axis.size();
       ++iaxis;
     }
-    for (unsigned int ibin = 0; ibin < axes[0].size(); ++ibin) {
-      for (int idiag = 0; idiag < nbins_diagonal; ++idiag) {
+    for (size_type ibin = 0; ibin < axes[0].size(); ++ibin) {
+      for (size_type idiag = 0; idiag < nbins_diagonal; ++idiag) {
         diagonal.push_back(ibin*stride_sum + idiag);
       }
     }
@@ -719,11 +719,11 @@ using DataContainerESE = DataContainer<Qn::EventShape>;
 //--------------------------------------------//
 template<>
 inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
-  Qn::Internal::DataContainerHelper::SampleBrowse(*this, b);
+  Qn::Internal::DataContainerHelper::SampleBrowse(this, b);
 }
 template<>
 inline void DataContainer<Qn::EventShape>::Browse(TBrowser *b) {
-  Qn::Internal::DataContainerHelper::EventShapeBrowse(*this, b);
+  Qn::Internal::DataContainerHelper::EventShapeBrowse(this, b);
 }
 template<>
 inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, const std::string &axis_name) {

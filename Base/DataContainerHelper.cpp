@@ -53,28 +53,30 @@ TMultiGraph *DataContainerHelper::DataToMultiGraph(const Qn::DataContainerSample
   return multigraph;
 }
 
-void DataContainerHelper::SampleBrowse(Qn::DataContainer<Qn::Sample> &data, TBrowser *b) {
+void DataContainerHelper::SampleBrowse(DataContainer<Sample> *data, TBrowser *b) {
   TString opt = gEnv->GetValue("TGraph.BrowseOption", "");
   if (opt.IsNull()) {
     opt = b ? b->GetDrawOption() : "AlP PLC PMC Z";
     opt = (opt=="") ? "ALP PMC PLC Z" : opt.Data();
     gEnv->SetValue("TGraph.BrowseOption", opt.Data());
   }
-  if (!data.list_) data.list_ = new TList();
-  data.list_->SetOwner(true);
-  for (auto &axis : data.axes_) {
-    auto proj = data.Projection({axis.Name()});
+  if (!data->list_) data->list_ = new TList();
+  data->list_->SetOwner(true);
+  for (auto &axis : data->axes_) {
+    auto proj = data->Projection({axis.Name()});
     auto graph = Qn::Internal::DataContainerHelper::DataToProfileGraph(proj);
-    graph->SetName(axis.Name().data());
-    graph->SetTitle(axis.Name().data());
-    data.list_->Add(graph);
+//    graph->SetName(data->GetName());
+//    graph->SetTitle(data->GetName());
+    graph->GetXaxis()->SetTitle(axis.Name().data());
+    graph->GetYaxis()->SetTitle("Correlation");
+    data->list_->Add(graph);
   }
-  if (data.dimension_ > 1) {
+  if (data->dimension_ > 1) {
     auto list = new TList();
-    for (auto iaxis = std::begin(data.axes_); iaxis < std::end(data.axes_); ++iaxis) {
-      for (auto jaxis = std::begin(data.axes_); jaxis < std::end(data.axes_); ++jaxis) {
+    for (auto iaxis = std::begin(data->axes_); iaxis < std::end(data->axes_); ++iaxis) {
+      for (auto jaxis = std::begin(data->axes_); jaxis < std::end(data->axes_); ++jaxis) {
         if (iaxis != jaxis) {
-          auto proj = data.Projection({iaxis->Name(), jaxis->Name()});
+          auto proj = data->Projection({iaxis->Name(), jaxis->Name()});
           auto mgraph = Qn::Internal::DataContainerHelper::DataToMultiGraph(proj, iaxis->Name());
           auto name = (jaxis->Name() + ":" + iaxis->Name());
           mgraph->SetName(name.data());
@@ -87,15 +89,15 @@ void DataContainerHelper::SampleBrowse(Qn::DataContainer<Qn::Sample> &data, TBro
     }
     list->SetName("2D");
     list->SetOwner(true);
-    data.list_->Add(list);
+    data->list_->Add(list);
   }
-  for (int i = 0; i<data.list_->GetSize(); ++i) {
-    b->Add(data.list_->At(i));
+  for (int i = 0; i<data->list_->GetSize(); ++i) {
+    b->Add(data->list_->At(i));
   }
 }
 
-void DataContainerHelper::EventShapeBrowse(Qn::DataContainer<Qn::EventShape> &data, TBrowser *b) {
-  if (!data.list_) data.list_ = new TList();
+void DataContainerHelper::EventShapeBrowse(Qn::DataContainer<Qn::EventShape> *data, TBrowser *b) {
+  if (!data->list_) data->list_ = new TList();
   int i = 0;
   auto hlist = new TList();
   hlist->SetName("histos");
@@ -103,8 +105,8 @@ void DataContainerHelper::EventShapeBrowse(Qn::DataContainer<Qn::EventShape> &da
   slist->SetName("splines");
   auto ilist = new TList();
   ilist->SetName("integrals");
-  for (auto &bin : data) {
-    auto name = data.GetBinDescription(i);
+  for (auto &bin : *data) {
+    auto name = data->GetBinDescription(i);
     bin.histo_->SetName((std::string("H_")+(name)).data());
     bin.histo_->SetTitle((std::string("H_")+(name)).data());
     bin.histo_->GetXaxis()->SetTitle("|Q|^{2}");
@@ -118,12 +120,12 @@ void DataContainerHelper::EventShapeBrowse(Qn::DataContainer<Qn::EventShape> &da
     ilist->Add(bin.integral_);
     ++i;
   }
-  data.list_->Add(hlist);
-  data.list_->Add(slist);
-  data.list_->Add(ilist);
-  data.list_->SetOwner(true);
-  for (int j = 0; i<data.list_->GetSize(); ++j) {
-    b->Add(data.list_->At(j));
+  data->list_->Add(hlist);
+  data->list_->Add(slist);
+  data->list_->Add(ilist);
+  data->list_->SetOwner(true);
+  for (int j = 0; j<data->list_->GetSize(); ++j) {
+    b->Add(data->list_->At(j));
   }
 }
 void DataContainerHelper::NDraw(Qn::DataContainer<Qn::Sample> &data, Option_t *option, std::string axis_name) {
