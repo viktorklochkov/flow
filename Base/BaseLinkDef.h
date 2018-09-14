@@ -28,6 +28,7 @@
 #pragma link C++ class Qn::DataContainer<Qn::Sample>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
 #pragma link C++ class Qn::DataContainer<TH1F>+;
+#pragma link C++ class Qn::DataContainerHelper+;
 #pragma link C++ typedef Qn::DataContainerProfile;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;

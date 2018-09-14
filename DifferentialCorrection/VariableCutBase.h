@@ -8,6 +8,8 @@
 #include <array>
 #include <vector>
 #include <iostream>
+#include <functional>
+
 #include "VariableManager.h"
 #include "QAHistogram.h"
 

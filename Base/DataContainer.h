@@ -58,8 +58,8 @@ class DataContainer : public TObject {
     if (list_) delete list_;
   };
 
-  using QnAxes = typename std::vector<Axis>;
-  using size_type = typename std::size_t;
+  using QnAxes = std::vector<Axis>;
+  using size_type = std::size_t;
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
   const_iterator begin() const { return data_.cbegin(); } ///< iterator for external use
@@ -71,7 +71,7 @@ class DataContainer : public TObject {
  * Size of data container
  * @return number of entries in the container
  */
-  size_type size() const { return data_.size(); }
+  size_type size() const noexcept { return data_.size(); }
 
 /**
  * Adds axes for storing data
@@ -149,21 +149,21 @@ class DataContainer : public TObject {
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  inline T const &At(const typename std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+  T const &At(const typename std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  inline T &At(const typename std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
+  T &At(const typename std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
-  inline T &At(const long index) { return data_.at(index); }
+  T &At(size_type index) noexcept { return data_.at(index); }
 
 /**
  * Calls function on element specified by indices.
@@ -296,7 +296,7 @@ class DataContainer : public TObject {
         }
         iaxis++;
       }
-      isprojected.at(iaxis) = bproj ? true : false;
+      isprojected.at(iaxis) = bproj;
     }
     size_type iaxis = 0;
     for (const auto proj : isprojected) {
@@ -374,7 +374,7 @@ class DataContainer : public TObject {
           continue;
         }
         this->GetIndex(indices, linearindex);
-        for (int i = indices.size() - 1; i >= 0; --i) {
+        for (size_type i = indices.size() - 1; i >= 0; --i) {
           if (isprojected[i]) {
             indices.erase(indices.begin() + i);
           }
@@ -393,9 +393,9 @@ class DataContainer : public TObject {
  * @return datacontainer after applying function.
  */
   template<typename Function>
-  DataContainer<T> Map(Function &&lambda) {
+  DataContainer<T> Map(Function &&lambda) const {
     DataContainer<T> result(*this);
-    std::transform(data_.begin(), data_.end(), result.begin(), [&lambda](T &element) { return lambda(element); });
+    std::transform(data_.begin(), data_.end(), result.begin(), [&lambda](const T &element) { return lambda(element); });
     return result;
   }
 
@@ -510,8 +510,8 @@ class DataContainer : public TObject {
  * @return rebinned datacontainer.
  */
   DataContainer<T> Rebin(const Axis &rebinaxis) const {
-    auto lambda = [] (const T& a, const T&b) {return a + b;};
-    return Rebin(rebinaxis,lambda);
+    auto lambda = [](const T &a, const T &b) { return a + b; };
+    return Rebin(rebinaxis, lambda);
   }
 
 /**
@@ -571,7 +571,7 @@ class DataContainer : public TObject {
  * Clear data at the specified postion.
  * @param position position at which to clear the data.
  */
-  void ClearDataAt(size_type position) {
+  void ClearDataAt(const size_type position) {
     data_.at(position) = T();
   }
 
@@ -605,7 +605,7 @@ class DataContainer : public TObject {
   QnAxes axes_;      ///< Vector of axes
   std::vector<long> stride_;    ///< Offset for conversion into one dimensional vector.
   TList *list_ = nullptr; ///!<!
-  friend Qn::Internal::DataContainerHelper;
+  friend Qn::DataContainerHelper;
 
   void Reset() {
     integrated_ = false;
@@ -653,14 +653,14 @@ class DataContainer : public TObject {
  * @param coordinates floating point coordinates
  * @return index belonging to coordinates
  */
-  typename std::vector<size_type> GetIndex(const std::vector<float> &coordinates) const {
-    typename std::vector<size_type> indices;
+  std::vector<size_type> GetIndex(const std::vector<float> &coordinates) const {
+    std::vector<size_type> indices;
     unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
       auto bin = axis.FindBin(coordinates[axisindex]);
-      if (bin < 0 || bin > axis.size())
+      if (bin < 0 || static_cast<size_type>(bin) > axis.size())
         throw std::out_of_range("bin out of specified range");
-      indices.push_back(static_cast<unsigned long &&>(bin));
+      indices.push_back(static_cast<size_type &&>(bin));
       axisindex++;
     }
     return indices;
@@ -694,7 +694,7 @@ class DataContainer : public TObject {
  * Implementation for template specializations please see below.
  * @param b TBrowser
  */
-  void Browse(TBrowser *b) {}
+  virtual void Browse(TBrowser *b) {}
 
 /// \cond CLASSIMP
  ClassDef(DataContainer, 12);
@@ -719,43 +719,67 @@ using DataContainerESE = DataContainer<Qn::EventShape>;
 //--------------------------------------------//
 template<>
 inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
-  Qn::Internal::DataContainerHelper::SampleBrowse(this, b);
+  Qn::DataContainerHelper::SampleBrowse(this, b);
 }
 template<>
 inline void DataContainer<Qn::EventShape>::Browse(TBrowser *b) {
-  Qn::Internal::DataContainerHelper::EventShapeBrowse(this, b);
+  Qn::DataContainerHelper::EventShapeBrowse(this, b);
 }
 template<>
 inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, const std::string &axis_name) {
-  Qn::Internal::DataContainerHelper::NDraw(*this, option, axis_name);
+  Qn::DataContainerHelper::NDraw(*this, option, axis_name);
 }
 
 //-----------------------------------------//
 // Operations for DataContainer arithmetic //
 //-----------------------------------------//
 template<typename T>
-DataContainer<T> operator+(DataContainer<T> a, const DataContainer<T> &b) {
+DataContainer<T> operator+(const DataContainer<T> &a, const DataContainer<T> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a + b; });
 }
 template<typename T>
-DataContainer<T> operator-(DataContainer<T> a, const DataContainer<T> &b) {
+DataContainer<T> operator-(const DataContainer<T> &a, const DataContainer<T> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a - b; });
 }
 template<typename T>
-DataContainer<T> operator*(DataContainer<T> a, const DataContainer<T> &b) {
+DataContainer<T> operator*(const DataContainer<T> &a, const DataContainer<T> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a*b; });
 }
 template<typename T>
-DataContainer<T> operator/(DataContainer<T> a, const DataContainer<T> &b) {
+DataContainer<T> operator/(const DataContainer<T> &a, const DataContainer<T> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a/b; });
 }
 template<typename T>
-DataContainer<T> operator*(DataContainer<T> a, double b) {
+DataContainer<T> operator*(const DataContainer<T> &a, double b) {
   return a.Map([b](T &a) { return a*b; });
 }
 template<typename T>
-DataContainer<T> Sqrt(DataContainer<T> a) {
-  return a.Map([](T &x) { return x.Sqrt(); });
+DataContainer<T> Sqrt(const DataContainer<T> &a) {
+  return a.Map([](const T &x) { return x.Sqrt(); });
 }
+/**
+ * Transformation of a DataContainer providing the operation:
+ * \f[
+ *      Bin_i=\Sum_j\neqi Bin_j
+ * \f]
+ * A transformed copy is returned.
+ * @tparam T Type of Bincontent
+ * @param input DataContainer to be transformed.
+ * @return Transformed DataContainer
+ */
+template<typename T>
+DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
+  DataContainer<T> Summed(input);
+  Summed.ClearData();
+  for (auto ibin = std::begin(input); ibin < std::end(input); ++ibin) {
+    for (auto jbin = std::begin(input); jbin < std::end(input); ++jbin) {
+      if (ibin != jbin) {
+        Summed.At(std::distance(std::begin(input), ibin)) += *jbin;
+      }
+    }
+  }
+  return Summed;
+}
+
 }
 #endif

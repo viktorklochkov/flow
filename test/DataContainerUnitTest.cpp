@@ -40,6 +40,16 @@ TEST(DataContainerTest, Projection) {
     EXPECT_EQ(600, bin);
   }
 }
+
+TEST(DataContainerTest, ExclusiveSum) {
+  Qn::DataContainerF container;
+  container.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
+  for (auto &bin : container) {
+    bin = 1;
+  }
+  auto exsum = Qn::ExclusiveSum(container);
+}
+
 //
 //TEST(DataContainerTest, ProjectionProfile) {
 //  Qn::DataContainerSample a;
