@@ -165,6 +165,15 @@ class DataContainer : public TObject {
  */
   T &At(size_type index) noexcept { return data_.at(index); }
 
+
+/**
+ * Get element in the specified bin
+ * @param index index of element
+ * @return      Element
+ */
+  T const &At(size_type index) const noexcept { return data_.at(index); }
+
+
 /**
  * Calls function on element specified by indices.
  * @tparam Function type of function to be called on the object
@@ -272,6 +281,7 @@ class DataContainer : public TObject {
     }
     return outstring;
   }
+
 /**
  * Projects datacontainer on a subset of axes
  * @tparam Function typename of function.
@@ -345,41 +355,57 @@ class DataContainer : public TObject {
  * @tparam Function typename of function.
  * @param axes subset of axes used for the projection.
  * @param lambda Function used to add two entries.
+ * @param exindices indices excluded from the projection.
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> ProjectionEX(const std::vector<std::string> names,
-                                Function &&lambda,
-                                std::vector<int> exindices) const {
+  DataContainer<T> ProjectionExclude(const std::vector<std::string> axis_names,
+                                     Function &&lambda, std::vector<int> exindices) const {
     DataContainer<T> projection;
-    unsigned long linearindex = 0;
+    size_type linearindex = 0;
     std::vector<bool> isprojected;
-    auto originalaxes = this->GetAxes();
-    for (const auto &originalaxis : originalaxes) {
-      for (const auto &name : names) {
-        isprojected.push_back((originalaxis.Name()==name)==0);
-        if (originalaxis.Name()==name) projection.AddAxis(originalaxis);
+    isprojected.resize(axes_.size());
+    for (const auto &name : axis_names) {
+      bool bproj = false;
+      size_type iaxis = 0;
+      for (const auto &originalaxis : axes_) {
+        if (originalaxis.Name()==name) {
+          bproj = true;
+          break;
+        }
+        iaxis++;
       }
+      isprojected.at(iaxis) = bproj;
     }
-    if (names.empty()) {
+    size_type iaxis = 0;
+    for (const auto proj : isprojected) {
+      if (proj) projection.AddAxis(axes_.at(iaxis));
+      ++iaxis;
+    }
+    if (axis_names.empty()) {
       for (const auto &bin : data_) {
         projection.At(0) = lambda(projection.At(0), bin);
+
       }
     } else {
-      std::vector<unsigned long> indices;
+      std::vector<size_type> indices;
+      std::vector<size_type> projindices;
       indices.reserve(dimension_);
+      projindices.resize(projection.dimension_);
       for (const auto &bin : data_) {
         if (std::find(exindices.begin(), exindices.end(), linearindex)!=exindices.end()) {
           ++linearindex;
           continue;
         }
         this->GetIndex(indices, linearindex);
-        for (size_type i = indices.size() - 1; i >= 0; --i) {
-          if (isprojected[i]) {
-            indices.erase(indices.begin() + i);
+        size_type iprojbin = 0;
+        for (size_type i = 0; i < indices.size(); ++i) {
+          if (isprojected.at(i)) {
+            projindices.at(iprojbin) = indices.at(i);
+            ++iprojbin;
           }
         }
-        projection.At(indices) = lambda(projection.At(indices), bin);
+        projection.At(projindices) = lambda(projection.At(projindices), bin);
         ++linearindex;
       }
     }
@@ -773,8 +799,8 @@ DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
   Summed.ClearData();
   for (auto ibin = std::begin(input); ibin < std::end(input); ++ibin) {
     for (auto jbin = std::begin(input); jbin < std::end(input); ++jbin) {
-      if (ibin != jbin) {
-        Summed.At(std::distance(std::begin(input), ibin)) += *jbin;
+      if (ibin!=jbin) {
+        Summed.At(std::distance(std::begin(input), ibin)) = Summed.At(std::distance(std::begin(input), ibin)) + *jbin;
       }
     }
   }
