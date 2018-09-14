@@ -18,24 +18,38 @@
 #ifndef FLOW_DATAFILLER_H
 #define FLOW_DATAFILLER_H
 
+#include <ReducedEvent/AliReducedEventInfo.h>
+#include <ReducedEvent/AliReducedTrackInfo.h>
+#include <ReducedEvent/AliReducedVarManager.h>
+#include <QnCorrections/QnCorrectionsManager.h>
+
+#include "TList.h"
+#include "Base/DataContainer.h"
 #include "DifferentialCorrection/Detector.h"
+#define VAR AliReducedVarManager
 
 namespace Qn {
 class DataFiller {
  public:
   using MapDetectors = std::map<std::string, std::unique_ptr<DetectorBase>>;
+  explicit DataFiller(AliReducedEventInfo *event) : event_(event) {}
   void FillEventInfo(const std::shared_ptr<VariableManager> &var_manager) {
-    //Fill event info into variable manager here.
+    VAR::FillEventInfo(event_, var_manager->GetVariableContainer());
   }
   void FillDetectors(MapDetectors &channel, MapDetectors  &tracking,
                      const std::shared_ptr<VariableManager> &var_manager) {
     for (auto &dp : channel) { dp.second->FillData(); }
-    for (int i= 0; i < 100;++i) {
-    //Fill Track info into variable manager here.
+    AliReducedTrackInfo *track = nullptr;
+    auto trackList = event_->GetTracks();
+    TIter next(trackList);
+    next.Reset();
+    while ((track = (AliReducedTrackInfo *) next())!=nullptr) {
+      VAR::FillTrackInfo(track, var_manager->GetVariableContainer());
       for (auto &dp : tracking) { dp.second->FillData(); }
     }
   }
  private:
+  AliReducedEventInfo *event_;
 };
 }
 #endif //FLOW_DATAFILLER_H

@@ -3,7 +3,7 @@ cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 1)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_cpp_STANDARD 14)
-set(CMAKE_BUILD_TYPE debug)
+#set(CMAKE_BUILD_TYPE debug)
 
 set(QNCORR_SOURCES
         QnCorrectionsCorrectionOnInputData.cpp
@@ -69,3 +69,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 ROOT_GENERATE_DICTIONARY(G__QnCorrFlow ${QNCORR_HEADERS} LINKDEF QnLinkDef.h)
 add_library(qncorrflow SHARED ${QNCORR_SOURCES} G__QnCorrFlow)
 target_link_libraries(qncorrflow ${ROOT_LIBRARIES})
+
+install(TARGETS qncorrflow DESTINATION lib)
+install(FILES ${QNCORR_HEADERS} DESTINATION include)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrFlow_rdict.pcm DESTINATION lib)

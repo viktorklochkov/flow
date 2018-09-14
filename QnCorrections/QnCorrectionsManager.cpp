@@ -40,6 +40,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <ReducedEvent/AliReducedVarManager.h>
 
 using std::cout;
 using std::endl;
@@ -50,7 +51,7 @@ ClassImp(QnCorrectionsManager);
 /// \endcond
 
 const Int_t QnCorrectionsManager::nMaxNoOfDetectors = 1024;
-const Int_t QnCorrectionsManager::nMaxNoOfDataVariables = 2048;
+const Int_t QnCorrectionsManager::nMaxNoOfDataVariables = AliReducedVarManager::Variables::kNVars;
 const char *QnCorrectionsManager::szCalibrationHistogramsKeyName = "CalibrationHistograms";
 const char *QnCorrectionsManager::szCalibrationQAHistogramsKeyName = "CalibrationQAHistograms";
 const char *QnCorrectionsManager::szCalibrationNveQAHistogramsKeyName = "CalibrationQANveHistograms";
