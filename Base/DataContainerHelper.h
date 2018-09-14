@@ -31,7 +31,7 @@ struct ProjectionDrawable : public TNamed {
 
   ProjectionDrawable() = default;
   ~ProjectionDrawable() override {
-    delete graph;
+    if (graph) delete graph;
   }
   explicit ProjectionDrawable(T projection) :
       graph(std::move(projection)) {
@@ -58,10 +58,14 @@ class DataContainerHelper {
  public:
   enum class Errors { Yonly, XandY };
 
-  static TGraphAsymmErrors* DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x);
-  static TGraphAsymmErrors *DataToProfileGraphShifted(const Qn::DataContainer<Qn::Sample> &data, int i, int max, Errors x);
-  static TMultiGraph* DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data, const std::string &axisname, Errors x);
-
+  static TGraphAsymmErrors *DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x);
+  static TGraphAsymmErrors *DataToProfileGraphShifted(const Qn::DataContainer<Qn::Sample> &data,
+                                                      int i,
+                                                      int max,
+                                                      Errors x);
+  static TMultiGraph *DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data,
+                                       const std::string &axisname,
+                                       Errors x);
 
  private:
   friend DataContainer<Qn::Sample>;
