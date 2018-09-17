@@ -22,7 +22,7 @@ struct DataVector {
  * Constructor with default weight 0.
  * @param phi azimuthal angle
  */
-  DataVector(float phi) : phi(phi), weight(1.0) {}
+  explicit DataVector(float phi) : phi(phi), weight(1.0) {}
   /**
    * Constructor
    * @param phi azimuthal angle
