@@ -39,7 +39,6 @@ void CorrectionTask::Run() {
 }
 
 void CorrectionTask::Initialize() {
-  using Axes = std::vector<Axis>;
   SetVariables({VAR::kVtxZ, VAR::kPt, VAR::kEta, VAR::kP,
                 VAR::kPhi, VAR::kTPCncls, VAR::kDcaXY,
                 VAR::kDcaZ, VAR::kVZEROTotalMult, VAR::kNtracksTotal,
@@ -90,9 +89,8 @@ void CorrectionTask::Initialize() {
   manager_.AddCorrectionAxis({"CentralitySPD", 80, 0, 80});
 
   //Config TPC
-  std::vector<float> pt = {{0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.25, 1.5,
-                            1.75, 2.0, 2.25, 2.5, 3., 3.5, 4., 5., 6., 8., 10.}};
-  Axes tpcaxes = {{"TPCPt", pt}};
+  Axis pt("TPCPt",{0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3., 3.5, 4., 5., 6., 8., 10.});
+  Axis eta("TPCEta",{-0.8,-0.5,0.5,0.8});
 //  auto cut_filterbit = [](double &flag) {
 //    return (unsigned long) flag & 1 << 23 || (unsigned long) flag & 1 << 24;
 //  };
@@ -108,7 +106,7 @@ void CorrectionTask::Initialize() {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_noCalibration);
   };
   //TPC pT-dependence
-  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", tpcaxes);
+  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt,eta});
   manager_.AddCut("TPC", {"TPCHybrid","TPCHybrid+"}, cut_hybrid);
   manager_.AddCut("TPC", {"TPCEta"}, cut_eta);
   manager_.AddCut("TPC", {"TPCPt"}, [](double &pt) { return pt > 0.2 && pt < 10.; });
@@ -116,7 +114,7 @@ void CorrectionTask::Initialize() {
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPhi", 50, 0, 2*TMath::Pi()}});
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPt", 50, 0., 10.}});
   //TPC pT-integrated
-  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi");
+  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi","Ones", {eta});
   manager_.AddCut("TPC_R", {"TPCHybrid","TPCHybrid+"}, cut_hybrid);
   manager_.AddCut("TPC_R", {"TPCEta"}, cut_eta);
   manager_.AddCut("TPC_R", {"TPCPt"}, [](double &pt) { return pt > 0.2 && pt < 10.; });
@@ -143,7 +141,7 @@ void CorrectionTask::Initialize() {
     auto equal = new QnCorrectionsInputGainEqualization();
     equal->SetEqualizationMethod(QnCorrectionsInputGainEqualization::GEQUAL_averageEqualization);
     equal->SetUseChannelGroupsWeights(true);
-    config->AddCorrectionOnInputData(equal);
+//    config->AddCorrectionOnInputData(equal);
   };
 
   //VZERO A
@@ -185,7 +183,6 @@ void CorrectionTask::Initialize() {
   manager_.SetCorrectionSteps("ZDCC", confZDC);
   manager_.AddHisto1D("ZDCC", {{"ZDCCChannels", 4, 0, 4}}, "ZDCCMult");
   manager_.AddCut("ZDCC",{"ZDCCMult"},[](double &mult){return mult > 100;});
-
 
   auto confT0 = [](QnCorrectionsDetectorConfigurationBase *config) {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);

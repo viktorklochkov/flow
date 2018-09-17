@@ -28,7 +28,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 
 #---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
+find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist)
 
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
@@ -43,4 +43,4 @@ target_link_libraries(reducedev ${ROOT_LIBRARIES} )
 
 install(TARGETS reducedev DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION include)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libReducedEv_rdict.pcm DESTINATION lib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libReducedEv.rootmap DESTINATION lib)

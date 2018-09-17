@@ -72,4 +72,5 @@ target_link_libraries(qncorrflow ${ROOT_LIBRARIES})
 
 install(TARGETS qncorrflow DESTINATION lib)
 install(FILES ${QNCORR_HEADERS} DESTINATION include)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrFlow_rdict.pcm DESTINATION lib)
+#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrFlow_rdict.pcm DESTINATION lib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrFlow.rootmap DESTINATION lib)
