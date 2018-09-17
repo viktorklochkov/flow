@@ -67,7 +67,6 @@ TMultiGraph *DataContainerHelper::DataToMultiGraph(const DataContainerSample &da
     auto subgraph = DataToProfileGraphShifted(subdata, ibin, axis.size(), drawerrors);
     subgraph->SetTitle(Form("%.2f - %.2f", axis.GetLowerBinEdge(ibin), axis.GetUpperBinEdge(ibin)));
     subgraph->SetMarkerStyle(kFullCircle);
-//    subgraph->SetMarkerSize(static_cast<Size_t>(0.5+(1./axis.size()*ibin)));
     multigraph->Add(subgraph);
   }
   return multigraph;

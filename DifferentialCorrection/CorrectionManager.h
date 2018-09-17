@@ -66,11 +66,11 @@ class CorrectionManager {
    * @param lambda
    */
   template<std::size_t N, typename FUNCTION>
-  void AddCut(const std::string &name, const char* const (&name_arr)[N], FUNCTION lambda) {
+  void AddCut(const std::string &name, const char* const (&names)[N], FUNCTION lambda) {
     Variable arr[N];
     int i = 0;
-    for (auto &name : name_arr) {
-      arr[i] = var_manager_->FindVariable(name);
+    for (auto &n : names) {
+      arr[i] = var_manager_->FindVariable(n);
       ++i;
     }
     auto cut = MakeUniqueNDimCut(arr, lambda);
@@ -144,7 +144,7 @@ class CorrectionManager {
 
   void SaveHistograms(std::shared_ptr<TFile> file);
 
-  void SaveTree(std::shared_ptr<TFile> file) {
+  void SaveTree(const std::shared_ptr<TFile> &file) {
     file->cd();
     out_tree_->Write();
     out_tree_.release();

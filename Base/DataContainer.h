@@ -44,7 +44,7 @@ class DataContainer : public TObject {
     axes_.push_back({"integrated", 1, 0, 1});
     dimension_ = 1;
     data_.resize(1);
-    stride_.resize(1);
+    stride_.resize(dimension_+1);
     CalculateStride();
   };
 /**

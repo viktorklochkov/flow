@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
-project(flow)
+cmake_policy(SET CMP0048 NEW)
+project(flow VERSION 1)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_cpp_STANDARD 14)
 set(CMAKE_BUILD_TYPE debug)
