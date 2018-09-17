@@ -149,12 +149,12 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
 void DataContainerHelper::NDraw(DataContainer<Sample> &data,
                                 std::string option,
                                 const std::string &axis_name = {}) {
-  option = (std::empty(option)) ? std::string("ALP PMC PLC Z") : option;
+  option = (option.empty()) ? std::string("ALP PMC PLC Z") : option;
   Errors err = Errors::Yonly;
   auto foundoption = option.find("XErrors");
   if (foundoption!=std::string::npos) {
     err = Errors::XandY;
-    option.erase(foundoption, std::size("XErrors"));
+    option.erase(foundoption, std::string("XErrors").size());
   }
   if (data.axes_.size()==1) {
     auto graph = DataContainerHelper::DataToProfileGraph(data, err);
