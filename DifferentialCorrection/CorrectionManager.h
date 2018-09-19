@@ -1,6 +1,19 @@
+// Flow Vector Correction Framework
 //
-// Created by Lukas Kreis on 16.01.18.
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
 //
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef FLOW_CORRECTIONMANAGER_H
 #define FLOW_CORRECTIONMANAGER_H
@@ -19,7 +32,7 @@ namespace Qn {
 class CorrectionManager {
  public:
 
-  using MapDetectors = std::map<std::string, Detector>;
+  using MapDetectors = std::map<std::string, std::unique_ptr<DetectorBase>>;
 
   CorrectionManager()
       : event_cuts_(new Cuts()), event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()) {
@@ -54,9 +67,44 @@ class CorrectionManager {
    * @param phi_name Name of the variable which saves the angular information e.g. phi angle of a channel or particle
    * @param weight_name Name of the variable which saves a weight. "Ones" is used for a weight of 1.
    * @param axes Axes used for differential corrections. Names correspond to the name of variables.
+   * @param harmo activated harmonics in a ordered initializer list e.g. `{1, 2, 4}`.
    */
-  void AddDetector(const std::string &name, DetectorType type, const std::string &phi_name,
-                   const std::string &weight_name = "Ones", const std::vector<Qn::Axis> &axes = {});
+  template<std::size_t N>
+  void AddDetector(std::string name,
+                   Qn::DetectorType type,
+                   const std::string &phi_name,
+                   const std::string &weight_name,
+                   const std::vector<Qn::Axis> &axes,
+                   int const(&harmo)[N]) {
+    Variable phi = var_manager_->FindVariable(phi_name);
+    Variable weight = var_manager_->FindVariable(weight_name);
+    std::vector<Variable> vars;
+    vars.reserve(axes.size());
+    for (const auto &axis : axes) {
+      vars.push_back(var_manager_->FindVariable(axis.Name()));
+    }
+    std::unique_ptr<Detector<N>> det(new Detector<N>(type, axes, phi, weight, vars, harmo));
+    auto pair = std::make_pair<std::string, std::unique_ptr<DetectorBase>>(std::move(name), std::move(det));
+    if (type==DetectorType::CHANNEL) detectors_channel.emplace(std::move(pair));
+    if (type==DetectorType::TRACK) detectors_track.emplace(std::move(pair));
+  }
+
+/**
+ * Adds a detector to the correction framework.
+ * Enables first second and third harmonic by default.
+ * @param name Name of the detector
+ * @param type Type of the detector: Channel or Track
+ * @param phi_name Name of the variable which saves the angular information e.g. phi angle of a channel or particle
+ * @param weight_name Name of the variable which saves a weight. "Ones" is used for a weight of 1.
+ * @param axes Axes used for differential corrections. Names correspond to the name of variables.
+ */
+  void AddDetector(const std::string &name,
+                   DetectorType type,
+                   const std::string &phi_name,
+                   const std::string &weight_name  = "Ones",
+                   const std::vector<Qn::Axis> &axes = {}) {
+  AddDetector(name,type,phi_name,weight_name,axes,{1,2,3});
+}
 
   /**
    * Adds a cut to a detector.
@@ -66,7 +114,7 @@ class CorrectionManager {
    * @param lambda
    */
   template<std::size_t N, typename FUNCTION>
-  void AddCut(const std::string &name, const char* const (&names)[N], FUNCTION lambda) {
+  void AddCut(const std::string &name, const char *const (&names)[N], FUNCTION lambda) {
     Variable arr[N];
     int i = 0;
     for (auto &n : names) {
@@ -74,9 +122,9 @@ class CorrectionManager {
       ++i;
     }
     auto cut = MakeUniqueNDimCut(arr, lambda);
-    try { detectors_track.at(name).AddCut(std::move(cut)); }
+    try { detectors_track.at(name)->AddCut(std::move(cut)); }
     catch (std::out_of_range &) {
-      try { detectors_channel.at(name).AddCut(std::move(cut)); }
+      try { detectors_channel.at(name)->AddCut(std::move(cut)); }
       catch (std::out_of_range &) {
         throw std::out_of_range(
             name + " was not found in the list of detectors. It needs to be created before a cut can be added.");
@@ -93,7 +141,7 @@ class CorrectionManager {
    *             The number of double& corresponds to the number of variables
    */
   template<std::size_t N, typename FUNCTION>
-  void AddEventCut(const char* const (&name_arr)[N], FUNCTION &&func) {
+  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func) {
     Variable arr[N];
     int i = 0;
     for (auto &name : name_arr) {
@@ -146,8 +194,7 @@ class CorrectionManager {
 
   void SaveTree(const std::shared_ptr<TFile> &file) {
     file->cd();
-    out_tree_->Write();
-    out_tree_.release();
+    out_tree_.release()->Write();
   }
 
   void Initialize(std::shared_ptr<TFile> &in_calibration_file_);
@@ -206,8 +253,8 @@ class CorrectionManager {
   std::vector<Qn::Axis> qncorrections_axis_;
   QnCorrectionsManager qncorrections_manager_;
   std::shared_ptr<VariableManager> var_manager_;
-  std::map<std::string, Detector> detectors_track;
-  std::map<std::string, Detector> detectors_channel;
+  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track;
+  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel;
   std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_;
   std::unique_ptr<TTree> out_tree_ = nullptr;
 };

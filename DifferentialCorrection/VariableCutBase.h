@@ -1,6 +1,19 @@
+// Flow Vector Correction Framework
 //
-// Created by Lukas Kreis on 29.08.18.
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
 //
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef FLOW_VARIABLECUTBASE_H
 #define FLOW_VARIABLECUTBASE_H
@@ -28,22 +41,22 @@ class VariableCutNDim : public VariableCutBase {
   VariableCutNDim<T...>(Variable const (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
       : lambda_(lambda) {
     int i = 0;
-    for (auto a : arr) {
+    for (const auto &a : arr) {
       variables_[i] = a;
       ++i;
     }
   }
   bool Check(int i) override {
-    return CheckImpl(i, variables_, std::make_index_sequence<sizeof...(T)>{});
+    return CheckImpl(i, std::make_index_sequence<sizeof...(T)>{});
   }
   int GetVariableLength() const override { return variables_[0].length(); }
  private:
-  template<typename ARR, std::size_t... I>
-  bool CheckImpl(int i, const ARR &arr, std::index_sequence<I...>) {
-    return lambda_(*(arr[I].begin() + i)...);
+  template<std::size_t... I>
+  bool CheckImpl(int i, std::index_sequence<I...>) {
+    return lambda_(*(variables_[I].begin() + i)...);
   }
 
-  std::string Name() const override {
+  inline std::string Name() const override {
     std::string name;
     for (auto var : variables_) {
       name += var.Name();
@@ -76,6 +89,8 @@ class Cuts {
   void AddCut(std::unique_ptr<VariableCutBase> cut) {
     cuts_.push_back(std::move(cut));
   }
+
+
   bool CheckCuts(int i) {
     int icut = 1;
     if (cuts_.empty()) return true;

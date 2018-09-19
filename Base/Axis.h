@@ -1,6 +1,19 @@
+// Flow Vector Correction Framework
 //
-// Created by Lukas Kreis on 29.06.17.
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
 //
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef FLOW_QNAXIS_H
 #define FLOW_QNAXIS_H
@@ -71,7 +84,21 @@ class Axis {
    * @param value for finding corresponding bin
    * @return bin index
    */
-  long FindBin(const float value) const;
+  inline long FindBin(const float value) const {
+    long bin = 0;
+    if (value < *bin_edges_.begin()) {
+      bin = -1;
+    } else {
+      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
+      if (lb == bin_edges_.begin() || *lb == value)
+        bin = (lb - bin_edges_.begin());
+      else
+        bin = (lb - bin_edges_.begin()) - 1;
+    }
+    if (bin >= (long) bin_edges_.size() - 1 || bin < 0)
+      bin = -1;
+    return bin;
+  };
 
   /**
  * Finds bin iterator for a given value

@@ -1,10 +1,22 @@
+// Flow Vector Correction Framework
 //
-// Created by Lukas Kreis on 14.11.17.
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
 //
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef FLOW_QVECTOR_H
 #define FLOW_QVECTOR_H
-#include <iostream>
 #include <array>
 #include <functional>
 #include <complex>
@@ -18,13 +30,12 @@ namespace Qn {
 struct QVec {
   QVec() = default;
   QVec(float x, float y) : x(x), y(y) {}
-  float x{0};
-  float y{0};
+  float x{NAN};
+  float y{NAN};
   friend QVec operator+(QVec a, QVec b);
   friend QVec operator-(QVec a, QVec b);
   friend QVec operator/(QVec a, float s);
   friend QVec operator*(QVec a, float s);
-
   friend float norm(QVec a);
 };
 
@@ -37,7 +48,6 @@ inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
 class QVector {
 
  public:
-
   enum class Normalization : short {
     NOCALIB,
     QOVERSQRTM,
@@ -48,20 +58,36 @@ class QVector {
   QVector() = default;
   virtual ~QVector() = default;
 
-  QVector(Normalization norm, int n, float sum, std::array<QVec, 4> q) :
+  QVector(Normalization norm, int n, float sum, std::vector<QVec> q) :
       norm_(norm),
       n_(n),
       sum_weights_(sum),
       q_(q) {
   }
 
-  QVector(Normalization norm, const QnCorrectionsQnVector *vector);
+  QVector(Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits);
 
-  inline float x(const int i) const { return q_[i].x; }
-  inline float n() const { return n_; }
-  inline float y(const int i) const { return q_[i].y; }
-  inline float mag(const int i) const { return sqrt(q_[i].x*q_[i].x + q_[i].y*q_[i].y); }
+  inline float x(const unsigned int i) const {
+    if (bits_.test(i)) {
+      return q_[std::bitset<8>(bits_ & std::bitset<8>((1 << (i + 1)) - 1)).count() - 1].x;
+    }
+    else {
+      throw std::out_of_range("harmonic not in range.");
+    }
+  }
+  inline float y(const unsigned int i) const {
+    if (bits_.test(i)) {
+      return q_[std::bitset<8>(bits_ & std::bitset<8>((1 << (i + 1)) - 1)).count() - 1].y;
+    }
+    else {
+      throw std::out_of_range("harmonic not in range.");
+    }
+  }
+
+  inline float mag(const unsigned int i) const { return sqrt(x(i)*x(i) + y(i)*y(i)); }
+
   inline float sumweights() const { return sum_weights_; }
+  inline float n() const { return n_; }
   inline Normalization GetNorm() const { return norm_; }
 
   friend QVector operator+(QVector a, QVector b);
@@ -71,17 +97,16 @@ class QVector {
   QVector DeNormal() const;
 
  private:
+
   Normalization norm_ = Normalization::NOCALIB; ///< normalization method
   int n_ = 0;                                   ///< number of data vectors contributing to the q vector
   float sum_weights_ = 0.0;                     ///< sum of weights
-  std::array<QVec, 4> q_;                       ///< array of qvectors for the different harmonics
+  std::bitset<8> bits_{};                       ///< Bitset for keeping track of the harmonics
+  std::vector<QVec> q_;                         ///< array of qvectors for the different harmonics
   /// \cond CLASSIMP
- ClassDef(QVector, 6);
+ ClassDef(QVector, 7);
   /// \endcond
 };
 
 }
-
-////
-
 #endif //FLOW_QVECTOR_H

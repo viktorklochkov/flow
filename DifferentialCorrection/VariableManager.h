@@ -1,6 +1,19 @@
+// Flow Vector Correction Framework
 //
-// Created by Lukas Kreis on 16.01.18.
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
 //
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifndef FLOW_VARIABLEMANAGER_H
 #define FLOW_VARIABLEMANAGER_H
@@ -23,12 +36,12 @@ class Variable {
   friend class Cuts;
  public:
   Variable() = default;
-  double *at(int i) noexcept { return &var_container[id_ + i]; }
-  double *begin() noexcept { return &var_container[id_]; }
-  double *end() noexcept { return &var_container[id_ + length_]; }
-  double *begin() const noexcept { return &var_container[id_]; }
-  double *end() const noexcept { return &var_container[id_ + length_]; }
-  int length() const noexcept { return length_; }
+  inline double *at(int i) noexcept { return &var_container[id_ + i]; }
+  inline double *begin() noexcept { return &var_container[id_]; }
+  inline double *end() noexcept { return &var_container[id_ + length_]; }
+  inline double *begin() const noexcept { return &var_container[id_]; }
+  inline double *end() const noexcept { return &var_container[id_ + length_]; }
+  inline int length() const noexcept { return length_; }
   std::string Name() const { return name_; }
 };
 }

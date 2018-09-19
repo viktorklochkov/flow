@@ -1,7 +1,20 @@
-/**
- * @file QnDataContainer.h
- * @author Lukas Kreis
- */
+// Flow Vector Correction Framework
+//
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #ifndef QNDATACONTAINER_H
 #define QNDATACONTAINER_H
 
@@ -78,7 +91,7 @@ class DataContainer : public TObject {
  * @param axes vector of axes
  */
   void AddAxes(const QnAxes &axes) {
-    if (axes.size()!=0) {
+    if (!axes.empty()) {
       if (integrated_) this->Reset();
       for (const auto &axis : axes) {
         AddAxis(axis);
@@ -680,13 +693,13 @@ class DataContainer : public TObject {
  * @return index belonging to coordinates
  */
   std::vector<size_type> GetIndex(const std::vector<float> &coordinates) const {
-    std::vector<size_type> indices;
+    std::vector<size_type> indices(dimension_);
     unsigned long axisindex = 0;
     for (const auto &axis : axes_) {
       auto bin = axis.FindBin(coordinates[axisindex]);
       if (bin < 0 || static_cast<size_type>(bin) > axis.size())
         throw std::out_of_range("bin out of specified range");
-      indices.push_back(static_cast<size_type &&>(bin));
+      indices[axisindex] = static_cast<size_type &&>(bin);
       axisindex++;
     }
     return indices;
@@ -743,6 +756,7 @@ using DataContainerESE = DataContainer<Qn::EventShape>;
 //--------------------------------------------//
 // Template specializations for visualisation //
 //--------------------------------------------//
+
 template<>
 inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
   Qn::DataContainerHelper::SampleBrowse(this, b);

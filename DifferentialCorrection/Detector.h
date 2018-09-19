@@ -1,6 +1,20 @@
+// Flow Vector Correction Framework
 //
-// Created by Lukas Kreis on 16.01.18.
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
 //
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #ifndef FLOW_DETECTOR_H
 #define FLOW_DETECTOR_H
 #include <memory>
@@ -25,6 +39,7 @@ enum class DetectorType {
 
 class DetectorBase {
  public:
+//  static constexpr std::size_t kNHarmonics = 4;
   virtual ~DetectorBase() = default;
 
   virtual std::unique_ptr<DataContainerDataVector> &GetDataContainer() = 0;
@@ -38,22 +53,29 @@ class DetectorBase {
   virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
   virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
   virtual void Initialize(const std::string &name, const VariableManager &man) = 0;
+  virtual void FillReport() = 0;
   virtual void FillData() = 0;
   virtual void ClearData() = 0;
   virtual void SaveReport() = 0;
+  virtual void ReserveDataVectors(int number) = 0;
+  virtual std::bitset<8> GetHarmonics() const = 0;
 
 };
 
-class Detector : DetectorBase {
+template <std::size_t N>
+class Detector : public DetectorBase {
  public:
   Detector(const DetectorType type,
            const std::vector<Qn::Axis> &axes,
            const Variable phi,
            const Variable weight,
-           const std::vector<Variable> &vars) :
+           const std::vector<Variable> &vars,
+           int const(&harmo)[N]) :
       nchannels_(phi.length()),
+      harmonics_(new int[N]),
       type_(type),
-      phi_(phi), weight_(weight),
+      phi_(phi),
+      weight_(weight),
       vars_(vars),
       cuts_(new Qn::Cuts),
       int_cuts_(new Qn::Cuts),
@@ -62,11 +84,15 @@ class Detector : DetectorBase {
     coordinates_.resize(vars.size());
     datavector_->AddAxes(axes);
     qvector_->AddAxes(axes);
+    for (int i = 0; i < N; ++i) {
+      harmonics_[i] = harmo[i];
+      harmonics_bits_.set(harmo[i]);
+    }
   }
 
-  explicit Detector(const DetectorType type) :
-      type_(type), datavector_(new Qn::DataContainerDataVector()),
-      qvector_(new Qn::DataContainerQVector()) {}
+  std::bitset<8> GetHarmonics() const override {
+    return harmonics_bits_;
+  }
 
   void ClearData() override {
     datavector_->ClearData();
@@ -99,13 +125,12 @@ class Detector : DetectorBase {
     QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
     if (type_==DetectorType::CHANNEL) {
       configuration =
-          new QnCorrectionsDetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_);
+          new QnCorrectionsDetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
     }
     if (type_==DetectorType::TRACK)
-      configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), set, nharmonics_);
+      configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), set, nharmonics_, harmonics_.get());
     return configuration;
   }
-
   std::unique_ptr<DataContainerDataVector> &GetDataContainer() override { return datavector_; }
   std::unique_ptr<DataContainerQVector> &GetQnDataContainer() override { return qvector_; }
   void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) override {
@@ -126,13 +151,12 @@ class Detector : DetectorBase {
     for (auto &histo : histograms_) {
       histo->Fill();
     }
-    for (auto phi : phi_) {
+    for (const auto &phi : phi_) {
       if (!cuts_->CheckCuts(i)) {
         ++i;
         continue;
       }
       if (vars_.empty()) {
-//        if (i == 0 && type_ == DetectorType::TRACK) {std::cout << phi << std::endl;}
         datavector_->CallOnElement(0, [&](std::vector<DataVector> &vector) {
           vector.emplace_back(phi, *(weight_.begin() + i));
         });
@@ -158,7 +182,7 @@ class Detector : DetectorBase {
 
   void Initialize(const std::string &name, const VariableManager &man) override {
     int_cuts_->CreateCutReport(name, 1);
-    cuts_->CreateCutReport(name, phi_.length());
+    cuts_->CreateCutReport(name, static_cast<size_t>(phi_.length()));
   }
 
   void SaveReport() override {
@@ -169,7 +193,7 @@ class Detector : DetectorBase {
     }
   }
 
-  void FillReport() {
+  void FillReport() override {
     int_cuts_->FillReport();
     cuts_->FillReport();
   }
@@ -178,9 +202,17 @@ class Detector : DetectorBase {
     histograms_.push_back(std::move(histo));
   }
 
+  void ReserveDataVectors(int number) override {
+    for (auto &bin : *datavector_) {
+      bin.reserve(number);
+    }
+  }
+
  private:
   int nchannels_ = 0;
-  int nharmonics_ = 4;
+  int nharmonics_ = N;
+  std::bitset<8> harmonics_bits_;
+  std::unique_ptr<int[]> harmonics_;
   DetectorType type_;
   Variable phi_;
   Variable weight_;
