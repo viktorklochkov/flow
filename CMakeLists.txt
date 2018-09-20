@@ -3,7 +3,7 @@ cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 1)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_cpp_STANDARD 14)
-#set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_BUILD_TYPE RELEASE)
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RELEASE)
 endif()
@@ -109,8 +109,6 @@ add_library(diffflow SHARED ${DIFF_SOURCES})
 target_link_libraries(diffflow ${ROOT_LIBRARIES} qncorrflow FlowBase reducedev)
 add_library(correlationflow SHARED ${CORR_SOURCES})
 target_link_libraries(correlationflow ${ROOT_LIBRARIES} FlowBase)
-set_target_properties(correlationflow PROPERTIES DEBUG_POSTFIX "")
-
 
 # Create a main program using the library
 add_executable(analysis ${EXE_SOURCES})

@@ -41,8 +41,10 @@ class DataFiller {
     for (auto &dp : channel) { dp.second->FillData(); }
     AliReducedTrackInfo *track = nullptr;
     auto trackList = event_->GetTracks();
+    auto ntracks = trackList->GetSize();
     TIter next(trackList);
     next.Reset();
+    for (auto &dp : tracking) { dp.second->ReserveDataVectors(ntracks); }
     while ((track = (AliReducedTrackInfo *) next())!=nullptr) {
       VAR::FillTrackInfo(track, var_manager->GetVariableContainer());
       for (auto &dp : tracking) { dp.second->FillData(); }

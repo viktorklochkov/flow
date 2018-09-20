@@ -62,8 +62,8 @@ void CorrectionTask::Initialize() {
   manager_.AddVariable("TPCPhi", VAR::kPhi, 1);
   manager_.AddVariable("TPCNCls", VAR::kTPCncls, 1);
   manager_.AddVariable("TPCTrackFlag", VAR::kQualityTrackFlags, 1);
-  manager_.AddVariable("TPCHybrid", VAR::kFilterBit+8, 1);
-  manager_.AddVariable("TPCHybrid+", VAR::kFilterBit+9, 1);
+  manager_.AddVariable("TPCHybrid", VAR::kFilterBit + 8, 1);
+  manager_.AddVariable("TPCHybrid+", VAR::kFilterBit + 9, 1);
   manager_.AddVariable("V0Mult", VAR::Variables::kVZEROTotalMult, 1);
   manager_.AddVariable("V0CMultChannel", VAR::Variables::kVZEROChannelMult, 32);
   manager_.AddVariable("V0AMultChannel", VAR::Variables::kVZEROChannelMult + 32, 32);
@@ -89,36 +89,35 @@ void CorrectionTask::Initialize() {
   manager_.AddCorrectionAxis({"CentralitySPD", 80, 0, 80});
 
   //Config TPC
-  Axis pt("TPCPt",{0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3., 3.5, 4., 5., 6., 8., 10.});
-  Axis eta("TPCEta",{-0.8,-0.5,0.5,0.8});
-//  auto cut_filterbit = [](double &flag) {
-//    return (unsigned long) flag & 1 << 23 || (unsigned long) flag & 1 << 24;
-//  };
-  auto cut_hybrid = [](double &flag, double &flagPlus) {
+  Axis pt("TPCPt",
+          {0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3., 3.5, 4., 5., 6., 8., 10.});
+  Axis eta("TPCEta", {-0.8, -0.5, 0.5, 0.8});
+
+  auto cut_hybrid = [](const double &flag, const double &flagPlus) {
     return flag==1 || flagPlus==1;
   };
-  auto cut_eta = [](double &eta) { return -0.8 < eta && eta < 0.8; };
+  auto cut_eta = [](const double &eta) { return -0.8 < eta && eta < 0.8; };
   //Config of TPC corrections
   auto confTPC = [](QnCorrectionsDetectorConfigurationBase *config) {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
   };
   auto confTPCR = [](QnCorrectionsDetectorConfigurationBase *config) {
-    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_noCalibration);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
   };
-  //TPC pT-dependence
-  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt,eta});
-  manager_.AddCut("TPC", {"TPCHybrid","TPCHybrid+"}, cut_hybrid);
+  // TPC pT-dependence
+  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt, eta}, {1, 2, 3, 4});
+  manager_.AddCut("TPC", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
   manager_.AddCut("TPC", {"TPCEta"}, cut_eta);
-  manager_.AddCut("TPC", {"TPCPt"}, [](double &pt) { return pt > 0.2 && pt < 10.; });
+  manager_.AddCut("TPC", {"TPCPt"}, [](const double &pt) { return pt > 0.2 && pt < 10.; });
   manager_.SetCorrectionSteps("TPC", confTPC);
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPhi", 50, 0, 2*TMath::Pi()}});
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPt", 50, 0., 10.}});
   //TPC pT-integrated
-  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi","Ones", {eta});
-  manager_.AddCut("TPC_R", {"TPCHybrid","TPCHybrid+"}, cut_hybrid);
+  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {eta}, {1, 2, 3, 4});
+  manager_.AddCut("TPC_R", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
   manager_.AddCut("TPC_R", {"TPCEta"}, cut_eta);
-  manager_.AddCut("TPC_R", {"TPCPt"}, [](double &pt) { return pt > 0.2 && pt < 10.; });
-  manager_.AddCut("TPC_R", {"TPCNCls"}, [](double &ncls) {return ncls > 70;});
+  manager_.AddCut("TPC_R", {"TPCPt"}, [](const double &pt) { return pt > 0.2 && pt < 10.; });
+  manager_.AddCut("TPC_R", {"TPCNCls"}, [](const double &ncls) { return ncls > 70; });
   manager_.SetCorrectionSteps("TPC_R", confTPCR);
 
   //Config VZERO A- and C-side
@@ -127,7 +126,7 @@ void CorrectionTask::Initialize() {
   };
   //Config of VZERO A- and C-side corrections
   auto confV0 = [](QnCorrectionsDetectorConfigurationBase *config) {
-    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_noCalibration);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     auto recenter = new QnCorrectionsQnVectorRecentering();
     recenter->SetApplyWidthEqualization(true);
     config->AddCorrectionOnQnVector(recenter);
@@ -141,18 +140,18 @@ void CorrectionTask::Initialize() {
     auto equal = new QnCorrectionsInputGainEqualization();
     equal->SetEqualizationMethod(QnCorrectionsInputGainEqualization::GEQUAL_averageEqualization);
     equal->SetUseChannelGroupsWeights(true);
-//    config->AddCorrectionOnInputData(equal);
+    config->AddCorrectionOnInputData(equal);
   };
 
   //VZERO A
-  manager_.AddDetector("V0A", DetectorType::CHANNEL, "V0APhiChannel", "V0AMultChannel", {});
+  manager_.AddDetector("V0A", DetectorType::CHANNEL, "V0APhiChannel", "V0AMultChannel", {}, {2, 3});
   manager_.AddCut("V0A", {"V0AMultChannel"}, cut_mult);
   manager_.SetCorrectionSteps("V0A", confV0);
   manager_.AddHisto1D("V0A", {{"V0AChannels", 32, 0, 32}}, "V0AMultChannel");
   manager_.AddHisto2D("V0A", {{"V0ARingChannel", 4, 0, 4}, {"V0AChannels", 32, 0, 32}}, "V0AMultChannel");
   manager_.AddHisto2D("V0A", {{"V0APhiChannel", 8, 0, 2*TMath::Pi()}, {"V0ARingChannel", 4, 0, 4}}, "V0AMultChannel");
   //VZERO C
-  manager_.AddDetector("V0C", DetectorType::CHANNEL, "V0CPhiChannel", "V0CMultChannel", {});
+  manager_.AddDetector("V0C", DetectorType::CHANNEL, "V0CPhiChannel", "V0CMultChannel", {}, {2, 3});
   manager_.AddCut("V0C", {"V0CMultChannel"}, cut_mult);
   manager_.SetCorrectionSteps("V0C", confV0);
   manager_.AddHisto1D("V0C", {{"V0CChannels", 32, 0, 32}}, "V0CMultChannel");
@@ -174,15 +173,15 @@ void CorrectionTask::Initialize() {
     ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, channelGroups, nullptr);
   };
   // ZDC A
-  manager_.AddDetector("ZDCA", DetectorType::CHANNEL, "ZDCAPhi", "ZDCAMult");
+  manager_.AddDetector("ZDCA", DetectorType::CHANNEL, "ZDCAPhi", "ZDCAMult", {}, {1});
   manager_.SetCorrectionSteps("ZDCA", confZDC);
   manager_.AddHisto1D("ZDCA", {{"ZDCAChannels", 4, 0, 4}}, "ZDCAMult");
-  manager_.AddCut("ZDCA",{"ZDCAMult"},[](double &mult){return mult > 100;});
+  manager_.AddCut("ZDCA", {"ZDCAMult"}, [](double &mult) { return mult > 100; });
   // ZDC C
-  manager_.AddDetector("ZDCC", DetectorType::CHANNEL, "ZDCCPhi", "ZDCCMult");
+  manager_.AddDetector("ZDCC", DetectorType::CHANNEL, "ZDCCPhi", "ZDCCMult", {}, {1});
   manager_.SetCorrectionSteps("ZDCC", confZDC);
   manager_.AddHisto1D("ZDCC", {{"ZDCCChannels", 4, 0, 4}}, "ZDCCMult");
-  manager_.AddCut("ZDCC",{"ZDCCMult"},[](double &mult){return mult > 100;});
+  manager_.AddCut("ZDCC", {"ZDCCMult"}, [](double &mult) { return mult > 100; });
 
   auto confT0 = [](QnCorrectionsDetectorConfigurationBase *config) {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
@@ -198,20 +197,20 @@ void CorrectionTask::Initialize() {
     ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, channelGroups, nullptr);
   };
   // T0A
-  manager_.AddDetector("T0A", DetectorType::CHANNEL, "T0APhi", "T0AMult");
+  manager_.AddDetector("T0A", DetectorType::CHANNEL, "T0APhi", "T0AMult", {}, {2, 3});
   manager_.SetCorrectionSteps("T0A", confT0);
-  manager_.AddCut("T0A",{"T0AMult"},cut_mult);
+  manager_.AddCut("T0A", {"T0AMult"}, cut_mult);
   manager_.AddHisto1D("T0A", {{"T0AChannels", 12, 0, 12}}, "T0AMult");
   // T0C
-  manager_.AddDetector("T0C", DetectorType::CHANNEL, "T0CPhi", "T0CMult");
+  manager_.AddDetector("T0C", DetectorType::CHANNEL, "T0CPhi", "T0CMult", {}, {2, 3});
   manager_.SetCorrectionSteps("T0C", confT0);
-  manager_.AddCut("T0C",{"T0CMult"},cut_mult);
+  manager_.AddCut("T0C", {"T0CMult"}, cut_mult);
   manager_.AddHisto1D("T0C", {{"T0Channels", 12, 0, 12}}, "T0CMult");
 
 //  Event selection configuration
-  manager_.AddEventCut({"NTracks"}, [](double &ntracks) { return ntracks > 0; });
-  manager_.AddEventCut({"VTXZ"}, [](double &z) { return -10 < z && z < 10; });
-  manager_.AddEventCut({"CentralityV0M"}, [](double &cent) { return 0 < cent && cent < 100; });
+  manager_.AddEventCut({"NTracks"}, [](const double &ntracks) { return ntracks > 0; });
+  manager_.AddEventCut({"VTXZ"}, [](const double &z) { return -10 < z && z < 10; });
+  manager_.AddEventCut({"CentralityV0M"}, [](const double &cent) { return 0 < cent && cent < 100; });
 
   manager_.AddEventHisto2D({{"VTXZ", 100, -30, 30}, {"VTXX", 100, -0.2, 0.2}});
   manager_.AddEventHisto2D({{"VTXZ", 100, -30, 30}, {"VTXY", 100, -0.2, 0.2}});

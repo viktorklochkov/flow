@@ -38,7 +38,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 
 ROOT_GENERATE_DICTIONARY(G__ReducedEv ${HEADERS} LINKDEF ReducedEventLinkDef.h)
 add_library(reducedev SHARED ${SOURCES} G__ReducedEv)
-set_target_properties(reducedev PROPERTIES DEBUG_POSTFIX "")
 target_link_libraries(reducedev ${ROOT_LIBRARIES} )
 
 install(TARGETS reducedev DESTINATION lib)
