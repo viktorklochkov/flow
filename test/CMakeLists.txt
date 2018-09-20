@@ -27,4 +27,4 @@ add_definitions(${ROOT_CXX_FLAGS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
 
 add_executable(tests ${TEST_SOURCES})
-target_link_libraries(tests gtest_main ${ROOT_LIBRARIES} FlowBase correlationflow)
+target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} FlowBase correlationflow)

@@ -13,7 +13,7 @@ TEST(CorrelatorUnitTest, Basic) {
   container_a.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
   for (auto &bin : container_a) {
     Qn::QVec qvec(1.0, 1.0);
-    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    std::vector<Qn::QVec> vecarray = {{qvec, qvec, qvec, qvec}};
     bin = Qn::QVector(Qn::QVector::Normalization::QOVERM, 1, 1, vecarray);
   }
   Qn::DataContainer<Qn::QVector> container_b(container_a);
@@ -46,7 +46,7 @@ TEST(CorrelatorUnitTest, AutoCorrelation) {
   container_a.AddAxes({{"a1", 2, 0, 10}});
   for (auto &bin : container_a) {
     Qn::QVec qvec(1.0, 1.0);
-    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    std::vector<Qn::QVec> vecarray = {{qvec, qvec, qvec, qvec}};
     bin = Qn::QVector(Qn::QVector::Normalization::QOVERM, 1, 1, vecarray);
   }
   Qn::DataContainer<Qn::QVector> container_b(container_a);
@@ -68,7 +68,7 @@ TEST(CorrelatorUnitTest, OneDataContainerOnly) {
   Qn::DataContainer<Qn::QVector> container_a;
   for (auto &bin : container_a) {
     Qn::QVec qvec(1.0, 1.0);
-    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    std::vector<Qn::QVec> vecarray = {{qvec, qvec, qvec, qvec}};
     bin = Qn::QVector(Qn::QVector::Normalization::QOVERSQRTM, 1, 1, vecarray);
   }
   std::vector<Qn::DataContainer<Qn::QVector>> vector{container_a};
@@ -83,13 +83,13 @@ TEST(CorrelatorUnitTest, OneDataContainerOnly) {
   correlator.FillCorrelation(vector,{0},0);
   for (auto &bin : vector.at(0)) {
     Qn::QVec qvec(2.0, 2.0);
-    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    std::vector<Qn::QVec> vecarray = {{qvec, qvec, qvec, qvec}};
     bin = Qn::QVector(Qn::QVector::Normalization::QOVERSQRTM, 1, 1, vecarray);
   }
   correlator.FillCorrelation(vector,{1},0);
   for (auto &bin : vector.at(0)) {
     Qn::QVec qvec(3.0, 3.0);
-    std::array<Qn::QVec, 4> vecarray = {{qvec, qvec, qvec, qvec}};
+    std::vector<Qn::QVec> vecarray = {{qvec, qvec, qvec, qvec}};
     bin = Qn::QVector(Qn::QVector::Normalization::QOVERSQRTM, 1, 1, vecarray);
   }
   correlator.FillCorrelation(vector,{2},0);
