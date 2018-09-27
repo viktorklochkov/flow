@@ -77,7 +77,7 @@ class CorrectionTask {
   std::shared_ptr<TFile> in_calibration_file_;
   std::shared_ptr<TFile> out_calibration_file_;
   std::unique_ptr<TTree> in_tree_;
-  std::unique_ptr<TTree> out_tree_;
+  TTree *out_tree_;
   TTreeReader tree_reader_;
   TTreeReaderValue<AliReducedEventInfo> event_;
   Qn::CorrectionManager manager_;

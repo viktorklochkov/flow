@@ -17,9 +17,10 @@
 
 #ifndef FLOW_QVECTOR_H
 #define FLOW_QVECTOR_H
-#include <array>
+#include <vector>
 #include <functional>
 #include <complex>
+#include <bitset>
 
 #include "Rtypes.h"
 

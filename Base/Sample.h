@@ -95,7 +95,7 @@ class Sample : public Profile {
     subsample_sum = 0;
     subsample_sum2_ = 0;
     subsample_entries_ = 0;
-    for (const auto stat : samples_stat_) {
+    for (const auto &stat : samples_stat_) {
       subsample_sum += stat.mean;
       subsample_sum2_ += stat.mean*stat.mean;
       subsample_entries_++;

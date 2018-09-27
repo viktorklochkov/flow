@@ -22,7 +22,7 @@ CorrectionTask::CorrectionTask(std::string filelist, std::string incalib, std::s
     manager_(),
     write_tree_(true) {
   out_file_->cd();
-  out_tree_ = std::make_unique<TTree>("tree", "tree");
+  out_tree_ = new TTree("tree", "tree");
 }
 
 void CorrectionTask::Run() {
@@ -100,9 +100,15 @@ void CorrectionTask::Initialize() {
   //Config of TPC corrections
   auto confTPC = [](QnCorrectionsDetectorConfigurationBase *config) {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    auto recenter = new QnCorrectionsQnVectorRecentering();
+    recenter->SetApplyWidthEqualization(true);
+    config->AddCorrectionOnQnVector(recenter);
   };
   auto confTPCR = [](QnCorrectionsDetectorConfigurationBase *config) {
     config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+    auto recenter = new QnCorrectionsQnVectorRecentering();
+    recenter->SetApplyWidthEqualization(true);
+    config->AddCorrectionOnQnVector(recenter);
   };
   // TPC pT-dependence
   manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt, eta}, {1, 2, 3, 4});
@@ -220,7 +226,7 @@ void CorrectionTask::Initialize() {
   manager_.AddEventHisto2D({{"SPDNTracklets", 100, 0, 4000}, {"ITSNClusters", 6, 0, 6}});
   manager_.AddEventHisto2D({{"NTracks", 100, 0, 1800}, {"V0Mult", 100, 0, 30000}});
   manager_.AddEventHisto2D({{"NTracksTPCout", 100, 0, 3000}, {"V0Mult", 100, 0, 30000}});
-  manager_.SetTree(std::move(out_tree_));
+  manager_.SetTree(out_tree_);
 
   //Initialization of framework
   manager_.Initialize(in_calibration_file_);

@@ -37,7 +37,7 @@ class AliReducedBaseTrack : public TObject {
     
     ULong_t GetQualityFlags()             const {return fQualityFlags;}
     Bool_t UsedForQvector()               const {return fQualityFlags&(UShort_t(1)<<0);}
-    Bool_t TestQualityFlag(UShort_t iflag)  const {return ((iflag<(8*sizeof(ULong_t))) ? fQualityFlags&(ULong_t(1)<<iflag) : kFALSE);}
+    inline Bool_t TestQualityFlag(UShort_t iflag)  const {return ((iflag<(8*sizeof(ULong_t))) ? fQualityFlags&(ULong_t(1)<<iflag) : kFALSE);}
     Bool_t IsMCTruth()                        const {return (fIsMCTruth ? kTRUE : kFALSE);}
     //Bool_t HasMCTruthInfo()               const {return (fMCFlags ? kTRUE : kFALSE);}
     Bool_t IsTRDmatch()                     const {return fQualityFlags&(ULong_t(1)<<26);}

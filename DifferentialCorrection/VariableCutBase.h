@@ -46,11 +46,15 @@ class VariableCutNDim : public VariableCutBase {
       ++i;
     }
   }
+
   bool Check(int i) override {
     return CheckImpl(i, std::make_index_sequence<sizeof...(T)>{});
   }
+
   int GetVariableLength() const override { return variables_[0].length(); }
+
  private:
+
   template<std::size_t... I>
   bool CheckImpl(int i, std::index_sequence<I...>) {
     return lambda_(*(variables_[I].begin() + i)...);
@@ -91,10 +95,10 @@ class Cuts {
   }
 
 
-  bool CheckCuts(int i) {
+  inline bool CheckCuts(int i) {
     int icut = 1;
     if (cuts_.empty()) return true;
-    *((cut_weight_).begin() + i) = *((cut_weight_).begin() + i) + 1.0;
+    ++*((cut_weight_).begin() + i);// = *((cut_weight_).begin() + i) + 1.0;
     bool passed = true;
     for (auto &cut : cuts_) {
       bool ipass = cut->Check(i) && passed;

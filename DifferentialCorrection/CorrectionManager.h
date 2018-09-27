@@ -122,13 +122,12 @@ class CorrectionManager {
       ++i;
     }
     auto cut = MakeUniqueNDimCut(arr, lambda);
-    try { detectors_track.at(name)->AddCut(std::move(cut)); }
-    catch (std::out_of_range &) {
-      try { detectors_channel.at(name)->AddCut(std::move(cut)); }
-      catch (std::out_of_range &) {
-        throw std::out_of_range(
-            name + " was not found in the list of detectors. It needs to be created before a cut can be added.");
-      }
+    if (detectors_track.find(name) != detectors_track.end()) {
+    detectors_track.at(name)->AddCut(std::move(cut));
+    } else if (detectors_channel.find(name) != detectors_channel.end()) {
+      detectors_channel.at(name)->AddCut(std::move(cut));
+    } else {
+      std::cout << "Detector" + name + "not found. Cut not Added." << std::endl;
     }
   }
   /**
@@ -188,13 +187,13 @@ class CorrectionManager {
   void SetCorrectionSteps(const std::string &name,
                           std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config);
 
-  void SetTree(std::unique_ptr<TTree> tree) { out_tree_ = std::move(tree); }
+  void SetTree(TTree *tree) { out_tree_ = tree; }
 
   void SaveHistograms(std::shared_ptr<TFile> file);
 
   void SaveTree(const std::shared_ptr<TFile> &file) {
     file->cd();
-    out_tree_.release()->Write();
+    out_tree_->Write();
   }
 
   void Initialize(std::shared_ptr<TFile> &in_calibration_file_);
@@ -217,11 +216,11 @@ class CorrectionManager {
 
   std::pair<std::array<Variable, 2>, TH1F> Create1DHisto(const std::string &name,
                                                          std::vector<Qn::Axis> axes,
-                                                         const std::string &weightname);
+                                                         const std::string &weightname = "Ones");
 
   std::pair<std::array<Variable, 3>, TH2F> Create2DHisto(const std::string &name,
                                                          std::vector<Qn::Axis> axes,
-                                                         const std::string &weightname);
+                                                         const std::string &weightname = "Ones");
 
   void CreateDetectors();
 
@@ -256,7 +255,7 @@ class CorrectionManager {
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track;
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel;
   std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_;
-  std::unique_ptr<TTree> out_tree_ = nullptr;
+  TTree *out_tree_ = nullptr;
 };
 }
 

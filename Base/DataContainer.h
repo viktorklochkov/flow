@@ -641,9 +641,9 @@ class DataContainer : public TObject {
   bool integrated_ = true;      ///< Flag to show if container is integrated (only one bin)
   unsigned long dimension_ = 0; ///< dimensionality of data
   std::vector<T> data_;         ///< linearized vector of data
-  QnAxes axes_;      ///< Vector of axes
+  QnAxes axes_;                 ///< Vector of axes
   std::vector<long> stride_;    ///< Offset for conversion into one dimensional vector.
-  TList *list_ = nullptr; ///!<!
+  TList *list_ = nullptr;       ///!<!
   friend Qn::DataContainerHelper;
 
   void Reset() {

@@ -21,6 +21,8 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <cmath>
+
 namespace Qn {
 
 class Variable {
@@ -59,6 +61,13 @@ namespace Qn {
 
 class VariableManager {
  public:
+
+  VariableManager() {
+    for (int i=0; i< maxsize; ++i) {
+      var_container[i] = NAN;
+    }
+  }
+
   void CreateVariable(std::string name, const int id, const int length) {
     Variable var(id, length, name);
     var.var_container = var_container;
@@ -97,7 +106,7 @@ class VariableManager {
   }
 
  private:
-  static constexpr int maxsize = 9000;
+  static constexpr int maxsize = 5000;
   double *var_container = new double[maxsize]; // non-owning pointer to variables
   double *var_ones = new double[1000];
   std::map<std::string, Variable> name_var_map_;

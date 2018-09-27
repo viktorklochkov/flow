@@ -84,7 +84,7 @@ class Detector : public DetectorBase {
     coordinates_.resize(vars.size());
     datavector_->AddAxes(axes);
     qvector_->AddAxes(axes);
-    for (int i = 0; i < N; ++i) {
+    for (unsigned int i = 0; i < N; ++i) {
       harmonics_[i] = harmo[i];
       harmonics_bits_.set(harmo[i]);
     }
@@ -178,7 +178,7 @@ class Detector : public DetectorBase {
     }
   }
 
-  const DetectorType Type() const { return type_; }
+  DetectorType Type() const { return type_; }
 
   void Initialize(const std::string &name, const VariableManager &man) override {
     int_cuts_->CreateCutReport(name, 1);

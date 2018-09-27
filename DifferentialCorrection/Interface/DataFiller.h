@@ -18,6 +18,9 @@
 #ifndef FLOW_DATAFILLER_H
 #define FLOW_DATAFILLER_H
 
+#include <iostream>
+#include <fstream>
+
 #include <ReducedEvent/AliReducedEventInfo.h>
 #include <ReducedEvent/AliReducedTrackInfo.h>
 #include <ReducedEvent/AliReducedVarManager.h>
@@ -41,10 +44,8 @@ class DataFiller {
     for (auto &dp : channel) { dp.second->FillData(); }
     AliReducedTrackInfo *track = nullptr;
     auto trackList = event_->GetTracks();
-    auto ntracks = trackList->GetSize();
     TIter next(trackList);
     next.Reset();
-    for (auto &dp : tracking) { dp.second->ReserveDataVectors(ntracks); }
     while ((track = (AliReducedTrackInfo *) next())!=nullptr) {
       VAR::FillTrackInfo(track, var_manager->GetVariableContainer());
       for (auto &dp : tracking) { dp.second->FillData(); }
@@ -53,5 +54,20 @@ class DataFiller {
  private:
   AliReducedEventInfo *event_;
 };
+
+inline TChain *MakeChain(std::string filename, std::string treename) {
+  auto chain = new TChain(treename.data());
+  std::ifstream in;
+  in.open(filename);
+  std::string line;
+  std::cout << "Adding files to chain:" << std::endl;
+  while ((in >> line).good()) {
+    if (!line.empty()) {
+      chain->AddFile(line.data());
+      std::cout << line << std::endl;
+    }
+  }
+  return chain;
+}
 }
 #endif //FLOW_DATAFILLER_H
