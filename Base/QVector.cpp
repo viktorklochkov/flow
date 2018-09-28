@@ -31,7 +31,7 @@ QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vecto
     sum_weights_ = vector->GetSumOfWeights();
     int *harmonicsmap = new int[8];
     vector->GetHarmonicsMap(harmonicsmap);
-    for (int i = 0; i < bits.count(); i++) {
+    for (unsigned int i = 0; i < bits.count(); i++) {
       int iharmonic = harmonicsmap[i];
       q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
     }
@@ -64,6 +64,7 @@ QVector operator+(const QVector a, const QVector b) {
                  });
   c.n_ = at.n_ + bt.n_;
   c.sum_weights_ = at.sum_weights_ + bt.sum_weights_;
+  c.bits_ = at.bits_;
   return c;
 }
 /**

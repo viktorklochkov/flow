@@ -54,20 +54,5 @@ class DataFiller {
  private:
   AliReducedEventInfo *event_;
 };
-
-inline TChain *MakeChain(std::string filename, std::string treename) {
-  auto chain = new TChain(treename.data());
-  std::ifstream in;
-  in.open(filename);
-  std::string line;
-  std::cout << "Adding files to chain:" << std::endl;
-  while ((in >> line).good()) {
-    if (!line.empty()) {
-      chain->AddFile(line.data());
-      std::cout << line << std::endl;
-    }
-  }
-  return chain;
-}
 }
 #endif //FLOW_DATAFILLER_H

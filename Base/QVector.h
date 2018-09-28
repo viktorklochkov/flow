@@ -64,6 +64,9 @@ class QVector {
       n_(n),
       sum_weights_(sum),
       q_(q) {
+    for (unsigned int i = 0; i < q.size(); ++i){
+      bits_.set(i);
+    }
   }
 
   QVector(Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits);

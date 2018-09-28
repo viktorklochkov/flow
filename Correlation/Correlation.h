@@ -29,23 +29,23 @@ namespace Qn {
  * @brief      Correlation of several input data containers.
  */
 class Correlation {
+  using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
-  using CONTAINERS = DataContainerQVector;
+  using DataContainers = std::vector<DataContainerQVector>;
  public:
   Correlation() = default;
-  Correlation(const std::vector<CONTAINERS> &input,
+
+  Correlation(const DataContainers &input,
               AXES event,
               std::function<double(std::vector<Qn::QVector> &)> lambda) :
       data_correlation_(),
       axes_event_(std::move(event)),
       function_(std::move(lambda)) {
-//    for (int i = 0; i < input.size(); ++i) {
-//      names_.push_back(std::to_string(i));
-//    }
     CreateCorrelationContainer(input);
   }
+
   Correlation(std::vector<std::string> names,
-              const std::vector<CONTAINERS> &input,
+              const DataContainers &input,
               AXES event,
               std::function<double(std::vector<Qn::QVector> &)> lambda) :
       data_correlation_(),
@@ -54,22 +54,23 @@ class Correlation {
       names_(std::move(names)) {
     CreateCorrelationContainer(input);
   }
-  void ConfigureCorrelation(const std::vector<DataContainerQVector> &input,
+
+  void ConfigureCorrelation(const DataContainers &input,
                             const std::vector<Qn::Axis> &event,
                             std::function<double(std::vector<Qn::QVector> &)> function,
-                            std::vector<std::string> names) {
+                            const std::vector<std::string> &names) {
     axes_event_ = event;
     names_ = names;
     function_ = function;
     CreateCorrelationContainer(input);
   }
+
   DataContainerFB GetCorrelation() const { return data_correlation_; }
   AXES GetEventAxes() const { return axes_event_; }
-  inline float &At(int index) {return data_correlation_.At(index).second; }
+  inline float &At(size_type index) { return data_correlation_.At(index).second; }
  private:
-  std::vector<std::vector<std::vector<unsigned long>>>
-      index_; ///< map of indices of all inputs used for calculating the correlations
-  std::vector<unsigned long> c_index_; ///< flattened index of correlation
+  std::vector<std::vector<std::vector<size_type>>> index_; ///< map of indices of all inputs
+  std::vector<size_type> c_index_; ///< flattened index of correlation
   DataContainerFB data_correlation_; ///<  datacontainer containing the correlations
   AXES axes_event_; ///< vector of event axes used in the correlation
   std::function<double(std::vector<Qn::QVector> &)> function_; ///< correlation function
@@ -78,7 +79,7 @@ class Correlation {
 /**
  * Create the correlation function. Automatically called at creation of Correlation object.
  */
-  void CreateCorrelationContainer(const std::vector<Correlation::CONTAINERS> &);
+  void CreateCorrelationContainer(const DataContainers &);
 
  public:
 
@@ -89,7 +90,7 @@ class Correlation {
  * @param eventindex of the used for the event axes
  * @param lambda correlation function
  */
-  void Fill(const std::vector<CONTAINERS> &input, const std::vector<unsigned long> &eventindex);
+  void Fill(const DataContainers &input, const std::vector<unsigned long> &eventindex);
 /**
  * Fill correlation recursive function
  * @param eventindex event index of event axes
@@ -103,7 +104,7 @@ class Correlation {
                        std::vector<QVector> &contents,
                        int iterationoffset,
                        u_int iteration,
-                       const std::vector<Correlation::CONTAINERS> &input);
+                       const DataContainers &input);
 };
 }
 

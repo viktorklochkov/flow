@@ -41,9 +41,7 @@ namespace Qn {
  */
 class CorrectionTask {
  public:
-  CorrectionTask() = default;
   CorrectionTask(std::string filelist, std::string incalib, std::string treename);
-  CorrectionTask(std::array<std::shared_ptr<TFile>, 4> files);
   ~CorrectionTask() = default;
   void Run();
 
@@ -51,22 +49,21 @@ class CorrectionTask {
   /**
    * Initializes TestTask;
    */
-  virtual void Initialize();
+  void Initialize();
   /**
    * Processes one event;
    */
-  virtual void Process();
+  void Process();
   /**
    * Finalizes TestTask. Called after processing is done.
    */
-  virtual void Finalize();
+  void Finalize();
   /**
    * Make TChain from file list
    * @param filename name of file containing paths to root files containing the input trees
    * @return Pointer to the TChain
    */
-  virtual std::unique_ptr<TChain> MakeChain(std::string filename, std::string treename);
-
+  std::unique_ptr<TChain> MakeChain(std::string filename, std::string treename);
   void SetVariables(std::vector<VAR::Variables> vars) {
     for (auto var : vars) {
       AliReducedVarManager::SetUseVariable(var);

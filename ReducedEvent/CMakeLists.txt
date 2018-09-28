@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0048 NEW)
 project(flow)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_cpp_STANDARD 14)
