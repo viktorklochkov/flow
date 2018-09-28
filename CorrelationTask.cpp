@@ -42,6 +42,7 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
 
   a.AddProjection("TPC","TPC_RR","");
   // Add Correlation
+  a.AddCorrelation("TPC_RR_TPC_RR","TPC_RR,TPC_RR",scalar,0,Qn::Sampler::Method::NONE);
   a.AddCorrelation("TPCPT_V0A", "TPC, V0A", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);
   a.AddCorrelation("TPCPT_V0C", "TPC, V0C", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);
   a.AddCorrelation("TPC_V0A", "TPC_R, V0A", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);

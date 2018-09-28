@@ -35,7 +35,7 @@ TEST(DataContainerTest, Projection) {
 //  for (const auto &bin : integration) {
 //    EXPECT_EQ(10000, bin);
 //  }
-  auto projection = container.Projection({"a3"});
+  auto projection = container.Projection();
   for (const auto &bin : projection) {
     EXPECT_EQ(600, bin);
   }

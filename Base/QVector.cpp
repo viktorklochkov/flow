@@ -50,21 +50,21 @@ QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vecto
 QVector operator+(const QVector a, const QVector b) {
   QVector at = a.DeNormal();
   QVector bt = b.DeNormal();
-  QVector c;
+  QVector c(a);
   std::transform(at.q_.begin(),
                  at.q_.end(),
                  bt.q_.begin(),
                  c.q_.begin(),
                  [](const QVec qa, const QVec qb) {
-                   QVec ta = {0.0, 0.0};
-                   QVec tb = {0.0, 0.0};
+                   QVec ta;
+                   QVec tb;
                    if (!(isnan(qa.x) || isnan(qa.y))) ta = qa;
                    if (!(isnan(qb.x) || isnan(qb.y))) tb = qb;
                    return ta + tb;
                  });
   c.n_ = at.n_ + bt.n_;
   c.sum_weights_ = at.sum_weights_ + bt.sum_weights_;
-  c.bits_ = at.bits_;
+  c.bits_  = b.bits_;
   return c;
 }
 /**

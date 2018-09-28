@@ -40,7 +40,7 @@ void CorrelationManager::AddDataContainer(const std::string &name) {
 void CorrelationManager::AddQVectors(const std::string &namelist) {
   std::vector<std::string> names;
   tokenize(namelist, names, ", ", true);
-  for (const auto & name : names) {
+  for (const auto &name : names) {
     AddDataContainer(name);
   }
 }
@@ -193,6 +193,8 @@ void CorrelationManager::MakeProjections() {
         qvectors_.at(std::get<0>(projection.second)).Projection(std::get<1>(projection.second),
                                                                 [](const Qn::QVector &a, const Qn::QVector &b) {
                                                                   auto norm = b.GetNorm();
+//                                                                  if (a.n()== 0 && b.n() > 0) return b.Normal(norm);
+//                                                                  if (a.n() > 0 && b.n()==0) return a.Normal(norm);
                                                                   return (a + b).Normal(norm);
                                                                 });
   }

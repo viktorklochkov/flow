@@ -327,16 +327,29 @@ class DataContainer : public TObject {
       ++iaxis;
     }
     if (axis_names.empty()) {
-      for (const auto &bin : data_) {
-        projection.At(0) = lambda(projection.At(0), bin);
-
+      projection.At(0) = data_.at(0);
+      for (auto bin = data_.begin()+1; bin < data_.end(); ++bin) {
+        projection.At(0) = lambda(projection.At(0), *bin);
       }
     } else {
       std::vector<size_type> indices;
       std::vector<size_type> projindices;
       indices.reserve(dimension_);
       projindices.resize(projection.dimension_);
-      for (const auto &bin : data_) {
+      // first bin
+      this->GetIndex(indices, 0);
+      size_type iprojbin = 0;
+      for (size_type i = 0; i < indices.size(); ++i) {
+        if (isprojected.at(i)) {
+          projindices.at(iprojbin) = indices.at(i);
+          ++iprojbin;
+        }
+      }
+      projection.At(projindices) = lambda(projection.At(projindices), data_.at(0));
+      ++linearindex;
+
+      // other bins
+      for (auto bin = data_.begin()+1; bin < data_.end(); ++bin) {
         this->GetIndex(indices, linearindex);
         size_type iprojbin = 0;
         for (size_type i = 0; i < indices.size(); ++i) {
@@ -345,7 +358,7 @@ class DataContainer : public TObject {
             ++iprojbin;
           }
         }
-        projection.At(projindices) = lambda(projection.At(projindices), bin);
+        projection.At(projindices) = lambda(projection.At(projindices), *bin);
         ++linearindex;
       }
     }
