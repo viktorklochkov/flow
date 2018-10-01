@@ -13,9 +13,9 @@
 #include <iostream>
 using std::cout;
 using std::endl;
-using std::flush;
-using std::ifstream;
-#include <fstream>
+//using std::flush;
+//using std::ifstream;
+//#include <fstream>
 
 #include <TString.h>
 #include <TMath.h>
@@ -177,6 +177,7 @@ AliReducedVarManager::AliReducedVarManager() :
 //__________________________________________________________________
 AliReducedVarManager::AliReducedVarManager(const Char_t *name) :
     TObject() {
+  std::cout << kNVars << std::endl;
   //
   // named constructor
   //
@@ -555,6 +556,35 @@ void AliReducedVarManager::FillEventInfo(BASEEVENT *baseEvent, double *values, E
 //    fgUsedVars[kNTracksTOFoutVsTRDout] = kFALSE;
 
   // Multiplicity estimators
+
+  if (event->GetFMD()!=nullptr) {
+    auto fmd = event->GetFMD();
+    TIter next(fmd);
+    int iA = 0;
+    int iC = 0;
+    for (int i = 0; i < 1200; ++i) {
+      values[kFMDAWeight + i] = 0;
+      values[kFMDAPhi + i] = 0;
+      values[kFMDAEta + i] = 0;
+      values[kFMDCPhi + i] = 0;
+      values[kFMDCWeight + i] = 0;
+      values[kFMDCEta + i] = 0;
+    }
+    while (auto *info = (AliReducedFMDInfo *) next()) {
+      if (info->Eta() > 0) {
+        values[kFMDAWeight + iA] = info->Multiplicity();
+        values[kFMDAPhi + iA] = info->Phi();
+        values[kFMDAEta + iA] = info->Eta();
+        ++iA;
+      } else if (info->Eta() < 0) {
+        values[kFMDCWeight + iC] = info->Multiplicity();
+        values[kFMDCPhi + iC] = info->Phi();
+        values[kFMDCEta + iC] = info->Eta();
+        ++iC;
+      }
+
+    }
+  }
 
   values[kVZEROATotalMult] = event->MultVZEROA();
   values[kVZEROCTotalMult] = event->MultVZEROC();

@@ -39,6 +39,7 @@ void CorrectionTask::Run() {
 }
 
 void CorrectionTask::Initialize() {
+  constexpr bool FMD = false;
   SetVariables({VAR::kVtxZ, VAR::kPt, VAR::kEta, VAR::kP,
                 VAR::kPhi, VAR::kTPCncls, VAR::kDcaXY,
                 VAR::kDcaZ, VAR::kVZEROTotalMult, VAR::kNtracksTotal,
@@ -80,6 +81,7 @@ void CorrectionTask::Initialize() {
   manager_.AddVariable("T0CPhi", VAR::Variables::kTZEROPhiCh, 12);
   manager_.AddVariable("T0CMult", VAR::Variables::kTZEROAmplitudeCh, 12);
 
+
   //Correction eventvariables
   manager_.SetEventVariable("CentralityV0M");
   manager_.SetEventVariable("CentralitySPD");
@@ -111,15 +113,16 @@ void CorrectionTask::Initialize() {
     config->AddCorrectionOnQnVector(recenter);
   };
   // TPC pT-dependence
-  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt, eta}, {1, 2, 3, 4});
+  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt,eta}, {2, 3, 4});
   manager_.AddCut("TPC", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
   manager_.AddCut("TPC", {"TPCEta"}, cut_eta);
   manager_.AddCut("TPC", {"TPCPt"}, [](const double &pt) { return pt > 0.2 && pt < 10.; });
   manager_.SetCorrectionSteps("TPC", confTPC);
+  manager_.AddHisto2D("TPC", {{"TPCPt", 50, 0., 10.}, {"TPCNCls", 160, 0, 160}});
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPhi", 50, 0, 2*TMath::Pi()}});
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPt", 50, 0., 10.}});
   //TPC pT-integrated
-  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {eta}, {1, 2, 3, 4});
+  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {eta}, {2, 3, 4});
   manager_.AddCut("TPC_R", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
   manager_.AddCut("TPC_R", {"TPCEta"}, cut_eta);
   manager_.AddCut("TPC_R", {"TPCPt"}, [](const double &pt) { return pt > 0.2 && pt < 10.; });
@@ -176,17 +179,19 @@ void CorrectionTask::Initialize() {
     for (int ich = 0; ich < 4; ich++) {
       channelGroups[ich] = 0;
     }
-    ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, channelGroups, nullptr);
+    ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, nullptr, nullptr);
   };
   // ZDC A
   manager_.AddDetector("ZDCA", DetectorType::CHANNEL, "ZDCAPhi", "ZDCAMult", {}, {1});
   manager_.SetCorrectionSteps("ZDCA", confZDC);
   manager_.AddHisto1D("ZDCA", {{"ZDCAChannels", 4, 0, 4}}, "ZDCAMult");
+  manager_.AddHisto1D("ZDCA", {{"ZDCAPhi", 4, 0, 2*TMath::Pi()}}, "ZDCAMult");
   manager_.AddCut("ZDCA", {"ZDCAMult"}, [](double &mult) { return mult > 100; });
   // ZDC C
   manager_.AddDetector("ZDCC", DetectorType::CHANNEL, "ZDCCPhi", "ZDCCMult", {}, {1});
   manager_.SetCorrectionSteps("ZDCC", confZDC);
   manager_.AddHisto1D("ZDCC", {{"ZDCCChannels", 4, 0, 4}}, "ZDCCMult");
+  manager_.AddHisto1D("ZDCC", {{"ZDCCPhi", 4, 0, 2*TMath::Pi()}}, "ZDCCMult");
   manager_.AddCut("ZDCC", {"ZDCCMult"}, [](double &mult) { return mult > 100; });
 
   auto confT0 = [](QnCorrectionsDetectorConfigurationBase *config) {
@@ -200,34 +205,74 @@ void CorrectionTask::Initialize() {
     for (int ich = 0; ich < 12; ich++) {
       channelGroups[ich] = 0;
     }
-    ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, channelGroups, nullptr);
+    ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, nullptr, nullptr);
   };
   // T0A
   manager_.AddDetector("T0A", DetectorType::CHANNEL, "T0APhi", "T0AMult", {}, {2, 3});
   manager_.SetCorrectionSteps("T0A", confT0);
   manager_.AddCut("T0A", {"T0AMult"}, cut_mult);
   manager_.AddHisto1D("T0A", {{"T0AChannels", 12, 0, 12}}, "T0AMult");
+  manager_.AddHisto1D("T0A", {{"T0APhi", 12, 0, 2*TMath::Pi()}}, "T0AMult");
   // T0C
   manager_.AddDetector("T0C", DetectorType::CHANNEL, "T0CPhi", "T0CMult", {}, {2, 3});
   manager_.SetCorrectionSteps("T0C", confT0);
   manager_.AddCut("T0C", {"T0CMult"}, cut_mult);
-  manager_.AddHisto1D("T0C", {{"T0Channels", 12, 0, 12}}, "T0CMult");
+  manager_.AddHisto1D("T0C", {{"T0CChannels", 12, 0, 12}}, "T0CMult");
+  manager_.AddHisto1D("T0C", {{"T0CPhi", 12, 0, 2*TMath::Pi()}}, "T0CMult");
+
+
+  if (FMD) {
+    manager_.AddVariable("FMDAPhi", VAR::Variables::kFMDAPhi, 1200);
+    manager_.AddVariable("FMDAMult", VAR::Variables::kFMDAWeight, 1200);
+    manager_.AddVariable("FMDAEta", VAR::Variables::kFMDAEta, 1200);
+
+    manager_.AddVariable("FMDCPhi", VAR::Variables::kFMDCPhi, 1200);
+    manager_.AddVariable("FMDCMult", VAR::Variables::kFMDCWeight, 1200);
+    manager_.AddVariable("FMDCEta", VAR::Variables::kFMDCEta, 1200);
+
+    auto confFMD = [](QnCorrectionsDetectorConfigurationBase *config) {
+      config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
+      auto recenter = new QnCorrectionsQnVectorRecentering();
+      recenter->SetApplyWidthEqualization(true);
+      config->AddCorrectionOnQnVector(recenter);
+      auto *channels = new bool[1200];
+      for (int ich = 0; ich < 1200; ich++) channels[ich] = kTRUE;
+      ((QnCorrectionsDetectorConfigurationChannels *) config)->SetChannelsScheme(channels, nullptr);
+    };
+    manager_.AddDetector("FMDA", DetectorType::CHANNEL, "FMDAPhi", "FMDAMult", {}, {2, 3});
+    manager_.SetCorrectionSteps("FMDA", confFMD);
+    manager_.AddHisto1D("FMDA", {{"FMDAChannels", 1200, 0, 1200}}, "FMDAMult");
+    manager_.AddHisto1D("FMDA", {{"FMDAPhi", 20, 0, 2*TMath::Pi()}}, "FMDAMult");
+    manager_.AddHisto2D("FMDA", {{"FMDAPhi", 20, 0, 2*TMath::Pi()},{"FMDAEta", 100, -4, 6}}, "FMDAMult");
+    manager_.AddCut("FMDA", {"FMDAMult"}, [](double &mult) { return mult > 1e-6; });
+
+    manager_.AddDetector("FMDC", DetectorType::CHANNEL, "FMDCPhi", "FMDCMult", {}, {2, 3});
+    manager_.SetCorrectionSteps("FMDC", confFMD);
+    manager_.AddHisto1D("FMDC", {{"FMDCChannels", 1200, 0, 1200}}, "FMDCMult");
+    manager_.AddHisto2D("FMDC", {{"FMDCPhi", 20, 0, 2*TMath::Pi()},{"FMDCEta", 100, -4, 6}}, "FMDCMult");
+    manager_.AddHisto1D("FMDC", {{"FMDCPhi", 20, 0, 2*TMath::Pi()}}, "FMDCMult");
+
+    manager_.AddCut("FMDC", {"FMDCMult"}, [](double &mult) { return mult > 1e-6; });
+  }
+
+
 
 //  Event selection configuration
   manager_.AddEventCut({"NTracks"}, [](const double &ntracks) { return ntracks > 0; });
   manager_.AddEventCut({"VTXZ"}, [](const double &z) { return -10 < z && z < 10; });
   manager_.AddEventCut({"CentralityV0M"}, [](const double &cent) { return 0 < cent && cent < 100; });
 
-  manager_.AddEventHisto2D({{"VTXZ", 100, -30, 30}, {"VTXX", 100, -0.2, 0.2}});
-  manager_.AddEventHisto2D({{"VTXZ", 100, -30, 30}, {"VTXY", 100, -0.2, 0.2}});
-  manager_.AddEventHisto2D({{"VTXX", 100, -0.2, 0.2}, {"VTXY", 100, -0.2, 0.2}});
+  manager_.AddEventHisto2D({{"VTXZ", 200, -30, 30}, {"VTXX", 200, -0.3, 0.3}});
+  manager_.AddEventHisto2D({{"VTXZ", 200, -30, 30}, {"VTXY", 200, -0.3, 0.3}});
+  manager_.AddEventHisto2D({{"VTXX", 200, -0.3, 0.3}, {"VTXY", 200, -0.3, 0.3}});
   manager_.AddEventHisto2D({{"NTracks", 100, 0, 1800}, {"CentralityV0M", 100, 0, 100}});
   manager_.AddEventHisto2D({{"CentralitySPD", 100, 0, 100}, {"CentralityV0M", 100, 0, 100}});
-  manager_.AddEventHisto2D({{"SPDNTracklets", 100, 0, 4000}, {"ITSNClusters", 6, 0, 6}});
+  manager_.AddEventHisto2D({{"SPDNTracklets", 100, 0, 4000}, {"CentralitySPD", 100, 0, 100}});
+  manager_.AddEventHisto2D({{"SPDNTracklets", 100, 0, 4000}, {"CentralityV0M", 100, 0, 100}});
+  manager_.AddEventHisto2D({{"SPDNTracklets", 100, 0, 4000}, {"NTracks", 100, 0, 1800}});
   manager_.AddEventHisto2D({{"NTracks", 100, 0, 1800}, {"V0Mult", 100, 0, 30000}});
   manager_.AddEventHisto2D({{"NTracksTPCout", 100, 0, 3000}, {"V0Mult", 100, 0, 30000}});
   manager_.SetTree(out_tree_);
-
   //Initialization of framework
   manager_.Initialize(in_calibration_file_);
 }

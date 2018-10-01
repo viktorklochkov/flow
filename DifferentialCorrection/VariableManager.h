@@ -106,8 +106,8 @@ class VariableManager {
   }
 
  private:
-  static constexpr int maxsize = 5000;
-  double *var_container = new double[maxsize]; // non-owning pointer to variables
+  static constexpr int maxsize = 11000;
+  double *var_container = new double[maxsize](); // non-owning pointer to variables
   double *var_ones = new double[1000];
   std::map<std::string, Variable> name_var_map_;
   std::map<Variable, std::string> var_name_map_;

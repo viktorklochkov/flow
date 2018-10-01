@@ -138,7 +138,8 @@ inline Qn::Profile operator+(Qn::Profile a, Qn::Profile b) {
   int nentries = a.entries_ + b.entries_;
   double binentries = a.binentries_ + b.binentries_;
   double nsum = a.sum_ + b.sum_;
-  double nmean = nsum/binentries;
+  double nmean = 0;
+  if (binentries > 0) nmean = nsum/binentries;
   double nsum2 = a.sum2_ + b.sum2_;
   double nerror = Qn::Statistics::Sigma(nmean, nsum2, nentries);
   Qn::Profile c(nmean, nsum, nsum2, nerror, nentries, binentries);

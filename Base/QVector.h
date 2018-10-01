@@ -31,8 +31,8 @@ namespace Qn {
 struct QVec {
   QVec() = default;
   QVec(float x, float y) : x(x), y(y) {}
-  float x{NAN};
-  float y{NAN};
+  float x{0.};
+  float y{0.};
   friend QVec operator+(QVec a, QVec b);
   friend QVec operator-(QVec a, QVec b);
   friend QVec operator/(QVec a, float s);
@@ -69,6 +69,8 @@ class QVector {
     }
   }
 
+  double Mean() const {return 0;}
+
   QVector(Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits);
 
   inline float x(const unsigned int i) const {
@@ -100,7 +102,7 @@ class QVector {
   QVector Normal(Normalization norm) const;
   QVector DeNormal() const;
 
- private:
+
 
   Normalization norm_ = Normalization::NOCALIB; ///< normalization method
   int n_ = 0;                                   ///< number of data vectors contributing to the q vector

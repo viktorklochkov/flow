@@ -40,7 +40,8 @@ struct StatisticMean {
   void operator+=(StatisticMean b) {
     sum += b.sum;
     n += b.n;
-    mean = sum/(float) n;
+    mean = 0;
+    if (n > 0) mean = sum/(float) n;
   }
 
   void operator*=(StatisticMean b) {

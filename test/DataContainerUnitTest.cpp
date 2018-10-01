@@ -25,21 +25,21 @@
 //  EXPECT_EQ(100, container.size());
 //}
 //
-TEST(DataContainerTest, Projection) {
-  Qn::DataContainerF container;
-  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
-  for (auto &bin : container) {
-    bin = 1;
-  }
-//  auto integration = container.ProjectionInt([](float a, float b) { return a + b; });
-//  for (const auto &bin : integration) {
-//    EXPECT_EQ(10000, bin);
+//TEST(DataContainerTest, Projection) {
+//  Qn::DataContainerF container;
+//  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
+//  for (auto &bin : container) {
+//    bin = 1;
 //  }
-  auto projection = container.Projection();
-  for (const auto &bin : projection) {
-    EXPECT_EQ(600, bin);
-  }
-}
+////  auto integration = container.ProjectionInt([](float a, float b) { return a + b; });
+////  for (const auto &bin : integration) {
+////    EXPECT_EQ(10000, bin);
+////  }
+//  auto projection = container.Projection();
+//  for (const auto &bin : projection) {
+//    EXPECT_EQ(600, bin);
+//  }
+//}
 
 TEST(DataContainerTest, ExclusiveSum) {
   Qn::DataContainerF container;

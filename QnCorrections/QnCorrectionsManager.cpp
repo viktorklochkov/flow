@@ -51,7 +51,7 @@ ClassImp(QnCorrectionsManager);
 /// \endcond
 
 const Int_t QnCorrectionsManager::nMaxNoOfDetectors = 1024;
-const Int_t QnCorrectionsManager::nMaxNoOfDataVariables = 5000;
+const Int_t QnCorrectionsManager::nMaxNoOfDataVariables = 11000;
 const char *QnCorrectionsManager::szCalibrationHistogramsKeyName = "CalibrationHistograms";
 const char *QnCorrectionsManager::szCalibrationQAHistogramsKeyName = "CalibrationQAHistograms";
 const char *QnCorrectionsManager::szCalibrationNveQAHistogramsKeyName = "CalibrationQANveHistograms";

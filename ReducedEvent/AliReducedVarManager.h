@@ -14,6 +14,7 @@
 #include <TH2F.h>
 #include <TProfile2D.h>
 
+#include "AliReducedFMDInfo.h"
 #include "AliReducedPairInfo.h"
 
 class AliReducedBaseEvent;
@@ -406,7 +407,14 @@ class AliReducedVarManager : public TObject {
     kMultEstimatorPercentileRefMult08,
     kINT7Triggered,
     kHighMultV0Triggered,
-    kNEventVars,                               // number of event variables  
+    kFMDCPhi,
+    kFMDCWeight = kFMDCPhi + 1200,
+    kFMDAPhi = kFMDCWeight +1200,
+    kFMDAWeight = kFMDAPhi + 1200,
+    kFMDAEta = kFMDAWeight + 1200,
+    kFMDCEta = kFMDAEta + 1200,
+    kNEventVars = kFMDCEta + 1200,
+    // number of event variables
     // Particle variables --------------------------------------
     // Common pair/track variables
     kPt=kNEventVars,

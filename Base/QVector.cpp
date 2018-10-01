@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <iostream>
 #include "QVector.h"
 namespace Qn {
 /**
@@ -22,7 +23,7 @@ namespace Qn {
  * @param norm normalisation method
  * @param vector QnCorrectionsQnVector to construct the QVector from. It is used internally by the framework but not exposed to the user.
  */
-QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vector,std::bitset<8> bits) :
+QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits) :
     norm_(norm),
     bits_(bits) {
   q_.resize(static_cast<size_t>(bits.count()));
@@ -33,7 +34,9 @@ QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vecto
     vector->GetHarmonicsMap(harmonicsmap);
     for (unsigned int i = 0; i < bits.count(); i++) {
       int iharmonic = harmonicsmap[i];
-      q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
+      if (!std::isinf(vector->Qx(iharmonic)) && !std::isinf(vector->Qy(iharmonic)) &&
+          !std::isnan(vector->Qx(iharmonic)) && !std::isnan(vector->Qy(iharmonic)))
+        q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
     }
     delete[] harmonicsmap;
   } else {
@@ -50,21 +53,22 @@ QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vecto
 QVector operator+(const QVector a, const QVector b) {
   QVector at = a.DeNormal();
   QVector bt = b.DeNormal();
-  QVector c(a);
+  QVector c;
+  c.q_.resize(a.q_.size());
   std::transform(at.q_.begin(),
                  at.q_.end(),
                  bt.q_.begin(),
                  c.q_.begin(),
                  [](const QVec qa, const QVec qb) {
-                   QVec ta;
-                   QVec tb;
+                   QVec ta = {0., 0.};
+                   QVec tb = {0., 0.};
                    if (!(isnan(qa.x) || isnan(qa.y))) ta = qa;
                    if (!(isnan(qb.x) || isnan(qb.y))) tb = qb;
                    return ta + tb;
                  });
   c.n_ = at.n_ + bt.n_;
   c.sum_weights_ = at.sum_weights_ + bt.sum_weights_;
-  c.bits_  = b.bits_;
+  c.bits_ = b.bits_;
   return c;
 }
 /**
@@ -84,14 +88,15 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
     case (Normalization::QOVERM): {
       auto add = [this](const QVec q) {
         if (sum_weights_!=0) return q/sum_weights_;
-        return q;
+        return QVec{0., 0.};
       };
       std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
       break;
     }
     case (Normalization::QOVERSQRTM): {
       auto add = [this](const QVec q) {
-        return q/std::sqrt(sum_weights_);
+        if (sum_weights_ > 0) return q/std::sqrt(sum_weights_);
+        return QVec{0., 0.};
       };
       std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
       break;
@@ -101,7 +106,7 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
         if (Qn::norm(q)!=0) {
           return q/Qn::norm(q);
         }
-        return q;
+        return QVec{0., 0.};
       };
       std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
       break;
