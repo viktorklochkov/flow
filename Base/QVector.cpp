@@ -78,6 +78,7 @@ QVector operator+(const QVector a, const QVector b) {
  */
 QVector QVector::Normal(const QVector::Normalization norm) const {
   QVector c(*this);
+  c.CopyHarmonics(*this);
   if (norm_!=Normalization::NOCALIB) {
     c = c.DeNormal();
   }
@@ -121,12 +122,13 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
  */
 QVector QVector::DeNormal() const {
   QVector c(*this);
+  c.CopyHarmonics(*this);
   switch (norm_) {
     case (Normalization::NOCALIB): {
       break;
     }
     case (Normalization::QOVERM): {
-      std::transform(q_.begin(), q_.end(), c.q_.begin(), [this](const QVec q) { return q*sum_weights_; });
+      std::transform(q_.begin(), q_.end(), c.q_.begin(), [this](const QVec q) { return q*this->sum_weights_; });
       break;
     }
     case (Normalization::QOVERSQRTM): {

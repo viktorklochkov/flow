@@ -226,6 +226,7 @@ void CorrelationManager::FillESE(std::map<std::string, Qn::Correlator> &corr) {
       inputs.at(i) = qvectors_.at(name);
       ++i;
     }
+
     pair.second.FillCorrelation(inputs, eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
   }
 }
@@ -276,6 +277,7 @@ bool CorrelationManager::CheckESEEvent() {
       auto pair = ese.At(eventbin_);
       float value = -999.;
       if (pair.first) value = pair.second;
+      std::cout << value << "  " << event_shape_->At(eventbin_).GetPercentile(value) << std::endl;
       event_values_.back() = event_shape_->At(eventbin_).GetPercentile(value);
     }
   }
@@ -285,6 +287,7 @@ bool CorrelationManager::CheckESEEvent() {
     for (const auto &ae : eventshape_axes_) {
       auto bin = ae.FindBin(event_values_.back());
       if (bin!=-1) {
+        std::cout << bin << std::endl;
         eventbin_.at(event_axis_size + ie) = (unsigned long) bin;
       } else {
         return false;

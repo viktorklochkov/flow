@@ -117,9 +117,9 @@ void CorrectionTask::Initialize() {
     return (((ULong_t) (flag)) & (ULong_t(1) << (23))) || (((ULong_t) (flag)) & (ULong_t(1) << (24)));
   };
   // TPC pT-dependence
-  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt}, {2, 3, 4});
-//  manager_.AddCut("TPC", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
-  manager_.AddCut("TPC", {"TPCQualityFlags"}, cut_filterbit);
+  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt, eta}, {2, 3, 4});
+  manager_.AddCut("TPC", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
+//  manager_.AddCut("TPC", {"TPCQualityFlags"}, cut_filterbit);
   manager_.AddCut("TPC", {"TPCEta"}, cut_eta);
   manager_.AddCut("TPC", {"TPCPt"}, [](const double &pt) { return pt > 0.2 && pt < 10.; });
   manager_.SetCorrectionSteps("TPC", confTPC);
@@ -127,9 +127,9 @@ void CorrectionTask::Initialize() {
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPhi", 50, 0, 2*TMath::Pi()}});
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPt", 50, 0., 10.}});
   //TPC pT-integrated
-  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {}, {2, 3, 4});
-//  manager_.AddCut("TPC_R", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
-  manager_.AddCut("TPC_R", {"TPCQualityFlags"}, cut_filterbit);
+  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {eta}, {2, 3, 4});
+  manager_.AddCut("TPC_R", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
+//  manager_.AddCut("TPC_R", {"TPCQualityFlags"}, cut_filterbit);
   manager_.AddCut("TPC_R", {"TPCEta"}, cut_eta);
   manager_.AddCut("TPC_R", {"TPCPt"}, [](const double &pt) { return pt > 0.2 && pt < 10.; });
   manager_.AddCut("TPC_R", {"TPCNCls"}, [](const double &ncls) { return ncls > 70; });
@@ -137,12 +137,13 @@ void CorrectionTask::Initialize() {
 
   //Config VZERO A- and C-side
   auto cut_mult = [](double &mult) {
-    if (mult < 0.1) mult = 0;
-    return true;
+//    if (mult < 0.1) mult = 0;
+//    return true;
+    return mult > 0.1;
   };
   //Config of VZERO A- and C-side corrections
   auto confV0 = [](QnCorrectionsDetectorConfigurationBase *config) {
-    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_noCalibration);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     auto recenter = new QnCorrectionsQnVectorRecentering();
     recenter->SetApplyWidthEqualization(true);
     config->AddCorrectionOnQnVector(recenter);
@@ -176,9 +177,9 @@ void CorrectionTask::Initialize() {
 
 //   Config for ZDC A and ZDC C
   auto confZDC = [](QnCorrectionsDetectorConfigurationBase *config) {
-    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_noCalibration);
+    config->SetQVectorNormalizationMethod(QnCorrectionsQnVector::QVNORM_QoverM);
     auto recenter = new QnCorrectionsQnVectorRecentering();
-    recenter->SetApplyWidthEqualization(true);
+//    recenter->SetApplyWidthEqualization(true);
     config->AddCorrectionOnQnVector(recenter);
     auto *channels = new bool[4];
     for (int ich = 0; ich < 4; ich++) channels[ich] = kTRUE;

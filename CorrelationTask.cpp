@@ -29,7 +29,7 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
   a.SetOutputFile("corr.root");
 
   // ESE Configuration
-  a.AddESE("ZDCA", 1, 800);
+  a.AddESE("ZDCA", 1, 200);
 
   // Add Detectors for Correlation
   a.AddQVectors("TPC, TPC_R, V0A, V0C, T0A, T0C, ZDCA, ZDCC");
@@ -48,7 +48,7 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
 
     a.AddCorrelation("TPCPT_V0A", "TPC, V0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
     a.AddCorrelation("TPCPT_V0C", "TPC, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
-
+//
     a.AddCorrelation("TPC_V0A", "TPC_R, V0A", scalar, 0, Qn::Sampler::Method::NONE);
     a.AddCorrelation("TPC_V0C", "TPC_R, V0C", scalar, 0, Qn::Sampler::Method::NONE);
     a.AddCorrelation("V0A_V0C", "V0A, V0C", scalar, 0, Qn::Sampler::Method::NONE);

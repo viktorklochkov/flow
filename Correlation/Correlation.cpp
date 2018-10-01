@@ -84,7 +84,7 @@ void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &
   data_correlation_.AddAxes(axes_event_);
   auto size = axes_event_.size();
   for (auto &input : inputs) {
-    size += input.GetAxes().size();
+    if (!input.IsIntegrated()) size += input.GetAxes().size();
     std::vector<std::vector<unsigned long>> indexmap;
     for (std::size_t j = 0; j < input.size(); ++j) {
       std::vector<unsigned long> indices;
