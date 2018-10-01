@@ -24,12 +24,24 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
     return a[0].x(2)*a[1].x(2) - a[0].y(2)*a[1].y(2);
   };
 
+  auto num = [](const std::vector<Qn::QVector> &a) {
+    auto u = a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ);
+    auto Q = a[1];//.DeNormal();
+    return u.x(2)*Q.x(2) + u.y(2)*Q.y(2);
+  };
+
+//  auto den = [](const std::vector<Qn::QVector> &a) {
+//    auto Q = a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ);
+//    auto Q = a[0].DeNormal();
+//    return u.x(2)*Q.x(2) + u.y(2)*Q.y(2);
+//  };
+
   // Set file names
-  a.SetESECalibrationFile("ese.root");
+//  a.SetESECalibrationFile("ese.root");
   a.SetOutputFile("corr.root");
 
   // ESE Configuration
-  a.AddESE("ZDCA", 1, 200);
+//  a.AddESE("ZDCA", 1, 200);
 
   // Add Detectors for Correlation
   a.AddQVectors("TPC, TPC_R, V0A, V0C, T0A, T0C, ZDCA, ZDCC");
@@ -43,8 +55,8 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
 //  a.AddProjection("TPC_R","TPC_RR","");
 //  a.AddProjection("TPC","TPC_PT","TPCPt");
   // Add Correlation
-//    a.AddCorrelation("TPC_RR_TPC_RR","TPC_RR,TPC_RR",scalar,0,Qn::Sampler::Method::NONE);
-//    a.AddCorrelation("TPC_TPC","TPC,TPC",scalar,0,Qn::Sampler::Method::NONE);
+    a.AddCorrelation("TPC_R_TPC_R","TPC_R,TPC_R",scalar,0,Qn::Sampler::Method::NONE);
+    a.AddCorrelation("TPC_TPC","TPC,TPC_R",num,0,Qn::Sampler::Method::NONE);
 
     a.AddCorrelation("TPCPT_V0A", "TPC, V0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
     a.AddCorrelation("TPCPT_V0C", "TPC, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
