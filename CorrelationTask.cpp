@@ -40,18 +40,27 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
   a.AddEventVariable({"CentralityV0M", {0., 5., 10., 20., 30., 40., 50., 60., 70.}});
 //  a.AddEventVariable({"VTXZ", 10,-10,10});
 
-  a.AddProjection("TPC","TPC_RR","");
+  a.AddProjection("TPC_R","TPC_RR","");
+  a.AddProjection("TPC","TPC_PT","TPCPt");
   // Add Correlation
-//  a.AddCorrelation("TPC_RR_TPC_RR","TPC_RR,TPC_RR",scalar,0,Qn::Sampler::Method::NONE);
-//  a.AddCorrelation("TPCPT_V0A", "TPC, V0A", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);
-  a.AddCorrelation("TPCPT_V0C", "TPC, V0C", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);
-  a.AddCorrelation("TPC_V0A", "TPC_R, V0A", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);
-//  a.AddCorrelation("TPC_V0C", "TPC_R, V0C", scalarsign, 10, Qn::Sampler::Method::BOOTSTRAP);
-//  a.AddCorrelation("V0A_V0C", "V0A, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
-//  a.AddCorrelation("ZDCAC_XX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return -a[0].x(1)*a[1].x(1);});
-//  a.AddCorrelation("ZDCAC_YY","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].y(1)*a[1].y(1);});
-//  a.AddCorrelation("ZDCAC_YX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].y(1)*a[1].x(1);});
-//  a.AddCorrelation("ZDCAC_XY","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].x(1)*a[1].y(1);});
+    a.AddCorrelation("TPC_RR_TPC_RR","TPC_RR,TPC_RR",scalar,0,Qn::Sampler::Method::NONE);
+    a.AddCorrelation("TPC_TPC","TPC,TPC",scalar,0,Qn::Sampler::Method::NONE);
+
+    a.AddCorrelation("TPCPT_V0A", "TPC_PT, V0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+    a.AddCorrelation("TPCPT_V0C", "TPC_PT, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+
+    a.AddCorrelation("TPC_V0A", "TPC_RR, V0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+    a.AddCorrelation("TPC_V0C", "TPC_RR, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+    a.AddCorrelation("V0A_V0C", "V0A, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+
+    a.AddCorrelation("TPC_T0A", "TPC_RR, T0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+    a.AddCorrelation("TPC_T0C", "TPC_RR, T0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+    a.AddCorrelation("T0A_T0C", "T0A, T0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
+
+    a.AddCorrelation("ZDCAC_XX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return -a[0].x(1)*a[1].x(1);});
+    a.AddCorrelation("ZDCAC_YY","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].y(1)*a[1].y(1);});
+    a.AddCorrelation("ZDCAC_YX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].y(1)*a[1].x(1);});
+    a.AddCorrelation("ZDCAC_XY","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].x(1)*a[1].y(1);});
 }
 
 void CorrelationTask::Run() {

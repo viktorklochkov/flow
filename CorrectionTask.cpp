@@ -185,13 +185,13 @@ void CorrectionTask::Initialize() {
   manager_.AddDetector("ZDCA", DetectorType::CHANNEL, "ZDCAPhi", "ZDCAMult", {}, {1});
   manager_.SetCorrectionSteps("ZDCA", confZDC);
   manager_.AddHisto1D("ZDCA", {{"ZDCAChannels", 4, 0, 4}}, "ZDCAMult");
-  manager_.AddHisto1D("ZDCA", {{"ZDCAPhi", 4, 0, 2*TMath::Pi()}}, "ZDCAMult");
+  manager_.AddHisto1D("ZDCA", {{"ZDCAPhi", 4, -TMath::Pi(), TMath::Pi()}}, "ZDCAMult");
   manager_.AddCut("ZDCA", {"ZDCAMult"}, [](double &mult) { return mult > 100; });
   // ZDC C
   manager_.AddDetector("ZDCC", DetectorType::CHANNEL, "ZDCCPhi", "ZDCCMult", {}, {1});
   manager_.SetCorrectionSteps("ZDCC", confZDC);
   manager_.AddHisto1D("ZDCC", {{"ZDCCChannels", 4, 0, 4}}, "ZDCCMult");
-  manager_.AddHisto1D("ZDCC", {{"ZDCCPhi", 4, 0, 2*TMath::Pi()}}, "ZDCCMult");
+  manager_.AddHisto1D("ZDCC", {{"ZDCCPhi", 4, -TMath::Pi(), TMath::Pi()}}, "ZDCCMult");
   manager_.AddCut("ZDCC", {"ZDCCMult"}, [](double &mult) { return mult > 100; });
 
   auto confT0 = [](QnCorrectionsDetectorConfigurationBase *config) {
@@ -212,13 +212,13 @@ void CorrectionTask::Initialize() {
   manager_.SetCorrectionSteps("T0A", confT0);
   manager_.AddCut("T0A", {"T0AMult"}, cut_mult);
   manager_.AddHisto1D("T0A", {{"T0AChannels", 12, 0, 12}}, "T0AMult");
-  manager_.AddHisto1D("T0A", {{"T0APhi", 12, 0, 2*TMath::Pi()}}, "T0AMult");
+  manager_.AddHisto1D("T0A", {{"T0APhi", 12, -TMath::Pi(), TMath::Pi()}}, "T0AMult");
   // T0C
   manager_.AddDetector("T0C", DetectorType::CHANNEL, "T0CPhi", "T0CMult", {}, {2, 3});
   manager_.SetCorrectionSteps("T0C", confT0);
   manager_.AddCut("T0C", {"T0CMult"}, cut_mult);
   manager_.AddHisto1D("T0C", {{"T0CChannels", 12, 0, 12}}, "T0CMult");
-  manager_.AddHisto1D("T0C", {{"T0CPhi", 12, 0, 2*TMath::Pi()}}, "T0CMult");
+  manager_.AddHisto1D("T0C", {{"T0CPhi", 12, -TMath::Pi(), TMath::Pi()}}, "T0CMult");
 
 
   if (FMD) {
