@@ -420,7 +420,7 @@ class AliReducedVarManager : public TObject {
     kPt=kNEventVars,
     kQualityTrackFlags,
     kFilterBit,
-    kPtMC = kQualityTrackFlags+10,
+    kPtMC = kFilterBit+10,
     kPtMCfromLegs,             // MC truth pt computed using the decay leg kinematics
     kP,      
     kPMC,

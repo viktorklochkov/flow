@@ -336,20 +336,8 @@ class DataContainer : public TObject {
       std::vector<size_type> projindices;
       indices.reserve(dimension_);
       projindices.resize(projection.dimension_);
-      // first bin
-      this->GetIndex(indices, 0);
-      size_type iprojbin = 0;
-      for (size_type i = 0; i < indices.size(); ++i) {
-        if (isprojected.at(i)) {
-          projindices.at(iprojbin) = indices.at(i);
-          ++iprojbin;
-        }
-      }
-      projection.At(projindices) = lambda(projection.At(projindices), data_.at(0));
-      ++linearindex;
-
       // other bins
-      for (auto bin = data_.begin()+1; bin < data_.end(); ++bin) {
+      for (auto bin : data_) {
         this->GetIndex(indices, linearindex);
         size_type iprojbin = 0;
         for (size_type i = 0; i < indices.size(); ++i) {
@@ -358,7 +346,7 @@ class DataContainer : public TObject {
             ++iprojbin;
           }
         }
-        projection.At(projindices) = lambda(projection.At(projindices), *bin);
+        projection.At(projindices) = lambda(projection.At(projindices), bin);
         ++linearindex;
       }
     }

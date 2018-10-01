@@ -25,6 +25,9 @@ class CorrelationTask {
   std::unique_ptr<TTree> in_tree_;
   std::shared_ptr<TTreeReader> reader_;
 
+  void ProgressBar(float progress);
+
+
   /**
    * Make TChain from file list
    * @param filename name of file containing paths to root files containing the input trees

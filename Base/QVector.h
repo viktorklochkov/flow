@@ -69,6 +69,11 @@ class QVector {
     }
   }
 
+  void CopyHarmonics(const QVector &qvec) {
+    this->bits_ = qvec.bits_;
+    this->q_.resize(qvec.q_.size());
+  }
+
   double Mean() const {return 0;}
 
   QVector(Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits);

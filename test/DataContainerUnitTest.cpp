@@ -2,9 +2,6 @@
 // Created by Lukas Kreis on 30.01.18.
 //
 
-
-
-
 #include <gtest/gtest.h>
 #include "Base/DataContainer.h"
 #include <TList.h>
@@ -25,30 +22,27 @@
 //  EXPECT_EQ(100, container.size());
 //}
 //
-//TEST(DataContainerTest, Projection) {
+
+TEST(DataContainerTest, Projection) {
+  Qn::DataContainerF container;
+  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
+  for (auto &bin : container) {
+  bin = 1;
+  }
+  auto projection = container.Projection({"a1","a2"},[](float a, float b) { return a + b; });
+  for (const auto &bin : projection) {
+  EXPECT_EQ(10, bin);
+  }
+}
+
+//TEST(DataContainerTest, ExclusiveSum) {
 //  Qn::DataContainerF container;
-//  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
+//  container.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
 //  for (auto &bin : container) {
 //    bin = 1;
 //  }
-////  auto integration = container.ProjectionInt([](float a, float b) { return a + b; });
-////  for (const auto &bin : integration) {
-////    EXPECT_EQ(10000, bin);
-////  }
-//  auto projection = container.Projection();
-//  for (const auto &bin : projection) {
-//    EXPECT_EQ(600, bin);
-//  }
+//  auto exsum = Qn::ExclusiveSum(container);
 //}
-
-TEST(DataContainerTest, ExclusiveSum) {
-  Qn::DataContainerF container;
-  container.AddAxes({{"a1", 2, 0, 10}, {"a2", 2, 0, 10}});
-  for (auto &bin : container) {
-    bin = 1;
-  }
-  auto exsum = Qn::ExclusiveSum(container);
-}
 
 //
 //TEST(DataContainerTest, ProjectionProfile) {

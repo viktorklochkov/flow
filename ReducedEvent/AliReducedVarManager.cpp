@@ -735,7 +735,7 @@ void AliReducedVarManager::FillEventInfo(BASEEVENT *baseEvent, double *values, E
   const std::array<double, 8> Y = {{0.38268, 0.92388, 0.92388, 0.38268, -0.38268, -0.92388, -0.92388, -0.38268}};
   for (Int_t ich = 0; ich < 64; ++ich) {
     if (fgUsedVars[kVZEROChannelMult + ich]) {
-      values[kVZEROChannelPhi + ich] = TMath::Pi() - (float) TMath::ATan2(Y[ich%8], X[ich%8]);
+      values[kVZEROChannelPhi + ich] = (float) TMath::ATan2(Y[ich%8], X[ich%8]);
       values[kVZEROChannelRing + ich] = ich < 32 ? ich/8 : (ich - 32)/8;
       values[kVZEROChannelMult + ich] = event->MultChannelVZERO(ich);
       if (values[kVZEROChannelMult + ich] < fgkVZEROminMult) {
