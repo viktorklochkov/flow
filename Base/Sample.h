@@ -190,7 +190,7 @@ inline Sample operator/(const Sample &a, const Sample &b) {
   return c;
 }
 
-inline Sample operator*(const Sample &a, double b) {
+inline Sample operator*(const Sample &a, const double b) {
   std::vector<StatisticMean> sums(a.samples_stat_);
   int i = 0;
   for (auto &sum : sums) {

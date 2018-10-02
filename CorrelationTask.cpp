@@ -20,13 +20,20 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
   auto scalar = [](const std::vector<Qn::QVector> &a) {
     return a[0].x(2)*a[1].x(2) + a[0].y(2)*a[1].y(2);
   };
-  auto scalarsign = [](const std::vector<Qn::QVector> &a) {
-    return a[0].x(2)*a[1].x(2) - a[0].y(2)*a[1].y(2);
+  auto spNoNormal = [](const std::vector<Qn::QVector> &a) {
+    auto Q0 = a[0].DeNormal();
+    auto Q1 = a[1].DeNormal();
+    return Q0.x(2)*Q1.x(2) + Q0.y(2)*Q1.y(2);
+  };
+  auto spNormal = [](const std::vector<Qn::QVector> &a) {
+    auto Q0 = a[0];
+    auto Q1 = a[1].DeNormal();
+    return Q0.x(2)*Q1.x(2) + Q0.y(2)*Q1.y(2);
   };
 
   auto num = [](const std::vector<Qn::QVector> &a) {
-    auto u = a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ);
-    auto Q = a[1];//.DeNormal();
+    auto u = a[0];
+    auto Q = a[1].DeNormal();
     return u.x(2)*Q.x(2) + u.y(2)*Q.y(2);
   };
 
@@ -55,8 +62,8 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
 //  a.AddProjection("TPC_R","TPC_RR","");
 //  a.AddProjection("TPC","TPC_PT","TPCPt");
   // Add Correlation
-    a.AddCorrelation("TPC_R_TPC_R","TPC_R,TPC_R",scalar,0,Qn::Sampler::Method::NONE);
-    a.AddCorrelation("TPC_TPC","TPC,TPC_R",num,0,Qn::Sampler::Method::NONE);
+    a.AddCorrelation("TPC_R_TPC_R","TPC_R,TPC_R",spNoNormal,0,Qn::Sampler::Method::NONE);
+    a.AddCorrelation("TPC_TPC","TPC,TPC_R",spNormal,0,Qn::Sampler::Method::NONE);
 
     a.AddCorrelation("TPCPT_V0A", "TPC, V0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
     a.AddCorrelation("TPCPT_V0C", "TPC, V0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
