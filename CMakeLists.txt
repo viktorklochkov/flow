@@ -15,6 +15,7 @@ if (APPLE)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
     add_definitions(-D__GLIBCXX__)
 endif (APPLE)
+
 set(EXE_SOURCES
         CorrelationTask.cpp
         CorrectionTask.cpp
@@ -118,6 +119,7 @@ target_link_libraries(analysis correlationflow diffflow FlowBase qncorrflow redu
 
 install(TARGETS correlationflow diffflow FlowBase  DESTINATION lib)
 install(FILES ${CMAKE_BINARY_DIR}/libFlowBase_rdict.pcm DESTINATION lib)
+install(FILES ${CMAKE_BINARY_DIR}/libFlowBase.rootmap DESTINATION lib)
 install(FILES ${BASE_HEADERS} ${CORR_HEADERS} ${DIFF_HEADERS} ${DIFF_HEADERS} DESTINATION include)
 if (APPLE)
     set_property(
