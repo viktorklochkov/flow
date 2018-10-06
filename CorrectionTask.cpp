@@ -117,7 +117,7 @@ void CorrectionTask::Initialize() {
     return (((ULong_t) (flag)) & (ULong_t(1) << (23))) || (((ULong_t) (flag)) & (ULong_t(1) << (24)));
   };
   // TPC pT-dependence
-  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt, eta}, {2, 3, 4});
+  manager_.AddDetector("TPC", DetectorType::TRACK, "TPCPhi", "Ones", {pt}, {2, 3, 4});
   manager_.AddCut("TPC", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
 //  manager_.AddCut("TPC", {"TPCQualityFlags"}, cut_filterbit);
   manager_.AddCut("TPC", {"TPCEta"}, cut_eta);
@@ -127,7 +127,7 @@ void CorrectionTask::Initialize() {
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPhi", 50, 0, 2*TMath::Pi()}});
   manager_.AddHisto2D("TPC", {{"TPCEta", 50, -1., 1.}, {"TPCPt", 50, 0., 10.}});
   //TPC pT-integrated
-  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {eta}, {2, 3, 4});
+  manager_.AddDetector("TPC_R", DetectorType::TRACK, "TPCPhi", "Ones", {}, {2, 3, 4});
   manager_.AddCut("TPC_R", {"TPCHybrid", "TPCHybrid+"}, cut_hybrid);
 //  manager_.AddCut("TPC_R", {"TPCQualityFlags"}, cut_filterbit);
   manager_.AddCut("TPC_R", {"TPCEta"}, cut_eta);
@@ -270,9 +270,9 @@ void CorrectionTask::Initialize() {
   manager_.AddEventCut({"VTXZ"}, [](const double &z) { return -10 < z && z < 10; });
   manager_.AddEventCut({"CentralityV0M"}, [](const double &cent) { return 0 < cent && cent < 100; });
 
-  manager_.AddEventHisto2D({{"VTXZ", 200, -30, 30}, {"VTXX", 200, -0.3, 0.3}});
-  manager_.AddEventHisto2D({{"VTXZ", 200, -30, 30}, {"VTXY", 200, -0.3, 0.3}});
-  manager_.AddEventHisto2D({{"VTXX", 200, -0.3, 0.3}, {"VTXY", 200, -0.3, 0.3}});
+  manager_.AddEventHisto2D({{"VTXZ", 200, -30, 30}, {"VTXX", 200, -0.4, 0.4}});
+  manager_.AddEventHisto2D({{"VTXZ", 200, -30, 30}, {"VTXY", 200, -0.4, 0.4}});
+  manager_.AddEventHisto2D({{"VTXX", 200, -0.4, 0.4}, {"VTXY", 200, -0.4, 0.4}});
   manager_.AddEventHisto2D({{"NTracks", 100, 0, 1800}, {"CentralityV0M", 100, 0, 100}});
   manager_.AddEventHisto2D({{"CentralitySPD", 100, 0, 100}, {"CentralityV0M", 100, 0, 100}});
   manager_.AddEventHisto2D({{"SPDNTracklets", 100, 0, 4000}, {"CentralitySPD", 100, 0, 100}});
