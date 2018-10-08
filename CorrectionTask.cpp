@@ -39,7 +39,7 @@ void CorrectionTask::Run() {
 }
 
 void CorrectionTask::Initialize() {
-  constexpr bool FMD = false;
+  constexpr bool FMD = true;
   SetVariables({VAR::kVtxZ, VAR::kPt, VAR::kEta, VAR::kP,
                 VAR::kPhi, VAR::kTPCncls, VAR::kDcaXY,
                 VAR::kDcaZ, VAR::kVZEROTotalMult, VAR::kNtracksTotal,

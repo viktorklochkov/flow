@@ -277,7 +277,6 @@ bool CorrelationManager::CheckESEEvent() {
       auto pair = ese.At(eventbin_);
       float value = -999.;
       if (pair.first) value = pair.second;
-      std::cout << value << "  " << event_shape_->At(eventbin_).GetPercentile(value) << std::endl;
       event_values_.back() = event_shape_->At(eventbin_).GetPercentile(value);
     }
   }
