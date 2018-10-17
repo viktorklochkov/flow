@@ -37,6 +37,10 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
     return u.x(2)*Q.x(2) + u.y(2)*Q.y(2);
   };
 
+  auto mag = [](const std::vector<Qn::QVector> &a) {
+    return 1./TMath::Sqrt(a[0].sumweights())*a[0].DeNormal().mag(1);
+  };
+
 //  auto den = [](const std::vector<Qn::QVector> &a) {
 //    auto Q = a[0].Normal(Qn::QVector::Normalization::QOVERNORMQ);
 //    auto Q = a[0].DeNormal();
@@ -48,15 +52,16 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
   a.SetOutputFile("corr.root");
 
   // ESE Configuration
-  a.AddESE("ZDCA", 1, 200);
+  a.AddESE("ZDCA, ZDCC", 1, 200);
 
   // Add Detectors for Correlation
-  a.AddQVectors("TPC, TPC_R, V0A, V0C, T0A, T0C, ZDCA, ZDCC, FMDA, FMDC");
+  a.AddQVectors("TPC, TPC_R, V0A, V0C, ZDCA, ZDCC");
 //  a.AddQVectors("TPC_R, V0A");
 
   // Add Eventvariables for correlation
   // Use Qn::Axis
   a.AddEventVariable({"CentralityV0M", {0., 5., 10., 15.,20.,25.,30.,35.,40.,45.,50.}});
+  a.AddEventVariable({"VTXX", 10,0.04,0.1});
 //  a.AddEventVariable({"VTXZ", 10,-10,10});
 
 //  a.AddProjection("TPC_R","TPC_RR","");
@@ -68,15 +73,17 @@ void CorrelationTask::Configure(Qn::CorrelationManager &a) {
 //    a.AddCorrelation("TPCPT_V0A", "TPC, V0A", scalar, 0, Qn::Sampler::Method::NONE);
 //    a.AddCorrelation("TPCPT_V0C", "TPC, V0C", scalar, 0, Qn::Sampler::Method::NONE);
 ////
-//    a.AddCorrelation("TPC_V0A", "TPC_R, V0A", scalar, 0, Qn::Sampler::Method::NONE);
+    a.AddCorrelation("TPC_V0A", "TPC_R, V0A", scalar, 0, Qn::Sampler::Method::NONE);
 //    a.AddCorrelation("TPC_V0C", "TPC_R, V0C", scalar, 0, Qn::Sampler::Method::NONE);
 //    a.AddCorrelation("V0A_V0C", "V0A, V0C", scalar, 0, Qn::Sampler::Method::NONE);
-//
+
 //    a.AddCorrelation("TPC_T0A", "TPC_R, T0A", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
 //    a.AddCorrelation("TPC_T0C", "TPC_R, T0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
 //    a.AddCorrelation("T0A_T0C", "T0A, T0C", scalar, 10, Qn::Sampler::Method::BOOTSTRAP);
 //
-//    a.AddCorrelation("ZDCAC_XX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return -a[0].x(1)*a[1].x(1);});
+  a.AddCorrelation("ZDCA_Mag","ZDCA",mag);
+  a.AddCorrelation("ZDCC_Mag","ZDCC",mag);
+//  a.AddCorrelation("ZDCAC_XX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return -a[0].x(1)*a[1].x(1);});
 //    a.AddCorrelation("ZDCAC_YY","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].y(1)*a[1].y(1);});
 //    a.AddCorrelation("ZDCAC_YX","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].y(1)*a[1].x(1);});
 //    a.AddCorrelation("ZDCAC_XY","ZDCA, ZDCC",[](const std::vector<Qn::QVector> &a){return a[0].x(1)*a[1].y(1);});
