@@ -114,14 +114,23 @@ void CorrelationManager::AddCorrelation(std::string name,
  * @param name Name of the datacontainer used to calculate the Q-vector magnitude.
  * @param harmonic harmonic used for calculation
  */
-void CorrelationManager::AddESE(const std::string &name, int harmonic, float qmax) {
+void CorrelationManager::AddESE(const std::string &names, int harmonic, float qmax) {
+  std::vector<std::string> esenames;
+  tokenize(names, esenames, ", ", true);
   use_ese_ = true;
+//  auto Mag = [harmonic](const std::vector<Qn::QVector> &a) {
+//    return 1./TMath::Sqrt(a[0].sumweights()+a[0])*a[0].DeNormal().mag(harmonic);
+//  };
   auto Mag = [harmonic](const std::vector<Qn::QVector> &a) {
-    return 1./TMath::Sqrt(a[0].sumweights())*a[0].DeNormal().mag(harmonic);
+    auto x0 = a[0].DeNormal().x(1);
+    auto x1 = a[1].DeNormal().x(1);
+    auto y0 = a[0].DeNormal().x(1);
+    auto y1 = a[1].DeNormal().x(1);
+    return 1./TMath::Sqrt(a[0].sumweights()+a[1].sumweights())*std::sqrt((x0+x1)*(x0+x1)+(y0+y1)*(y0+y1));
   };
-  Qn::Correlator correlator({name}, Mag, TH1F("q", ";q;%;", 100, 0., qmax));
+  Qn::Correlator correlator(esenames, Mag, TH1F("q", ";q;%;", 100, 0., qmax));
   correlator.ConfigureSampler(Sampler::Method::NONE, 0);
-  ese_correlations_.emplace("ESE_" + name, std::move(correlator));
+  ese_correlations_.emplace("ESE_" + esenames[0]+esenames[1], std::move(correlator));
 }
 /**
  * Initializes the Correlation task.
@@ -286,7 +295,6 @@ bool CorrelationManager::CheckESEEvent() {
     for (const auto &ae : eventshape_axes_) {
       auto bin = ae.FindBin(event_values_.back());
       if (bin!=-1) {
-        std::cout << bin << std::endl;
         eventbin_.at(event_axis_size + ie) = (unsigned long) bin;
       } else {
         return false;
