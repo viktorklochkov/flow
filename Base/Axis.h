@@ -130,8 +130,6 @@ class Axis {
   std::string name_;
   std::vector<float> bin_edges_;
 
-
-
   /// \cond CLASSIMP
  ClassDef(Axis, 2);
   /// \endcond

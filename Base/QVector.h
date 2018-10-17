@@ -24,7 +24,7 @@
 
 #include "Rtypes.h"
 
-#include "QnCorrections/QnCorrectionsQnVector.h"
+#include "QnCorrectionsQnVector.h"
 
 namespace Qn {
 
@@ -86,6 +86,7 @@ class QVector {
       throw std::out_of_range("harmonic not in range.");
     }
   }
+
   inline float y(const unsigned int i) const {
     if (bits_.test(i)) {
       return q_[std::bitset<8>(bits_ & std::bitset<8>((1 << (i + 1)) - 1)).count() - 1].y;
@@ -96,18 +97,13 @@ class QVector {
   }
 
   inline float mag(const unsigned int i) const { return sqrt(x(i)*x(i) + y(i)*y(i)); }
-
   inline float sumweights() const { return sum_weights_; }
   inline float n() const { return n_; }
   inline Normalization GetNorm() const { return norm_; }
-
   friend QVector operator+(QVector a, QVector b);
-
   inline void Add(const QVector &a) { *this + a; }
   QVector Normal(Normalization norm) const;
   QVector DeNormal() const;
-
-
 
   Normalization norm_ = Normalization::NOCALIB; ///< normalization method
   int n_ = 0;                                   ///< number of data vectors contributing to the q vector

@@ -4,9 +4,9 @@
 
 
 #include <gtest/gtest.h>
-#include "Correlation/Correlation.h"
-#include "Correlation/CorrelationManager.h"
-#include "DifferentialCorrection/EventInfo.h"
+#include "Correlation.h"
+#include "CorrelationManager.h"
+#include "EventInfo.h"
 
 TEST(CorrelationManagerTest, AddingCorrelation) {
 //  auto data1 = new Qn::DataContainer<Qn::QVector>();

@@ -21,8 +21,8 @@
 #include <iostream>
 #include <utility>
 #include <TGraphErrors.h>
-#include "Base/DataContainer.h"
-#include "Base/QVector.h"
+#include "DataContainer.h"
+#include "QVector.h"
 
 namespace Qn {
 /**

@@ -71,14 +71,14 @@ class DataContainerHelper {
  public:
   enum class Errors { Yonly, XandY };
 
-  static TGraphAsymmErrors *DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x);
+  static TGraphAsymmErrors *DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x = Errors::Yonly);
   static TGraphAsymmErrors *DataToProfileGraphShifted(const Qn::DataContainer<Qn::Sample> &data,
                                                       int i,
                                                       int max,
-                                                      Errors x);
+                                                      Errors x = Errors::Yonly);
   static TMultiGraph *DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data,
                                        const std::string &axisname,
-                                       Errors x);
+                                       Errors x= Errors::Yonly);
 
  private:
   friend DataContainer<Qn::Sample>;

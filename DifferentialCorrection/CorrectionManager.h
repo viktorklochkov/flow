@@ -21,13 +21,14 @@
 #include <string>
 #include <map>
 #include <utility>
-#include <QnCorrections/QnCorrectionsManager.h>
+#include <QnCorrectionsManager.h>
 #include "Detector.h"
 #include "VariableManager.h"
-#include "Base/Axis.h"
+#include "Axis.h"
 #include "EventInfo.h"
-#include "DifferentialCorrection/Interface/DataFiller.h"
+#include "Interface/DataFiller.h"
 #include "VariableCutBase.h"
+
 namespace Qn {
 class CorrectionManager {
  public:

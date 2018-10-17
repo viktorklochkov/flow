@@ -4,10 +4,10 @@
 
 #include <gtest/gtest.h>
 #include <TMath.h>
-#include <DifferentialCorrection/Detector.h>
-#include <DifferentialCorrection/QAHistogram.h>
-#include <DifferentialCorrection/VariableCutBase.h>
-#include "DifferentialCorrection/VariableManager.h"
+#include <Detector.h>
+#include <QAHistogram.h>
+#include <VariableCutBase.h>
+#include "VariableManager.h"
 
 TEST(VarManagerUnitTest, test) {
   using namespace Qn;

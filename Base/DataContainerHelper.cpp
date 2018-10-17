@@ -27,7 +27,7 @@ namespace Qn {
 
 TGraphAsymmErrors *DataContainerHelper::DataToProfileGraphShifted(const DataContainerSample &data,
                                                                   int i,
-                                                                  int maxi, Errors drawerrors = Errors::Yonly) {
+                                                                  int maxi, Errors drawerrors) {
   if (data.GetAxes().size() > 1) {
     std::cout << "Data container has more than one dimension. " << std::endl;
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
@@ -54,7 +54,7 @@ TGraphAsymmErrors *DataContainerHelper::DataToProfileGraphShifted(const DataCont
 };
 
 TGraphAsymmErrors *DataContainerHelper::DataToProfileGraph(const DataContainerSample &data,
-                                                           Errors drawerrors = Errors::Yonly) {
+                                                           Errors drawerrors) {
   return DataToProfileGraphShifted(data, 1, 2, drawerrors);
 };
 
@@ -66,7 +66,7 @@ TGraphAsymmErrors *DataContainerHelper::DataToProfileGraph(const DataContainerSa
  */
 TMultiGraph *DataContainerHelper::DataToMultiGraph(const DataContainerSample &data,
                                                    const std::string &axisname,
-                                                   Errors drawerrors = Errors::Yonly) {
+                                                   Errors drawerrors) {
   auto multigraph = new TMultiGraph();
   if (data.GetAxes().size()!=2) {
     std::cout << "Data Container dimension has wrong dimension " << data.GetAxes().size() << "\n";

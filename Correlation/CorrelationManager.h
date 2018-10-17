@@ -18,15 +18,16 @@
 #ifndef FLOW_CORRELATIONMANAGER_H
 #define FLOW_CORRELATIONMANAGER_H
 
-#include <TTreeReader.h>
-
 #include <memory>
 #include <utility>
-#include <TFile.h>
+
+#include "TTreeReader.h"
+#include "TFile.h"
+
 #include "Correlation.h"
 #include "Sampler.h"
 #include "Correlator.h"
-#include "Base/EventShape.h"
+#include "EventShape.h"
 
 namespace Qn {
 

@@ -3,8 +3,10 @@
 //
 
 #include <gtest/gtest.h>
-#include <Base/Sample.h>
-#include <TRandom3.h>
+
+#include "TRandom3.h"
+#include "Sample.h"
+
 
 TEST(SampleUnitTest, create) {
   TRandom3 rndm;

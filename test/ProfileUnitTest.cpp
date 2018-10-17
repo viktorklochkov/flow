@@ -4,9 +4,11 @@
 
 
 #include <gtest/gtest.h>
-#include <Base/DataContainer.h>
-#include <TProfile.h>
-#include "Base/Profile.h"
+
+#include "TProfile.h"
+
+#include "DataContainer.h"
+#include "Profile.h"
 
 TEST(ProfileTest, Trivial) {
   Qn::Profile a;

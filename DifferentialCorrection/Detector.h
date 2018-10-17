@@ -17,17 +17,21 @@
 
 #ifndef FLOW_DETECTOR_H
 #define FLOW_DETECTOR_H
+
 #include <memory>
 #include <utility>
-#include <QnCorrections/QnCorrectionsDetector.h>
-#include <QnCorrections/QnCorrectionsEventClassVariablesSet.h>
-#include <QnCorrections/QnCorrectionsDetectorConfigurationChannels.h>
-#include <QnCorrections/QnCorrectionsDetectorConfigurationTracks.h>
-#include <TH2I.h>
-#include "DifferentialCorrection/VariableManager.h"
-#include "Base/DataContainer.h"
-#include "Base/QVector.h"
-#include "Base/DataVector.h"
+
+#include "TH2I.h"
+
+#include "QnCorrectionsDetector.h"
+#include "QnCorrectionsEventClassVariablesSet.h"
+#include "QnCorrectionsDetectorConfigurationChannels.h"
+#include "QnCorrectionsDetectorConfigurationTracks.h"
+
+#include "VariableManager.h"
+#include "DataContainer.h"
+#include "QVector.h"
+#include "DataVector.h"
 #include "QAHistogram.h"
 #include "VariableCutBase.h"
 

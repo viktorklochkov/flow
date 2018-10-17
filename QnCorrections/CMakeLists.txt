@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 1)
 set(CMAKE_MACOSX_RPATH 1)
@@ -53,23 +53,15 @@ string(REPLACE ".cpp" ".h" QNCORR_HEADERS "${QNCORR_SOURCES}")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-# Telling CMake where to find the ROOT installation.
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnLinkDef.h)
+add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
+target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
+target_include_directories(QnCorrections PRIVATE ${ROOT_INCLUDE_DIRS})
+target_include_directories(QnCorrections PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(QnCorrections ROOT::Core ROOT::MathMore ROOT::MathCore ROOT::Hist ROOT::TreePlayer ROOT::Tree)
 
-#---Locate the ROOT package and defines a number of variables (e.g. ROOT_INCLUDE_DIRS)
-find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
-
-# Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-include(${ROOT_USE_FILE})
-add_definitions(${ROOT_CXX_FLAGS})
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${ROOT_INCLUDE_DIRS})
-
-ROOT_GENERATE_DICTIONARY(G__QnCorrFlow ${QNCORR_HEADERS} LINKDEF QnLinkDef.h)
-add_library(qncorrflow SHARED ${QNCORR_SOURCES} G__QnCorrFlow)
-target_link_libraries(qncorrflow ${ROOT_LIBRARIES})
-
-install(TARGETS qncorrflow DESTINATION lib)
+install(TARGETS QnCorrections DESTINATION lib)
 install(FILES ${QNCORR_HEADERS} DESTINATION include)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrFlow_rdict.pcm DESTINATION lib)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrFlow.rootmap DESTINATION lib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrections_rdict.pcm DESTINATION lib)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libQnCorrections.rootmap DESTINATION lib)
+

@@ -16,3 +16,17 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "EventShape.h"
+
+void Qn::EventShape::IntegrateHist() {
+  integral_ = (TH1F *) histo_->Clone("integral");
+  for (int i = 0; i < histo_->GetNbinsX()+1; ++i) {
+    double inte = histo_->Integral(0, i)/histo_->Integral();
+    integral_->SetBinContent(i, inte);
+  }
+}
+
+void Qn::EventShape::FitWithSpline(TH1F hist) {
+  IntegrateHist();
+  spline_ = new TSpline3(integral_, "sp3");
+  spline_->SetName("spline");
+}

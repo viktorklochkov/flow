@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include "Base/Efficiency.h"
+#include "Efficiency.h"
 
 TEST(EfficiencyTest, Trivial) {
   Qn::Efficiency eff;

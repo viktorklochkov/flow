@@ -3,9 +3,9 @@
 //
 
 #include <gtest/gtest.h>
-#include <Correlation/Sampler.h>
+#include <Sampler.h>
 #include <TH1F.h>
-#include <Base/DataContainer.h>
+#include <DataContainer.h>
 
 TEST(BootStrapSamplerTest, Constructor) {
   const int nsamples = 50;

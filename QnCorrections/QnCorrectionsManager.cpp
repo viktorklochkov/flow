@@ -40,7 +40,6 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <ReducedEvent/AliReducedVarManager.h>
 
 using std::cout;
 using std::endl;
