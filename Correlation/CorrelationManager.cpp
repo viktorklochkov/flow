@@ -15,9 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "CorrelationManager.h"
-#include <TFile.h>
 #include <memory>
+
+#include "CorrelationManager.h"
+
 namespace Qn {
 /**
  * Adds a new DataContainer to the correlation manager.

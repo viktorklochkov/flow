@@ -21,8 +21,6 @@
 #include <memory>
 #include <utility>
 
-#include "TH2I.h"
-
 #include "QnCorrectionsDetector.h"
 #include "QnCorrectionsEventClassVariablesSet.h"
 #include "QnCorrectionsDetectorConfigurationChannels.h"
@@ -43,7 +41,6 @@ enum class DetectorType {
 
 class DetectorBase {
  public:
-//  static constexpr std::size_t kNHarmonics = 4;
   virtual ~DetectorBase() = default;
 
   virtual std::unique_ptr<DataContainerDataVector> &GetDataContainer() = 0;

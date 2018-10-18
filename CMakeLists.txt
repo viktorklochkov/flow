@@ -1,9 +1,13 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 1)
-set(CMAKE_MACOSX_RPATH 1)
 
 set(CMAKE_CXX_STANDARD 14)
+if (APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+    add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
+    add_definitions(-D__GLIBCXX__)
+endif (APPLE)
 
 # By default build optimized code with debug symbols.
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -19,12 +23,6 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ftree-vectorize -ffast-math -DNODEBUG")
 message(STATUS "Using CXX flags for ${CMAKE_BUILD_TYPE}: ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
 
-
-if (APPLE)
-    add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
-    add_definitions(-D__GLIBCXX__)
-endif (APPLE)
-
 set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/CorrelationManager.cpp
@@ -34,14 +32,11 @@ set(CORR_SOURCES
         )
 
 set(DIFF_SOURCES
-        DifferentialCorrection/VariableManager.cpp
         DifferentialCorrection/CorrectionManager.cpp
         DifferentialCorrection/Interface/DataFiller.cpp
         )
 
 set(BASE_SOURCES
-        Base/DataVector.cpp
-        Base/DataContainer.cpp
         Base/Axis.cpp
         Base/QVector.cpp
         Base/Profile.cpp
@@ -52,11 +47,12 @@ set(BASE_SOURCES
         )
 
 string(REPLACE ".cpp" ".h" BASE_HEADERS "${BASE_SOURCES}")
+set(BASE_HEADERS ${BASE_HEADERS} Base/DataContainer.h Base/DataVector.h)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-# Download and unpack googletest at configure time
+# Googletest
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
         RESULT_VARIABLE result
@@ -70,20 +66,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} --build .
 if(result)
     message(FATAL_ERROR "Build step for googletest failed: ${result}")
 endif()
-# Prevent overriding the parent project's compiler/linker
-# settings on Windows
+# Prevent overriding the parent project's compiler/linker settings on Windows
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# Add googletest directly to our build. This defines
-# the gtest and gtest_main targets.
-add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-        ${CMAKE_BINARY_DIR}/googletest-build
-        EXCLUDE_FROM_ALL)
-# The gtest/gtest_main targets carry header search path
-# dependencies automatically when using CMake 2.8.11 or
-# later. Otherwise we have to add them here ourselves.
-if (CMAKE_VERSION VERSION_LESS 2.8.11)
-    include_directories("${gtest_SOURCE_DIR}/include")
-endif()
+add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
 
 # ROOT
 find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)

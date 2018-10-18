@@ -6,6 +6,7 @@
 #include <Sampler.h>
 #include <TH1F.h>
 #include <DataContainer.h>
+#include "TRandom3.h"
 
 TEST(BootStrapSamplerTest, Constructor) {
   const int nsamples = 50;

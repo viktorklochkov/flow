@@ -19,10 +19,9 @@
 #define FLOW_EVENTINFO_H
 
 #include <string>
-#include <iostream>
 #include <map>
-#include <TTree.h>
-#include <TLeaf.h>
+
+#include "TTree.h"
 #include "Rtypes.h"
 
 namespace Qn {
@@ -110,26 +109,6 @@ class EventInfo {
     }
   }
 /**
- * Attaches input tree to event information object for reading.
- * @param tree input tree which contains the  event information in branches
- */
-  void AttachToTree(TTree &tree) {
-    for (auto &element : map_) {
-      element.second.isgood_ = true;
-      auto branch = tree.GetBranch(element.first.data());
-      if (branch) {
-        tree.SetBranchAddress(element.first.data(), &element.second.GetAddress());
-      } else throw std::invalid_argument("EventInfo was not saved to tree");
-    }
-  }
-  std::vector<T> GetVector() {
-    std::vector<T> vector;
-    for (auto &pair : map_) {
-      vector.emplace_back(pair.second.Get());
-    }
-    return vector;
-  }
-/**
  * Clears information store in the event information.
  */
   void Clear() {
@@ -149,7 +128,6 @@ class EventInfo {
 
 };
 
-typedef EventInfo<int> EventInfoI; ///< Typedef for integer parameters
 typedef EventInfo<float> EventInfoF; ///< Typedef for floating point parameters
 
 }

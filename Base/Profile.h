@@ -19,12 +19,12 @@
 #define FLOW_PROFILE_H
 
 #include <iterator>
-#include <iostream>
 #include <algorithm>
 #include <utility>
-#include <TMathBase.h>
-#include <TMath.h>
 #include <array>
+
+#include "TMathBase.h"
+#include "TMath.h"
 
 namespace Qn {
 

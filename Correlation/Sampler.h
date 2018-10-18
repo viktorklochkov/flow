@@ -19,11 +19,6 @@
 #define FLOW_BOOTSTRAPSAMPLER_H
 
 #include <vector>
-#include <array>
-#include <TRandom3.h>
-#include <iostream>
-#include <random>
-#include <algorithm>
 
 namespace Qn {
 class Sampler {

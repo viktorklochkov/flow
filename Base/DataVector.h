@@ -19,7 +19,6 @@
 #define FLOW_DATAVECTOR_H
 
 #include <math.h>
-
 #include "Rtypes.h"
 
 namespace Qn {

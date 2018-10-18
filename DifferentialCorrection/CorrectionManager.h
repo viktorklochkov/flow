@@ -24,7 +24,6 @@
 #include <QnCorrectionsManager.h>
 #include "Detector.h"
 #include "VariableManager.h"
-#include "Axis.h"
 #include "EventInfo.h"
 #include "Interface/DataFiller.h"
 #include "VariableCutBase.h"

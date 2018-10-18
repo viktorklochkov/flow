@@ -16,6 +16,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Sampler.h"
+#include <random>
+#include <algorithm>
+
+#include "TRandom3.h"
+
 void Qn::Sampler::CreateSubSamples() {
   TRandom3 random;
   std::vector<int> event_vector;

@@ -18,9 +18,8 @@
 #ifndef FLOW_CORRELATION_H
 #define FLOW_CORRELATION_H
 
-#include <iostream>
 #include <utility>
-#include <TGraphErrors.h>
+
 #include "DataContainer.h"
 #include "QVector.h"
 
