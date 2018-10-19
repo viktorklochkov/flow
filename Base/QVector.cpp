@@ -18,6 +18,7 @@
 #include <functional>
 
 #include "QVector.h"
+#include "QnCorrectionsQnVector.h"
 
 namespace Qn {
 /**

@@ -17,12 +17,14 @@
 
 #ifndef FLOW_QVECTOR_H
 #define FLOW_QVECTOR_H
+
 #include <vector>
 #include <bitset>
+#include <math.h>
 
 #include "Rtypes.h"
 
-#include "QnCorrectionsQnVector.h"
+class QnCorrectionsQnVector;
 
 namespace Qn {
 

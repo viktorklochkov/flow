@@ -25,7 +25,6 @@
 #include "Detector.h"
 #include "VariableManager.h"
 #include "EventInfo.h"
-#include "Interface/DataFiller.h"
 #include "VariableCutBase.h"
 
 namespace Qn {
@@ -189,30 +188,36 @@ class CorrectionManager {
 
   void SetTree(TTree *tree) { out_tree_ = tree; }
 
-  void SaveHistograms(std::shared_ptr<TFile> file);
-
-  void SaveTree(const std::shared_ptr<TFile> &file) {
-    file->cd();
-    out_tree_->Write();
+  void SaveOutput(std::shared_ptr<TFile> qa_histograms_file, std::shared_ptr<TFile> tree_file) {
+    SaveHistograms(qa_histograms_file);
+    SaveTree(tree_file);
   }
 
   void Initialize(std::shared_ptr<TFile> &in_calibration_file_);
 
-  void Process(Qn::DataFiller filler);
+  void ProcessEvent();
+
+  void ProcessQnVectors();
 
   void Finalize();
 
   void Reset();
 
+  void FillChannelDetectors() {
+    for (auto &dp : detectors_channel) {
+      dp.second->FillData();
+    }
+  }
+
+  void FillTrackingDetectors() {
+    for (auto &dp : detectors_track) {
+      dp.second->FillData();
+    }
+  }
+
+  double* GetVariableContainer() {return var_manager_->GetVariableContainer();}
+
  private:
-
-  void FillEventData(Qn::DataFiller filler);
-
-  void FillData(Qn::DataFiller filler);
-
-  void SetQVectorsToTree();
-
-  void SetEventVariablesToTree();
 
   std::pair<std::array<Variable, 2>, TH1F> Create1DHisto(const std::string &name,
                                                          std::vector<Qn::Axis> axes,
@@ -224,11 +229,14 @@ class CorrectionManager {
 
   void CreateDetectors();
 
-  void FillDataToFramework();
-
   void GetQnFromFramework(const std::string &step);
 
   void CalculateCorrectionAxis();
+
+  void SaveHistograms(std::shared_ptr<TFile> file);
+
+  void SaveTree(const std::shared_ptr<TFile> &file);
+
 /**
  * Get Normalization from Qn::CorrectionsQnVector framework
  * @param method normalization method.
@@ -256,6 +264,7 @@ class CorrectionManager {
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel;
   std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_;
   TTree *out_tree_ = nullptr;
+  bool event_passed_cuts_ = false;
 };
 }
 
