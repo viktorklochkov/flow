@@ -28,6 +28,7 @@
 #include "Sampler.h"
 #include "Correlator.h"
 #include "EventShape.h"
+#include "DataContainer.h"
 
 namespace Qn {
 

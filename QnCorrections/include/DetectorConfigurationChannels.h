@@ -65,7 +65,7 @@ class DetectorConfigurationChannels :
   /// \return FALSE, this is a hit / channel detector configuration
   virtual Bool_t GetIsTrackingDetector() const { return kFALSE; }
 
-  void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup, Float_t *hardCodedGroupWeights = NULL);
+  virtual void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup=nullptr, Float_t *hardCodedGroupWeights = nullptr);
 
   /* QA section */
   /// Sets the variable id used for centrality in QA histograms.

@@ -21,11 +21,24 @@
 #include <string>
 #include <map>
 #include <utility>
-#include <QnCorrectionsManager.h>
 #include "Detector.h"
 #include "VariableManager.h"
 #include "EventInfo.h"
 #include "VariableCutBase.h"
+#include "QnCorrectionsProfile3DCorrelations.h"
+#include "QnCorrectionsProfileCorrelationComponents.h"
+#include "DetectorConfigurationChannels.h"
+#include "DetectorConfiguration.h"
+#include "QnCorrectionsDetectorConfigurationTracks.h"
+#include "Recentering.h"
+#include "TwistAndRescale.h"
+#include "QnCorrectionsCutSetBit.h"
+#include "QnCorrectionsCutWithin.h"
+#include "GainEqualization.h"
+#include "Alignment.h"
+#include "QnCorrectionsManager.h"
+#include "DataContainer.h"
+#include "EventInfo.h"
 
 namespace Qn {
 class CorrectionManager {

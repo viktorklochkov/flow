@@ -66,9 +66,9 @@ class DetectorConfiguration : public TNamed {
   friend class QnCorrectionsDetector;
   DetectorConfiguration();
   DetectorConfiguration(const char *name,
-                                         QnCorrectionsEventClassVariablesSet *eventClassesVariables,
-                                         Int_t nNoOfHarmonics,
-                                         Int_t *harmonicMap = NULL);
+                        QnCorrectionsEventClassVariablesSet *eventClassesVariables,
+                        Int_t nNoOfHarmonics,
+                        Int_t *harmonicMap = NULL);
   virtual ~DetectorConfiguration();
 
   /// Sets the set of cuts for the detector configuration
@@ -76,7 +76,7 @@ class DetectorConfiguration : public TNamed {
   void SetCuts(QnCorrectionsCutsSet *cuts) { fCuts = cuts; }
   /// Sets the normalization method for Q vectors
   /// \param method the Qn vector normalizatio method
-  void SetQVectorNormalizationMethod(QnCorrectionsQnVector::Normalization method) {
+  void SetNormalization(QnCorrectionsQnVector::Normalization method) {
     fQnNormalizationMethod = method;
   }
   /// Get the normalization method for Q vectors
@@ -252,10 +252,7 @@ class DetectorConfiguration : public TNamed {
   /// \param weight the weight of the data vector
   /// \param channelId the channel Id that originates the data vector
   /// \return kTRUE if the data vector was accepted and stored
-  virtual Bool_t AddDataVector(const double *variableContainer,
-                               Double_t phi,
-                               Double_t weight = 1.0,
-                               Int_t channelId = -1) = 0;
+  virtual Bool_t AddDataVector(const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) = 0;
 
   virtual Bool_t IsSelected(const double *variableContainer) = 0;
   virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) = 0;
@@ -263,6 +260,14 @@ class DetectorConfiguration : public TNamed {
   /// Clean the configuration to accept a new event
   /// Pure virtual function
   virtual void ClearConfiguration() = 0;
+
+  virtual void SetChannelsScheme(Bool_t *bUsedChannel,
+                                 Int_t *nChannelGroup = nullptr,
+                                 Float_t *hardCodedGroupWeights = nullptr) {
+    (void) bUsedChannel;
+    (void) nChannelGroup;
+    (void) hardCodedGroupWeights;
+  }
 
  private:
   QnCorrectionsDetector *fDetector;    ///< pointer to the detector that owns the configuration
