@@ -76,7 +76,7 @@ public:
   ///
   /// Does nothing. Not applicable for corrections on input data
   /// \param list list where the corrected Qn vector should be added
-  virtual void IncludeCorrectedQnVector(TList *list) = 0;
+  virtual void IncludeCorrectedQnVector(TList *list) {(void) list;}
   /// Clean the correction to accept a new event
   /// Pure virtual function
   virtual void ClearCorrectionStep() = 0;

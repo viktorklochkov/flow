@@ -66,7 +66,7 @@ GainEqualization::GainEqualization() :
   fQAMultiplicityBefore = NULL;
   fQAMultiplicityAfter = NULL;
   fQANotValidatedBin = NULL;
-  fEqualizationMethod = GEQUAL_noEqualization;
+  fEqualizationMethod = GainEqualizationMethod::NONE;
   fShift = GAINEQUALIZATION_SHIFTDEFAULT;
   fScale = GAINEQUALIZATION_SCALEDEFAULT;
   fUseChannelGroupsWeights = kFALSE;
@@ -239,14 +239,14 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
     }
     /* store the equalized weights in the data vector bank according to equalization method */
     switch (fEqualizationMethod) {
-    case GEQUAL_noEqualization:
+    case GainEqualizationMethod::NONE:
       for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
         QnCorrectionsDataVectorChannelized *dataVector =
             static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
         dataVector->SetEqualizedWeight(dataVector->EqualizedWeight());
       }
       break;
-    case GEQUAL_averageEqualization:
+    case GainEqualizationMethod::AVERAGE:
       for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
         QnCorrectionsDataVectorChannelized *dataVector =
             static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
@@ -273,7 +273,7 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
         }
       }
       break;
-    case GEQUAL_widthEqualization:
+    case GainEqualizationMethod::WIDTH:
       for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
         QnCorrectionsDataVectorChannelized *dataVector =
             static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));

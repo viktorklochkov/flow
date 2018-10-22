@@ -247,13 +247,13 @@ class CorrectionManager {
  * @return corresponding correlation.
  */
   inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_noCalibration)
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::NONE)
       return Qn::QVector::Normalization::NOCALIB;
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverM)
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::M)
       return Qn::QVector::Normalization::QOVERM;
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverSqrtM)
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::SQRT_M)
       return Qn::QVector::Normalization::QOVERSQRTM;
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::QVNORM_QoverQlength)
+    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::MAGNITUDE)
       return Qn::QVector::Normalization::QOVERNORMQ;
     return Qn::QVector::Normalization::NOCALIB;
   }

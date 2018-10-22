@@ -52,7 +52,7 @@ DetectorConfiguration::DetectorConfiguration() : TNamed(),
   fCorrectionsManager = NULL;
   fCuts = NULL;
   fDataVectorBank = NULL;
-  fQnNormalizationMethod = QnCorrectionsQnVector::QVNORM_noCalibration;
+  fQnNormalizationMethod = QnCorrectionsQnVector::NONE;
   fEventClassVariables = NULL;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
   fCorrectedQ2nVector.SetHarmonicMultiplier(2);
@@ -81,7 +81,7 @@ DetectorConfiguration::DetectorConfiguration(const char *name,
   fCorrectionsManager = NULL;
   fCuts = NULL;
   fDataVectorBank = NULL;
-  fQnNormalizationMethod = QnCorrectionsQnVector::QVNORM_noCalibration;
+  fQnNormalizationMethod = QnCorrectionsQnVector::NONE;
   fEventClassVariables = eventClassesVariables;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
   fCorrectedQ2nVector.SetHarmonicMultiplier(2);

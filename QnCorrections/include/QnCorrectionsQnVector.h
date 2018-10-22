@@ -46,10 +46,10 @@ public:
   ///
   /// M is the sum of weights.
   enum QnVectorNormalizationMethod {
-    QVNORM_noCalibration, ///< \f$ \mbox{Q'} = \mbox{Q}\f$
-    QVNORM_QoverSqrtM,    ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\sqrt{\mbox{M}}} \f$
-    QVNORM_QoverM,        ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\mbox{M}} \f$
-    QVNORM_QoverQlength   ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{|\mbox{Q}|} \f$
+    NONE, ///< \f$ \mbox{Q'} = \mbox{Q}\f$
+    SQRT_M,    ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\sqrt{\mbox{M}}} \f$
+    M,        ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\mbox{M}} \f$
+    MAGNITUDE   ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{|\mbox{Q}|} \f$
   };
 
   QnCorrectionsQnVector();
