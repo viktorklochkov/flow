@@ -38,24 +38,24 @@
 #include "QnCorrectionsDetector.h"
 #include "QnCorrectionsManager.h"
 #include "QnCorrectionsLog.h"
-#include "QnCorrectionsQnVectorAlignment.h"
+#include "Alignment.h"
 
-const Int_t QnCorrectionsQnVectorAlignment::fDefaultMinNoOfEntries = 2;
-const char *QnCorrectionsQnVectorAlignment::szCorrectionName = "Alignment";
-const char *QnCorrectionsQnVectorAlignment::szKey = "EEEE";
-const char *QnCorrectionsQnVectorAlignment::szSupportHistogramName = "QnQn";
-const char *QnCorrectionsQnVectorAlignment::szCorrectedQnVectorName = "align";
-const char *QnCorrectionsQnVectorAlignment::szQANotValidatedHistogramName = "Align NvE";
-const char *QnCorrectionsQnVectorAlignment::szQAQnAverageHistogramName = "Align Qn avg ";
+const Int_t Alignment::fDefaultMinNoOfEntries = 2;
+const char *Alignment::szCorrectionName = "Alignment";
+const char *Alignment::szKey = "EEEE";
+const char *Alignment::szSupportHistogramName = "QnQn";
+const char *Alignment::szCorrectedQnVectorName = "align";
+const char *Alignment::szQANotValidatedHistogramName = "Align NvE";
+const char *Alignment::szQAQnAverageHistogramName = "Align Qn avg ";
 
 
 /// \cond CLASSIMP
-ClassImp(QnCorrectionsQnVectorAlignment);
+ClassImp(Alignment);
 /// \endcond
 
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
-QnCorrectionsQnVectorAlignment::QnCorrectionsQnVectorAlignment() :
+Alignment::Alignment() :
     QnCorrectionsCorrectionOnQvector(szCorrectionName, szKey),
     fDetectorConfigurationForAlignmentName() {
   fInputHistograms = NULL;
@@ -69,7 +69,7 @@ QnCorrectionsQnVectorAlignment::QnCorrectionsQnVectorAlignment() :
 
 /// Default destructor
 /// Releases the memory taken
-QnCorrectionsQnVectorAlignment::~QnCorrectionsQnVectorAlignment() {
+Alignment::~Alignment() {
   if (fInputHistograms != NULL)
     delete fInputHistograms;
   if (fCalibrationHistograms != NULL)
@@ -83,7 +83,7 @@ QnCorrectionsQnVectorAlignment::~QnCorrectionsQnVectorAlignment() {
 /// Set the detector configuration used as reference for alignment
 /// The detector configuration name is stored for further use.
 /// \param name the name of the reference detector configuration
-void QnCorrectionsQnVectorAlignment::SetReferenceConfigurationForAlignment(const char *name) {
+void Alignment::SetReferenceConfigurationForAlignment(const char *name) {
   QnCorrectionsInfo(Form("Reference name: %s, attached to detector configuration: %s",
       name,
       ((fDetectorConfiguration != NULL) ? "yes" : "no")));
@@ -96,7 +96,7 @@ void QnCorrectionsQnVectorAlignment::SetReferenceConfigurationForAlignment(const
 
 /// Informs when the detector configuration has been attached to the framework manager
 /// Basically this allows interaction between the different framework sections at configuration time
-void QnCorrectionsQnVectorAlignment::AttachedToFrameworkManager() {
+void Alignment::AttachedToFrameworkManager() {
   QnCorrectionsInfo(Form("Attached! reference for alignment: %s", fDetectorConfigurationForAlignmentName.Data()));
 
 }
@@ -105,7 +105,7 @@ void QnCorrectionsQnVectorAlignment::AttachedToFrameworkManager() {
 ///
 /// Locates the reference detector configuration for alignment if its name has been previously stored
 /// Creates the recentered Qn vector
-void QnCorrectionsQnVectorAlignment::CreateSupportDataStructures() {
+void Alignment::CreateSupportDataStructures() {
 
   /* now, definitely, we should have the reference detector configurations */
   if (fDetectorConfigurationForAlignmentName.Length() != 0) {
@@ -145,7 +145,7 @@ void QnCorrectionsQnVectorAlignment::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorAlignment::CreateSupportHistograms(TList *list) {
+Bool_t Alignment::CreateSupportHistograms(TList *list) {
 
   TString histoNameAndTitle = Form("%s %s#times%s ",
       szSupportHistogramName,
@@ -166,7 +166,7 @@ Bool_t QnCorrectionsQnVectorAlignment::CreateSupportHistograms(TList *list) {
 /// Attaches the needed input information to the correction step
 /// \param list list where the inputs should be found
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorAlignment::AttachInput(TList *list) {
+Bool_t Alignment::AttachInput(TList *list) {
 
   if (fInputHistograms->AttachHistograms(list)) {
     fState = QCORRSTEP_applyCollect;
@@ -180,7 +180,7 @@ Bool_t QnCorrectionsQnVectorAlignment::AttachInput(TList *list) {
 /// Allocates the histogram objects and creates the QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorAlignment::CreateQAHistograms(TList *list) {
+Bool_t Alignment::CreateQAHistograms(TList *list) {
 
   fQAQnAverageHistogram = new QnCorrectionsProfileComponents(
       Form("%s %s", szQAQnAverageHistogramName, fDetectorConfiguration->GetName()),
@@ -201,7 +201,7 @@ Bool_t QnCorrectionsQnVectorAlignment::CreateQAHistograms(TList *list) {
 /// Allocates the histogram objects and creates the non validated entries QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorAlignment::CreateNveQAHistograms(TList *list) {
+Bool_t Alignment::CreateNveQAHistograms(TList *list) {
 
   fQANotValidatedBin = new QnCorrectionsHistogramSparse(
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
@@ -215,7 +215,7 @@ Bool_t QnCorrectionsQnVectorAlignment::CreateNveQAHistograms(TList *list) {
 ///
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorAlignment::ProcessCorrections(const double *variableContainer) {
+Bool_t Alignment::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -284,7 +284,7 @@ Bool_t QnCorrectionsQnVectorAlignment::ProcessCorrections(const double *variable
 ///
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorAlignment::ProcessDataCollection(const double *variableContainer) {
+Bool_t Alignment::ProcessDataCollection(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* logging */
@@ -352,7 +352,7 @@ Bool_t QnCorrectionsQnVectorAlignment::ProcessDataCollection(const double *varia
 }
 
 /// Clean the correction to accept a new event
-void QnCorrectionsQnVectorAlignment::ClearCorrectionStep() {
+void Alignment::ClearCorrectionStep() {
 
   fCorrectedQnVector->Reset();
 }
@@ -360,7 +360,7 @@ void QnCorrectionsQnVectorAlignment::ClearCorrectionStep() {
 /// Reports if the correction step is being applied
 /// Returns TRUE if in the proper state for applying the correction step
 /// \return TRUE if the correction step is being applied
-Bool_t QnCorrectionsQnVectorAlignment::IsBeingApplied() const {
+Bool_t Alignment::IsBeingApplied() const {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* we are collecting */
@@ -387,7 +387,7 @@ Bool_t QnCorrectionsQnVectorAlignment::IsBeingApplied() const {
 /// \param calibrationList list containing the correction steps producing calibration information
 /// \param applyList list containing the correction steps applying corrections
 /// \return kTRUE if the correction step is being applied
-Bool_t QnCorrectionsQnVectorAlignment::ReportUsage(TList *calibrationList, TList *applyList) {
+Bool_t Alignment::ReportUsage(TList *calibrationList, TList *applyList) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* we are collecting */

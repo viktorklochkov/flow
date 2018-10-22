@@ -17,8 +17,8 @@
 
 #include "QnCorrectionsCorrectionsSetOnInputData.h"
 #include "QnCorrectionsDataVectorChannelized.h"
-#include "QnCorrectionsDetectorConfigurationBase.h"
-
+#include "DetectorConfiguration.h"
+#include "QnCorrectionsLog.h"
 class QnCorrectionsProfileComponents;
 
 /// \class QnCorrectionsDetectorConfigurationChannels
@@ -37,16 +37,16 @@ class QnCorrectionsProfileComponents;
 /// \date Feb 08, 2016
 
 class QnCorrectionsDetectorConfigurationChannels :
-    public QnCorrectionsDetectorConfigurationBase {
-public:
+    public DetectorConfiguration {
+ public:
   friend class QnCorrectionsCorrectionStepBase;
   friend class QnCorrectionsDetector;
   QnCorrectionsDetectorConfigurationChannels();
   QnCorrectionsDetectorConfigurationChannels(const char *name,
-      QnCorrectionsEventClassVariablesSet *eventClassesVariables,
-      Int_t nNoOfChannels,
-      Int_t nNoOfHarmonics,
-      Int_t *harmonicMap = NULL);
+                                             QnCorrectionsEventClassVariablesSet *eventClassesVariables,
+                                             Int_t nNoOfChannels,
+                                             Int_t nNoOfHarmonics,
+                                             Int_t *harmonicMap = NULL);
   virtual ~QnCorrectionsDetectorConfigurationChannels();
 
   /// Gets the number of channels
@@ -63,9 +63,7 @@ public:
   const Float_t *GetHardCodedGroupWeights() const { return fHardCodedGroupWeights; }
   /// Get if the detector configuration is own by a tracking detector
   /// \return FALSE, this is a hit / channel detector configuration
-  virtual Bool_t GetIsTrackingDetector() const
-  { return kFALSE; }
-
+  virtual Bool_t GetIsTrackingDetector() const { return kFALSE; }
 
   void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup, Float_t *hardCodedGroupWeights = NULL);
 
@@ -78,8 +76,11 @@ public:
   /// \param nbins the number of bins
   /// \param min minimum multiplicity value
   /// \param max maximum multiplicity value
-  void SetQAMultiplicityAxis(Int_t nbins, Float_t min, Float_t max)
-  { fQAnBinsMultiplicity = nbins; fQAMultiplicityMin = min; fQAMultiplicityMax = max; }
+  void SetQAMultiplicityAxis(Int_t nbins, Float_t min, Float_t max) {
+    fQAnBinsMultiplicity = nbins;
+    fQAMultiplicityMin = min;
+    fQAMultiplicityMax = max;
+  }
 
   virtual void AttachCorrectionsManager(QnCorrectionsManager *manager);
 
@@ -90,8 +91,10 @@ public:
 
   /// Activate the processing for the passed harmonic
   /// \param harmonic the desired harmonic number to activate
-  virtual void ActivateHarmonic(Int_t harmonic)
-  { QnCorrectionsDetectorConfigurationBase::ActivateHarmonic(harmonic); fRawQnVector.ActivateHarmonic(harmonic); }
+  virtual void ActivateHarmonic(Int_t harmonic) {
+    DetectorConfiguration::ActivateHarmonic(harmonic);
+    fRawQnVector.ActivateHarmonic(harmonic);
+  }
   virtual Bool_t AttachCorrectionInputs(TList *list);
   virtual void AfterInputsAttachActions();
   virtual Bool_t ProcessCorrections(const double *variableContainer);
@@ -113,16 +116,23 @@ public:
   /// \param variableContainer pointer to the variable content bank
   /// \param nChannel the interested external channel number
   /// \return kTRUE if the current content applies to the configuration
-  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel)
-    { return ((fUsedChannel[nChannel]) ? ((fCuts != NULL) ? fCuts->IsSelected(variableContainer) : kTRUE) : kFALSE); }
+  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) {
+    return ((fUsedChannel[nChannel]) ? ((fCuts!=NULL) ? fCuts->IsSelected(variableContainer) : kTRUE) : kFALSE);
+  }
   /// wrong call for this class invoke base class behavior
-  virtual Bool_t IsSelected(const double *variableContainer)
-  { return QnCorrectionsDetectorConfigurationBase::IsSelected(variableContainer); }
+  virtual Bool_t IsSelected(const double *variableContainer) {
+    (void) variableContainer;
+     QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
+    "you are using a channelized detector configuration but passing no channel number. FIX IT, PLEASE.",
+      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
+    return kFALSE;
+  }
 
   virtual void ClearConfiguration();
 
-private:
-  static const char *szRawQnVectorName;   ///< the name of the raw Qn vector from raw data without input data corrections
+ private:
+  static const char
+      *szRawQnVectorName;   ///< the name of the raw Qn vector from raw data without input data corrections
   QnCorrectionsQnVector fRawQnVector;     ///< Q vector from input data before pre-processing
   Int_t fNoOfChannels;                    ///< The number of channels associated
   /// array, which of the detector channels is used for this configuration
@@ -138,7 +148,8 @@ private:
   /* QA section */
   void FillQAHistograms(const double *variableContainer);
   static const char *szQAMultiplicityHistoName; ///< QA multiplicity histograms name
-  static const char *szQAQnAverageHistogramName; ///< name and title for plain Qn vector components average QA histograms
+  static const char
+      *szQAQnAverageHistogramName; ///< name and title for plain Qn vector components average QA histograms
   Int_t fQACentralityVarId;   ///< the id of the variable used for centrality in QA histograms
   Int_t fQAnBinsMultiplicity; ///< number of bins for multiplicity in QA histograms
   Float_t fQAMultiplicityMin; ///< minimum multiplicity value
@@ -147,16 +158,16 @@ private:
   TH3F *fQAMultiplicityAfter3D;  //!<! 3D channel multiplicity histogram after input equalization
   QnCorrectionsProfileComponents *fQAQnAverageHistogram; //!<! the plain average Qn components QA histogram
 
-private:
+ private:
   /// Copy constructor
   /// Not allowed. Forced private.
   QnCorrectionsDetectorConfigurationChannels(const QnCorrectionsDetectorConfigurationChannels &);
   /// Assignment operator
   /// Not allowed. Forced private.
-  QnCorrectionsDetectorConfigurationChannels& operator= (const QnCorrectionsDetectorConfigurationChannels &);
+  QnCorrectionsDetectorConfigurationChannels &operator=(const QnCorrectionsDetectorConfigurationChannels &);
 
 /// \cond CLASSIMP
-  ClassDef(QnCorrectionsDetectorConfigurationChannels, 2);
+ ClassDef(QnCorrectionsDetectorConfigurationChannels, 2);
 /// \endcond
 };
 
@@ -174,8 +185,8 @@ inline Bool_t QnCorrectionsDetectorConfigurationChannels::AddDataVector(
     const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
   if (IsSelected(variableContainer, channelId)) {
     /// add the data vector to the bank
-    new (fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
-      QnCorrectionsDataVectorChannelized(channelId, phi, weight);
+    new(fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
+        QnCorrectionsDataVectorChannelized(channelId, phi, weight);
     return kTRUE;
   }
   return kFALSE;
@@ -188,8 +199,9 @@ inline Bool_t QnCorrectionsDetectorConfigurationChannels::AddDataVector(
 inline void QnCorrectionsDetectorConfigurationChannels::BuildRawQnVector() {
   fTempQnVector.Reset();
 
-  for(Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++){
-    QnCorrectionsDataVectorChannelized *dataVector = static_cast<QnCorrectionsDataVectorChannelized *>(fDataVectorBank->At(ixData));
+  for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
+    QnCorrectionsDataVectorChannelized
+        *dataVector = static_cast<QnCorrectionsDataVectorChannelized *>(fDataVectorBank->At(ixData));
     fTempQnVector.Add(dataVector->Phi(), dataVector->Weight());
   }
   fTempQnVector.CheckQuality();
@@ -205,8 +217,9 @@ inline void QnCorrectionsDetectorConfigurationChannels::BuildQnVector() {
   fTempQnVector.Reset();
   fTempQ2nVector.Reset();
 
-  for(Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++){
-    QnCorrectionsDataVectorChannelized *dataVector = static_cast<QnCorrectionsDataVectorChannelized *>(fDataVectorBank->At(ixData));
+  for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
+    QnCorrectionsDataVectorChannelized
+        *dataVector = static_cast<QnCorrectionsDataVectorChannelized *>(fDataVectorBank->At(ixData));
     fTempQnVector.Add(dataVector->Phi(), dataVector->EqualizedWeight());
     fTempQ2nVector.Add(dataVector->Phi(), dataVector->EqualizedWeight());
   }
@@ -219,7 +232,6 @@ inline void QnCorrectionsDetectorConfigurationChannels::BuildQnVector() {
   fCorrectedQnVector.Set(&fTempQnVector, kFALSE);
   fCorrectedQ2nVector.Set(&fTempQ2nVector, kFALSE);
 }
-
 
 /// Ask for processing corrections for the involved detector configuration
 ///

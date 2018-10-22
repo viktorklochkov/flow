@@ -726,14 +726,14 @@ class DataContainer : public TObject {
  * @param option draw option
  * @param axis_name name of axis used for second dimension.
  */
-  void NDraw(Option_t *option, const std::string &axis_name = "") {}
+  void NDraw(Option_t *option, const std::string &axis_name = "") {(void)option; (void)axis_name;}
 
 /**
  * Display contents of DataContainer in TBrowser.
  * Implementation for template specializations please see below.
  * @param b TBrowser
  */
-  virtual void Browse(TBrowser *b) {}
+  virtual void Browse(TBrowser *b) {(void)b;}
 
 /// \cond CLASSIMP
  ClassDef(DataContainer, 12);

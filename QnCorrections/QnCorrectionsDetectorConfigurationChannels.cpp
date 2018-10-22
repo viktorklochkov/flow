@@ -46,7 +46,7 @@ const char *QnCorrectionsDetectorConfigurationChannels::szQAQnAverageHistogramNa
 
 /// Default constructor
 QnCorrectionsDetectorConfigurationChannels::QnCorrectionsDetectorConfigurationChannels() :
-    QnCorrectionsDetectorConfigurationBase(), fRawQnVector(), fInputDataCorrections() {
+    DetectorConfiguration(), fRawQnVector(), fInputDataCorrections() {
 
   fNoOfChannels = 0;
   fUsedChannel = NULL;
@@ -75,7 +75,7 @@ QnCorrectionsDetectorConfigurationChannels::QnCorrectionsDetectorConfigurationCh
       Int_t nNoOfChannels,
       Int_t nNoOfHarmonics,
       Int_t *harmonicMap) :
-          QnCorrectionsDetectorConfigurationBase(name, eventClassesVariables, nNoOfHarmonics, harmonicMap),
+          DetectorConfiguration(name, eventClassesVariables, nNoOfHarmonics, harmonicMap),
           fRawQnVector(szRawQnVectorName, nNoOfHarmonics, harmonicMap),
           fInputDataCorrections() {
   fNoOfChannels = nNoOfChannels;

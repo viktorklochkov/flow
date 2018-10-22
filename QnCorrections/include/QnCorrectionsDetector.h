@@ -15,11 +15,11 @@
 /// \brief Detector and detector configuration classes for Q vector correction framework
 ///
 
-#include "QnCorrectionsDetectorConfigurationBase.h"
+#include "DetectorConfiguration.h"
 #include "QnCorrectionsDetectorConfigurationsSet.h"
 
 class QnCorrectionsDetectorConfigurationsSet;
-class QnCorrectionsDetectorConfigurationBase;
+class DetectorConfiguration;
 class QnCorrectionsDetector;
 class QnCorrectionsManager;
 
@@ -70,8 +70,8 @@ public:
   { return fDataVectorAcceptedConfigurations.At(index)->GetName(); }
 
   void AttachCorrectionsManager(QnCorrectionsManager *manager);
-  void AddDetectorConfiguration(QnCorrectionsDetectorConfigurationBase *detectorConfiguration);
-  QnCorrectionsDetectorConfigurationBase *FindDetectorConfiguration(const char *name);
+  void AddDetectorConfiguration(DetectorConfiguration *detectorConfiguration);
+  DetectorConfiguration *FindDetectorConfiguration(const char *name);
   void FillDetectorConfigurationNameList(TList *list) const;
   void FillOverallInputCorrectionStepList(TList *list) const;
   void FillOverallQnVectorCorrectionStepList(TList *list) const;

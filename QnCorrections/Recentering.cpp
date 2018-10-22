@@ -36,23 +36,23 @@
 #include "QnCorrectionsHistogramSparse.h"
 #include "QnCorrectionsDetector.h"
 #include "QnCorrectionsLog.h"
-#include "QnCorrectionsQnVectorRecentering.h"
+#include "Recentering.h"
 
-const Int_t QnCorrectionsQnVectorRecentering::fDefaultMinNoOfEntries = 2;
-const char *QnCorrectionsQnVectorRecentering::szCorrectionName = "Recentering and width equalization";
-const char *QnCorrectionsQnVectorRecentering::szKey = "CCCC";
-const char *QnCorrectionsQnVectorRecentering::szSupportHistogramName = "Qn";
-const char *QnCorrectionsQnVectorRecentering::szCorrectedQnVectorName = "rec";
-const char *QnCorrectionsQnVectorRecentering::szQANotValidatedHistogramName = "Rec NvE";
-const char *QnCorrectionsQnVectorRecentering::szQAQnAverageHistogramName = "Rec Qn avg ";
+const Int_t Recentering::fDefaultMinNoOfEntries = 2;
+const char *Recentering::szCorrectionName = "Recentering and width equalization";
+const char *Recentering::szKey = "CCCC";
+const char *Recentering::szSupportHistogramName = "Qn";
+const char *Recentering::szCorrectedQnVectorName = "rec";
+const char *Recentering::szQANotValidatedHistogramName = "Rec NvE";
+const char *Recentering::szQAQnAverageHistogramName = "Rec Qn avg ";
 
 /// \cond CLASSIMP
-ClassImp(QnCorrectionsQnVectorRecentering);
+ClassImp(Recentering);
 /// \endcond
 
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
-QnCorrectionsQnVectorRecentering::QnCorrectionsQnVectorRecentering() :
+Recentering::Recentering() :
     QnCorrectionsCorrectionOnQvector(szCorrectionName, szKey) {
   fInputHistograms = NULL;
   fCalibrationHistograms = NULL;
@@ -64,7 +64,7 @@ QnCorrectionsQnVectorRecentering::QnCorrectionsQnVectorRecentering() :
 
 /// Default destructor
 /// Releases the memory taken
-QnCorrectionsQnVectorRecentering::~QnCorrectionsQnVectorRecentering() {
+Recentering::~Recentering() {
   if (fInputHistograms != NULL)
     delete fInputHistograms;
   if (fCalibrationHistograms != NULL)
@@ -78,7 +78,7 @@ QnCorrectionsQnVectorRecentering::~QnCorrectionsQnVectorRecentering() {
 /// Asks for support data structures creation
 ///
 /// Creates the recentered Qn vector
-void QnCorrectionsQnVectorRecentering::CreateSupportDataStructures() {
+void Recentering::CreateSupportDataStructures() {
 
   Int_t nNoOfHarmonics = fDetectorConfiguration->GetNoOfHarmonics();
   Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
@@ -99,7 +99,7 @@ void QnCorrectionsQnVectorRecentering::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorRecentering::CreateSupportHistograms(TList *list) {
+Bool_t Recentering::CreateSupportHistograms(TList *list) {
 
   TString histoNameAndTitle = Form("%s %s ",
       szSupportHistogramName,
@@ -124,7 +124,7 @@ Bool_t QnCorrectionsQnVectorRecentering::CreateSupportHistograms(TList *list) {
 /// Attaches the needed input information to the correction step
 /// \param list list where the inputs should be found
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorRecentering::AttachInput(TList *list) {
+Bool_t Recentering::AttachInput(TList *list) {
 
   if (fInputHistograms->AttachHistograms(list)) {
     QnCorrectionsInfo(Form("Recentering on %s going to be applied", fDetectorConfiguration->GetName()));
@@ -139,7 +139,7 @@ Bool_t QnCorrectionsQnVectorRecentering::AttachInput(TList *list) {
 /// Allocates the histogram objects and creates the QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorRecentering::CreateQAHistograms(TList *list) {
+Bool_t Recentering::CreateQAHistograms(TList *list) {
 
   fQAQnAverageHistogram = new QnCorrectionsProfileComponents(
       Form("%s %s", szQAQnAverageHistogramName, fDetectorConfiguration->GetName()),
@@ -160,7 +160,7 @@ Bool_t QnCorrectionsQnVectorRecentering::CreateQAHistograms(TList *list) {
 /// Allocates the histogram objects and creates the non validated entries QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorRecentering::CreateNveQAHistograms(TList *list) {
+Bool_t Recentering::CreateNveQAHistograms(TList *list) {
 
   fQANotValidatedBin = new QnCorrectionsHistogramSparse(
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
@@ -174,7 +174,7 @@ Bool_t QnCorrectionsQnVectorRecentering::CreateNveQAHistograms(TList *list) {
 ///
 /// Pure virtual function
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorRecentering::ProcessCorrections(const double *variableContainer) {
+Bool_t Recentering::ProcessCorrections(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
   case QCORRSTEP_calibration:
@@ -235,7 +235,7 @@ Bool_t QnCorrectionsQnVectorRecentering::ProcessCorrections(const double *variab
 ///
 /// Pure virtual function
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorRecentering::ProcessDataCollection(const double *variableContainer) {
+Bool_t Recentering::ProcessDataCollection(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
   case QCORRSTEP_calibration:
@@ -284,7 +284,7 @@ Bool_t QnCorrectionsQnVectorRecentering::ProcessDataCollection(const double *var
 }
 
 /// Clean the correction to accept a new event
-void QnCorrectionsQnVectorRecentering::ClearCorrectionStep() {
+void Recentering::ClearCorrectionStep() {
 
   fCorrectedQnVector->Reset();
 }
@@ -292,7 +292,7 @@ void QnCorrectionsQnVectorRecentering::ClearCorrectionStep() {
 /// Reports if the correction step is being applied
 /// Returns TRUE if in the proper state for applying the correction step
 /// \return TRUE if the correction step is being applied
-Bool_t QnCorrectionsQnVectorRecentering::IsBeingApplied() const {
+Bool_t Recentering::IsBeingApplied() const {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* we are collecting */
@@ -319,7 +319,7 @@ Bool_t QnCorrectionsQnVectorRecentering::IsBeingApplied() const {
 /// \param calibrationList list containing the correction steps producing calibration information
 /// \param applyList list containing the correction steps applying corrections
 /// \return kTRUE if the correction step is being applied
-Bool_t QnCorrectionsQnVectorRecentering::ReportUsage(TList *calibrationList, TList *applyList) {
+Bool_t Recentering::ReportUsage(TList *calibrationList, TList *applyList) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* we are collecting */

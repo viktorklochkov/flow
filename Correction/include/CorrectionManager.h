@@ -184,7 +184,7 @@ class CorrectionManager {
    * C-callable of signature void(QnCorrectionsDetectorConfigurationBase *config).
    */
   void SetCorrectionSteps(const std::string &name,
-                          std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config);
+                          std::function<void(DetectorConfiguration *config)> config);
 
   void SetTree(TTree *tree) { out_tree_ = tree; }
 
@@ -204,14 +204,18 @@ class CorrectionManager {
   void Reset();
 
   void FillChannelDetectors() {
-    for (auto &dp : detectors_channel) {
-      dp.second->FillData();
+    if (event_passed_cuts_) {
+      for (auto &dp : detectors_channel) {
+        dp.second->FillData();
+      }
     }
   }
 
   void FillTrackingDetectors() {
-    for (auto &dp : detectors_track) {
-      dp.second->FillData();
+    if (event_passed_cuts_) {
+      for (auto &dp : detectors_track) {
+        dp.second->FillData();
+      }
     }
   }
 

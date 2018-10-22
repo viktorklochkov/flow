@@ -18,7 +18,7 @@
 #include <TNamed.h>
 #include <TList.h>
 
-class QnCorrectionsDetectorConfigurationBase;
+class DetectorConfiguration;
 class QnCorrectionsDetectorConfigurationChannels;
 class QnCorrectionsQnVector;
 
@@ -52,7 +52,7 @@ public:
     QCORRSTEP_passive,             ///< the correction step is waiting for external conditions fulfillment
   } QnCorrectionStepStatus;
 
-  friend class QnCorrectionsDetectorConfigurationBase;
+  friend class DetectorConfiguration;
   QnCorrectionsCorrectionStepBase();
   QnCorrectionsCorrectionStepBase(const char *name, const char *key);
   virtual ~QnCorrectionsCorrectionStepBase();
@@ -136,11 +136,11 @@ public:
 protected:
   /// Stores the detector configuration owner
   /// \param detectorConfiguration the detector configuration owner
-  void SetConfigurationOwner(QnCorrectionsDetectorConfigurationBase *detectorConfiguration)
+  void SetConfigurationOwner(DetectorConfiguration *detectorConfiguration)
   { fDetectorConfiguration = detectorConfiguration; }
 
   QnCorrectionStepStatus fState;                                  ///< the state in which the correction step is
-  QnCorrectionsDetectorConfigurationBase *fDetectorConfiguration; ///< pointer to the detector configuration owner
+  DetectorConfiguration *fDetectorConfiguration; ///< pointer to the detector configuration owner
   TString fKey;                                                   ///< the correction key that codifies order information
 
 private:

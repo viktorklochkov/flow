@@ -37,15 +37,15 @@
 #include "QnCorrectionsHistogramChannelizedSparse.h"
 #include "QnCorrectionsDetectorConfigurationChannels.h"
 #include "QnCorrectionsLog.h"
-#include "QnCorrectionsInputGainEqualization.h"
+#include "GainEqualization.h"
 
-const Float_t  QnCorrectionsInputGainEqualization::fMinimumSignificantValue = 1E-6;
-const Int_t QnCorrectionsInputGainEqualization::fDefaultMinNoOfEntries = 2;
-const char *QnCorrectionsInputGainEqualization::szCorrectionName = "Gain equalization";
-const char *QnCorrectionsInputGainEqualization::szKey = "CCCC";
-const char *QnCorrectionsInputGainEqualization::szSupportHistogramName = "Multiplicity";
-const char *QnCorrectionsInputGainEqualization::szQAHistogramName = "QA Multiplicity";
-const char *QnCorrectionsInputGainEqualization::szQANotValidatedHistogramName = "GE NvE";
+const Float_t  GainEqualization::fMinimumSignificantValue = 1E-6;
+const Int_t GainEqualization::fDefaultMinNoOfEntries = 2;
+const char *GainEqualization::szCorrectionName = "Gain equalization";
+const char *GainEqualization::szKey = "CCCC";
+const char *GainEqualization::szSupportHistogramName = "Multiplicity";
+const char *GainEqualization::szQAHistogramName = "QA Multiplicity";
+const char *GainEqualization::szQANotValidatedHistogramName = "GE NvE";
 
 /// Default value for the shift parameter
 #define GAINEQUALIZATION_SHIFTDEFAULT 0.0
@@ -54,12 +54,12 @@ const char *QnCorrectionsInputGainEqualization::szQANotValidatedHistogramName = 
 
 
 /// \cond CLASSIMP
-ClassImp(QnCorrectionsInputGainEqualization);
+ClassImp(GainEqualization);
 /// \endcond
 
 /// Default constructor
 /// Passes to the base class the identity data for the Gain equalization correction step
-QnCorrectionsInputGainEqualization::QnCorrectionsInputGainEqualization() :
+GainEqualization::GainEqualization() :
     QnCorrectionsCorrectionOnInputData(szCorrectionName, szKey) {
   fInputHistograms = NULL;
   fCalibrationHistograms = NULL;
@@ -76,7 +76,7 @@ QnCorrectionsInputGainEqualization::QnCorrectionsInputGainEqualization() :
 
 /// Default destructor
 /// Releases the memory taken
-QnCorrectionsInputGainEqualization::~QnCorrectionsInputGainEqualization() {
+GainEqualization::~GainEqualization() {
   if (fInputHistograms != NULL)
     delete fInputHistograms;
   if (fCalibrationHistograms != NULL)
@@ -95,7 +95,7 @@ QnCorrectionsInputGainEqualization::~QnCorrectionsInputGainEqualization() {
 /// the detector configuration
 /// \param list list where the inputs should be found
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsInputGainEqualization::AttachInput(TList *list) {
+Bool_t GainEqualization::AttachInput(TList *list) {
   QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
       static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
   if (fInputHistograms->AttachHistograms(list,
@@ -110,7 +110,7 @@ Bool_t QnCorrectionsInputGainEqualization::AttachInput(TList *list) {
 /// Asks for support data structures creation
 ///
 /// Does nothing for the time being
-void QnCorrectionsInputGainEqualization::CreateSupportDataStructures() {
+void GainEqualization::CreateSupportDataStructures() {
 
 }
 
@@ -125,7 +125,7 @@ void QnCorrectionsInputGainEqualization::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsInputGainEqualization::CreateSupportHistograms(TList *list) {
+Bool_t GainEqualization::CreateSupportHistograms(TList *list) {
 
   TString histoNameAndTitle = Form("%s %s",
       szSupportHistogramName,
@@ -149,7 +149,7 @@ QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
 /// Allocates the histogram objects and creates the QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsInputGainEqualization::CreateQAHistograms(TList *list) {
+Bool_t GainEqualization::CreateQAHistograms(TList *list) {
   TString beforeName = Form("%s %s",
       szSupportHistogramName,
       fDetectorConfiguration->GetName());
@@ -188,7 +188,7 @@ Bool_t QnCorrectionsInputGainEqualization::CreateQAHistograms(TList *list) {
 /// Allocates the histogram objects and creates the non validated entries QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsInputGainEqualization::CreateNveQAHistograms(TList *list) {
+Bool_t GainEqualization::CreateNveQAHistograms(TList *list) {
   QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
       static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
   fQANotValidatedBin = new QnCorrectionsHistogramChannelizedSparse(
@@ -209,7 +209,7 @@ Bool_t QnCorrectionsInputGainEqualization::CreateNveQAHistograms(TList *list) {
 /// from correction processing. If so is required probably multiple equalization
 /// structures should be included.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsInputGainEqualization::ProcessCorrections(const double *variableContainer) {
+Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* collect the data needed to further produce equalization parameters */
@@ -328,7 +328,8 @@ Bool_t QnCorrectionsInputGainEqualization::ProcessCorrections(const double *vari
 /// structures should be included.
 /// So this function only retures the proper value according to the status.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsInputGainEqualization::ProcessDataCollection(const double *variableContainer) {
+Bool_t GainEqualization::ProcessDataCollection(const double *variableContainer) {
+  (void) variableContainer;
   switch (fState) {
   case QCORRSTEP_calibration:
     /* collect the data needed to further produce equalization parameters */
@@ -354,7 +355,7 @@ Bool_t QnCorrectionsInputGainEqualization::ProcessDataCollection(const double *v
 /// \param calibrationList list containing the correction steps producing calibration information
 /// \param applyList list containing the correction steps applying corrections
 /// \return kTRUE if the correction step is being applied
-Bool_t QnCorrectionsInputGainEqualization::ReportUsage(TList *calibrationList, TList *applyList) {
+Bool_t GainEqualization::ReportUsage(TList *calibrationList, TList *applyList) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* we are collecting */

@@ -15,7 +15,7 @@
 /// \brief Set of detector configuration class within Q vector correction framework
 ///
 
-#include "QnCorrectionsDetectorConfigurationBase.h"
+#include "DetectorConfiguration.h"
 
 /// \class QnCorrectionsDetectorConfigurationsSet
 /// \brief Array of detector configurations within Q vector correction framework
@@ -40,8 +40,8 @@ public:
   /// Access the detector configuration at the passed position
   /// \param i position in the list (starting at zero)
   /// \return the detector configuration object a position i
-  virtual QnCorrectionsDetectorConfigurationBase *At(Int_t i) const
-    { return (QnCorrectionsDetectorConfigurationBase *) TObjArray::At(i);}
+  virtual DetectorConfiguration *At(Int_t i) const
+    { return (DetectorConfiguration *) TObjArray::At(i);}
 
 /// \cond CLASSIMP
   ClassDef(QnCorrectionsDetectorConfigurationsSet, 1);

@@ -168,8 +168,8 @@ QnCorrectionsDetector *QnCorrectionsManager::FindDetector(Int_t id) const {
 /// Searches for a concrete detector configuration by name
 /// \param name the name of the detector configuration to find
 /// \return pointer to the found detector configuration (NULL if not found)
-QnCorrectionsDetectorConfigurationBase *QnCorrectionsManager::FindDetectorConfiguration(const char *name) const {
-  QnCorrectionsDetectorConfigurationBase *detectorConfiguration;
+DetectorConfiguration *QnCorrectionsManager::FindDetectorConfiguration(const char *name) const {
+  DetectorConfiguration *detectorConfiguration;
   for (Int_t ixDetector = 0; ixDetector < fDetectorsSet.GetEntries(); ixDetector++) {
     detectorConfiguration = ((QnCorrectionsDetector *) fDetectorsSet.At(ixDetector))->FindDetectorConfiguration(name);
     if (detectorConfiguration != NULL) {

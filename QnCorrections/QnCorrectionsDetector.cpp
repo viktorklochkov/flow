@@ -162,7 +162,7 @@ void QnCorrectionsDetector::AttachCorrectionsManager(QnCorrectionsManager *manag
 /// is not empty and if the detector configuration
 /// is already incorporated to the detector.
 /// \param detectorConfiguration pointer to the configuration to be added
-void QnCorrectionsDetector::AddDetectorConfiguration(QnCorrectionsDetectorConfigurationBase *detectorConfiguration) {
+void QnCorrectionsDetector::AddDetectorConfiguration(DetectorConfiguration *detectorConfiguration) {
   if (detectorConfiguration->GetDetector() != NULL) {
     QnCorrectionsFatal(Form("You are adding %s detector configuration of detector Id %d to detector Id %d. FIX IT, PLEASE.",
         detectorConfiguration->GetName(),
@@ -185,8 +185,8 @@ void QnCorrectionsDetector::AddDetectorConfiguration(QnCorrectionsDetectorConfig
 /// Searches for a concrete detector configuration by name
 /// \param name the name of the detector configuration to find
 /// \return pointer to the found detector configuration (NULL if not found)
-QnCorrectionsDetectorConfigurationBase *QnCorrectionsDetector::FindDetectorConfiguration(const char *name) {
-  return (QnCorrectionsDetectorConfigurationBase *) fConfigurations.FindObject(name);
+DetectorConfiguration *QnCorrectionsDetector::FindDetectorConfiguration(const char *name) {
+  return (DetectorConfiguration *) fConfigurations.FindObject(name);
 }
 
 /// Include the the list of Qn vector associated to the detector

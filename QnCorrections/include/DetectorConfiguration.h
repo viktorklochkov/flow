@@ -60,16 +60,16 @@ class QnCorrectionsManager;
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 08, 2016
 
-class QnCorrectionsDetectorConfigurationBase : public TNamed {
+class DetectorConfiguration : public TNamed {
  public:
   friend class QnCorrectionsCorrectionStepBase;
   friend class QnCorrectionsDetector;
-  QnCorrectionsDetectorConfigurationBase();
-  QnCorrectionsDetectorConfigurationBase(const char *name,
+  DetectorConfiguration();
+  DetectorConfiguration(const char *name,
                                          QnCorrectionsEventClassVariablesSet *eventClassesVariables,
                                          Int_t nNoOfHarmonics,
                                          Int_t *harmonicMap = NULL);
-  virtual ~QnCorrectionsDetectorConfigurationBase();
+  virtual ~DetectorConfiguration();
 
   /// Sets the set of cuts for the detector configuration
   /// \param cuts the set of cuts
@@ -257,8 +257,8 @@ class QnCorrectionsDetectorConfigurationBase : public TNamed {
                                Double_t weight = 1.0,
                                Int_t channelId = -1) = 0;
 
-  virtual Bool_t IsSelected(const double *variableContainer);
-  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel);
+  virtual Bool_t IsSelected(const double *variableContainer) = 0;
+  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) = 0;
 
   /// Clean the configuration to accept a new event
   /// Pure virtual function
@@ -288,13 +288,13 @@ class QnCorrectionsDetectorConfigurationBase : public TNamed {
  private:
   /// Copy constructor
   /// Not allowed. Forced private.
-  QnCorrectionsDetectorConfigurationBase(const QnCorrectionsDetectorConfigurationBase &);
+  DetectorConfiguration(const DetectorConfiguration &);
   /// Assignment operator
   /// Not allowed. Forced private.
-  QnCorrectionsDetectorConfigurationBase &operator=(const QnCorrectionsDetectorConfigurationBase &);
+  DetectorConfiguration &operator=(const DetectorConfiguration &);
 
 /// \cond CLASSIMP
- ClassDef(QnCorrectionsDetectorConfigurationBase, 3);
+ ClassDef(DetectorConfiguration, 3);
 /// \endcond
 };
 

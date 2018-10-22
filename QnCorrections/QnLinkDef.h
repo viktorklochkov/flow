@@ -29,7 +29,7 @@
 #pragma link C++ class QnCorrectionsDataVector+;
 #pragma link C++ class QnCorrectionsDataVectorChannelized+;
 #pragma link C++ class QnCorrectionsDetector+;
-#pragma link C++ class QnCorrectionsDetectorConfigurationBase+;
+#pragma link C++ class DetectorConfiguration+;
 #pragma link C++ class QnCorrectionsDetectorConfigurationChannels+;
 #pragma link C++ class QnCorrectionsDetectorConfigurationsSet+;
 #pragma link C++ class QnCorrectionsDetectorConfigurationTracks+;
@@ -40,7 +40,7 @@
 #pragma link C++ class QnCorrectionsHistogramChannelized+;
 #pragma link C++ class QnCorrectionsHistogramChannelizedSparse+;
 #pragma link C++ class QnCorrectionsHistogramSparse+;
-#pragma link C++ class QnCorrectionsInputGainEqualization+;
+#pragma link C++ class GainEqualization+;
 #pragma link C++ class QnCorrectionsManager+;
 #pragma link C++ class QnCorrectionsProfile+;
 #pragma link C++ class QnCorrectionsProfile3DCorrelations+;
@@ -50,9 +50,9 @@
 #pragma link C++ class QnCorrectionsProfileCorrelationComponents+;
 #pragma link C++ class QnCorrectionsProfileCorrelationComponentsHarmonics+;
 #pragma link C++ class QnCorrectionsQnVector+;
-#pragma link C++ class QnCorrectionsQnVectorAlignment+;
+#pragma link C++ class Alignment+;
 #pragma link C++ class QnCorrectionsQnVectorBuild+;
-#pragma link C++ class QnCorrectionsQnVectorRecentering+;
-#pragma link C++ class QnCorrectionsQnVectorTwistAndRescale+;
+#pragma link C++ class Recentering+;
+#pragma link C++ class TwistAndRescale+;
 
 #endif

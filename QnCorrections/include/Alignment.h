@@ -1,5 +1,5 @@
-#ifndef QNCORRECTIONS_QNVECTORRECENTERING_H
-#define QNCORRECTIONS_QNVECTORRECENTERING_H
+#ifndef QNCORRECTIONS_QNVECTORALIGNMENT_H
+#define QNCORRECTIONS_QNVECTORALIGNMENT_H
 
 /***************************************************************************
  * Package:       FlowVectorCorrections                                    *
@@ -11,83 +11,71 @@
  * See cxx source for GPL licence et. al.                                  *
  ***************************************************************************/
 
-/// \file QnCorrectionsQnVectorRecentering.h
-/// \brief Definition of the class that implements recentering and width equalization on Q vectors.
+/// \file QnCorrectionsQnVectorAlignment.h
+/// \brief Definition of the class that implements Qn vectors rotations for detector alignment corrections.
 ///
-/// Recentering and weight equalization is applied on ongoing Q vector from the involved detector
-/// configuration. It is supposed that such a Q vector has already been built after input data
-/// equalization and is with proper normalization for the recentering correction being applied.
-/// The recentering correction is always applied while the with equalization is user configurable.
+/// Qn vector alignment is applied on ongoing Qn vector from the involved detector
+/// configuration. It is supposed that such a Qn vector has already been built after input data
+/// equalization and, potentially, Qn vector recentering, and is with proper normalization for
+/// the recentering correction being applied.
 ///
-/// The recentering is applied according to:
+/// The alignment is applied according to:
 /// \f[
-///        Q' = Q - {\langle Q \rangle}
+///        Q' = \mathcal{R}(\Delta \phi) Q
 /// \f]
-/// where  \f$\langle Q \rangle\f$ is an average over events in a given event class
+/// where the rotation angle \f$ \Delta \phi \f$ is given by
 /// \f[
-///        \langle Q \rangle = \frac{1}{\mbox{N}_{ev}} \sum_{i}^{\mbox{N}_{ev}} Q_i
+///        \Delta \phi_n = - \frac{1}{m} \tan^{-1}
+///          \left(\frac{\langle{Q_n}_X{Q^A_m}_Y\rangle - \langle{Q_n}_Y{Q^A_m}_X\rangle}
+///                    {\langle{Q_n}_X{Q^A_m}_X\rangle + \langle{Q_n}_Y{Q^A_m}_Y\rangle}\right)
 /// \f]
+/// with  \f$ \langle \cdots \rangle \f$ as an average over events in a given event class, \f$ A \f$
+/// the detector configuration chosen as alignment reference and \f$ m \f$ the harmonic selected
+/// for alignment.
 ///
-/// The recentering and width equalization is applied according to:
-/// \f[
-///     Q' = \frac{Q- \langle Q \rangle}{\sigma_Q}
-/// \f]
-/// where \f$ \sigma_Q \f$ is the standard deviation of the \f$ Q \f$ values
-/// for the considered event class.
-/// \f[
-///        \sigma_Q = \sqrt{
-///          \frac{1}{\mbox{N}_{ev}} \sum_{i}^{\mbox{N}_{ev}} Q^2_i -
-///          \frac{1}{\mbox{N}^2_{ev}} \left(\sum_{i}^{\mbox{N}_{ev}} Q_i \right)^2}
-/// \f]
+/// So, options configurable by the user are the detector configuration to use for alignment
+/// and the harmonic number also to be used.
 ///
-/// Recentering (and width equalization) is only applied if the class instance
+/// Qn vector rotation(and width equalization) is only applied if the class instance
 /// is in the correction status. In order to be in that status the instance
 /// should have been able to get the proper correction histograms that will
 /// provide the required averages per event class.
 /// If the class instance is not in the correction status then, it is
 /// in the calibration one, collecting data for producing, once merged in a
-/// further phase, the correction histograms.
+/// further phase, the needed correction histograms.
 ///
 /// Correction and data collecting during calibration is performed for all harmonics
 /// defined within the involved detector configuration
 
 #include "QnCorrectionsCorrectionOnQvector.h"
 
-/// \class QnCorrectionsQnVectorRecentering
-/// \brief Encapsulates recentering and width equalization on Q vector
+/// \class QnCorrectionsQnVectorAlignment
+/// \brief Encapsulates Qn vector rotation for alignment correction
 ///
 ///
 /// \author Jaap Onderwaater <jacobus.onderwaater@cern.ch>, GSI
 /// \author Ilya Selyuzhenkov <ilya.selyuzhenkov@gmail.com>, GSI
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
-/// \date Apr 01, 2016
+/// \date Apr 27, 2016
 ///
-/// Recentering and weight equalization is applied on ongoing Q vector from the involved detector
+/// Alignment is applied on ongoing Qn vector from the involved detector
 /// configuration.
-/// The recentering correction is always applied while the with equalization is user configurable.
 ///
-/// The recentering is applied according to:
+/// The alignment is applied according to:
 /// \f[
-///        Q' = Q - {\langle Q \rangle}
+///        Q' = \mathcal{R}(\Delta \phi) Q
 /// \f]
-/// where  \f$\langle Q \rangle\f$ is an average over events in a given event class
+/// where the rotation angle \f$ \Delta \phi \f$ is given by
 /// \f[
-///        \langle Q \rangle = \frac{1}{\mbox{N}_{ev}} \sum_{i}^{\mbox{N}_{ev}} Q_i
+///        \Delta \phi_n = - \frac{1}{m} \tan^{-1}
+///          \left(\frac{\langle{Q_n}_X{Q^A_m}_Y\rangle - \langle{Q_n}_Y{Q^A_m}_X\rangle}
+///                    {\langle{Q_n}_X{Q^A_m}_X\rangle + \langle{Q_n}_Y{Q^A_m}_Y\rangle}\right)
 /// \f]
+/// with  \f$ \langle \cdots \rangle \f$ as an average over events in a given event class, \f$ A \f$
+/// the detector configuration chosen as alignment reference and \f$ m \f$ the harmonic selected
+/// for alignment.
 ///
-/// The recentering and width equalization is applied according to:
-/// \f[
-///     Q' = \frac{Q- \langle Q \rangle}{\sigma_Q}
-/// \f]
-/// where \f$ \sigma_Q \f$ is the standard deviation of the \f$ Q \f$ values
-/// for the considered event class.
-/// \f[
-///        \sigma_Q = \sqrt{
-///          \frac{1}{\mbox{N}_{ev}} \sum_{i}^{\mbox{N}_{ev}} Q^2_i -
-///          \frac{1}{\mbox{N}^2_{ev}} \left(\sum_{i}^{\mbox{N}_{ev}} Q_i \right)^2}
-/// \f]
-///
-/// Recentering (and width equalization) is only applied if the class instance
+/// Alignment is only applied if the class instance
 /// is in the correction status. In order to be in that status the instance
 /// should have been able to get the proper correction histograms that will
 /// provide the required averages per event class.
@@ -100,31 +88,29 @@
 
 class QnCorrectionsHistogramSparse;
 
-class QnCorrectionsQnVectorRecentering : public QnCorrectionsCorrectionOnQvector {
+class Alignment : public QnCorrectionsCorrectionOnQvector {
 public:
-  QnCorrectionsQnVectorRecentering();
-  ~QnCorrectionsQnVectorRecentering();
+  Alignment();
+  ~Alignment();
 
-  /// Controls if width equalization step shall be additionally applied
-  /// \param apply kTRUE for applying the width equalization step
-  void SetApplyWidthEqualization(Bool_t apply)
-  { fApplyWidthEqualization = apply; }
+  /// Set the harmonic number used for alignment
+  /// \param harmonic harmonic number
+  void SetHarmonicNumberForAlignment(Int_t harmonic)
+  { fHarmonicForAlignment = harmonic; }
+  void SetReferenceConfigurationForAlignment(const char *name);
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
 
-  /// Informs when the detector configuration has been attached to the framework manager
-  /// Basically this allows interaction between the different framework sections at configuration time
-  /// No action for Qn vector recentering
-  virtual void AttachedToFrameworkManager() {}
+  virtual void AttachedToFrameworkManager();
   virtual Bool_t AttachInput(TList *list);
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
   /// it is time to check if their requirements are satisfied
   ///
-  /// Does nothin for the time being
-  virtual void AfterInputsAttachActions() {};
+  /// Does nothing for the time being
+  virtual void AfterInputsAttachActions() {}
   virtual void CreateSupportDataStructures();
   virtual Bool_t CreateSupportHistograms(TList *list);
   virtual Bool_t CreateQAHistograms(TList *list);
@@ -144,17 +130,19 @@ private:
   static const char *szCorrectedQnVectorName;        ///< the name of the Qn vector after applying the correction
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
   static const char *szQAQnAverageHistogramName;     ///< the name and title for Qn components average QA histograms
-  QnCorrectionsProfileComponents *fInputHistograms; //!<! the histogram with calibration information
-  QnCorrectionsProfileComponents *fCalibrationHistograms; //!<! the histogram for building calibration information
+  QnCorrectionsProfileCorrelationComponents *fInputHistograms; //!<! the histogram with calibration information
+  QnCorrectionsProfileCorrelationComponents *fCalibrationHistograms; //!<! the histogram for building calibration information
   QnCorrectionsHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
   QnCorrectionsProfileComponents *fQAQnAverageHistogram; //!<! the after correction step average Qn components QA histogram
 
-  Bool_t fApplyWidthEqualization;              ///< apply the width equalization step
+  Int_t  fHarmonicForAlignment;              ///< the harmonic number to be used for Qn vector alignment correction
+  TString fDetectorConfigurationForAlignmentName; ///< storage for the name of the reference detector configuration for alignment correction
+  DetectorConfiguration *fDetectorConfigurationForAlignment; ///< pointer to the detector configuration used as reference for alingment
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP
-  ClassDef(QnCorrectionsQnVectorRecentering, 3);
+  ClassDef(Alignment, 3);
 /// \endcond
 };
 
-#endif // QNCORRECTIONS_QNVECTORRECENTERING_H
+#endif // QNCORRECTIONS_QNVECTORALIGNMENT_H

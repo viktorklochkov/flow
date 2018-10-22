@@ -16,7 +16,8 @@
 ///
 
 #include "QnCorrectionsDataVector.h"
-#include "QnCorrectionsDetectorConfigurationBase.h"
+#include "DetectorConfiguration.h"
+#include "QnCorrectionsLog.h"
 
 class QnCorrectionsProfileComponents;
 
@@ -34,7 +35,7 @@ class QnCorrectionsProfileComponents;
 /// \date Feb 08, 2016
 
 class QnCorrectionsDetectorConfigurationTracks :
-    public QnCorrectionsDetectorConfigurationBase {
+    public DetectorConfiguration {
 public:
   friend class QnCorrectionsCorrectionStepBase;
   friend class QnCorrectionsDetector;
@@ -73,11 +74,18 @@ public:
   /// the detector configuration
   /// \param variableContainer pointer to the variable content bank
   /// \return kTRUE if the current content applies to the configuration
-  virtual Bool_t IsSelected(const double *variableContainer)
-    { return ((fCuts != NULL) ? fCuts->IsSelected(variableContainer) : kTRUE); }
+  virtual Bool_t IsSelected(const double *variableContainer) {
+    return ((fCuts != NULL) ? fCuts->IsSelected(variableContainer) : kTRUE);
+  }
   /// wrong call for this class invoke base class behavior
-  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel)
-  { return QnCorrectionsDetectorConfigurationBase::IsSelected(variableContainer,nChannel); }
+  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) {
+    (void) variableContainer;
+    (void) nChannel;
+    QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
+    "you are using a channelized detector configuration but passing no channel number. FIX IT, PLEASE.",
+                            "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
+    return kFALSE;
+  }
 
   virtual void ClearConfiguration();
 

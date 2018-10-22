@@ -335,7 +335,7 @@ void CorrelationManager::FitEventShape() {
       auto name = correlation.first;
       event_shape_->At(ibin).SetName("ESE_" + name);;
       event_shape_->At(ibin).SetHisto(&bin);
-      event_shape_->At(ibin).FitWithSpline(bin);
+      event_shape_->At(ibin).FitWithSpline();
       event_shape_->At(ibin).SetReady();
       ++ibin;
     }

@@ -25,7 +25,7 @@ void Qn::EventShape::IntegrateHist() {
   }
 }
 
-void Qn::EventShape::FitWithSpline(TH1F hist) {
+void Qn::EventShape::FitWithSpline() {
   IntegrateHist();
   spline_ = new TSpline3(integral_, "sp3");
   spline_->SetName("spline");

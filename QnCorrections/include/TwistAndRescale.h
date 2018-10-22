@@ -129,7 +129,7 @@
 
 class QnCorrectionsHistogramSparse;
 
-class QnCorrectionsQnVectorTwistAndRescale : public QnCorrectionsCorrectionOnQvector {
+class TwistAndRescale : public QnCorrectionsCorrectionOnQvector {
 public:
    /// \enum QnTwistAndRescaleMethod
    /// \brief The class of the id of the supported twist and rescale methods
@@ -148,8 +148,8 @@ public:
      ///  \Lambda^{A,-}_{2n} =  \frac{\langle X^{A}_{n} Y^{B}_{n} \rangle}{\langle Y^{A}_{n} Y^{B}_{n} \rangle} \f$
    };
 
-   QnCorrectionsQnVectorTwistAndRescale();
-  ~QnCorrectionsQnVectorTwistAndRescale();
+   TwistAndRescale();
+  ~TwistAndRescale();
 
   /// Sets the method for extracting twist and rescale correction parameters
   /// \param method the chosen method
@@ -208,15 +208,15 @@ private:
   Bool_t fApplyTwist;              ///< apply the twist step
   Bool_t fApplyRescale;            ///< apply the rescale step
   TString fBDetectorConfigurationName; ///< the name of the B detector configuration
-  QnCorrectionsDetectorConfigurationBase *fBDetectorConfiguration; ///< pointer to the B detector configuration
+  DetectorConfiguration *fBDetectorConfiguration; ///< pointer to the B detector configuration
   TString fCDetectorConfigurationName; ///< the name of the C detector configuration
-  QnCorrectionsDetectorConfigurationBase *fCDetectorConfiguration; ///< pointer to the C detector configuration
+  DetectorConfiguration *fCDetectorConfiguration; ///< pointer to the C detector configuration
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
   QnCorrectionsQnVector *fTwistCorrectedQnVector;   ///< twisted Qn vector
   QnCorrectionsQnVector *fRescaleCorrectedQnVector; ///< rescaled Qn vector
 
 /// \cond CLASSIMP
-  ClassDef(QnCorrectionsQnVectorTwistAndRescale, 2);
+  ClassDef(TwistAndRescale, 2);
 /// \endcond
 };
 

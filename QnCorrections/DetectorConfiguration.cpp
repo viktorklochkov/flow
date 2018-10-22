@@ -32,18 +32,18 @@
 /// \file QnCorrectionsDetectorConfigurationBase.cxx
 /// \brief Implementation of the base detector configuration class within Q vector correction framework
 
-#include "QnCorrectionsDetectorConfigurationBase.h"
+#include "DetectorConfiguration.h"
 #include "QnCorrectionsLog.h"
 
 /// \cond CLASSIMP
-ClassImp(QnCorrectionsDetectorConfigurationBase);
+ClassImp(DetectorConfiguration);
 /// \endcond
 
-const char *QnCorrectionsDetectorConfigurationBase::szPlainQnVectorName = "plain";
+const char *DetectorConfiguration::szPlainQnVectorName = "plain";
 
 
 /// Default constructor
-QnCorrectionsDetectorConfigurationBase::QnCorrectionsDetectorConfigurationBase() : TNamed(),
+DetectorConfiguration::DetectorConfiguration() : TNamed(),
     fPlainQnVector(), fPlainQ2nVector(),
     fCorrectedQnVector(), fCorrectedQ2nVector(),
     fTempQnVector(), fTempQ2nVector(),
@@ -64,7 +64,7 @@ QnCorrectionsDetectorConfigurationBase::QnCorrectionsDetectorConfigurationBase()
 /// \param eventClassesVariables the set of event classes variables
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
-QnCorrectionsDetectorConfigurationBase::QnCorrectionsDetectorConfigurationBase(const char *name,
+DetectorConfiguration::DetectorConfiguration(const char *name,
       QnCorrectionsEventClassVariablesSet *eventClassesVariables,
       Int_t nNoOfHarmonics,
       Int_t *harmonicMap) :
@@ -90,7 +90,7 @@ QnCorrectionsDetectorConfigurationBase::QnCorrectionsDetectorConfigurationBase(c
 
 /// Default destructor
 /// Releases the memory which was taken or passed
-QnCorrectionsDetectorConfigurationBase::~QnCorrectionsDetectorConfigurationBase() {
+DetectorConfiguration::~DetectorConfiguration() {
   if (fDataVectorBank != NULL) {
     delete fDataVectorBank;
   }
@@ -101,7 +101,7 @@ QnCorrectionsDetectorConfigurationBase::~QnCorrectionsDetectorConfigurationBase(
 
 /// Incorporates the passed correction to the set of Q vector corrections
 /// \param correctionOnQn the correction to add
-void QnCorrectionsDetectorConfigurationBase::AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) {
+void DetectorConfiguration::AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) {
   correctionOnQn->SetConfigurationOwner(this);
   fQnVectorCorrections.AddCorrection(correctionOnQn);
 }
@@ -113,7 +113,8 @@ void QnCorrectionsDetectorConfigurationBase::AddCorrectionOnQnVector(QnCorrectio
 /// Run time error to support debugging.
 ///
 /// \param correctionOnInputData the correction to add
-void QnCorrectionsDetectorConfigurationBase::AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData) {
+void DetectorConfiguration::AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData) {
+  (void) correctionOnInputData;
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a non channelized detector configuration to calibrate input data. FIX IT, PLEASE.",
       "QnCorrectionsDetectorConfigurationBase::AddCorrectionOnInputData()"));
@@ -124,7 +125,7 @@ void QnCorrectionsDetectorConfigurationBase::AddCorrectionOnInputData(QnCorrecti
 /// The user is not able to modify it.
 /// \param correctionOnQn the correction to find its predecessor corrected Qn vector
 /// \return the corrected Qn vector from the correction step predecessor or the plain Qn vector
-const QnCorrectionsQnVector *QnCorrectionsDetectorConfigurationBase::GetPreviousCorrectedQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) const {
+const QnCorrectionsQnVector *DetectorConfiguration::GetPreviousCorrectedQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) const {
   if (fQnVectorCorrections.GetPrevious(correctionOnQn) != NULL)
     return fQnVectorCorrections.GetPrevious(correctionOnQn)->GetCorrectedQnVector();
   else
@@ -137,7 +138,7 @@ const QnCorrectionsQnVector *QnCorrectionsDetectorConfigurationBase::GetPrevious
 /// Transfers the request to the set of Qn vector corrections.
 /// \param step the name of the correction step
 /// \return TRUE if the correction step is being applied
-Bool_t QnCorrectionsDetectorConfigurationBase::IsCorrectionStepBeingApplied(const char *step) const {
+Bool_t DetectorConfiguration::IsCorrectionStepBeingApplied(const char *step) const {
 
   return fQnVectorCorrections.IsCorrectionStepBeingApplied(step);
 }
@@ -145,7 +146,7 @@ Bool_t QnCorrectionsDetectorConfigurationBase::IsCorrectionStepBeingApplied(cons
 
 /// Activate the processing for the passed harmonic
 /// \param harmonic the desired harmonic number to activate
-void QnCorrectionsDetectorConfigurationBase::ActivateHarmonic(Int_t harmonic) {
+void DetectorConfiguration::ActivateHarmonic(Int_t harmonic) {
   fPlainQnVector.ActivateHarmonic(harmonic);
   fCorrectedQnVector.ActivateHarmonic(harmonic);
   fPlainQ2nVector.ActivateHarmonic(harmonic);
@@ -163,12 +164,12 @@ void QnCorrectionsDetectorConfigurationBase::ActivateHarmonic(Int_t harmonic) {
 ///
 /// \param variableContainer pointer to the variable content bank
 /// \return kTRUE if the current content applies to the configuration
-Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const double *variableContainer) {
-  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
-      "you are using a channelized detector configuration without passing the channel number. FIX IT, PLEASE.",
-      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
-  return kFALSE;
-}
+//Bool_t DetectorConfiguration::IsSelected(const double *variableContainer) {
+//  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
+//      "you are using a channelized detector configuration without passing the channel number. FIX IT, PLEASE.",
+//      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
+//  return kFALSE;
+//}
 
 /// Checks if the current content of the variable bank applies to
 /// the detector configuration for the passed channel.
@@ -180,10 +181,10 @@ Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const double *variable
 /// \param variableContainer pointer to the variable content bank
 /// \param nChannel the interested external channel number
 /// \return kTRUE if the current content applies to the configuration
-Bool_t QnCorrectionsDetectorConfigurationBase::IsSelected(const double *variableContainer, Int_t nChannel) {
-  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
-      "you are using a non channelized detector configuration but passing a channel number. FIX IT, PLEASE.",
-      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
-  return kFALSE;
-}
+//Bool_t DetectorConfiguration::IsSelected(const double *variableContainer, Int_t nChannel) {
+//  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
+//      "you are using a non channelized detector configuration but passing a channel number. FIX IT, PLEASE.",
+//      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
+//  return kFALSE;
+//}
 

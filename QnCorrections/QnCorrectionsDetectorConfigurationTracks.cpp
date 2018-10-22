@@ -43,7 +43,7 @@ ClassImp(QnCorrectionsDetectorConfigurationTracks);
 const char *QnCorrectionsDetectorConfigurationTracks::szQAQnAverageHistogramName = "Plain Qn avg ";
 
 /// Default constructor
-QnCorrectionsDetectorConfigurationTracks::QnCorrectionsDetectorConfigurationTracks() : QnCorrectionsDetectorConfigurationBase() {
+QnCorrectionsDetectorConfigurationTracks::QnCorrectionsDetectorConfigurationTracks() : DetectorConfiguration() {
 
   fQAQnAverageHistogram = NULL;
 }
@@ -58,7 +58,7 @@ QnCorrectionsDetectorConfigurationTracks::QnCorrectionsDetectorConfigurationTrac
       QnCorrectionsEventClassVariablesSet *eventClassesVariables,
       Int_t nNoOfHarmonics,
       Int_t *harmonicMap) :
-          QnCorrectionsDetectorConfigurationBase(name, eventClassesVariables, nNoOfHarmonics, harmonicMap) {
+          DetectorConfiguration(name, eventClassesVariables, nNoOfHarmonics, harmonicMap) {
 
   fQAQnAverageHistogram = NULL;
 }
@@ -282,7 +282,7 @@ void QnCorrectionsDetectorConfigurationTracks::IncludeQnVectors(TList *list) {
 /// There are not input correction so we do nothing
 /// \param list list where the correction steps should be incorporated
 void QnCorrectionsDetectorConfigurationTracks::FillOverallInputCorrectionStepList(TList *list) const {
-
+  (void) list;
 }
 
 /// Include only one instance of each Qn vector correction step

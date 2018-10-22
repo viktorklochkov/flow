@@ -49,7 +49,7 @@ class EventShape : public TObject {
 
   void IntegrateHist();
 
-  void FitWithSpline(TH1F hist);
+  void FitWithSpline();
 
   bool ready_ = false;
   std::string name_;

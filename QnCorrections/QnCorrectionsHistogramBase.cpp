@@ -19,8 +19,8 @@ const char *QnCorrectionsHistogramBase::szYXCorrelationComponentSuffix = "YX";
 const char *QnCorrectionsHistogramBase::szYYCorrelationComponentSuffix = "YY";
 const Int_t QnCorrectionsHistogramBase::nMaxHarmonicNumberSupported = 15;
 const UInt_t QnCorrectionsHistogramBase::harmonicNumberMask[] =
-  {0x0000,0x0002,0x0004,0x0008,0x0010,0x0020,0x0040,0x0080,
-   0x0100,0x0200,0x0400,0x0800,0x1000,0x2000,0x4000,0x8000};
+    {0x0000, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
+     0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000};
 const UInt_t QnCorrectionsHistogramBase::correlationXXmask = 0x0001;
 const UInt_t QnCorrectionsHistogramBase::correlationXYmask = 0x0002;
 const UInt_t QnCorrectionsHistogramBase::correlationYXmask = 0x0004;
@@ -33,9 +33,9 @@ ClassImp(QnCorrectionsHistogramBase);
 
 /// Default constructor
 QnCorrectionsHistogramBase::QnCorrectionsHistogramBase() :
-  TNamed(),
-  fEventClassVariables(),
-  fBinAxesValues(NULL) {
+    TNamed(),
+    fEventClassVariables(),
+    fBinAxesValues(nullptr) {
 
   fErrorMode = kERRORMEAN;
   fMinNoOfEntriesToValidate = nDefaultMinNoOfEntriesValidated;
@@ -45,8 +45,7 @@ QnCorrectionsHistogramBase::QnCorrectionsHistogramBase() :
 ///
 /// restores the taken memory for the bin axes values bank
 QnCorrectionsHistogramBase::~QnCorrectionsHistogramBase() {
-  if (fBinAxesValues != NULL)
-    delete [] fBinAxesValues;
+  delete[] fBinAxesValues;
 }
 
 /// Normal constructor
@@ -68,12 +67,12 @@ QnCorrectionsHistogramBase::~QnCorrectionsHistogramBase() {
 ///
 ///     's'            the bin are the standard deviation of of the bin values
 QnCorrectionsHistogramBase::QnCorrectionsHistogramBase(const char *name,
-    const char *title,
-    QnCorrectionsEventClassVariablesSet &ecvs,
-    Option_t *option) :
-  TNamed(name, title),
-  fEventClassVariables(ecvs),
-  fBinAxesValues(NULL) {
+                                                       const char *title,
+                                                       QnCorrectionsEventClassVariablesSet &ecvs,
+                                                       Option_t *option) :
+    TNamed(name, title),
+    fEventClassVariables(ecvs),
+    fBinAxesValues(nullptr) {
 
   /* one place more for storing the channel number by inherited classes */
   fBinAxesValues = new Double_t[fEventClassVariables.GetEntries() + 1];
@@ -93,9 +92,10 @@ QnCorrectionsHistogramBase::QnCorrectionsHistogramBase(const char *name,
 /// \param histogramList list where the histograms have to be located
 /// \return the associated bin to the current variables content
 Bool_t QnCorrectionsHistogramBase::AttachHistograms(TList *histogramList) {
+  (void) histogramList;
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a channelized profile without passing channels information. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::AttachHistograms()"));
+                          "QnCorrectionsHistogramBase::AttachHistograms()"));
   return kFALSE;
 }
 
@@ -108,13 +108,17 @@ Bool_t QnCorrectionsHistogramBase::AttachHistograms(TList *histogramList) {
 /// \param bUsedChannel array of booleans one per each channel
 /// \param nChannelGroup array of group number for each channel
 /// \return true if properly attached else false
-Bool_t QnCorrectionsHistogramBase::AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup) {
+Bool_t QnCorrectionsHistogramBase::AttachHistograms(TList *histogramList,
+                                                    const Bool_t *bUsedChannel,
+                                                    const Int_t *nChannelGroup) {
+  (void) nChannelGroup;
+  (void) histogramList;
+  (void) bUsedChannel;
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a non channelized profile but passing channels information. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::AttachHistograms()"));
+                          "QnCorrectionsHistogramBase::AttachHistograms()"));
   return kFALSE;
 }
-
 
 /// Get the bin number for the current variable content
 ///
@@ -128,9 +132,10 @@ Bool_t QnCorrectionsHistogramBase::AttachHistograms(TList *histogramList, const 
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
 Long64_t QnCorrectionsHistogramBase::GetBin(const double *variableContainer) {
+  (void) variableContainer;
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a channelized profile without passing the channel number. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetBin()"));
+                          "QnCorrectionsHistogramBase::GetBin()"));
   return -1;
 }
 
@@ -147,9 +152,11 @@ Long64_t QnCorrectionsHistogramBase::GetBin(const double *variableContainer) {
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
 Long64_t QnCorrectionsHistogramBase::GetBin(const double *variableContainer, Int_t nChannel) {
+  (void) nChannel;
+  (void) variableContainer;
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
       "you are using a non channelized profile passing a channel number. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetBin()"));
+                          "QnCorrectionsHistogramBase::GetBin()"));
   return -1;
 }
 
@@ -165,9 +172,10 @@ Long64_t QnCorrectionsHistogramBase::GetBin(const double *variableContainer, Int
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetBinContent(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetXBinContent or GetYBinContent, or GetXXBinContent ... GetYYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetBinContent()"));
+                          "QnCorrectionsHistogramBase::GetBinContent()"));
   return 0.0;
 }
 
@@ -185,9 +193,11 @@ Float_t QnCorrectionsHistogramBase::GetBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetXBinContent(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXXBinContent ... GetYYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXBinContent()"));
+                          "QnCorrectionsHistogramBase::GetXBinContent()"));
   return 0.0;
 }
 
@@ -205,9 +215,11 @@ Float_t QnCorrectionsHistogramBase::GetXBinContent(Int_t harmonic, Long64_t bin)
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetYBinContent(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXXBinContent ... GetYYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYBinContent()"));
+                          "QnCorrectionsHistogramBase::GetYBinContent()"));
   return 0.0;
 }
 
@@ -223,9 +235,10 @@ Float_t QnCorrectionsHistogramBase::GetYBinContent(Int_t harmonic, Long64_t bin)
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetXXBinContent(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent, GetYBinContent or GetXXBinContent(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXXBinContent()"));
+                          "QnCorrectionsHistogramBase::GetXXBinContent()"));
   return 0.0;
 }
 
@@ -241,9 +254,10 @@ Float_t QnCorrectionsHistogramBase::GetXXBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetXYBinContent(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent, GetYBinContent or GetXYBinContent(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXYBinContent()"));
+                          "QnCorrectionsHistogramBase::GetXYBinContent()"));
   return 0.0;
 }
 
@@ -259,9 +273,10 @@ Float_t QnCorrectionsHistogramBase::GetXYBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetYXBinContent(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent, GetYBinContent or GetYXBinContent(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYXBinContent()"));
+                          "QnCorrectionsHistogramBase::GetYXBinContent()"));
   return 0.0;
 }
 
@@ -277,9 +292,10 @@ Float_t QnCorrectionsHistogramBase::GetYXBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetYYBinContent(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent, GetYBinContent or GetYYBinContent(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYYBinContent()"));
+                          "QnCorrectionsHistogramBase::GetYYBinContent()"));
   return 0.0;
 }
 
@@ -297,9 +313,11 @@ Float_t QnCorrectionsHistogramBase::GetYYBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetXXBinContent(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent or GetYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXXBinContent()"));
+                          "QnCorrectionsHistogramBase::GetXXBinContent()"));
   return 0.0;
 }
 
@@ -317,9 +335,11 @@ Float_t QnCorrectionsHistogramBase::GetXXBinContent(Int_t harmonic, Long64_t bin
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetXYBinContent(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent or GetYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXYBinContent()"));
+                          "QnCorrectionsHistogramBase::GetXYBinContent()"));
   return 0.0;
 }
 
@@ -337,9 +357,11 @@ Float_t QnCorrectionsHistogramBase::GetXYBinContent(Int_t harmonic, Long64_t bin
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetYXBinContent(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent or GetYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYXBinContent()"));
+                          "QnCorrectionsHistogramBase::GetYXBinContent()"));
   return 0.0;
 }
 
@@ -357,9 +379,11 @@ Float_t QnCorrectionsHistogramBase::GetYXBinContent(Int_t harmonic, Long64_t bin
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t QnCorrectionsHistogramBase::GetYYBinContent(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinContent, or GetXBinContent or GetYBinContent, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYYBinContent()"));
+                          "QnCorrectionsHistogramBase::GetYYBinContent()"));
   return 0.0;
 }
 
@@ -375,9 +399,10 @@ Float_t QnCorrectionsHistogramBase::GetYYBinContent(Int_t harmonic, Long64_t bin
 /// \param bin the interested bin number
 /// \return the bin number content error
 Float_t QnCorrectionsHistogramBase::GetBinError(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetXBinError or GetYBinError, or GetXXBinError ... GetYYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetBinError()"));
+                          "QnCorrectionsHistogramBase::GetBinError()"));
   return 0.0;
 }
 
@@ -395,9 +420,11 @@ Float_t QnCorrectionsHistogramBase::GetBinError(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetXBinError(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, or GetXXBinError ... GetYYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXBinError()"));
+                          "QnCorrectionsHistogramBase::GetXBinError()"));
   return 0.0;
 }
 
@@ -415,9 +442,11 @@ Float_t QnCorrectionsHistogramBase::GetXBinError(Int_t harmonic, Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetYBinError(Int_t harmonic, Long64_t bin) {
+  (void) bin;
+  (void) harmonic;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, or GetXXBinError ... GetYYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYBinError()"));
+                          "QnCorrectionsHistogramBase::GetYBinError()"));
   return 0.0;
 }
 
@@ -433,9 +462,10 @@ Float_t QnCorrectionsHistogramBase::GetYBinError(Int_t harmonic, Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetXXBinError(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, GetXBinError, GetYBinError or GetXXBinError(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXXBinError()"));
+                          "QnCorrectionsHistogramBase::GetXXBinError()"));
   return 0.0;
 }
 
@@ -451,9 +481,10 @@ Float_t QnCorrectionsHistogramBase::GetXXBinError(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetXYBinError(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, GetXBinError, GetYBinError or GetXYBinError(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXYBinError()"));
+                          "QnCorrectionsHistogramBase::GetXYBinError()"));
   return 0.0;
 }
 
@@ -469,9 +500,10 @@ Float_t QnCorrectionsHistogramBase::GetXYBinError(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetYXBinError(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, GetXBinError, GetYBinError or GetYXBinError(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYXBinError()"));
+                          "QnCorrectionsHistogramBase::GetYXBinError()"));
   return 0.0;
 }
 
@@ -487,9 +519,10 @@ Float_t QnCorrectionsHistogramBase::GetYXBinError(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetYYBinError(Long64_t bin) {
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, GetXBinError, GetYBinError or GetYYBinError(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYYBinError()"));
+                          "QnCorrectionsHistogramBase::GetYYBinError()"));
   return 0.0;
 }
 
@@ -507,9 +540,11 @@ Float_t QnCorrectionsHistogramBase::GetYYBinError(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetXXBinError(Int_t harmonic, Long64_t bin) {
+  (void) harmonic;
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, or GetXBinError or GetYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXXBinError()"));
+                          "QnCorrectionsHistogramBase::GetXXBinError()"));
   return 0.0;
 }
 
@@ -527,9 +562,11 @@ Float_t QnCorrectionsHistogramBase::GetXXBinError(Int_t harmonic, Long64_t bin) 
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetXYBinError(Int_t harmonic, Long64_t bin) {
+  (void) harmonic;
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, or GetXBinError or GetYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetXYBinError()"));
+                          "QnCorrectionsHistogramBase::GetXYBinError()"));
   return 0.0;
 }
 
@@ -547,9 +584,11 @@ Float_t QnCorrectionsHistogramBase::GetXYBinError(Int_t harmonic, Long64_t bin) 
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetYXBinError(Int_t harmonic, Long64_t bin) {
+  (void) harmonic;
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, or GetXBinError or GetYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYXBinError()"));
+                          "QnCorrectionsHistogramBase::GetYXBinError()"));
   return 0.0;
 }
 
@@ -567,9 +606,11 @@ Float_t QnCorrectionsHistogramBase::GetYXBinError(Int_t harmonic, Long64_t bin) 
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t QnCorrectionsHistogramBase::GetYYBinError(Int_t harmonic, Long64_t bin) {
+  (void) harmonic;
+  (void) bin;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   GetBinError, or GetXBinError or GetYBinError, or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::GetYYBinError()"));
+                          "QnCorrectionsHistogramBase::GetYYBinError()"));
   return 0.0;
 }
 
@@ -586,10 +627,12 @@ Float_t QnCorrectionsHistogramBase::GetYYBinError(Int_t harmonic, Long64_t bin) 
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::Fill(const double *variableContainer, Float_t weight) {
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   FillX or FillY, or FillXX ... FillYY or you have instantiated a base class or you are using\n" \
       "a channelized profile without passing a channel number. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::Fill()"));
+                          "QnCorrectionsHistogramBase::Fill()"));
 }
 
 /// Fills the histogram
@@ -606,10 +649,13 @@ void QnCorrectionsHistogramBase::Fill(const double *variableContainer, Float_t w
 /// \param nChannel the interested external channel number
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
+  (void) nChannel;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   FillX or FillY, or FillXX ... FillYY or you have instantiated a base class or you are using\n" \
       "a non channelized profile passing a channel number. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::Fill()"));
+                          "QnCorrectionsHistogramBase::Fill()"));
 }
 
 /// Fills the X component for the corresponding harmonic histogram
@@ -626,9 +672,12 @@ void QnCorrectionsHistogramBase::Fill(const double *variableContainer, Int_t nCh
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillX(Int_t harmonic, const double *variableContainer, Float_t weight) {
+  (void) harmonic;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill or FillXX ... FillYY or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillX()"));
+                          "QnCorrectionsHistogramBase::FillX()"));
 }
 
 /// Fills the Y component for the corresponding harmonic histogram
@@ -645,9 +694,12 @@ void QnCorrectionsHistogramBase::FillX(Int_t harmonic, const double *variableCon
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillY(Int_t harmonic, const double *variableContainer, Float_t weight) {
+  (void) harmonic;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill or FillXX ... FillYY or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillY()"));
+                          "QnCorrectionsHistogramBase::FillY()"));
 }
 
 /// Fills the XX component histogram
@@ -663,9 +715,11 @@ void QnCorrectionsHistogramBase::FillY(Int_t harmonic, const double *variableCon
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillXX(const double *variableContainer, Float_t weight) {
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX, FillY or FillXX(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillXX()"));
+                          "QnCorrectionsHistogramBase::FillXX()"));
 }
 
 /// Fills the XY component histogram
@@ -681,9 +735,11 @@ void QnCorrectionsHistogramBase::FillXX(const double *variableContainer, Float_t
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillXY(const double *variableContainer, Float_t weight) {
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX, FillY  or FillXY(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillXY()"));
+                          "QnCorrectionsHistogramBase::FillXY()"));
 }
 
 /// Fills the YX component histogram
@@ -699,9 +755,11 @@ void QnCorrectionsHistogramBase::FillXY(const double *variableContainer, Float_t
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillYX(const double *variableContainer, Float_t weight) {
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX, FillY  or FillYX(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillYX()"));
+                          "QnCorrectionsHistogramBase::FillYX()"));
 }
 
 /// Fills the YY component histogram
@@ -717,9 +775,11 @@ void QnCorrectionsHistogramBase::FillYX(const double *variableContainer, Float_t
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillYY(const double *variableContainer, Float_t weight) {
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX, FillY  or FillXX(harmonic), or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillYY()"));
+                          "QnCorrectionsHistogramBase::FillYY()"));
 }
 
 /// Fills the XX component for the corresponding harmonic histogram
@@ -736,9 +796,12 @@ void QnCorrectionsHistogramBase::FillYY(const double *variableContainer, Float_t
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillXX(Int_t harmonic, const double *variableContainer, Float_t weight) {
+  (void) harmonic;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX or FillY or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillXX()"));
+                          "QnCorrectionsHistogramBase::FillXX()"));
 }
 
 /// Fills the XY component for the corresponding harmonic histogram
@@ -755,9 +818,12 @@ void QnCorrectionsHistogramBase::FillXX(Int_t harmonic, const double *variableCo
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillXY(Int_t harmonic, const double *variableContainer, Float_t weight) {
+  (void) harmonic;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX or FillY or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillXY()"));
+                          "QnCorrectionsHistogramBase::FillXY()"));
 }
 
 /// Fills the YX component for the corresponding harmonic histogram
@@ -774,9 +840,12 @@ void QnCorrectionsHistogramBase::FillXY(Int_t harmonic, const double *variableCo
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillYX(Int_t harmonic, const double *variableContainer, Float_t weight) {
+  (void) harmonic;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX or FillY or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillYX()"));
+                          "QnCorrectionsHistogramBase::FillYX()"));
 }
 
 /// Fills the YY component for the corresponding harmonic histogram
@@ -793,9 +862,12 @@ void QnCorrectionsHistogramBase::FillYX(Int_t harmonic, const double *variableCo
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
 void QnCorrectionsHistogramBase::FillYY(Int_t harmonic, const double *variableContainer, Float_t weight) {
+  (void) harmonic;
+  (void) variableContainer;
+  (void) weight;
   QnCorrectionsFatal(Form("You have reached base member %s. This means either you should have used\n" \
       "   Fill, FillX or FillY or you have instantiated a base class. FIX IT, PLEASE.",
-      "QnCorrectionsHistogramBase::FillYY()"));
+                          "QnCorrectionsHistogramBase::FillYY()"));
 }
 
 /// Divide two THn histograms
@@ -807,16 +879,16 @@ void QnCorrectionsHistogramBase::FillYY(Int_t harmonic, const double *variableCo
 /// \param hEntries the entries multidimensional histogram
 /// \param hValid optional multidimensional histogram where validation information is stored
 /// \return the values / error multidimensional histogram
-THnF* QnCorrectionsHistogramBase::DivideTHnF(THnF *hValues, THnI *hEntries, THnC *hValid) {
+THnF *QnCorrectionsHistogramBase::DivideTHnF(THnF *hValues, THnI *hEntries, THnC *hValid) {
 
-  THnF *hResult =  (THnF*) THn::CreateHn(hValues->GetName(), hValues->GetTitle(), hValues);
+  THnF *hResult = (THnF *) THn::CreateHn(hValues->GetName(), hValues->GetTitle(), hValues);
 
   Double_t value, error2;
   Int_t nEntries;
   Bool_t bErrorMessage = kFALSE;
   Int_t nNotValidatedBins = 0;
 
-  for (Long64_t bin = 0; bin < hResult->GetNbins(); bin++){
+  for (Long64_t bin = 0; bin < hResult->GetNbins(); bin++) {
     value = hValues->GetBinContent(bin);
     nEntries = Int_t(hEntries->GetBinContent(bin));
     error2 = hValues->GetBinError2(bin);
@@ -825,37 +897,36 @@ THnF* QnCorrectionsHistogramBase::DivideTHnF(THnF *hValues, THnI *hEntries, THnC
       /* bin content not validated */
       hResult->SetBinContent(bin, 0.0);
       hResult->SetBinError(bin, 0.0);
-      if (hValid != NULL) hValid->SetBinContent(bin, 0.0);
-      if (value != 0.0) {
+      if (hValid!=NULL) hValid->SetBinContent(bin, 0.0);
+      if (value!=0.0) {
         bErrorMessage = kTRUE;
         nNotValidatedBins++;
       }
-    }
-    else {
-      Double_t average = value / nEntries;
-      Double_t serror = TMath::Sqrt(TMath::Abs(error2 / nEntries - average * average));
+    } else {
+      Double_t average = value/nEntries;
+      Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
       switch (fErrorMode) {
-      case kERRORMEAN:
-        /* standard error on the mean of the bin values */
-        hResult->SetBinContent(bin, average);
-        hResult->SetBinError(bin, serror / TMath::Sqrt(nEntries));
-        break;
-      case kERRORSPREAD:
-        /* standard deviation of the bin values */
-        hResult->SetBinContent(bin, average);
-        hResult->SetBinError(bin, serror);
-        break;
+        case kERRORMEAN:
+          /* standard error on the mean of the bin values */
+          hResult->SetBinContent(bin, average);
+          hResult->SetBinError(bin, serror/TMath::Sqrt(nEntries));
+          break;
+        case kERRORSPREAD:
+          /* standard deviation of the bin values */
+          hResult->SetBinContent(bin, average);
+          hResult->SetBinError(bin, serror);
+          break;
       }
-      if (hValid != NULL) hValid->SetBinContent(bin, 1.0);
+      if (hValid!=nullptr) hValid->SetBinContent(bin, 1.0);
     }
     hResult->SetEntries(hValues->GetEntries());
   }
   if (bErrorMessage) {
     QnCorrectionsError(Form("There are %d bins whose bin content were not validated! histogram: %s.\n" \
         "   Minimum number of entries to validate: %d.",
-        nNotValidatedBins,
-        hValues->GetName(),
-        fMinNoOfEntriesToValidate));
+                            nNotValidatedBins,
+                            hValues->GetName(),
+                            fMinNoOfEntriesToValidate));
   }
   return hResult;
 }
@@ -892,15 +963,14 @@ void QnCorrectionsHistogramBase::CopyTHnFDimension(THnF *hDest, THnF *hSource, I
     /* no then, scan this dimension and move to the next one */
     for (Long64_t bin = 0; bin < hSource->GetAxis(dimension)->GetNbins(); bin++) {
       binsArray[dimension] = bin + 1;
-      CopyTHnFDimension(hDest, hSource, binsArray, dimension +1);
+      CopyTHnFDimension(hDest, hSource, binsArray, dimension + 1);
     }
-  }
-  else {
+  } else {
     /* all variables have a new bin configuration, let's do the actual copy */
     Double_t value = hSource->GetBinContent(binsArray);
     Double_t error = hSource->GetBinError(binsArray);
     hDest->SetBinContent(binsArray, value);
-    hDest->SetBinError(binsArray,error);
+    hDest->SetBinError(binsArray, error);
   }
 }
 

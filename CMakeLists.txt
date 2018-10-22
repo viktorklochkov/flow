@@ -2,26 +2,19 @@ cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 14)
 if (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
     add_definitions(-D__GLIBCXX__)
 endif (APPLE)
 
-# By default build optimized code with debug symbols.
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
-endif ()
-set(CMAKE_ALLOWED_BUILD_TYPES DEBUG RELEASE RELWITHDEBINFO)
-if (NOT CMAKE_BUILD_TYPE IN_LIST CMAKE_ALLOWED_BUILD_TYPES)
-    message(FATAL_ERROR "Invalid build type ${CMAKE_BUILD_TYPE}. Use one of: ${CMAKE_ALLOWED_BUILD_TYPES}.")
-endif ()
-# Set default flags for the different build types.
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG -D__DEBUG")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ftree-vectorize -ffast-math -DNODEBUG")
-message(STATUS "Using CXX flags for ${CMAKE_BUILD_TYPE}: ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
+add_compile_options("-Wall" "-Wextra"
+                    "$<$<CONFIG:RELEASE>:-O3;-march=native;-ftree-vectorize;-ffast-math>"
+                    "$<$<CONFIG:DEBUG>:-O0;-O0>")
+if ("${CMAKE_COMPILER_ID}" STREQUAL  "Clang")
+    add_compile_options("-stdlib=libc++")
+endif()
 
 set(QNCORR_SOURCES
         QnCorrections/QnCorrectionsCorrectionOnInputData.cpp
@@ -37,7 +30,7 @@ set(QNCORR_SOURCES
         QnCorrections/QnCorrectionsCutAbove.cpp
         QnCorrections/QnCorrectionsHistogramSparse.cpp
         QnCorrections/QnCorrectionsCutBelow.cpp
-        QnCorrections/QnCorrectionsInputGainEqualization.cpp
+        QnCorrections/GainEqualization.cpp
         QnCorrections/QnCorrectionsCutOutside.cpp
         QnCorrections/QnCorrectionsLog.cpp
         QnCorrections/QnCorrectionsCutSetBit.cpp
@@ -56,16 +49,16 @@ set(QNCORR_SOURCES
         QnCorrections/QnCorrectionsProfileCorrelationComponents.cpp
         QnCorrections/QnCorrectionsDetector.cpp
         QnCorrections/QnCorrectionsProfileCorrelationComponentsHarmonics.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationBase.cpp
+        QnCorrections/DetectorConfiguration.cpp
         QnCorrections/QnCorrectionsQnVector.cpp
         QnCorrections/QnCorrectionsDetectorConfigurationChannels.cpp
-        QnCorrections/QnCorrectionsQnVectorAlignment.cpp
+        QnCorrections/Alignment.cpp
         QnCorrections/QnCorrectionsDetectorConfigurationTracks.cpp
         QnCorrections/QnCorrectionsQnVectorBuild.cpp
         QnCorrections/QnCorrectionsDetectorConfigurationsSet.cpp
-        QnCorrections/QnCorrectionsQnVectorRecentering.cpp
+        QnCorrections/Recentering.cpp
         QnCorrections/QnCorrectionsEventClassVariable.cpp
-        QnCorrections/QnCorrectionsQnVectorTwistAndRescale.cpp
+        QnCorrections/TwistAndRescale.cpp
         )
 
 set(CORR_SOURCES
@@ -134,13 +127,13 @@ set(QNCORR_HEADERS QnCorrections/include/QnCorrectionsCorrectionOnInputData.h
         QnCorrections/include/QnCorrectionsQnVectorBuild.h
         QnCorrections/include/QnCorrectionsDetectorConfigurationsSet.h
         QnCorrections/include/QnCorrectionsEventClassVariable.h
-        QnCorrections/include/QnCorrectionsDetectorConfigurationBase.h
-        QnCorrections/include/QnCorrectionsInputGainEqualization.h
+        QnCorrections/include/DetectorConfiguration.h
+        QnCorrections/include/GainEqualization.h
         QnCorrections/include/QnCorrectionsLog.h
         QnCorrections/include/QnCorrectionsQnVector.h
-        QnCorrections/include/QnCorrectionsQnVectorAlignment.h
-        QnCorrections/include/QnCorrectionsQnVectorRecentering.h
-        QnCorrections/include/QnCorrectionsQnVectorTwistAndRescale.h
+        QnCorrections/include/Alignment.h
+        QnCorrections/include/Recentering.h
+        QnCorrections/include/TwistAndRescale.h
         )
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -187,6 +180,7 @@ ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} ${QNCORR_HEADERS} LINKDEF Base/
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
+target_compile_features(Base PUBLIC cxx_std_14)
 target_include_directories(Base
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
@@ -220,7 +214,6 @@ target_include_directories(Correlation
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Correlation/include>
-
         )
 target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
@@ -248,7 +241,6 @@ install(EXPORT QnTargets
         NAMESPACE Qn::
         DESTINATION ${INSTALL_CONFIGDIR}/
         )
-
 #Create a ConfigVersion.cmake file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(

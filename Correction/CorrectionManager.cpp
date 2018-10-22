@@ -18,7 +18,7 @@
 #include "CorrectionManager.h"
 
 void Qn::CorrectionManager::SetCorrectionSteps(const std::string &name,
-                                               std::function<void(QnCorrectionsDetectorConfigurationBase *config)> config) {
+                                               std::function<void(DetectorConfiguration *config)> config) {
   try { detectors_track.at(name)->SetConfig(std::move(config)); }
   catch (std::out_of_range &) {
     try { detectors_channel.at(name)->SetConfig(std::move(config)); }
@@ -131,10 +131,10 @@ void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_fi
   CalculateCorrectionAxis();
   CreateDetectors();
   for (auto &det : detectors_track) {
-    det.second->Initialize(det.first, *var_manager_);
+    det.second->Initialize(det.first);
   }
   for (auto &det : detectors_channel) {
-    det.second->Initialize(det.first, *var_manager_);
+    det.second->Initialize(det.first);
   }
   event_cuts_->CreateCutReport("Event", 1);
   qncorrections_manager_.SetCalibrationHistogramsList(in_calibration_file_.get());

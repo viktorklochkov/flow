@@ -99,7 +99,7 @@ class QnCorrectionsHistogramChannelizedSparse;
 /// in the calibration one, collecting data for producing, once merged in a
 /// further phase, the calibration histograms.
 
-class QnCorrectionsInputGainEqualization : public QnCorrectionsCorrectionOnInputData {
+class GainEqualization : public QnCorrectionsCorrectionOnInputData {
 public:
   /// \enum QnGainEqualizationMethod
   /// \brief The class of the id of the supported gain equalization methods
@@ -114,8 +114,8 @@ public:
     GEQUAL_widthEqualization,      ///< \f$ \mbox{M}' = \mbox{A} + \mbox{B} \frac{\mbox{M} - \langle\mbox{M} \rangle}{\sigma_{{M}}} \f$
   };
 
-  QnCorrectionsInputGainEqualization();
-  ~QnCorrectionsInputGainEqualization();
+  GainEqualization();
+  ~GainEqualization();
 
   /// Stores the passed equalization method
   /// \param method the desired equalization method
@@ -177,7 +177,7 @@ private:
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP
-  ClassDef(QnCorrectionsInputGainEqualization, 2);
+  ClassDef(GainEqualization, 2);
 /// \endcond
 };
 

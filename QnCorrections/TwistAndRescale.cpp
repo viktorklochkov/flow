@@ -38,29 +38,29 @@
 #include "QnCorrectionsDetector.h"
 #include "QnCorrectionsManager.h"
 #include "QnCorrectionsLog.h"
-#include "QnCorrectionsQnVectorTwistAndRescale.h"
+#include "TwistAndRescale.h"
 
-const Int_t QnCorrectionsQnVectorTwistAndRescale::fDefaultMinNoOfEntries = 2;
-const Double_t QnCorrectionsQnVectorTwistAndRescale::fMaxThreshold = 99999999.0;
-const char *QnCorrectionsQnVectorTwistAndRescale::szTwistCorrectionName = "Twist";
-const char *QnCorrectionsQnVectorTwistAndRescale::szRescaleCorrectionName = "Rescale";
-const char *QnCorrectionsQnVectorTwistAndRescale::szKey = "HHHH";
-const char *QnCorrectionsQnVectorTwistAndRescale::szDoubleHarmonicSupportHistogramName = "DH Q2n";
-const char *QnCorrectionsQnVectorTwistAndRescale::szCorrelationsSupportHistogramName = "3D QnQn";
-const char *QnCorrectionsQnVectorTwistAndRescale::szTwistCorrectedQnVectorName = "twist";
-const char *QnCorrectionsQnVectorTwistAndRescale::szRescaleCorrectedQnVectorName = "rescale";
-const char *QnCorrectionsQnVectorTwistAndRescale::szQANotValidatedHistogramName = "TwScale NvE";
-const char *QnCorrectionsQnVectorTwistAndRescale::szQATwistQnAverageHistogramName = "Twist Qn avg ";
-const char *QnCorrectionsQnVectorTwistAndRescale::szQARescaleQnAverageHistogramName = "Rescale Qn avg ";
+const Int_t TwistAndRescale::fDefaultMinNoOfEntries = 2;
+const Double_t TwistAndRescale::fMaxThreshold = 99999999.0;
+const char *TwistAndRescale::szTwistCorrectionName = "Twist";
+const char *TwistAndRescale::szRescaleCorrectionName = "Rescale";
+const char *TwistAndRescale::szKey = "HHHH";
+const char *TwistAndRescale::szDoubleHarmonicSupportHistogramName = "DH Q2n";
+const char *TwistAndRescale::szCorrelationsSupportHistogramName = "3D QnQn";
+const char *TwistAndRescale::szTwistCorrectedQnVectorName = "twist";
+const char *TwistAndRescale::szRescaleCorrectedQnVectorName = "rescale";
+const char *TwistAndRescale::szQANotValidatedHistogramName = "TwScale NvE";
+const char *TwistAndRescale::szQATwistQnAverageHistogramName = "Twist Qn avg ";
+const char *TwistAndRescale::szQARescaleQnAverageHistogramName = "Rescale Qn avg ";
 
 /// \cond CLASSIMP
-ClassImp(QnCorrectionsQnVectorTwistAndRescale);
+ClassImp(TwistAndRescale);
 /// \endcond
 
 
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
-QnCorrectionsQnVectorTwistAndRescale::QnCorrectionsQnVectorTwistAndRescale() :
+TwistAndRescale::TwistAndRescale() :
     QnCorrectionsCorrectionOnQvector(Form("%s and %s",szTwistCorrectionName,szRescaleCorrectionName), szKey),
     fBDetectorConfigurationName(),
     fCDetectorConfigurationName() {
@@ -83,7 +83,7 @@ QnCorrectionsQnVectorTwistAndRescale::QnCorrectionsQnVectorTwistAndRescale() :
 
 /// Default destructor
 /// Releases the memory taken
-QnCorrectionsQnVectorTwistAndRescale::~QnCorrectionsQnVectorTwistAndRescale() {
+TwistAndRescale::~TwistAndRescale() {
   if (fDoubleHarmonicInputHistograms != NULL)
     delete fDoubleHarmonicInputHistograms;
   if (fDoubleHarmonicCalibrationHistograms != NULL)
@@ -108,7 +108,7 @@ QnCorrectionsQnVectorTwistAndRescale::~QnCorrectionsQnVectorTwistAndRescale() {
 /// The detector configurations names are stored for further use.
 /// \param nameB the name of the B detector configuration
 /// \param nameC the name of the C detector configuration
-void QnCorrectionsQnVectorTwistAndRescale::SetReferenceConfigurationsForTwistAndRescale(const char *nameB, const char *nameC) {
+void TwistAndRescale::SetReferenceConfigurationsForTwistAndRescale(const char *nameB, const char *nameC) {
   QnCorrectionsInfo(Form("Detector configurations: %s and %s, attached?: %s",
       nameB, nameC,
       ((fDetectorConfiguration != NULL) ? "yes" : "no")));
@@ -122,7 +122,7 @@ void QnCorrectionsQnVectorTwistAndRescale::SetReferenceConfigurationsForTwistAnd
 
 /// Informs when the detector configuration has been attached to the framework manager
 /// Basically this allows interaction between the different framework sections at configuration time
-void QnCorrectionsQnVectorTwistAndRescale::AttachedToFrameworkManager() {
+void TwistAndRescale::AttachedToFrameworkManager() {
   switch (fTwistAndRescaleMethod) {
   case TWRESCALE_doubleHarmonic:
     break;
@@ -139,7 +139,7 @@ void QnCorrectionsQnVectorTwistAndRescale::AttachedToFrameworkManager() {
 /// Asks for support data structures creation
 /// Creates the corrected Qn vectors
 /// Locates the reference detector configurations for twist and rescaling if their names have been previously stored
-void QnCorrectionsQnVectorTwistAndRescale::CreateSupportDataStructures() {
+void TwistAndRescale::CreateSupportDataStructures() {
 
   Int_t nNoOfHarmonics = fDetectorConfiguration->GetNoOfHarmonics();
   Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
@@ -210,7 +210,7 @@ void QnCorrectionsQnVectorTwistAndRescale::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateSupportHistograms(TList *list) {
+Bool_t TwistAndRescale::CreateSupportHistograms(TList *list) {
 
   TString histoDoubleHarmonicNameAndTitle = Form("%s %s ",
       szDoubleHarmonicSupportHistogramName,
@@ -270,7 +270,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateSupportHistograms(TList *list
 /// Attaches the needed input information to the correction step
 /// \param list list where the inputs should be found
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorTwistAndRescale::AttachInput(TList *list) {
+Bool_t TwistAndRescale::AttachInput(TList *list) {
 
   switch (fTwistAndRescaleMethod) {
   case TWRESCALE_doubleHarmonic:
@@ -302,7 +302,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::AttachInput(TList *list) {
 /// A check is done to confirm that \f$ B \f$ is applying
 /// twist to correct its Qn vectors. If not the correction
 /// step is set to passive
-void QnCorrectionsQnVectorTwistAndRescale::AfterInputsAttachActions() {
+void TwistAndRescale::AfterInputsAttachActions() {
 
   switch (fTwistAndRescaleMethod) {
   case TWRESCALE_doubleHarmonic:
@@ -327,7 +327,7 @@ void QnCorrectionsQnVectorTwistAndRescale::AfterInputsAttachActions() {
 /// Allocates the histogram objects and creates the QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateQAHistograms(TList *list) {
+Bool_t TwistAndRescale::CreateQAHistograms(TList *list) {
 
   if (fApplyTwist) {
     fQATwistQnAverageHistogram = new QnCorrectionsProfileComponents(
@@ -361,7 +361,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateQAHistograms(TList *list) {
 /// Allocates the histogram objects and creates the non validated entries QA histograms.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateNveQAHistograms(TList *list) {
+Bool_t TwistAndRescale::CreateNveQAHistograms(TList *list) {
 
   switch (fTwistAndRescaleMethod) {
   case TWRESCALE_doubleHarmonic:
@@ -388,7 +388,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::CreateNveQAHistograms(TList *list) 
 ///
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessCorrections(const double *variableContainer) {
+Bool_t TwistAndRescale::ProcessCorrections(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
   case QCORRSTEP_calibration: {
@@ -567,7 +567,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessCorrections(const double *va
 ///
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
-Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessDataCollection(const double *variableContainer) {
+Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
   switch (fState) {
   case QCORRSTEP_calibration: {
     /* logging */
@@ -684,7 +684,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::ProcessDataCollection(const double 
 }
 
 /// Clean the correction to accept a new event
-void QnCorrectionsQnVectorTwistAndRescale::ClearCorrectionStep() {
+void TwistAndRescale::ClearCorrectionStep() {
 
   fTwistCorrectedQnVector->Reset();
   fRescaleCorrectedQnVector->Reset();
@@ -696,7 +696,7 @@ void QnCorrectionsQnVectorTwistAndRescale::ClearCorrectionStep() {
 /// Adds the Qn vector to the passed list
 /// if the correction step is in correction states.
 /// \param list list where the corrected Qn vector should be added
-void QnCorrectionsQnVectorTwistAndRescale::IncludeCorrectedQnVector(TList *list) {
+void TwistAndRescale::IncludeCorrectedQnVector(TList *list) {
 
   QnCorrectionsInfo("");
   switch (fState) {
@@ -722,7 +722,7 @@ void QnCorrectionsQnVectorTwistAndRescale::IncludeCorrectedQnVector(TList *list)
 /// Reports if the correction step is being applied
 /// Returns TRUE if in the proper state for applying the correction step
 /// \return TRUE if the correction step is being applied
-Bool_t QnCorrectionsQnVectorTwistAndRescale::IsBeingApplied() const {
+Bool_t TwistAndRescale::IsBeingApplied() const {
 
   switch (fState) {
   case QCORRSTEP_calibration:
@@ -751,7 +751,7 @@ Bool_t QnCorrectionsQnVectorTwistAndRescale::IsBeingApplied() const {
 /// \param calibrationList list containing the correction steps producing calibration information
 /// \param applyList list containing the correction steps applying corrections
 /// \return kTRUE if the correction step is being applied
-Bool_t QnCorrectionsQnVectorTwistAndRescale::ReportUsage(TList *calibrationList, TList *applyList) {
+Bool_t TwistAndRescale::ReportUsage(TList *calibrationList, TList *applyList) {
   switch (fState) {
   case QCORRSTEP_calibration:
     /* we are collecting */

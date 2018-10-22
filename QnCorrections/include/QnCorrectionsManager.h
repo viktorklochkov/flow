@@ -85,7 +85,7 @@ public:
 
   QnCorrectionsDetector *FindDetector(const char *name) const;
   QnCorrectionsDetector *FindDetector(Int_t id) const;
-  QnCorrectionsDetectorConfigurationBase *FindDetectorConfiguration(const char *name) const;
+  DetectorConfiguration *FindDetectorConfiguration(const char *name) const;
 
 
   /// Gets a pointer to the data variables bank

@@ -48,12 +48,12 @@ class DetectorBase {
 
   virtual QnCorrectionsDetector *GenerateDetector(const std::string &detname, int globalid, int binid,
                                                   QnCorrectionsEventClassVariablesSet *set) = 0;
-  virtual QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name,
+  virtual DetectorConfiguration *CreateDetectorConfiguration(const std::string &name,
                                                                               QnCorrectionsEventClassVariablesSet *set) = 0;
-  virtual void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) = 0;
+  virtual void SetConfig(std::function<void(DetectorConfiguration *config)> conf) = 0;
   virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
   virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
-  virtual void Initialize(const std::string &name, const VariableManager &man) = 0;
+  virtual void Initialize(const std::string &name) = 0;
   virtual void FillReport() = 0;
   virtual void FillData() = 0;
   virtual void ClearData() = 0;
@@ -121,9 +121,9 @@ class Detector : public DetectorBase {
     return detector;
   }
 
-  QnCorrectionsDetectorConfigurationBase *CreateDetectorConfiguration(const std::string &name,
+  DetectorConfiguration *CreateDetectorConfiguration(const std::string &name,
                                                                       QnCorrectionsEventClassVariablesSet *set) override {
-    QnCorrectionsDetectorConfigurationBase *configuration = nullptr;
+    DetectorConfiguration *configuration = nullptr;
     if (type_==DetectorType::CHANNEL) {
       configuration =
           new QnCorrectionsDetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
@@ -134,7 +134,7 @@ class Detector : public DetectorBase {
   }
   std::unique_ptr<DataContainerDataVector> &GetDataContainer() override { return datavector_; }
   std::unique_ptr<DataContainerQVector> &GetQnDataContainer() override { return qvector_; }
-  void SetConfig(std::function<void(QnCorrectionsDetectorConfigurationBase *config)> conf) override {
+  void SetConfig(std::function<void(DetectorConfiguration *config)> conf) override {
     configuration_ = conf;
   }
 
@@ -181,7 +181,7 @@ class Detector : public DetectorBase {
 
   DetectorType Type() const { return type_; }
 
-  void Initialize(const std::string &name, const VariableManager &man) override {
+  void Initialize(const std::string &name) override {
     int_cuts_->CreateCutReport(name, 1);
     cuts_->CreateCutReport(name, static_cast<size_t>(phi_.length()));
   }
@@ -224,7 +224,7 @@ class Detector : public DetectorBase {
   std::vector<std::unique_ptr<QAHistoBase>> histograms_;
   std::unique_ptr<DataContainerDataVector> datavector_;
   std::unique_ptr<DataContainerQVector> qvector_;
-  std::function<void(QnCorrectionsDetectorConfigurationBase *config)> configuration_;
+  std::function<void(DetectorConfiguration *config)> configuration_;
 };
 }
 
