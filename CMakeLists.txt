@@ -51,7 +51,7 @@ set(QNCORR_SOURCES
         QnCorrections/QnCorrectionsProfileCorrelationComponentsHarmonics.cpp
         QnCorrections/DetectorConfiguration.cpp
         QnCorrections/QnCorrectionsQnVector.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationChannels.cpp
+        QnCorrections/DetectorConfigurationChannels.cpp
         QnCorrections/Alignment.cpp
         QnCorrections/QnCorrectionsDetectorConfigurationTracks.cpp
         QnCorrections/QnCorrectionsQnVectorBuild.cpp
@@ -122,7 +122,7 @@ set(QNCORR_HEADERS QnCorrections/include/QnCorrectionsCorrectionOnInputData.h
         QnCorrections/include/QnCorrectionsProfileCorrelationComponents.h
         QnCorrections/include/QnCorrectionsDetector.h
         QnCorrections/include/QnCorrectionsProfileCorrelationComponentsHarmonics.h
-        QnCorrections/include/QnCorrectionsDetectorConfigurationChannels.h
+        QnCorrections/include/DetectorConfigurationChannels.h
         QnCorrections/include/QnCorrectionsDetectorConfigurationTracks.h
         QnCorrections/include/QnCorrectionsQnVectorBuild.h
         QnCorrections/include/QnCorrectionsDetectorConfigurationsSet.h

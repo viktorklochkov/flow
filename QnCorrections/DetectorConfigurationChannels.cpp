@@ -33,19 +33,19 @@
 /// \brief Implementation of the channel detector configuration class 
 
 #include "QnCorrectionsProfileComponents.h"
-#include "QnCorrectionsDetectorConfigurationChannels.h"
+#include "DetectorConfigurationChannels.h"
 #include "QnCorrectionsLog.h"
 
 /// \cond CLASSIMP
-ClassImp(QnCorrectionsDetectorConfigurationChannels);
+ClassImp(DetectorConfigurationChannels);
 /// \endcond
 
-const char *QnCorrectionsDetectorConfigurationChannels::szRawQnVectorName = "raw";
-const char *QnCorrectionsDetectorConfigurationChannels::szQAMultiplicityHistoName = "Multiplicity";
-const char *QnCorrectionsDetectorConfigurationChannels::szQAQnAverageHistogramName = "Plain Qn avg ";
+const char *DetectorConfigurationChannels::szRawQnVectorName = "raw";
+const char *DetectorConfigurationChannels::szQAMultiplicityHistoName = "Multiplicity";
+const char *DetectorConfigurationChannels::szQAQnAverageHistogramName = "Plain Qn avg ";
 
 /// Default constructor
-QnCorrectionsDetectorConfigurationChannels::QnCorrectionsDetectorConfigurationChannels() :
+DetectorConfigurationChannels::DetectorConfigurationChannels() :
     DetectorConfiguration(), fRawQnVector(), fInputDataCorrections() {
 
   fNoOfChannels = 0;
@@ -70,7 +70,7 @@ QnCorrectionsDetectorConfigurationChannels::QnCorrectionsDetectorConfigurationCh
 /// \param nNoOfChannels the number of channels of the associated detector
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
-QnCorrectionsDetectorConfigurationChannels::QnCorrectionsDetectorConfigurationChannels(const char *name,
+DetectorConfigurationChannels::DetectorConfigurationChannels(const char *name,
       QnCorrectionsEventClassVariablesSet *eventClassesVariables,
       Int_t nNoOfChannels,
       Int_t nNoOfHarmonics,
@@ -95,7 +95,7 @@ QnCorrectionsDetectorConfigurationChannels::QnCorrectionsDetectorConfigurationCh
 
 /// Default destructor
 /// Releases the memory taken
-QnCorrectionsDetectorConfigurationChannels::~QnCorrectionsDetectorConfigurationChannels() {
+DetectorConfigurationChannels::~DetectorConfigurationChannels() {
 
   if (fUsedChannel != NULL) delete [] fUsedChannel;
   if (fChannelMap != NULL) delete [] fChannelMap;
@@ -111,7 +111,7 @@ QnCorrectionsDetectorConfigurationChannels::~QnCorrectionsDetectorConfigurationC
 ///        If NULL all channels in fNoOfChannels are assigned to a unique group
 /// \param hardCodedGroupWeights array with hard coded weight for each group
 ///        If NULL no hard coded weight is assigned (i.e. weight = 1)
-void QnCorrectionsDetectorConfigurationChannels::SetChannelsScheme(
+void DetectorConfigurationChannels::SetChannelsScheme(
     Bool_t *bUsedChannel,
     Int_t *nChannelGroup,
     Float_t *hardCodedGroupWeights) {
@@ -167,7 +167,7 @@ void QnCorrectionsDetectorConfigurationChannels::SetChannelsScheme(
 /// Orders the base class to store the correction manager and informs the input data corrections
 /// and the Qn vector corrections they are now attached to the framework
 /// \param manager the framework manager
-void QnCorrectionsDetectorConfigurationChannels::AttachCorrectionsManager(QnCorrectionsManager *manager) {
+void DetectorConfigurationChannels::AttachCorrectionsManager(QnCorrectionsManager *manager) {
   fCorrectionsManager = manager;
 
   if (manager != NULL) {
@@ -186,7 +186,7 @@ void QnCorrectionsDetectorConfigurationChannels::AttachCorrectionsManager(QnCorr
 ///
 /// The input data vector bank is allocated and the request is
 /// transmitted to the input data corrections and then to the Q vector corrections.
-void QnCorrectionsDetectorConfigurationChannels::CreateSupportDataStructures() {
+void DetectorConfigurationChannels::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
   fDataVectorBank = new TClonesArray("QnCorrectionsDataVectorChannelized", INITIALDATAVECTORBANKSIZE);
@@ -207,7 +207,7 @@ void QnCorrectionsDetectorConfigurationChannels::CreateSupportDataStructures() {
 /// and then to the Q vector corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsDetectorConfigurationChannels::CreateSupportHistograms(TList *list) {
+Bool_t DetectorConfigurationChannels::CreateSupportHistograms(TList *list) {
 
   TList *detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
@@ -241,7 +241,7 @@ Bool_t QnCorrectionsDetectorConfigurationChannels::CreateSupportHistograms(TList
 /// and then to the Q vector corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsDetectorConfigurationChannels::CreateQAHistograms(TList *list) {
+Bool_t DetectorConfigurationChannels::CreateQAHistograms(TList *list) {
   TList *detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
@@ -367,7 +367,7 @@ Bool_t QnCorrectionsDetectorConfigurationChannels::CreateQAHistograms(TList *lis
 /// and then to the Q vector corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsDetectorConfigurationChannels::CreateNveQAHistograms(TList *list) {
+Bool_t DetectorConfigurationChannels::CreateNveQAHistograms(TList *list) {
   TList *detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
@@ -400,7 +400,7 @@ Bool_t QnCorrectionsDetectorConfigurationChannels::CreateNveQAHistograms(TList *
 /// and then propagated to the Q vector corrections
 /// \param list list where the input information should be found
 /// \return kTRUE if everything went OK
-Bool_t QnCorrectionsDetectorConfigurationChannels::AttachCorrectionInputs(TList *list) {
+Bool_t DetectorConfigurationChannels::AttachCorrectionInputs(TList *list) {
   TList *detectorConfigurationList = (TList *) list->FindObject(this->GetName());
   if (detectorConfigurationList != NULL) {
     Bool_t retValue = kTRUE;
@@ -424,7 +424,7 @@ Bool_t QnCorrectionsDetectorConfigurationChannels::AttachCorrectionInputs(TList 
 ///
 /// The request is transmitted to the input data corrections
 /// and then propagated to the Q vector corrections
-void QnCorrectionsDetectorConfigurationChannels::AfterInputsAttachActions() {
+void DetectorConfigurationChannels::AfterInputsAttachActions() {
   for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
     fInputDataCorrections.At(ixCorrection)->AfterInputsAttachActions();
   }
@@ -437,7 +437,7 @@ void QnCorrectionsDetectorConfigurationChannels::AfterInputsAttachActions() {
 
 /// Incorporates the passed correction to the set of input data corrections
 /// \param correctionOnInputData the correction to add
-void QnCorrectionsDetectorConfigurationChannels::AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData) {
+void DetectorConfigurationChannels::AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData) {
   correctionOnInputData->SetConfigurationOwner(this);
   fInputDataCorrections.AddCorrection(correctionOnInputData);
 }
@@ -445,7 +445,7 @@ void QnCorrectionsDetectorConfigurationChannels::AddCorrectionOnInputData(QnCorr
 /// Fills the QA multiplicity histograms before and after input equalization
 /// and the plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
-void QnCorrectionsDetectorConfigurationChannels::FillQAHistograms(const double *variableContainer) {
+void DetectorConfigurationChannels::FillQAHistograms(const double *variableContainer) {
   if (fQAMultiplicityBefore3D != NULL && fQAMultiplicityAfter3D != NULL) {
     for(Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++){
       QnCorrectionsDataVectorChannelized *dataVector =
@@ -479,7 +479,7 @@ void QnCorrectionsDetectorConfigurationChannels::FillQAHistograms(const double *
 /// about the process name and then the correction histograms could still not
 /// be attached and the constructed list does not contain the final Qn vectors.
 /// \param list list where the corrected Qn vector should be added
-inline void QnCorrectionsDetectorConfigurationChannels::IncludeQnVectors(TList *list) {
+inline void DetectorConfigurationChannels::IncludeQnVectors(TList *list) {
 
   /* we check whether we are already there and if so we clean it and go again */
   Bool_t bAlreadyThere;
@@ -511,7 +511,7 @@ inline void QnCorrectionsDetectorConfigurationChannels::IncludeQnVectors(TList *
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void QnCorrectionsDetectorConfigurationChannels::FillOverallInputCorrectionStepList(TList *list) const {
+void DetectorConfigurationChannels::FillOverallInputCorrectionStepList(TList *list) const {
 
   fInputDataCorrections.FillOverallCorrectionsList(list);
 }
@@ -521,7 +521,7 @@ void QnCorrectionsDetectorConfigurationChannels::FillOverallInputCorrectionStepL
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void QnCorrectionsDetectorConfigurationChannels::FillOverallQnVectorCorrectionStepList(TList *list) const {
+void DetectorConfigurationChannels::FillOverallQnVectorCorrectionStepList(TList *list) const {
 
   fQnVectorCorrections.FillOverallCorrectionsList(list);
 }
@@ -533,7 +533,7 @@ void QnCorrectionsDetectorConfigurationChannels::FillOverallQnVectorCorrectionSt
 /// \param steps list for incorporating the list of assigned correction steps
 /// \param calib list for incorporating the list of steps in calibrating status
 /// \param apply list for incorporating the list of steps in applying status
-void QnCorrectionsDetectorConfigurationChannels::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
+void DetectorConfigurationChannels::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
   TList *mysteps = new TList();
   mysteps->SetOwner(kTRUE);
   mysteps->SetName(GetName());

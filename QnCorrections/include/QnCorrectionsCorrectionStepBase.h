@@ -19,7 +19,7 @@
 #include <TList.h>
 
 class DetectorConfiguration;
-class QnCorrectionsDetectorConfigurationChannels;
+class DetectorConfigurationChannels;
 class QnCorrectionsQnVector;
 
 /// \class QnCorrectionsCorrectionStepBase

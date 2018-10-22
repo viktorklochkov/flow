@@ -30,7 +30,7 @@
 #pragma link C++ class QnCorrectionsDataVectorChannelized+;
 #pragma link C++ class QnCorrectionsDetector+;
 #pragma link C++ class DetectorConfiguration+;
-#pragma link C++ class QnCorrectionsDetectorConfigurationChannels+;
+#pragma link C++ class DetectorConfigurationChannels+;
 #pragma link C++ class QnCorrectionsDetectorConfigurationsSet+;
 #pragma link C++ class QnCorrectionsDetectorConfigurationTracks+;
 #pragma link C++ class QnCorrectionsEventClassVariable+;

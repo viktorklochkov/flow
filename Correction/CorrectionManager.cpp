@@ -172,6 +172,7 @@ void Qn::CorrectionManager::ProcessQnVectors() {
           ++idata;
         }
       }
+      pair.second->FillReport();
       nbinsrunning += detector->size();
     }
     for (auto &pair : detectors_channel) {
@@ -186,8 +187,10 @@ void Qn::CorrectionManager::ProcessQnVectors() {
           ++idata;
         }
       }
+      pair.second->FillReport();
       nbinsrunning += detector->size();
     }
+    var_manager_->FillToQnCorrections(qncorrections_manager_.GetDataPointer());
     qncorrections_manager_.ProcessEvent();
     GetQnFromFramework("latest");
     out_tree_->Fill();

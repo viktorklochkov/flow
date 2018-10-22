@@ -23,7 +23,7 @@
 
 #include "QnCorrectionsDetector.h"
 #include "QnCorrectionsEventClassVariablesSet.h"
-#include "QnCorrectionsDetectorConfigurationChannels.h"
+#include "DetectorConfigurationChannels.h"
 #include "QnCorrectionsDetectorConfigurationTracks.h"
 
 #include "VariableManager.h"
@@ -126,7 +126,7 @@ class Detector : public DetectorBase {
     DetectorConfiguration *configuration = nullptr;
     if (type_==DetectorType::CHANNEL) {
       configuration =
-          new QnCorrectionsDetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
+          new DetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
     }
     if (type_==DetectorType::TRACK)
       configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), set, nharmonics_, harmonics_.get());

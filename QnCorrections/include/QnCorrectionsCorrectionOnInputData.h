@@ -30,7 +30,7 @@
 
 class QnCorrectionsCorrectionOnInputData: public QnCorrectionsCorrectionStepBase {
 public:
-  friend class QnCorrectionsDetectorConfigurationChannels;
+  friend class DetectorConfigurationChannels;
   QnCorrectionsCorrectionOnInputData();
   QnCorrectionsCorrectionOnInputData(const char *name, const char *key);
   virtual ~QnCorrectionsCorrectionOnInputData();

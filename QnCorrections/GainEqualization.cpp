@@ -35,7 +35,7 @@
 #include "QnCorrectionsProfileChannelizedIngress.h"
 #include "QnCorrectionsProfileChannelized.h"
 #include "QnCorrectionsHistogramChannelizedSparse.h"
-#include "QnCorrectionsDetectorConfigurationChannels.h"
+#include "DetectorConfigurationChannels.h"
 #include "QnCorrectionsLog.h"
 #include "GainEqualization.h"
 
@@ -91,8 +91,8 @@ GainEqualization::~GainEqualization() {
 /// \param list list where the inputs should be found
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::AttachInput(TList *list) {
-  QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
-      static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
+  DetectorConfigurationChannels *ownerConfiguration =
+      static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
   if (fInputHistograms->AttachHistograms(list,
                                          ownerConfiguration->GetUsedChannelsMask(),
                                          ownerConfiguration->GetChannelsGroups())) {
@@ -127,8 +127,8 @@ Bool_t GainEqualization::CreateSupportHistograms(TList *list) {
                                    szSupportHistogramName,
                                    fDetectorConfiguration->GetName());
 
-  QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
-      static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
+  DetectorConfigurationChannels *ownerConfiguration =
+      static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
   if (fInputHistograms!=NULL) delete fInputHistograms;
   fInputHistograms =
       new QnCorrectionsProfileChannelizedIngress((const char *) histoNameAndTitle,
@@ -171,8 +171,8 @@ Bool_t GainEqualization::CreateQAHistograms(TList *list) {
                             szSupportHistogramName,
                             fDetectorConfiguration->GetName());
   afterTitle += " after gain equalization";
-  QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
-      static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
+  DetectorConfigurationChannels *ownerConfiguration =
+      static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
   fQAMultiplicityBefore = new QnCorrectionsProfileChannelized(
       (const char *) beforeName,
       (const char *) beforeTitle,
@@ -196,8 +196,8 @@ Bool_t GainEqualization::CreateQAHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::CreateNveQAHistograms(TList *list) {
-  QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
-      static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
+  DetectorConfigurationChannels *ownerConfiguration =
+      static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
   fQANotValidatedBin = new QnCorrectionsHistogramChannelizedSparse(
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
