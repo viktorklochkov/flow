@@ -163,6 +163,7 @@ include(${ROOT_USE_FILE})
 
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
+#include_directories(QnCorrections/include)
 ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnCorrections/QnLinkDef.h)
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)
@@ -176,7 +177,10 @@ target_include_directories(QnCorrections
         )
 target_link_libraries(QnCorrections PRIVATE ${ROOT_LIBRARIES})
 
-ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} ${QNCORR_HEADERS} LINKDEF Base/BaseLinkDef.h)
+#add_custom_command(TARGET QnCorrections PRE_BUILD COMMAND ${CMAKE_COMMAND}
+#        -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/QnCorrections/include ${CMAKE_BINARY_DIR}/include)
+
+ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINKDEF Base/BaseLinkDef.h)
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
@@ -184,6 +188,7 @@ target_compile_features(Base PUBLIC cxx_std_14)
 target_include_directories(Base
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
+        QnCorrections/include
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Base/include>

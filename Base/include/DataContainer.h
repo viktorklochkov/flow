@@ -751,7 +751,7 @@ using DataContainerProfile = DataContainer<Qn::Profile>;
 using DataContainerSample = DataContainer<Qn::Sample>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerTH1F = DataContainer<TH1F>;
-using DataContainerESE = DataContainer<Qn::EventShape>;
+using DataContainerEventShape = DataContainer<Qn::EventShape>;
 
 //--------------------------------------------//
 // Template specializations for visualisation //

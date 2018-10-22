@@ -66,7 +66,7 @@ GainEqualization::GainEqualization() :
   fQAMultiplicityBefore = NULL;
   fQAMultiplicityAfter = NULL;
   fQANotValidatedBin = NULL;
-  fEqualizationMethod = GainEqualizationMethod::NONE;
+  fEqualizationMethod = Method::NONE;
   fShift = GAINEQUALIZATION_SHIFTDEFAULT;
   fScale = GAINEQUALIZATION_SCALEDEFAULT;
   fUseChannelGroupsWeights = kFALSE;
@@ -77,16 +77,11 @@ GainEqualization::GainEqualization() :
 /// Default destructor
 /// Releases the memory taken
 GainEqualization::~GainEqualization() {
-  if (fInputHistograms != NULL)
-    delete fInputHistograms;
-  if (fCalibrationHistograms != NULL)
-    delete fCalibrationHistograms;
-  if (fQAMultiplicityBefore != NULL)
-    delete fQAMultiplicityBefore;
-  if (fQAMultiplicityAfter != NULL)
-    delete fQAMultiplicityAfter;
-  if (fQANotValidatedBin != NULL)
-    delete fQANotValidatedBin;
+  delete fInputHistograms;
+  delete fCalibrationHistograms;
+  delete fQAMultiplicityBefore;
+  delete fQAMultiplicityAfter;
+  delete fQANotValidatedBin;
 }
 
 /// Attaches the needed input information to the correction step
@@ -99,7 +94,8 @@ Bool_t GainEqualization::AttachInput(TList *list) {
   QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
       static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
   if (fInputHistograms->AttachHistograms(list,
-      ownerConfiguration->GetUsedChannelsMask(), ownerConfiguration->GetChannelsGroups())) {
+                                         ownerConfiguration->GetUsedChannelsMask(),
+                                         ownerConfiguration->GetChannelsGroups())) {
     fState = QCORRSTEP_applyCollect;
     fHardCodedWeights = ownerConfiguration->GetHardCodedGroupWeights();
     return kTRUE;
@@ -128,19 +124,28 @@ void GainEqualization::CreateSupportDataStructures() {
 Bool_t GainEqualization::CreateSupportHistograms(TList *list) {
 
   TString histoNameAndTitle = Form("%s %s",
-      szSupportHistogramName,
-      fDetectorConfiguration->GetName());
+                                   szSupportHistogramName,
+                                   fDetectorConfiguration->GetName());
 
-QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
+  QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
       static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
-  if (fInputHistograms != NULL) delete fInputHistograms;
-  fInputHistograms = new QnCorrectionsProfileChannelizedIngress((const char *) histoNameAndTitle, (const char *) histoNameAndTitle,
-      ownerConfiguration->GetEventClassVariablesSet(),ownerConfiguration->GetNoOfChannels(), "s");
+  if (fInputHistograms!=NULL) delete fInputHistograms;
+  fInputHistograms =
+      new QnCorrectionsProfileChannelizedIngress((const char *) histoNameAndTitle,
+                                                 (const char *) histoNameAndTitle,
+                                                 ownerConfiguration->GetEventClassVariablesSet(),
+                                                 ownerConfiguration->GetNoOfChannels(),
+                                                 "s");
   fInputHistograms->SetNoOfEntriesThreshold(fMinNoOfEntriesToValidate);
-  fCalibrationHistograms = new QnCorrectionsProfileChannelized((const char *) histoNameAndTitle, (const char *) histoNameAndTitle,
-      ownerConfiguration->GetEventClassVariablesSet(),ownerConfiguration->GetNoOfChannels(), "s");
+  fCalibrationHistograms =
+      new QnCorrectionsProfileChannelized((const char *) histoNameAndTitle,
+                                          (const char *) histoNameAndTitle,
+                                          ownerConfiguration->GetEventClassVariablesSet(),
+                                          ownerConfiguration->GetNoOfChannels(),
+                                          "s");
   fCalibrationHistograms->CreateProfileHistograms(list,
-      ownerConfiguration->GetUsedChannelsMask(), ownerConfiguration->GetChannelsGroups());
+                                                  ownerConfiguration->GetUsedChannelsMask(),
+                                                  ownerConfiguration->GetChannelsGroups());
   return kTRUE;
 }
 
@@ -151,35 +156,37 @@ QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::CreateQAHistograms(TList *list) {
   TString beforeName = Form("%s %s",
-      szSupportHistogramName,
-      fDetectorConfiguration->GetName());
+                            szSupportHistogramName,
+                            fDetectorConfiguration->GetName());
   beforeName += "Before";
   TString beforeTitle = Form("%s %s",
-      szSupportHistogramName,
-      fDetectorConfiguration->GetName());
+                             szSupportHistogramName,
+                             fDetectorConfiguration->GetName());
   beforeTitle += " before gain equalization";
   TString afterName = Form("%s %s",
-      szSupportHistogramName,
-      fDetectorConfiguration->GetName());
+                           szSupportHistogramName,
+                           fDetectorConfiguration->GetName());
   afterName += "After";
   TString afterTitle = Form("%s %s",
-      szSupportHistogramName,
-      fDetectorConfiguration->GetName());
+                            szSupportHistogramName,
+                            fDetectorConfiguration->GetName());
   afterTitle += " after gain equalization";
   QnCorrectionsDetectorConfigurationChannels *ownerConfiguration =
       static_cast<QnCorrectionsDetectorConfigurationChannels *>(fDetectorConfiguration);
   fQAMultiplicityBefore = new QnCorrectionsProfileChannelized(
       (const char *) beforeName,
       (const char *) beforeTitle,
-      ownerConfiguration->GetEventClassVariablesSet(),ownerConfiguration->GetNoOfChannels());
+      ownerConfiguration->GetEventClassVariablesSet(), ownerConfiguration->GetNoOfChannels());
   fQAMultiplicityBefore->CreateProfileHistograms(list,
-      ownerConfiguration->GetUsedChannelsMask(), ownerConfiguration->GetChannelsGroups());
+                                                 ownerConfiguration->GetUsedChannelsMask(),
+                                                 ownerConfiguration->GetChannelsGroups());
   fQAMultiplicityAfter = new QnCorrectionsProfileChannelized(
       (const char *) afterName,
       (const char *) afterTitle,
-      ownerConfiguration->GetEventClassVariablesSet(),ownerConfiguration->GetNoOfChannels());
+      ownerConfiguration->GetEventClassVariablesSet(), ownerConfiguration->GetNoOfChannels());
   fQAMultiplicityAfter->CreateProfileHistograms(list,
-      ownerConfiguration->GetUsedChannelsMask(), ownerConfiguration->GetChannelsGroups());
+                                                ownerConfiguration->GetUsedChannelsMask(),
+                                                ownerConfiguration->GetChannelsGroups());
   return kTRUE;
 }
 
@@ -211,109 +218,110 @@ Bool_t GainEqualization::CreateNveQAHistograms(TList *list) {
 /// \return kTRUE if the correction step was applied
 Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
-  case QCORRSTEP_calibration:
-    /* collect the data needed to further produce equalization parameters */
-    for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
-      QnCorrectionsDataVectorChannelized *dataVector =
-          static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-      fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
-    }
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    /* collect the data needed to further produce equalization parameters */
-    for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
-      QnCorrectionsDataVectorChannelized *dataVector =
-          static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-      fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
-    }
-    /* and proceed to ... */
-  case QCORRSTEP_apply: /* apply the equalization */
-    /* collect QA data if asked */
-    if (fQAMultiplicityBefore != NULL) {
-      for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
+    case QCORRSTEP_calibration:
+      /* collect the data needed to further produce equalization parameters */
+      for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
         QnCorrectionsDataVectorChannelized *dataVector =
             static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        fQAMultiplicityBefore->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+        fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
       }
-    }
-    /* store the equalized weights in the data vector bank according to equalization method */
-    switch (fEqualizationMethod) {
-    case GainEqualizationMethod::NONE:
-      for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
-        QnCorrectionsDataVectorChannelized *dataVector =
-            static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        dataVector->SetEqualizedWeight(dataVector->EqualizedWeight());
-      }
+      return kFALSE;
       break;
-    case GainEqualizationMethod::AVERAGE:
-      for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
+    case QCORRSTEP_applyCollect:
+      /* collect the data needed to further produce equalization parameters */
+      for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
         QnCorrectionsDataVectorChannelized *dataVector =
             static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
-        if (fInputHistograms->BinContentValidated(bin)) {
-          Float_t average = fInputHistograms->GetBinContent(bin);
-          /* let's handle the potential group weights usage */
-          Float_t groupweight = 1.0;
-          if (fUseChannelGroupsWeights) {
-            groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer, dataVector->GetId()));
+        fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+      }
+      /* and proceed to ... */
+    case QCORRSTEP_apply: /* apply the equalization */
+      /* collect QA data if asked */
+      if (fQAMultiplicityBefore!=NULL) {
+        for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
+          QnCorrectionsDataVectorChannelized *dataVector =
+              static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+          fQAMultiplicityBefore->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+        }
+      }
+      /* store the equalized weights in the data vector bank according to equalization method */
+      switch (fEqualizationMethod) {
+        case Method::NONE:
+          for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
+            QnCorrectionsDataVectorChannelized *dataVector =
+                static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            dataVector->SetEqualizedWeight(dataVector->EqualizedWeight());
           }
-          else {
-            if (fHardCodedWeights != NULL) {
-              groupweight = fHardCodedWeights[dataVector->GetId()];
+          break;
+        case Method::AVERAGE:
+          for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
+            QnCorrectionsDataVectorChannelized *dataVector =
+                static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
+            if (fInputHistograms->BinContentValidated(bin)) {
+              Float_t average = fInputHistograms->GetBinContent(bin);
+              /* let's handle the potential group weights usage */
+              Float_t groupweight = 1.0;
+              if (fUseChannelGroupsWeights) {
+                groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
+                                                                                             dataVector->GetId()));
+              } else {
+                if (fHardCodedWeights!=NULL) {
+                  groupweight = fHardCodedWeights[dataVector->GetId()];
+                }
+              }
+              if (fMinimumSignificantValue < average)
+                dataVector->SetEqualizedWeight((dataVector->EqualizedWeight()/average)*groupweight);
+              else
+                dataVector->SetEqualizedWeight(0.0);
+            } else {
+              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector->GetId(), 1.0);
             }
           }
-          if (fMinimumSignificantValue < average)
-            dataVector->SetEqualizedWeight((dataVector->EqualizedWeight() / average) * groupweight);
-          else
-            dataVector->SetEqualizedWeight(0.0);
-        }
-        else {
-          if (fQANotValidatedBin != NULL) fQANotValidatedBin->Fill(variableContainer, dataVector->GetId(), 1.0);
-        }
-      }
-      break;
-    case GainEqualizationMethod::WIDTH:
-      for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
-        QnCorrectionsDataVectorChannelized *dataVector =
-            static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
-        if (fInputHistograms->BinContentValidated(bin)) {
-          Float_t average = fInputHistograms->GetBinContent(fInputHistograms->GetBin(variableContainer, dataVector->GetId()));
-          Float_t width = fInputHistograms->GetBinError(fInputHistograms->GetBin(variableContainer, dataVector->GetId()));
-          /* let's handle the potential group weights usage */
-          Float_t groupweight = 1.0;
-          if (fUseChannelGroupsWeights) {
-            groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer, dataVector->GetId()));
-          }
-          else {
-            if (fHardCodedWeights != NULL) {
-              groupweight = fHardCodedWeights[dataVector->GetId()];
+          break;
+        case Method::WIDTH:
+          for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
+            QnCorrectionsDataVectorChannelized *dataVector =
+                static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
+            if (fInputHistograms->BinContentValidated(bin)) {
+              Float_t average =
+                  fInputHistograms->GetBinContent(fInputHistograms->GetBin(variableContainer, dataVector->GetId()));
+              Float_t width =
+                  fInputHistograms->GetBinError(fInputHistograms->GetBin(variableContainer, dataVector->GetId()));
+              /* let's handle the potential group weights usage */
+              Float_t groupweight = 1.0;
+              if (fUseChannelGroupsWeights) {
+                groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
+                                                                                             dataVector->GetId()));
+              } else {
+                if (fHardCodedWeights!=NULL) {
+                  groupweight = fHardCodedWeights[dataVector->GetId()];
+                }
+              }
+              if (fMinimumSignificantValue < average)
+                dataVector->SetEqualizedWeight(
+                    (fShift + fScale*(dataVector->EqualizedWeight() - average)/width)*groupweight);
+              else
+                dataVector->SetEqualizedWeight(0.0);
+            } else {
+              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector->GetId(), 1.0);
             }
           }
-          if (fMinimumSignificantValue < average)
-            dataVector->SetEqualizedWeight((fShift + fScale * (dataVector->EqualizedWeight() - average) / width) * groupweight);
-          else
-            dataVector->SetEqualizedWeight(0.0);
-        }
-        else {
-          if (fQANotValidatedBin != NULL) fQANotValidatedBin->Fill(variableContainer, dataVector->GetId(), 1.0);
+          break;
+      }
+      /* collect QA data if asked */
+      if (fQAMultiplicityAfter!=NULL) {
+        for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
+          QnCorrectionsDataVectorChannelized *dataVector =
+              static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+          fQAMultiplicityAfter->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
         }
       }
       break;
-    }
-    /* collect QA data if asked */
-    if (fQAMultiplicityAfter != NULL) {
-      for(Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++){
-        QnCorrectionsDataVectorChannelized *dataVector =
-            static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        fQAMultiplicityAfter->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
-      }
-    }
-    break;
-  default:
-    /* we are in passive state waiting for proper conditions, no corrections applied */
-    return kFALSE;
+    default:
+      /* we are in passive state waiting for proper conditions, no corrections applied */
+      return kFALSE;
   }
   return kTRUE;
 }
@@ -331,18 +339,17 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
 Bool_t GainEqualization::ProcessDataCollection(const double *variableContainer) {
   (void) variableContainer;
   switch (fState) {
-  case QCORRSTEP_calibration:
-    /* collect the data needed to further produce equalization parameters */
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    /* collect the data needed to further produce equalization parameters */
-    /* and proceed to ... */
-  case QCORRSTEP_apply: /* apply the equalization */
-    /* collect QA data if asked */
-    break;
-  default:
-    return kFALSE;
+    case QCORRSTEP_calibration:
+      /* collect the data needed to further produce equalization parameters */
+      return kFALSE;
+      break;
+    case QCORRSTEP_applyCollect:
+      /* collect the data needed to further produce equalization parameters */
+      /* and proceed to ... */
+    case QCORRSTEP_apply: /* apply the equalization */
+      /* collect QA data if asked */
+      break;
+    default:return kFALSE;
   }
   return kTRUE;
 }
@@ -357,21 +364,20 @@ Bool_t GainEqualization::ProcessDataCollection(const double *variableContainer) 
 /// \return kTRUE if the correction step is being applied
 Bool_t GainEqualization::ReportUsage(TList *calibrationList, TList *applyList) {
   switch (fState) {
-  case QCORRSTEP_calibration:
-    /* we are collecting */
-    calibrationList->Add(new TObjString(szCorrectionName));
-    /* but not applying */
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    /* we are collecting */
-    calibrationList->Add(new TObjString(szCorrectionName));
-  case QCORRSTEP_apply:
-    /* and applying */
-    applyList->Add(new TObjString(szCorrectionName));
-    break;
-  default:
-    return kFALSE;
+    case QCORRSTEP_calibration:
+      /* we are collecting */
+      calibrationList->Add(new TObjString(szCorrectionName));
+      /* but not applying */
+      return kFALSE;
+      break;
+    case QCORRSTEP_applyCollect:
+      /* we are collecting */
+      calibrationList->Add(new TObjString(szCorrectionName));
+    case QCORRSTEP_apply:
+      /* and applying */
+      applyList->Add(new TObjString(szCorrectionName));
+      break;
+    default:return kFALSE;
   }
   return kTRUE;
 }

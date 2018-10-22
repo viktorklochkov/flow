@@ -241,23 +241,6 @@ class CorrectionManager {
 
   void SaveTree(const std::shared_ptr<TFile> &file);
 
-/**
- * Get Normalization from Qn::CorrectionsQnVector framework
- * @param method normalization method.
- * @return corresponding correlation.
- */
-  inline Qn::QVector::Normalization GetNormalization(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::NONE)
-      return Qn::QVector::Normalization::NOCALIB;
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::M)
-      return Qn::QVector::Normalization::QOVERM;
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::SQRT_M)
-      return Qn::QVector::Normalization::QOVERSQRTM;
-    if (method==QnCorrectionsQnVector::QnVectorNormalizationMethod::MAGNITUDE)
-      return Qn::QVector::Normalization::QOVERNORMQ;
-    return Qn::QVector::Normalization::NOCALIB;
-  }
-
   QnCorrectionsEventClassVariablesSet *qncorrections_varset_ = nullptr;
   std::unique_ptr<Cuts> event_cuts_;
   std::unique_ptr<Qn::EventInfoF> event_variables_;

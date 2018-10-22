@@ -18,7 +18,6 @@
 #include <functional>
 
 #include "QVector.h"
-#include "QnCorrectionsQnVector.h"
 
 namespace Qn {
 /**
@@ -82,14 +81,14 @@ QVector operator+(const QVector a, const QVector b) {
 QVector QVector::Normal(const QVector::Normalization norm) const {
   QVector c(*this);
   c.CopyHarmonics(*this);
-  if (norm_!=Normalization::NOCALIB) {
+  if (norm_!=Normalization::NONE) {
     c = c.DeNormal();
   }
   switch (norm) {
-    case (Normalization::NOCALIB): {
+    case (Normalization::NONE): {
       break;
     }
-    case (Normalization::QOVERM): {
+    case (Normalization::M): {
       auto add = [this](const QVec q) {
         if (sum_weights_!=0) return q/sum_weights_;
         return QVec{0., 0.};
@@ -97,7 +96,7 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
       std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
       break;
     }
-    case (Normalization::QOVERSQRTM): {
+    case (Normalization::SQRT_M): {
       auto add = [this](const QVec q) {
         if (sum_weights_ > 0) return q/std::sqrt(sum_weights_);
         return QVec{0., 0.};
@@ -105,7 +104,7 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
       std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
       break;
     }
-    case (Normalization::QOVERNORMQ): {
+    case (Normalization::MAGNITUDE): {
       auto add = [](const QVec q) {
         if (Qn::norm(q)!=0) {
           return q/Qn::norm(q);
@@ -127,24 +126,24 @@ QVector QVector::DeNormal() const {
   QVector c(*this);
   c.CopyHarmonics(*this);
   switch (norm_) {
-    case (Normalization::NOCALIB): {
+    case (Normalization::NONE): {
       break;
     }
-    case (Normalization::QOVERM): {
+    case (Normalization::M): {
       std::transform(q_.begin(), q_.end(), c.q_.begin(), [this](const QVec q) { return q*this->sum_weights_; });
       break;
     }
-    case (Normalization::QOVERSQRTM): {
+    case (Normalization::SQRT_M): {
       std::transform(q_.begin(), q_.end(), c.q_.begin(),
                      [this](const QVec q) { return q*std::sqrt(sum_weights_); });
       break;
     }
-    case (Normalization::QOVERNORMQ): {
+    case (Normalization::MAGNITUDE): {
       std::transform(q_.begin(), q_.end(), c.q_.begin(), [](const QVec q) { return q*Qn::norm(q); });
       break;
     }
   }
-  c.norm_ = Normalization::NOCALIB;
+  c.norm_ = Normalization::NONE;
   return c;
 }
 

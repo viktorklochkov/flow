@@ -142,7 +142,7 @@ class CorrelationManager {
   std::vector<unsigned long> eventbin_;
   std::vector<Qn::Axis> event_axes_;
   std::vector<Qn::Axis> eventshape_axes_;
-  std::unique_ptr<Qn::DataContainerESE> event_shape_ = nullptr;
+  std::unique_ptr<Qn::DataContainerEventShape> event_shape_ = nullptr;
   bool fill_ese_ = false;
   bool use_ese_ = false;
   size_type num_events_ = 0;

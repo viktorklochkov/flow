@@ -23,8 +23,9 @@
 #include <math.h>
 
 #include "Rtypes.h"
+#include "QnCorrectionsQnVector.h"
 
-class QnCorrectionsQnVector;
+//class QnCorrectionsQnVector;
 
 namespace Qn {
 
@@ -49,12 +50,15 @@ inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
 class QVector {
 
  public:
-  enum class Normalization : short {
-    NOCALIB,
-    QOVERSQRTM,
-    QOVERM,
-    QOVERNORMQ
-  };
+
+  using Normalization = QnCorrectionsQnVector::Normalization;
+
+//  enum class Normalization : short {
+//    NOCALIB,
+//    QOVERSQRTM,
+//    QOVERM,
+//    QOVERNORMQ
+//  };
 
   QVector() = default;
   virtual ~QVector() = default;
@@ -105,7 +109,7 @@ class QVector {
   QVector Normal(Normalization norm) const;
   QVector DeNormal() const;
 
-  Normalization norm_ = Normalization::NOCALIB; ///< normalization method
+  Normalization norm_ = Normalization::NONE; ///< normalization method
   int n_ = 0;                                   ///< number of data vectors contributing to the q vector
   float sum_weights_ = 0.0;                     ///< sum of weights
   std::bitset<8> bits_{};                       ///< Bitset for keeping track of the harmonics

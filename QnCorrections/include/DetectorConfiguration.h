@@ -76,11 +76,11 @@ class DetectorConfiguration : public TNamed {
   void SetCuts(QnCorrectionsCutsSet *cuts) { fCuts = cuts; }
   /// Sets the normalization method for Q vectors
   /// \param method the Qn vector normalizatio method
-  void SetQVectorNormalizationMethod(QnCorrectionsQnVector::QnVectorNormalizationMethod method) {
+  void SetQVectorNormalizationMethod(QnCorrectionsQnVector::Normalization method) {
     fQnNormalizationMethod = method;
   }
   /// Get the normalization method for Q vectors
-  QnCorrectionsQnVector::QnVectorNormalizationMethod GetQVectorNormalizationMethod() const {
+  QnCorrectionsQnVector::Normalization GetQVectorNormalizationMethod() const {
     return fQnNormalizationMethod;
   }
  public:
@@ -280,7 +280,7 @@ class DetectorConfiguration : public TNamed {
   QnCorrectionsQnVector fCorrectedQ2nVector; ///< Q2n vector after subsequent correction steps
   QnCorrectionsQnVectorBuild fTempQnVector; ///< temporary Qn vector for efficient Q vector building
   QnCorrectionsQnVectorBuild fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
-  QnCorrectionsQnVector::QnVectorNormalizationMethod fQnNormalizationMethod; ///< the method for Q vector normalization
+  QnCorrectionsQnVector::Normalization fQnNormalizationMethod; ///< the method for Q vector normalization
   QnCorrectionsCorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
   /// set of variables that define event classes
   QnCorrectionsEventClassVariablesSet *fEventClassVariables; //->

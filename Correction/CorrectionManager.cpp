@@ -67,7 +67,7 @@ void Qn::CorrectionManager::GetQnFromFramework(const std::string &step) {
       auto vector = qncorrections_manager_.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
       auto method =
           qncorrections_manager_.FindDetector(name.data())->FindDetectorConfiguration(name.data())->GetQVectorNormalizationMethod();
-      QVector temp(GetNormalization(method), vector, harmonics);
+      QVector temp(method, vector, harmonics);
       bin = temp;
     }
     nbinsrunning += detector->size();
@@ -87,7 +87,7 @@ void Qn::CorrectionManager::GetQnFromFramework(const std::string &step) {
       auto vector = qncorrections_manager_.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
       auto method =
           qncorrections_manager_.FindDetector(name.data())->FindDetectorConfiguration(name.data())->GetQVectorNormalizationMethod();
-      QVector temp(GetNormalization(method), vector, harmonics);
+      QVector temp(method, vector, harmonics);
       bin = temp;
     }
     nbinsrunning += detector->size();

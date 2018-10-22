@@ -135,7 +135,7 @@ void CorrelationManager::Initialize() {
     ese_file_ = std::make_unique<TFile>(ese_file_name_.data(), "READ");
     fill_ese_ = true;
     if (ese_file_->IsOpen()) {
-      event_shape_.reset((Qn::DataContainerESE *) (ese_file_->Get("ESE"))->Clone("ESE"));
+      event_shape_.reset((Qn::DataContainerEventShape *) (ese_file_->Get("ESE"))->Clone("ESE"));
       fill_ese_ = false;
     }
     if (event_shape_) eventbin_.push_back(-1);
@@ -305,7 +305,7 @@ void CorrelationManager::BuildESECorrelation() {
   if (!use_ese_) return;
   for (const auto &ese : ese_correlations_) {
     if (!event_shape_) {
-      event_shape_ = std::make_unique<Qn::DataContainerESE>();
+      event_shape_ = std::make_unique<Qn::DataContainerEventShape>();
       event_shape_->AddAxes(event_axes_);
     }
     if (event_shape_ && !fill_ese_) {
@@ -344,7 +344,7 @@ void CorrelationManager::FitEventShape() {
 
 void CorrelationManager::SaveEventShape(const std::string &filename) {
   if (fill_ese_ && use_ese_) {
-    event_shape_.reset((Qn::DataContainerESE *) event_shape_->Clone("ESE"));
+    event_shape_.reset((Qn::DataContainerEventShape *) event_shape_->Clone("ESE"));
     ese_file_ = std::make_unique<TFile>(filename.data(), "RECREATE");
     if (event_shape_ && fill_ese_) ese_file_->WriteTObject(event_shape_.get(), "ESE", "");
     ese_file_->Close();

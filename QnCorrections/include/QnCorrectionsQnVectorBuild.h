@@ -47,7 +47,7 @@ public:
   /// Current criteria is number of contributors should be at least one.
   /// If so happen, sets the good quality flag.
   void CheckQuality() { fGoodQuality = ((0 < fN) ? kTRUE : kFALSE); }
-  void Normalize(QnVectorNormalizationMethod method);
+  void Normalize(Normalization method);
 
   void NormalizeQoverM();
   void NormalizeQoverSquareRootOfM();
@@ -91,17 +91,17 @@ inline void QnCorrectionsQnVectorBuild::Add(Double_t phi, Double_t weight) {
 
 /// Calibrates the Q vector according to the method passed
 /// \param method the method of calibration
-inline void QnCorrectionsQnVectorBuild::Normalize(QnVectorNormalizationMethod method) {
+inline void QnCorrectionsQnVectorBuild::Normalize(Normalization method) {
   switch (method) {
-  case NONE:
+    case Normalization::NONE:
     break;
-  case SQRT_M:
+    case Normalization::SQRT_M:
     NormalizeQoverSquareRootOfM();
     break;
-  case M:
+    case Normalization::M:
     NormalizeQoverM();
     break;
-  case MAGNITUDE:
+    case Normalization::MAGNITUDE:
     QnCorrectionsQnVector::Normalize();
     break;
   }

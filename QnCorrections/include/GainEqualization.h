@@ -108,7 +108,7 @@ public:
   /// But full protection will be reached when were possible declaring it
   /// as a class.
   ///
-  enum class GainEqualizationMethod {
+  enum class Method {
     NONE,         ///< \f$ \mbox{M'} = \mbox{M}\f$
     AVERAGE,    ///< \f$ \mbox{M}' = \frac{\mbox{M}}{\langle\mbox{M}\rangle} \f$
     WIDTH,      ///< \f$ \mbox{M}' = \mbox{A} + \mbox{B} \frac{\mbox{M} - \langle\mbox{M} \rangle}{\sigma_{{M}}} \f$
@@ -119,7 +119,7 @@ public:
 
   /// Stores the passed equalization method
   /// \param method the desired equalization method
-  void SetEqualizationMethod(GainEqualizationMethod method)
+  void SetEqualizationMethod(Method method)
   { fEqualizationMethod = method; }
 
   /// Set the shift (A) width equalization parameter
@@ -168,7 +168,7 @@ private:
   QnCorrectionsProfileChannelized *fQAMultiplicityBefore;  //!<! the channel multiplicity histogram before gain equalization
   QnCorrectionsProfileChannelized *fQAMultiplicityAfter;   //!<! the channel multiplicity histogram after gain equalization
   QnCorrectionsHistogramChannelizedSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  GainEqualizationMethod fEqualizationMethod; ///< the selected equalization method
+  Method fEqualizationMethod; ///< the selected equalization method
 
   Float_t fShift;                               ///< the shift (A) parameter for width equalization
   Float_t fScale;                               ///< the scale (B) parameter for width equalization

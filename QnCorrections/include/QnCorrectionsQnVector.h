@@ -45,7 +45,7 @@ public:
   /// as a class.
   ///
   /// M is the sum of weights.
-  enum QnVectorNormalizationMethod {
+  enum class Normalization {
     NONE, ///< \f$ \mbox{Q'} = \mbox{Q}\f$
     SQRT_M,    ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\sqrt{\mbox{M}}} \f$
     M,        ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\mbox{M}} \f$
