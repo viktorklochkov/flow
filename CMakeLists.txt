@@ -243,7 +243,7 @@ set(INSTALL_CONFIGDIR lib/cmake/Qn)
 install(EXPORT QnTargets
         FILE QnTargets.cmake
         NAMESPACE Qn::
-        DESTINATION ${INSTALL_CONFIGDIR}/
+        DESTINATION ${INSTALL_CONFIGDIR}
         )
 #Create a ConfigVersion.cmake file
 include(CMakePackageConfigHelpers)
@@ -252,9 +252,13 @@ write_basic_package_version_file(
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY AnyNewerVersion
 )
+
+configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/QnConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/lib/cmake/QnConfig.cmake
+        INSTALL_DESTINATION ${INSTALL_CONFIGDIR})
 #Install the config, configversion
 install(FILES
-        ${CMAKE_CURRENT_LIST_DIR}/cmake/QnConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/lib/cmake/QnConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/QnConfigVersion.cmake
         DESTINATION ${INSTALL_CONFIGDIR})
 
