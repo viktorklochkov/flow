@@ -115,8 +115,8 @@ void DetectorConfiguration::AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQve
 /// \param correctionOnInputData the correction to add
 void DetectorConfiguration::AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData) {
   (void) correctionOnInputData;
-  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
-      "you are using a non channelized detector configuration to calibrate input data. FIX IT, PLEASE.",
+  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n"
+                          "you are using a non channelized detector configuration to calibrate input data. FIX IT, PLEASE.",
       "QnCorrectionsDetectorConfigurationBase::AddCorrectionOnInputData()"));
 }
 

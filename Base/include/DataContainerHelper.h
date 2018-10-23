@@ -71,14 +71,14 @@ class DataContainerHelper {
  public:
   enum class Errors { Yonly, XandY };
 
-  static TGraphAsymmErrors *DataToProfileGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x = Errors::Yonly);
-  static TGraphAsymmErrors *DataToProfileGraphShifted(const Qn::DataContainer<Qn::Sample> &data,
-                                                      int i,
-                                                      int max,
-                                                      Errors x = Errors::Yonly);
-  static TMultiGraph *DataToMultiGraph(const Qn::DataContainer<Qn::Sample> &data,
-                                       const std::string &axisname,
-                                       Errors x= Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x = Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Qn::Sample> &data,
+                                            int i,
+                                            int max,
+                                            Errors x = Errors::Yonly);
+  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Qn::Sample> &data,
+                                    const std::string &axisname,
+                                    Errors x = Errors::Yonly);
 
  private:
   friend DataContainer<Qn::Sample>;
@@ -88,6 +88,11 @@ class DataContainerHelper {
   static void NDraw(Qn::DataContainer<Qn::Sample> &data, std::string option, const std::string &axis_name);
 
 };
+
+using Errors = DataContainerHelper::Errors;
+constexpr auto ToTGraph = &DataContainerHelper::ToTGraph;
+constexpr auto ToTMultiGraph = &DataContainerHelper::ToTMultiGraph;
+
 }
 
 #endif //FLOW_DATACONTAINERHELPER_H

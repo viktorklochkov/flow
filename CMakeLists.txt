@@ -84,8 +84,8 @@ set(BASE_SOURCES
 
 set(BASE_HEADERS Base/include/DataContainer.h
         Base/include/DataVector.h
+        Base/include/DataContainerHelper.h
         Base/include/Axis.h
-        Base/include/DataVector.h
         Base/include/Profile.h
         Base/include/Efficiency.h
         Base/include/QVector.h
@@ -163,7 +163,7 @@ include(${ROOT_USE_FILE})
 
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
-include_directories(QnCorrections/include)
+include_directories(QnCorrections/include Base/include)
 ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnCorrections/QnLinkDef.h)
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)

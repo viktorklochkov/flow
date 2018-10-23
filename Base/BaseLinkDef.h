@@ -20,25 +20,28 @@
 #pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
-#pragma link C++ nestedclasses;
+
+#pragma link C++ namespace Qn;
+#pragma link C++ nestedclass;
+#pragma link C++ nestedtypedef;
 
 #pragma link C++ class Qn::Axis+;
 #pragma link C++ class Qn::DataVector+;
-#pragma link C++ class vector<Qn::DataVector >+;
-#pragma link C++ class vector<vector <Qn::DataVector> >+;
-#pragma link C++ class vector<QnCorrectionsQnVector >+;
-#pragma link C++ class vector<Qn::Axis >+;
-#pragma link C++ class Qn::QVec+;
+//#pragma link C++ class vector<Qn::DataVector >+;
+//#pragma link C++ class vector<vector <Qn::DataVector> >+;
+//#pragma link C++ class vector<QnCorrectionsQnVector >+;
+//#pragma link C++ class vector<Qn::Axis >+;
+//#pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
 #pragma link C++ class Qn::Profile+;
-#pragma link C++ class Qn::StatisticMean+;
+//#pragma link C++ class Qn::StatisticMean+;
 #pragma link C++ class Qn::Sample+;
 #pragma link C++ class Qn::EventShape+;
-#pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
+//#pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
 #pragma link C++ class Qn::DataContainer<Qn::EventShape>+;
-#pragma link C++ class Qn::DataContainer<float >+;
+//#pragma link C++ class Qn::DataContainer<float >+;
 #pragma link C++ class Qn::DataContainer<std::pair<bool,float> >+;
-#pragma link C++ class Qn::DataContainer<Qn::Profile>+;
+//#pragma link C++ class Qn::DataContainer<Qn::Profile>+;
 #pragma link C++ class Qn::DataContainer<Qn::Sample>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
 #pragma link C++ class Qn::DataContainer<TH1F>+;
@@ -51,10 +54,10 @@
 #pragma link C++ typedef Qn::DataContainerSample;
 #pragma link C++ typedef Qn::DataContainerTH1F;
 #pragma link C++ typedef Qn::DataContainerEventShape;
+#pragma link C++ typedef Qn::Errors;
 
-
-#pragma link C++ function Qn::DataToProfileGraph;
-#pragma link C++ function Qn::DataToMultiGraph;
-#pragma link C++ function Qn::Sqrt;
+#pragma link C++ function Qn::ToTGraph;
+#pragma link C++ function Qn::ToTMultiGraph;
+#pragma link C++ function Qn::Sqrt<DataContainer<Qn::Sample>>;
 
 #endif

@@ -25,9 +25,9 @@
 
 namespace Qn {
 
-TGraphAsymmErrors *DataContainerHelper::DataToProfileGraphShifted(const DataContainerSample &data,
-                                                                  int i,
-                                                                  int maxi, Errors drawerrors) {
+TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerSample &data,
+                                                        int i,
+                                                        int maxi, Errors drawerrors) {
   if (data.GetAxes().size() > 1) {
     std::cout << "Data container has more than one dimension. " << std::endl;
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
@@ -53,9 +53,9 @@ TGraphAsymmErrors *DataContainerHelper::DataToProfileGraphShifted(const DataCont
   return graph;
 };
 
-TGraphAsymmErrors *DataContainerHelper::DataToProfileGraph(const DataContainerSample &data,
-                                                           Errors drawerrors) {
-  return DataToProfileGraphShifted(data, 1, 2, drawerrors);
+TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerSample &data,
+                                                 Errors drawerrors) {
+  return ToTGraphShifted(data, 1, 2, drawerrors);
 };
 
 /**
@@ -64,9 +64,9 @@ TGraphAsymmErrors *DataContainerHelper::DataToProfileGraph(const DataContainerSa
  * @param axisname name of the axis which is used for the multigraph.
  * @return graph containing a profile graph for each bin.
  */
-TMultiGraph *DataContainerHelper::DataToMultiGraph(const DataContainerSample &data,
-                                                   const std::string &axisname,
-                                                   Errors drawerrors) {
+TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerSample &data,
+                                                const std::string &axisname,
+                                                Errors drawerrors) {
   auto multigraph = new TMultiGraph();
   if (data.GetAxes().size()!=2) {
     std::cout << "Data Container dimension has wrong dimension " << data.GetAxes().size() << "\n";
@@ -79,7 +79,7 @@ TMultiGraph *DataContainerHelper::DataToMultiGraph(const DataContainerSample &da
   }
   for (unsigned int ibin = 0; ibin < axis.size(); ++ibin) {
     auto subdata = data.Select({axisname, {axis.GetLowerBinEdge(ibin), axis.GetUpperBinEdge(ibin)}});
-    auto subgraph = DataToProfileGraphShifted(subdata, ibin, axis.size(), drawerrors);
+    auto subgraph = ToTGraphShifted(subdata, ibin, axis.size(), drawerrors);
     subgraph->SetTitle(Form("%.2f - %.2f", axis.GetLowerBinEdge(ibin), axis.GetUpperBinEdge(ibin)));
     subgraph->SetMarkerStyle(kFullCircle);
     multigraph->Add(subgraph);
@@ -94,7 +94,7 @@ void DataContainerHelper::SampleBrowse(DataContainer<Sample> *data, TBrowser *b)
   data->list_->SetOwner(true);
   for (auto &axis : data->axes_) {
     auto proj = data->Projection({axis.Name()});
-    auto graph = DataContainerHelper::DataToProfileGraph(proj, Errors::Yonly);
+    auto graph = DataContainerHelper::ToTGraph(proj, Errors::Yonly);
     graph->SetName(axis.Name().data());
     graph->SetTitle(axis.Name().data());
     graph->GetXaxis()->SetTitle(axis.Name().data());
@@ -107,7 +107,7 @@ void DataContainerHelper::SampleBrowse(DataContainer<Sample> *data, TBrowser *b)
       for (auto jaxis = std::begin(data->axes_); jaxis < std::end(data->axes_); ++jaxis) {
         if (iaxis!=jaxis) {
           auto proj = data->Projection({iaxis->Name(), jaxis->Name()});
-          auto mgraph = DataContainerHelper::DataToMultiGraph(proj, iaxis->Name(), Errors::Yonly);
+          auto mgraph = DataContainerHelper::ToTMultiGraph(proj, iaxis->Name(), Errors::Yonly);
           auto name = (jaxis->Name() + ":" + iaxis->Name());
           mgraph->SetName(name.data());
           mgraph->SetTitle(name.data());
@@ -170,11 +170,11 @@ void DataContainerHelper::NDraw(DataContainer<Sample> &data,
     option.erase(foundoption, std::string("XErrors").size());
   }
   if (data.axes_.size()==1) {
-    auto graph = DataContainerHelper::DataToProfileGraph(data, err);
+    auto graph = DataContainerHelper::ToTGraph(data, err);
     graph->Draw(option.data());
   } else if (data.axes_.size()==2) {
     try {
-      auto mgraph = DataContainerHelper::DataToMultiGraph(data, axis_name, err);
+      auto mgraph = DataContainerHelper::ToTMultiGraph(data, axis_name, err);
       mgraph->Draw(option.data());
     } catch (std::exception &) {
       std::string axes_in_dc = "Axis \"" + axis_name + "\" not found.\n";
