@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
-project(flow VERSION 1 LANGUAGES CXX)
+project(flow VERSION 1.1 LANGUAGES CXX)
 
 #set(CMAKE_CXX_STANDARD 14)
 if (APPLE)
@@ -221,7 +221,7 @@ target_include_directories(Correlation
         )
 target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
-#add_subdirectory(test)
+add_subdirectory(test)
 
 # Install configuration
 

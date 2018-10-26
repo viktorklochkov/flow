@@ -18,6 +18,8 @@
 #ifndef FLOW_EVENTSHAPE_H
 #define FLOW_EVENTSHAPE_H
 
+#include <iostream>
+
 #include "TH1F.h"
 #include "TSpline.h"
 #include "TCanvas.h"
@@ -27,29 +29,34 @@ namespace Qn {
 class EventShape : public TObject {
  public:
 
-  EventShape() {}
-  EventShape(std::string name) : name_(name) {}
-  ~EventShape() {
-    delete spline_;
-    delete histo_;
-    delete integral_;
+  EventShape() = default;
+
+  EventShape(std::string name) : name_(name) {
+
+  }
+  ~EventShape() = default;
+
+  template<class... Args>
+  void SetHisto(Args &&... args) {
+    histo_ = new TH1F(std::forward<Args>(args)...);
+    integral_ = new TH1F(std::forward<Args>(args)...);
   }
 
-  void SetHisto(TH1F* histo) { histo_ = (TH1F*) histo->Clone("histo"); }
+  void SetName(const std::string &name) { name_ = name; }
 
-  void SetName(const std::string &name) {name_ = name;}
+  void SetReady() { ready_ = true; }
 
-  void SetReady() {ready_ = true;}
+  bool IsReady() const { return ready_; }
 
-  bool IsReady() const {return ready_;}
-
-  std::string Name() const {return name_;}
+  std::string Name() const { return name_; }
 
   inline float GetPercentile(float q) { return static_cast<float>(spline_->Eval(q)); }
 
   void IntegrateHist();
 
   void FitWithSpline();
+
+  friend Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b);
 
   bool ready_ = false;
   std::string name_;
@@ -58,9 +65,17 @@ class EventShape : public TObject {
   TH1F *integral_ = nullptr;
 
   /// \cond CLASSIMP
-  ClassDef(EventShape,1);
+ ClassDef(EventShape, 4);
   /// \endcond
 };
+
+inline Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b) {
+  Qn::EventShape c(a.name_);
+  c.SetHisto(*a.histo_);
+  c.histo_->Add(b.histo_);
+  c.FitWithSpline();
+  return c;
+}
 }
 
 #endif //FLOW_EVENTSHAPE_H

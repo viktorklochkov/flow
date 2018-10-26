@@ -334,7 +334,7 @@ void CorrelationManager::FitEventShape() {
     for (auto bin : *correlation.second.GetBinnedResult()) {
       auto name = correlation.first;
       event_shape_->At(ibin).SetName("ESE_" + name);;
-      event_shape_->At(ibin).SetHisto(&bin);
+      event_shape_->At(ibin).SetHisto(bin);
       event_shape_->At(ibin).FitWithSpline();
       event_shape_->At(ibin).SetReady();
       ++ibin;
@@ -344,9 +344,9 @@ void CorrelationManager::FitEventShape() {
 
 void CorrelationManager::SaveEventShape(const std::string &filename) {
   if (fill_ese_ && use_ese_) {
-    event_shape_.reset((Qn::DataContainerEventShape *) event_shape_->Clone("ESE"));
+    auto tmp_event_shape = (Qn::DataContainerEventShape *) event_shape_->Clone("ESE");
     ese_file_ = std::make_unique<TFile>(filename.data(), "RECREATE");
-    if (event_shape_ && fill_ese_) ese_file_->WriteTObject(event_shape_.get(), "ESE", "");
+    if (event_shape_ && fill_ese_) ese_file_->WriteTObject(tmp_event_shape, "ESE", "");
     ese_file_->Close();
   }
 }

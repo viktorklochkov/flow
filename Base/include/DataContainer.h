@@ -67,7 +67,7 @@ class DataContainer : public TObject {
     AddAxes(axes);
   }
   virtual ~DataContainer() {
-    if (list_) delete list_;
+     delete list_;
   };
 
   using QnAxes = std::vector<Axis>;
@@ -631,7 +631,7 @@ class DataContainer : public TObject {
   Long64_t Merge(TCollection *inputlist) {
     TIter next(inputlist);
     while (auto data = (DataContainer<T> *) next()) {
-      auto lambda = [](const T &a, const T &b) { return Qn::Merge(a, b); };
+      auto lambda = [](const T &a, const T &b) -> T { return Qn::Merge(a, b); };
       *this = this->Apply(*data, lambda);
     }
     return this->size();

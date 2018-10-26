@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "DataContainer.h"
+
 #include <TList.h>
 #include <TFile.h>
 #include <TRandom3.h>
@@ -146,33 +147,42 @@
 //  EXPECT_EQ(100, numberofbins);
 //}
 //
-//TEST(DataContainerTest, Hadd) {
-//  auto file_a = new TFile("testa.root", "RECREATE");
-//  file_a->cd();
-//  auto container_a = new Qn::DataContainerProfile();
-//  container_a->AddAxes({{"a1", 2, 0, 10}});
-//  for (auto &bin : *container_a) {
-//    bin.Update(3.0);
-//  }
-//  file_a->WriteObject(container_a, "container");
-//  file_a->Write();
-//  auto file_b = new TFile("testb.root", "RECREATE");
-//  file_b->cd();
-//  auto container_b = new Qn::DataContainerProfile();
-//  container_b->AddAxes({{"a1",2, 0, 10}});
-//  for (auto &bin : *container_b) {
-//    bin.Update(1.0);
-//  }
-//  file_b->WriteObject(container_b, "container");
-//  file_b->Write();
-//  system("rm test.root");
-//  system("hadd test.root testa.root testb.root");
-//  auto file_c = new TFile("test.root", "OPEN");
-//  auto container_c = (Qn::DataContainerProfile *) file_c->Get("container");
-//  for (auto &bin : *container_c) {
-//    EXPECT_FLOAT_EQ(2.0, bin.Mean());
-//  }
-//}
+TEST(DataContainerTest, Hadd) {
+  auto container_a = new Qn::DataContainerEventShape();
+  container_a->AddAxes({{"a1", 1, 0, 10}});
+  for (auto &bin : *container_a) {
+    bin.SetHisto(TH1F("test","test",1,0,1));
+    bin.histo_->Fill(0.5);
+  }
+  auto file_a = new TFile("testa.root", "RECREATE");
+  file_a->WriteObject(container_a, "container");
+  file_a->Write();
+  system("rm test.root");
+  system("hadd test.root testa.root testa.root");
+  auto file_c = new TFile("test.root", "OPEN");
+  auto container_c = (Qn::DataContainerEventShape *) file_c->Get("container");
+  for (auto &bin : *container_c) {
+    EXPECT_FLOAT_EQ(2, bin.histo_->GetEntries());
+  }
+}
+TEST(DataContainerTest, HaddProfile) {
+  auto file_a = new TFile("testa.root", "RECREATE");
+  file_a->cd();
+  auto container_a = new Qn::DataContainerProfile();
+  container_a->AddAxes({{"a1", 1, 0, 10}});
+  for (auto &bin : *container_a) {
+    bin.Update(1.0);
+  }
+  file_a->WriteObject(container_a, "container");
+  file_a->Write();
+  system("rm test.root");
+  system("hadd test.root testa.root testa.root");
+  auto file_c = new TFile("test.root", "OPEN");
+  auto container_c = (Qn::DataContainerProfile *) file_c->Get("container");
+  for (auto &bin : *container_c) {
+    EXPECT_FLOAT_EQ(2, bin.Sum());
+  }
+}
 
 //TEST(DataContainerTest, ProjectionExclude) {
 //  Qn::DataContainerF container_a;
