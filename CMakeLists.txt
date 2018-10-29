@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
-project(flow VERSION 1.1 LANGUAGES CXX)
+project(flow VERSION 1.2 LANGUAGES CXX)
 
 #set(CMAKE_CXX_STANDARD 14)
 if (APPLE)
@@ -163,7 +163,7 @@ include(${ROOT_USE_FILE})
 
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
-include_directories(QnCorrections/include Base/include)
+include_directories(QnCorrections Base QnCorrections/include Base/include)
 ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnCorrections/QnLinkDef.h)
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)
