@@ -168,6 +168,7 @@ ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnCorrection
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)
 target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
+target_compile_features(QnCorrections PUBLIC cxx_std_14)
 target_include_directories(QnCorrections
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
