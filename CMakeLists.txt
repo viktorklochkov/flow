@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 1.2 LANGUAGES CXX)
 
-#set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 11)
 if (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
@@ -168,7 +168,7 @@ ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnCorrection
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)
 target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
-target_compile_features(QnCorrections PUBLIC cxx_std_14)
+#target_compile_features(QnCorrections PUBLIC cxx_std_11)
 target_include_directories(QnCorrections
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
@@ -184,11 +184,12 @@ ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINK
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
-target_compile_features(Base PUBLIC cxx_std_14)
+#target_compile_features(Base PUBLIC cxx_std_11)
 target_include_directories(Base
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
         QnCorrections/include
+        ${CMAKE_CURRENT_BINARY_DIR}/common
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Base/include>
@@ -232,6 +233,8 @@ install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_
 install(FILES ${CMAKE_BINARY_DIR}/libBase.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+
 
 install(TARGETS Base Correction Correlation QnCorrections
         EXPORT QnTargets

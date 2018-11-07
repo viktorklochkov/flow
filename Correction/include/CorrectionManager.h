@@ -40,6 +40,10 @@
 #include "DataContainer.h"
 #include "EventInfo.h"
 
+#if !Qn_COMPILER_CXX_14
+#include "BackPorts.h"
+#endif
+
 namespace Qn {
 class CorrectionManager {
  public:
@@ -159,8 +163,7 @@ class CorrectionManager {
       arr[i] = var_manager_->FindVariable(name);
       ++i;
     }
-    auto cut = MakeUniqueNDimCut(arr, func);
-    event_cuts_->AddCut(std::move(cut));
+    event_cuts_->AddCut(MakeUniqueNDimCut(arr, func));
   }
   /**
    * Adds a one dimesional event histogram

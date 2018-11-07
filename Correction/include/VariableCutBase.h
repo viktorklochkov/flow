@@ -25,6 +25,10 @@
 #include "VariableManager.h"
 #include "QAHistogram.h"
 
+#if !Qn_COMPILER_CXX_14
+#include "BackPorts.h"
+#endif
+
 namespace Qn {
 
 struct VariableCutBase {
@@ -73,15 +77,15 @@ class VariableCutNDim : public VariableCutBase {
 namespace Details {
 template<std::size_t>
 using Type = double &;
-template<std::size_t... Is, std::size_t N, typename FUNC>
-auto CreateNDimCutImpl(std::index_sequence<Is...>, Variable const (&arr)[N], FUNC &&func) {
+template<std::size_t N, typename FUNC, std::size_t... Is>
+std::unique_ptr<VariableCutNDim<Type<Is>...>> CreateNDimCutImpl(std::index_sequence<Is...>, Variable const (&arr)[N], FUNC &&func) {
   auto pp = std::make_unique<VariableCutNDim<Type<Is>...>>(arr, std::forward<FUNC>(func));
   return pp;
 }
 }
 
 template<std::size_t N, typename FUNC>
-auto MakeUniqueNDimCut(Variable const (&arr)[N], FUNC &&func) {
+std::unique_ptr<VariableCutBase> MakeUniqueNDimCut(Variable const (&arr)[N], FUNC &&func) {
   return Details::CreateNDimCutImpl(std::make_index_sequence<N>{}, arr, std::forward<FUNC>(func));
 }
 

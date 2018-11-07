@@ -23,6 +23,11 @@
 #include <TH1.h>
 #include <TH2.h>
 #include "VariableManager.h"
+
+#if !Qn_COMPILER_CXX_14
+#include "BackPorts.h"
+#endif
+
 namespace Qn {
 
 struct QAHistoBase {
@@ -40,7 +45,7 @@ class QAHisto : public QAHistoBase {
   QAHisto(std::array<VAR, N> vec, HISTO histo) : vars_(std::move(vec)), histo_(histo) {}
 
   template<typename array, std::size_t... I>
-  auto FillImpl(const array a, std::index_sequence<I...>) {
+  void FillImpl(const array a, std::index_sequence<I...>) {
     histo_.FillN(a[0].length(), (a[I].begin())...);
   }
 
