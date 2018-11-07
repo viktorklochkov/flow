@@ -82,14 +82,14 @@ set(BASE_SOURCES
         Base/EventShape.cpp
         )
 
-set(BASE_HEADERS Base/include/DataContainer.h
-        Base/include/DataVector.h
-        Base/include/DataContainerHelper.h
-        Base/include/Axis.h
-        Base/include/Profile.h
-        Base/include/Efficiency.h
-        Base/include/QVector.h
-        Base/include/Sample.h
+set(BASE_HEADERS DataContainer.h
+        DataVector.h
+        DataContainerHelper.h
+        Axis.h
+        Profile.h
+        Efficiency.h
+        QVector.h
+        Sample.h
         )
 
 set(QNCORR_HEADERS CorrectionOnInputData.h
