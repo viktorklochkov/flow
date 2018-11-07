@@ -41,6 +41,10 @@
  * QnCorrectionsframework
  */
 namespace Qn {
+
+template<typename T>
+T Merge(const T&a, const T&b) {return a + b;}
+
 /**
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
@@ -631,7 +635,7 @@ class DataContainer : public TObject {
   Long64_t Merge(TCollection *inputlist) {
     TIter next(inputlist);
     while (auto data = (DataContainer<T> *) next()) {
-      auto lambda = [](const T &a, const T &b) -> T { return Qn::Merge(a, b); };
+      auto lambda = [](const T &a, const T &b) -> T { return Qn::Merge<T>(a, b); };
       *this = this->Apply(*data, lambda);
     }
     return this->size();
@@ -821,5 +825,12 @@ DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
   return Summed;
 }
 
-}
+template<>
+Long64_t DataContainer<std::pair<bool,float>>::Merge(TCollection *inputlist) = delete;
+
+template<>
+Long64_t DataContainer<std::vector<DataVector>>::Merge(TCollection *inputlist) = delete;
+
+
+};
 #endif

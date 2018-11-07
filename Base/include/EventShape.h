@@ -56,7 +56,7 @@ class EventShape : public TObject {
 
   void FitWithSpline();
 
-  friend Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b);
+  friend Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b);
 
   bool ready_ = false;
   std::string name_;
@@ -69,13 +69,15 @@ class EventShape : public TObject {
   /// \endcond
 };
 
-inline Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b) {
+
+inline Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b) {
   Qn::EventShape c(a.name_);
   c.SetHisto(*a.histo_);
   c.histo_->Add(b.histo_);
   c.FitWithSpline();
   return c;
 }
+
 }
 
 #endif //FLOW_EVENTSHAPE_H
