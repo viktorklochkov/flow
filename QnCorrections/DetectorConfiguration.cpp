@@ -33,26 +33,25 @@
 /// \brief Implementation of the base detector configuration class within Q vector correction framework
 
 #include "DetectorConfiguration.h"
-#include "QnCorrectionsLog.h"
+#include "CorrectionLog.h"
 
 /// \cond CLASSIMP
-ClassImp(DetectorConfiguration);
+ClassImp(Qn::DetectorConfiguration);
 /// \endcond
-
+namespace Qn {
 const char *DetectorConfiguration::szPlainQnVectorName = "plain";
-
 
 /// Default constructor
 DetectorConfiguration::DetectorConfiguration() : TNamed(),
-    fPlainQnVector(), fPlainQ2nVector(),
-    fCorrectedQnVector(), fCorrectedQ2nVector(),
-    fTempQnVector(), fTempQ2nVector(),
-    fQnVectorCorrections() {
+                                                 fPlainQnVector(), fPlainQ2nVector(),
+                                                 fCorrectedQnVector(), fCorrectedQ2nVector(),
+                                                 fTempQnVector(), fTempQ2nVector(),
+                                                 fQnVectorCorrections() {
   fDetector = NULL;
   fCorrectionsManager = NULL;
   fCuts = NULL;
   fDataVectorBank = NULL;
-  fQnNormalizationMethod = QnCorrectionsQnVector::Normalization::NONE;
+  fQnNormalizationMethod = CorrectionQnVector::Normalization::NONE;
   fEventClassVariables = NULL;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
   fCorrectedQ2nVector.SetHarmonicMultiplier(2);
@@ -65,23 +64,23 @@ DetectorConfiguration::DetectorConfiguration() : TNamed(),
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
 DetectorConfiguration::DetectorConfiguration(const char *name,
-      QnCorrectionsEventClassVariablesSet *eventClassesVariables,
-      Int_t nNoOfHarmonics,
-      Int_t *harmonicMap) :
-          TNamed(name,name),
-          fPlainQnVector(szPlainQnVectorName,nNoOfHarmonics, harmonicMap),
-          fPlainQ2nVector(Form("%s2n",szPlainQnVectorName),nNoOfHarmonics, harmonicMap),
-          fCorrectedQnVector(szPlainQnVectorName,nNoOfHarmonics, harmonicMap),
-          fCorrectedQ2nVector(Form("%s2n",szPlainQnVectorName),nNoOfHarmonics, harmonicMap),
-          fTempQnVector("temp",nNoOfHarmonics, harmonicMap),
-          fTempQ2nVector("temp2n",nNoOfHarmonics, harmonicMap),
-          fQnVectorCorrections() {
+                                             EventClassVariablesSet *eventClassesVariables,
+                                             Int_t nNoOfHarmonics,
+                                             Int_t *harmonicMap) :
+    TNamed(name, name),
+    fPlainQnVector(szPlainQnVectorName, nNoOfHarmonics, harmonicMap),
+    fPlainQ2nVector(Form("%s2n", szPlainQnVectorName), nNoOfHarmonics, harmonicMap),
+    fCorrectedQnVector(szPlainQnVectorName, nNoOfHarmonics, harmonicMap),
+    fCorrectedQ2nVector(Form("%s2n", szPlainQnVectorName), nNoOfHarmonics, harmonicMap),
+    fTempQnVector("temp", nNoOfHarmonics, harmonicMap),
+    fTempQ2nVector("temp2n", nNoOfHarmonics, harmonicMap),
+    fQnVectorCorrections() {
 
   fDetector = NULL;
   fCorrectionsManager = NULL;
   fCuts = NULL;
   fDataVectorBank = NULL;
-  fQnNormalizationMethod = QnCorrectionsQnVector::Normalization::NONE;
+  fQnNormalizationMethod = CorrectionQnVector::Normalization::NONE;
   fEventClassVariables = eventClassesVariables;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
   fCorrectedQ2nVector.SetHarmonicMultiplier(2);
@@ -91,17 +90,17 @@ DetectorConfiguration::DetectorConfiguration(const char *name,
 /// Default destructor
 /// Releases the memory which was taken or passed
 DetectorConfiguration::~DetectorConfiguration() {
-  if (fDataVectorBank != NULL) {
+  if (fDataVectorBank!=NULL) {
     delete fDataVectorBank;
   }
-  if (fCuts != NULL) {
+  if (fCuts!=NULL) {
     delete fCuts;
   }
 }
 
 /// Incorporates the passed correction to the set of Q vector corrections
 /// \param correctionOnQn the correction to add
-void DetectorConfiguration::AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) {
+void DetectorConfiguration::AddCorrectionOnQnVector(CorrectionOnQvector *correctionOnQn) {
   correctionOnQn->SetConfigurationOwner(this);
   fQnVectorCorrections.AddCorrection(correctionOnQn);
 }
@@ -113,11 +112,11 @@ void DetectorConfiguration::AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQve
 /// Run time error to support debugging.
 ///
 /// \param correctionOnInputData the correction to add
-void DetectorConfiguration::AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData) {
+void DetectorConfiguration::AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData) {
   (void) correctionOnInputData;
   QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n"
                           "you are using a non channelized detector configuration to calibrate input data. FIX IT, PLEASE.",
-      "QnCorrectionsDetectorConfigurationBase::AddCorrectionOnInputData()"));
+                          "QnCorrectionsDetectorConfigurationBase::AddCorrectionOnInputData()"));
 }
 
 /// Get the corrected Qn vector from the step previous to the one given
@@ -125,8 +124,8 @@ void DetectorConfiguration::AddCorrectionOnInputData(QnCorrectionsCorrectionOnIn
 /// The user is not able to modify it.
 /// \param correctionOnQn the correction to find its predecessor corrected Qn vector
 /// \return the corrected Qn vector from the correction step predecessor or the plain Qn vector
-const QnCorrectionsQnVector *DetectorConfiguration::GetPreviousCorrectedQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) const {
-  if (fQnVectorCorrections.GetPrevious(correctionOnQn) != NULL)
+const CorrectionQnVector *DetectorConfiguration::GetPreviousCorrectedQnVector(CorrectionOnQvector *correctionOnQn) const {
+  if (fQnVectorCorrections.GetPrevious(correctionOnQn)!=NULL)
     return fQnVectorCorrections.GetPrevious(correctionOnQn)->GetCorrectedQnVector();
   else
     return &fPlainQnVector;
@@ -142,7 +141,6 @@ Bool_t DetectorConfiguration::IsCorrectionStepBeingApplied(const char *step) con
 
   return fQnVectorCorrections.IsCorrectionStepBeingApplied(step);
 }
-
 
 /// Activate the processing for the passed harmonic
 /// \param harmonic the desired harmonic number to activate
@@ -187,4 +185,4 @@ void DetectorConfiguration::ActivateHarmonic(Int_t harmonic) {
 //      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
 //  return kFALSE;
 //}
-
+}

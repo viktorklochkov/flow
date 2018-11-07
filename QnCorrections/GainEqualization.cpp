@@ -31,14 +31,17 @@
 
 /// \file QnCorrectionsInputGainEqualization.cxx
 /// \brief Implementation of procedures for gain equalization on input data.
-#include "QnCorrectionsEventClassVariablesSet.h"
-#include "QnCorrectionsProfileChannelizedIngress.h"
-#include "QnCorrectionsProfileChannelized.h"
-#include "QnCorrectionsHistogramChannelizedSparse.h"
+#include "EventClassVariablesSet.h"
+#include "CorrectionProfileChannelizedIngress.h"
+#include "CorrectionProfileChannelized.h"
+#include "CorrectionHistogramChannelizedSparse.h"
 #include "DetectorConfigurationChannels.h"
-#include "QnCorrectionsLog.h"
+#include "CorrectionLog.h"
 #include "GainEqualization.h"
-
+/// \cond CLASSIMP
+ClassImp(Qn::GainEqualization);
+/// \endcond
+namespace Qn {
 const Float_t  GainEqualization::fMinimumSignificantValue = 1E-6;
 const Int_t GainEqualization::fDefaultMinNoOfEntries = 2;
 const char *GainEqualization::szCorrectionName = "Gain equalization";
@@ -52,15 +55,10 @@ const char *GainEqualization::szQANotValidatedHistogramName = "GE NvE";
 /// Default value for the scale parameter
 #define GAINEQUALIZATION_SCALEDEFAULT 1.0
 
-
-/// \cond CLASSIMP
-ClassImp(GainEqualization);
-/// \endcond
-
 /// Default constructor
 /// Passes to the base class the identity data for the Gain equalization correction step
 GainEqualization::GainEqualization() :
-    QnCorrectionsCorrectionOnInputData(szCorrectionName, szKey) {
+    CorrectionOnInputData(szCorrectionName, szKey) {
   fInputHistograms = NULL;
   fCalibrationHistograms = NULL;
   fQAMultiplicityBefore = NULL;
@@ -131,14 +129,14 @@ Bool_t GainEqualization::CreateSupportHistograms(TList *list) {
       static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
   if (fInputHistograms!=NULL) delete fInputHistograms;
   fInputHistograms =
-      new QnCorrectionsProfileChannelizedIngress((const char *) histoNameAndTitle,
+      new CorrectionProfileChannelizedIngress((const char *) histoNameAndTitle,
                                                  (const char *) histoNameAndTitle,
                                                  ownerConfiguration->GetEventClassVariablesSet(),
                                                  ownerConfiguration->GetNoOfChannels(),
                                                  "s");
   fInputHistograms->SetNoOfEntriesThreshold(fMinNoOfEntriesToValidate);
   fCalibrationHistograms =
-      new QnCorrectionsProfileChannelized((const char *) histoNameAndTitle,
+      new CorrectionProfileChannelized((const char *) histoNameAndTitle,
                                           (const char *) histoNameAndTitle,
                                           ownerConfiguration->GetEventClassVariablesSet(),
                                           ownerConfiguration->GetNoOfChannels(),
@@ -173,14 +171,14 @@ Bool_t GainEqualization::CreateQAHistograms(TList *list) {
   afterTitle += " after gain equalization";
   DetectorConfigurationChannels *ownerConfiguration =
       static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
-  fQAMultiplicityBefore = new QnCorrectionsProfileChannelized(
+  fQAMultiplicityBefore = new CorrectionProfileChannelized(
       (const char *) beforeName,
       (const char *) beforeTitle,
       ownerConfiguration->GetEventClassVariablesSet(), ownerConfiguration->GetNoOfChannels());
   fQAMultiplicityBefore->CreateProfileHistograms(list,
                                                  ownerConfiguration->GetUsedChannelsMask(),
                                                  ownerConfiguration->GetChannelsGroups());
-  fQAMultiplicityAfter = new QnCorrectionsProfileChannelized(
+  fQAMultiplicityAfter = new CorrectionProfileChannelized(
       (const char *) afterName,
       (const char *) afterTitle,
       ownerConfiguration->GetEventClassVariablesSet(), ownerConfiguration->GetNoOfChannels());
@@ -198,7 +196,7 @@ Bool_t GainEqualization::CreateQAHistograms(TList *list) {
 Bool_t GainEqualization::CreateNveQAHistograms(TList *list) {
   DetectorConfigurationChannels *ownerConfiguration =
       static_cast<DetectorConfigurationChannels *>(fDetectorConfiguration);
-  fQANotValidatedBin = new QnCorrectionsHistogramChannelizedSparse(
+  fQANotValidatedBin = new CorrectionHistogramChannelizedSparse(
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
       ownerConfiguration->GetEventClassVariablesSet(),
@@ -221,8 +219,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
     case QCORRSTEP_calibration:
       /* collect the data needed to further produce equalization parameters */
       for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-        QnCorrectionsDataVectorChannelized *dataVector =
-            static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+        CorrectionDataVectorChannelized *dataVector =
+            static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
         fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
       }
       return kFALSE;
@@ -230,8 +228,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
     case QCORRSTEP_applyCollect:
       /* collect the data needed to further produce equalization parameters */
       for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-        QnCorrectionsDataVectorChannelized *dataVector =
-            static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+        CorrectionDataVectorChannelized *dataVector =
+            static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
         fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
       }
       /* and proceed to ... */
@@ -239,8 +237,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
       /* collect QA data if asked */
       if (fQAMultiplicityBefore!=NULL) {
         for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-          QnCorrectionsDataVectorChannelized *dataVector =
-              static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+          CorrectionDataVectorChannelized *dataVector =
+              static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
           fQAMultiplicityBefore->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
         }
       }
@@ -248,15 +246,15 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
       switch (fEqualizationMethod) {
         case Method::NONE:
           for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            QnCorrectionsDataVectorChannelized *dataVector =
-                static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            CorrectionDataVectorChannelized *dataVector =
+                static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
             dataVector->SetEqualizedWeight(dataVector->EqualizedWeight());
           }
           break;
         case Method::AVERAGE:
           for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            QnCorrectionsDataVectorChannelized *dataVector =
-                static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            CorrectionDataVectorChannelized *dataVector =
+                static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
             Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average = fInputHistograms->GetBinContent(bin);
@@ -281,8 +279,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
           break;
         case Method::WIDTH:
           for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            QnCorrectionsDataVectorChannelized *dataVector =
-                static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            CorrectionDataVectorChannelized *dataVector =
+                static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
             Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average =
@@ -313,8 +311,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
       /* collect QA data if asked */
       if (fQAMultiplicityAfter!=NULL) {
         for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-          QnCorrectionsDataVectorChannelized *dataVector =
-              static_cast<QnCorrectionsDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+          CorrectionDataVectorChannelized *dataVector =
+              static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
           fQAMultiplicityAfter->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
         }
       }
@@ -381,4 +379,4 @@ Bool_t GainEqualization::ReportUsage(TList *calibrationList, TList *applyList) {
   }
   return kTRUE;
 }
-
+}

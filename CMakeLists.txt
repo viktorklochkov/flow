@@ -17,47 +17,47 @@ if ("${CMAKE_COMPILER_ID}" STREQUAL  "Clang")
 endif()
 
 set(QNCORR_SOURCES
-        QnCorrections/QnCorrectionsCorrectionOnInputData.cpp
-        QnCorrections/QnCorrectionsEventClassVariablesSet.cpp
-        QnCorrections/QnCorrectionsCorrectionOnQvector.cpp
-        QnCorrections/QnCorrectionsHistogram.cpp
-        QnCorrections/QnCorrectionsCorrectionStepBase.cpp
-        QnCorrections/QnCorrectionsHistogramBase.cpp
-        QnCorrections/QnCorrectionsCorrectionsSetOnInputData.cpp
-        QnCorrections/QnCorrectionsHistogramChannelized.cpp
-        QnCorrections/QnCorrectionsCorrectionsSetOnQvector.cpp
-        QnCorrections/QnCorrectionsHistogramChannelizedSparse.cpp
-        QnCorrections/QnCorrectionsCutAbove.cpp
-        QnCorrections/QnCorrectionsHistogramSparse.cpp
-        QnCorrections/QnCorrectionsCutBelow.cpp
+        QnCorrections/CorrectionOnInputData.cpp
+        QnCorrections/EventClassVariablesSet.cpp
+        QnCorrections/CorrectionOnQvector.cpp
+        QnCorrections/CorrectionHistogram.cpp
+        QnCorrections/CorrectionStepBase.cpp
+        QnCorrections/CorrectionHistogramBase.cpp
+        QnCorrections/CorrectionsSetOnInputData.cpp
+        QnCorrections/CorrectionHistogramChannelized.cpp
+        QnCorrections/CorrectionsSetOnQvector.cpp
+        QnCorrections/CorrectionHistogramChannelizedSparse.cpp
+        QnCorrections/CutAbove.cpp
+        QnCorrections/CorrectionHistogramSparse.cpp
+        QnCorrections/CutBelow.cpp
         QnCorrections/GainEqualization.cpp
-        QnCorrections/QnCorrectionsCutOutside.cpp
-        QnCorrections/QnCorrectionsLog.cpp
-        QnCorrections/QnCorrectionsCutSetBit.cpp
-        QnCorrections/QnCorrectionsManager.cpp
-        QnCorrections/QnCorrectionsCutValue.cpp
-        QnCorrections/QnCorrectionsProfile.cpp
-        QnCorrections/QnCorrectionsCutWithin.cpp
-        QnCorrections/QnCorrectionsProfile3DCorrelations.cpp
-        QnCorrections/QnCorrectionsCutsBase.cpp
-        QnCorrections/QnCorrectionsProfileChannelized.cpp
-        QnCorrections/QnCorrectionsCutsSet.cpp
-        QnCorrections/QnCorrectionsProfileChannelizedIngress.cpp
-        QnCorrections/QnCorrectionsDataVector.cpp
-        QnCorrections/QnCorrectionsProfileComponents.cpp
-        QnCorrections/QnCorrectionsDataVectorChannelized.cpp
-        QnCorrections/QnCorrectionsProfileCorrelationComponents.cpp
-        QnCorrections/QnCorrectionsDetector.cpp
-        QnCorrections/QnCorrectionsProfileCorrelationComponentsHarmonics.cpp
+        QnCorrections/CutOutside.cpp
+        QnCorrections/CorrectionLog.cpp
+        QnCorrections/CutSetBit.cpp
+        QnCorrections/CorrectionCalculator.cpp
+        QnCorrections/CutValue.cpp
+        QnCorrections/CorrectionProfile.cpp
+        QnCorrections/CutWithin.cpp
+        QnCorrections/CorrectionProfile3DCorrelations.cpp
+        QnCorrections/CutsBase.cpp
+        QnCorrections/CorrectionProfileChannelized.cpp
+        QnCorrections/CutsSet.cpp
+        QnCorrections/CorrectionProfileChannelizedIngress.cpp
+        QnCorrections/CorrectionDataVector.cpp
+        QnCorrections/CorrectionProfileComponents.cpp
+        QnCorrections/CorrectionDataVectorChannelized.cpp
+        QnCorrections/CorrectionProfileCorrelationComponents.cpp
+        QnCorrections/CorrectionDetector.cpp
+        QnCorrections/CorrectionProfileCorrelationComponentsHarmonics.cpp
         QnCorrections/DetectorConfiguration.cpp
-        QnCorrections/QnCorrectionsQnVector.cpp
+        QnCorrections/CorrectionQnVector.cpp
         QnCorrections/DetectorConfigurationChannels.cpp
         QnCorrections/Alignment.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationTracks.cpp
-        QnCorrections/QnCorrectionsQnVectorBuild.cpp
-        QnCorrections/QnCorrectionsDetectorConfigurationsSet.cpp
+        QnCorrections/DetectorConfigurationTracks.cpp
+        QnCorrections/CorrectionQnVectorBuild.cpp
+        QnCorrections/CorrectionDetectorConfigurationsSet.cpp
         QnCorrections/Recentering.cpp
-        QnCorrections/QnCorrectionsEventClassVariable.cpp
+        QnCorrections/EventClassVariable.cpp
         QnCorrections/TwistAndRescale.cpp
         )
 
@@ -92,48 +92,48 @@ set(BASE_HEADERS Base/include/DataContainer.h
         Base/include/Sample.h
         )
 
-set(QNCORR_HEADERS QnCorrections/include/QnCorrectionsCorrectionOnInputData.h
-        QnCorrections/include/QnCorrectionsEventClassVariablesSet.h
-        QnCorrections/include/QnCorrectionsCorrectionOnQvector.h
-        QnCorrections/include/QnCorrectionsHistogram.h
-        QnCorrections/include/QnCorrectionsCorrectionStepBase.h
-        QnCorrections/include/QnCorrectionsHistogramBase.h
-        QnCorrections/include/QnCorrectionsCorrectionsSetOnInputData.h
-        QnCorrections/include/QnCorrectionsHistogramChannelized.h
-        QnCorrections/include/QnCorrectionsCorrectionsSetOnQvector.h
-        QnCorrections/include/QnCorrectionsHistogramChannelizedSparse.h
-        QnCorrections/include/QnCorrectionsCutAbove.h
-        QnCorrections/include/QnCorrectionsHistogramSparse.h
-        QnCorrections/include/QnCorrectionsCutBelow.h
-        QnCorrections/include/QnCorrectionsCutOutside.h
-        QnCorrections/include/QnCorrectionsCutSetBit.h
-        QnCorrections/include/QnCorrectionsManager.h
-        QnCorrections/include/QnCorrectionsCutValue.h
-        QnCorrections/include/QnCorrectionsProfile.h
-        QnCorrections/include/QnCorrectionsCutWithin.h
-        QnCorrections/include/QnCorrectionsProfile3DCorrelations.h
-        QnCorrections/include/QnCorrectionsCutsBase.h
-        QnCorrections/include/QnCorrectionsProfileChannelized.h
-        QnCorrections/include/QnCorrectionsCutsSet.h
-        QnCorrections/include/QnCorrectionsProfileChannelizedIngress.h
-        QnCorrections/include/QnCorrectionsDataVector.h
-        QnCorrections/include/QnCorrectionsProfileComponents.h
-        QnCorrections/include/QnCorrectionsDataVectorChannelized.h
-        QnCorrections/include/QnCorrectionsProfileCorrelationComponents.h
-        QnCorrections/include/QnCorrectionsDetector.h
-        QnCorrections/include/QnCorrectionsProfileCorrelationComponentsHarmonics.h
-        QnCorrections/include/DetectorConfigurationChannels.h
-        QnCorrections/include/QnCorrectionsDetectorConfigurationTracks.h
-        QnCorrections/include/QnCorrectionsQnVectorBuild.h
-        QnCorrections/include/QnCorrectionsDetectorConfigurationsSet.h
-        QnCorrections/include/QnCorrectionsEventClassVariable.h
-        QnCorrections/include/DetectorConfiguration.h
-        QnCorrections/include/GainEqualization.h
-        QnCorrections/include/QnCorrectionsLog.h
-        QnCorrections/include/QnCorrectionsQnVector.h
-        QnCorrections/include/Alignment.h
-        QnCorrections/include/Recentering.h
-        QnCorrections/include/TwistAndRescale.h
+set(QNCORR_HEADERS CorrectionOnInputData.h
+        EventClassVariablesSet.h
+        CorrectionOnQvector.h
+        CorrectionHistogram.h
+        CorrectionStepBase.h
+        CorrectionHistogramBase.h
+        CorrectionsSetOnInputData.h
+        CorrectionHistogramChannelized.h
+        CorrectionsSetOnQvector.h
+        CorrectionHistogramChannelizedSparse.h
+        CutAbove.h
+        CorrectionHistogramSparse.h
+        CutBelow.h
+        CutOutside.h
+        CutSetBit.h
+        CorrectionCalculator.h
+        CutValue.h
+        CorrectionProfile.h
+        CutWithin.h
+        CorrectionProfile3DCorrelations.h
+        CutsBase.h
+        CorrectionProfileChannelized.h
+        CutsSet.h
+        CorrectionProfileChannelizedIngress.h
+        CorrectionDataVector.h
+        CorrectionProfileComponents.h
+        CorrectionDataVectorChannelized.h
+        CorrectionProfileCorrelationComponents.h
+        CorrectionDetector.h
+        CorrectionProfileCorrelationComponentsHarmonics.h
+        DetectorConfigurationChannels.h
+        DetectorConfigurationTracks.h
+        CorrectionQnVectorBuild.h
+        DetectorConfigurationsSet.h
+        EventClassVariable.h
+        DetectorConfiguration.h
+        GainEqualization.h
+        CorrectionLog.h
+        CorrectionQnVector.h
+        Alignment.h
+        Recentering.h
+        TwistAndRescale.h
         )
 
 set(CMAKE_VERBOSE_MAKEFILE ON)

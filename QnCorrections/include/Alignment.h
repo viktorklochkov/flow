@@ -47,7 +47,7 @@
 /// Correction and data collecting during calibration is performed for all harmonics
 /// defined within the involved detector configuration
 
-#include "QnCorrectionsCorrectionOnQvector.h"
+#include "CorrectionOnQvector.h"
 
 /// \class QnCorrectionsQnVectorAlignment
 /// \brief Encapsulates Qn vector rotation for alignment correction
@@ -86,17 +86,18 @@
 /// Correction and data collecting during calibration is performed for all harmonics
 /// defined within the involved detector configuration
 
-class QnCorrectionsHistogramSparse;
+namespace Qn {
 
-class Alignment : public QnCorrectionsCorrectionOnQvector {
-public:
+class CorrectionHistogramSparse;
+
+class Alignment : public CorrectionOnQvector {
+ public:
   Alignment();
   ~Alignment();
 
   /// Set the harmonic number used for alignment
   /// \param harmonic harmonic number
-  void SetHarmonicNumberForAlignment(Int_t harmonic)
-  { fHarmonicForAlignment = harmonic; }
+  void SetHarmonicNumberForAlignment(Int_t harmonic) { fHarmonicForAlignment = harmonic; }
   void SetReferenceConfigurationForAlignment(const char *name);
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
@@ -122,7 +123,7 @@ public:
   virtual Bool_t IsBeingApplied() const;
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
-private:
+ private:
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const char *szCorrectionName;               ///< the name of the correction step
   static const char *szKey;                          ///< the key of the correction step for ordering purpose
@@ -130,19 +131,25 @@ private:
   static const char *szCorrectedQnVectorName;        ///< the name of the Qn vector after applying the correction
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
   static const char *szQAQnAverageHistogramName;     ///< the name and title for Qn components average QA histograms
-  QnCorrectionsProfileCorrelationComponents *fInputHistograms; //!<! the histogram with calibration information
-  QnCorrectionsProfileCorrelationComponents *fCalibrationHistograms; //!<! the histogram for building calibration information
-  QnCorrectionsHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  QnCorrectionsProfileComponents *fQAQnAverageHistogram; //!<! the after correction step average Qn components QA histogram
+  CorrectionProfileCorrelationComponents *fInputHistograms; //!<! the histogram with calibration information
+  CorrectionProfileCorrelationComponents
+      *fCalibrationHistograms; //!<! the histogram for building calibration information
+  CorrectionHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
+  CorrectionProfileComponents
+      *fQAQnAverageHistogram; //!<! the after correction step average Qn components QA histogram
 
-  Int_t  fHarmonicForAlignment;              ///< the harmonic number to be used for Qn vector alignment correction
-  TString fDetectorConfigurationForAlignmentName; ///< storage for the name of the reference detector configuration for alignment correction
-  DetectorConfiguration *fDetectorConfigurationForAlignment; ///< pointer to the detector configuration used as reference for alingment
+  Int_t fHarmonicForAlignment;              ///< the harmonic number to be used for Qn vector alignment correction
+  TString
+      fDetectorConfigurationForAlignmentName; ///< storage for the name of the reference detector configuration for alignment correction
+  DetectorConfiguration
+      *fDetectorConfigurationForAlignment; ///< pointer to the detector configuration used as reference for alingment
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP
-  ClassDef(Alignment, 3);
+ ClassDef(Alignment, 3);
 /// \endcond
 };
+
+}
 
 #endif // QNCORRECTIONS_QNVECTORALIGNMENT_H

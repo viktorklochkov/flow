@@ -20,16 +20,18 @@
 #include <TObjArray.h>
 #include <TClonesArray.h>
 #include <TH3.h>
-#include "QnCorrectionsCutsSet.h"
-#include "QnCorrectionsCorrectionsSetOnInputData.h"
-#include "QnCorrectionsCorrectionsSetOnQvector.h"
-#include "QnCorrectionsEventClassVariablesSet.h"
-#include "QnCorrectionsQnVector.h"
-#include "QnCorrectionsQnVectorBuild.h"
+#include "CutsSet.h"
+#include "CorrectionsSetOnInputData.h"
+#include "CorrectionsSetOnQvector.h"
+#include "EventClassVariablesSet.h"
+#include "CorrectionQnVector.h"
+#include "CorrectionQnVectorBuild.h"
 
-class QnCorrectionsDetectorConfigurationsSet;
-class QnCorrectionsDetector;
-class QnCorrectionsManager;
+namespace Qn {
+
+class DetectorConfigurationsSet;
+class CorrectionDetector;
+class CorrectionCalculator;
 
 /// \class QnCorrectionsDetectorConfigurationBase
 /// \brief The base of a concrete detector configuration within Q vector correction framework
@@ -62,39 +64,39 @@ class QnCorrectionsManager;
 
 class DetectorConfiguration : public TNamed {
  public:
-  friend class QnCorrectionsCorrectionStepBase;
-  friend class QnCorrectionsDetector;
+  friend class CorrectionStepBase;
+  friend class CorrectionDetector;
   DetectorConfiguration();
   DetectorConfiguration(const char *name,
-                        QnCorrectionsEventClassVariablesSet *eventClassesVariables,
+                        EventClassVariablesSet *eventClassesVariables,
                         Int_t nNoOfHarmonics,
                         Int_t *harmonicMap = NULL);
   virtual ~DetectorConfiguration();
 
   /// Sets the set of cuts for the detector configuration
   /// \param cuts the set of cuts
-  void SetCuts(QnCorrectionsCutsSet *cuts) { fCuts = cuts; }
+  void SetCuts(CutsSet *cuts) { fCuts = cuts; }
   /// Sets the normalization method for Q vectors
   /// \param method the Qn vector normalizatio method
-  void SetNormalization(QnCorrectionsQnVector::Normalization method) {
+  void SetNormalization(CorrectionQnVector::Normalization method) {
     fQnNormalizationMethod = method;
   }
   /// Get the normalization method for Q vectors
-  QnCorrectionsQnVector::Normalization GetQVectorNormalizationMethod() const {
+  CorrectionQnVector::Normalization GetQVectorNormalizationMethod() const {
     return fQnNormalizationMethod;
   }
  public:
   /// Stores the detector reference
   /// \param detector the detector owner
-  void SetDetectorOwner(QnCorrectionsDetector *detector) { fDetector = detector; }
+  void SetDetectorOwner(CorrectionDetector *detector) { fDetector = detector; }
   /// Gets the detector reference
   ///
   /// \return detector pointer
-  QnCorrectionsDetector *GetDetector() { return fDetector; }
+  CorrectionDetector *GetDetector() { return fDetector; }
   /// Stores the framework manager pointer
   /// Pure virtual function
   /// \param manager the framework manager
-  virtual void AttachCorrectionsManager(QnCorrectionsManager *manager) = 0;
+  virtual void AttachCorrectionsManager(CorrectionCalculator *manager) = 0;
  public:
   /// Get the input data bank.
   /// Makes it available for input corrections steps.
@@ -103,33 +105,33 @@ class DetectorConfiguration : public TNamed {
   /// Get the event class variables set
   /// Makes it available for corrections steps
   /// \return pointer to the event class variables set
-  QnCorrectionsEventClassVariablesSet &GetEventClassVariablesSet() { return *fEventClassVariables; }
+  EventClassVariablesSet &GetEventClassVariablesSet() { return *fEventClassVariables; }
   /// Get the current Qn vector
   /// Makes it available for subsequent correction steps.
   /// It could have already supported previous correction steps
   /// \return pointer to the current Qn vector instance
-  QnCorrectionsQnVector *GetCurrentQnVector() { return &fCorrectedQnVector; }
-  const QnCorrectionsQnVector *GetPreviousCorrectedQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn) const;
+  CorrectionQnVector *GetCurrentQnVector() { return &fCorrectedQnVector; }
+  const CorrectionQnVector *GetPreviousCorrectedQnVector(CorrectionOnQvector *correctionOnQn) const;
   Bool_t IsCorrectionStepBeingApplied(const char *step) const;
   /// Get the current Q2n vector
   /// Makes it available for subsequent correction steps.
   /// It could have already supported previous correction steps
   /// \return pointer to the current Q2n vector instance
-  QnCorrectionsQnVector *GetCurrentQ2nVector() { return &fCorrectedQ2nVector; }
+  CorrectionQnVector *GetCurrentQ2nVector() { return &fCorrectedQ2nVector; }
   /// Get the plain Qn vector
   /// Makes it available for correction steps which need it.
   /// \return pointer to the plain Qn vector instance
-  QnCorrectionsQnVector *GetPlainQnVector() { return &fPlainQnVector; }
+  CorrectionQnVector *GetPlainQnVector() { return &fPlainQnVector; }
   /// Get the plain Q2n vector
   /// Makes it available for correction steps which need it.
   /// \return pointer to the plain Qn vector instance
-  QnCorrectionsQnVector *GetPlainQ2nVector() { return &fPlainQ2nVector; }
+  CorrectionQnVector *GetPlainQ2nVector() { return &fPlainQ2nVector; }
   /// Update the current Qn vector
   /// Update towards what is the latest values of the Qn vector after executing a
   /// correction step to make it available to further steps.
   /// \param newQnVector the new values for the Qn vector
   /// \param changename kTRUE by default to keep track of the subsequent Qn vector corrections
-  void UpdateCurrentQnVector(QnCorrectionsQnVector *newQnVector, Bool_t changename = kTRUE) {
+  void UpdateCurrentQnVector(CorrectionQnVector *newQnVector, Bool_t changename = kTRUE) {
     fCorrectedQnVector.Set(newQnVector,
                            changename);
   }
@@ -138,7 +140,7 @@ class DetectorConfiguration : public TNamed {
   /// correction step to make it available to further steps.
   /// \param newQ2nVector the new values for the Q2n vector
   /// \param changename kTRUE by default to keep track of the subsequent Q2n vector corrections
-  void UpdateCurrentQ2nVector(QnCorrectionsQnVector *newQ2nVector, Bool_t changename = kTRUE) {
+  void UpdateCurrentQ2nVector(CorrectionQnVector *newQ2nVector, Bool_t changename = kTRUE) {
     fCorrectedQ2nVector.Set(newQ2nVector,
                             changename);
   }
@@ -150,7 +152,7 @@ class DetectorConfiguration : public TNamed {
   void GetHarmonicMap(Int_t *store) const { fCorrectedQnVector.GetHarmonicsMap(store); }
   /// Get the pointer to the framework manager
   /// \return the stored pointer to the corrections framework
-  QnCorrectionsManager *GetCorrectionsManager() const { return fCorrectionsManager; }
+  CorrectionCalculator *GetCorrectionsManager() const { return fCorrectionsManager; }
   /// Get if the detector configuration is own by a tracking detector
   /// Pure virtual function
   /// \return TRUE if it is a tracking detector configuration
@@ -213,8 +215,8 @@ class DetectorConfiguration : public TNamed {
   /// \return kTRUE if everything went OK
   virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
   virtual void ActivateHarmonic(Int_t harmonic);
-  virtual void AddCorrectionOnQnVector(QnCorrectionsCorrectionOnQvector *correctionOnQn);
-  virtual void AddCorrectionOnInputData(QnCorrectionsCorrectionOnInputData *correctionOnInputData);
+  virtual void AddCorrectionOnQnVector(CorrectionOnQvector *correctionOnQn);
+  virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
 
   /// Builds Qn vector before Q vector corrections but
   /// considering the chosen calibration method.
@@ -270,25 +272,25 @@ class DetectorConfiguration : public TNamed {
   }
 
  private:
-  QnCorrectionsDetector *fDetector;    ///< pointer to the detector that owns the configuration
+  CorrectionDetector *fDetector;    ///< pointer to the detector that owns the configuration
  protected:
   static const char *szPlainQnVectorName; ///< the name of the Qn plain, not corrected Qn vectors
   /// set of cuts that define the detector configuration
-  QnCorrectionsManager *fCorrectionsManager; /// the framework manager pointer
-  QnCorrectionsCutsSet *fCuts;         //->
+  CorrectionCalculator *fCorrectionsManager; /// the framework manager pointer
+  CutsSet *fCuts;         //->
 /// The default initial size of data vectors banks
 #define INITIALDATAVECTORBANKSIZE 25000
   TClonesArray *fDataVectorBank;        //!<! input data for the current process / event
-  QnCorrectionsQnVector fPlainQnVector;     ///< Qn vector from the post processed input data
-  QnCorrectionsQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
-  QnCorrectionsQnVector fCorrectedQnVector; ///< Qn vector after subsequent correction steps
-  QnCorrectionsQnVector fCorrectedQ2nVector; ///< Q2n vector after subsequent correction steps
-  QnCorrectionsQnVectorBuild fTempQnVector; ///< temporary Qn vector for efficient Q vector building
-  QnCorrectionsQnVectorBuild fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
-  QnCorrectionsQnVector::Normalization fQnNormalizationMethod; ///< the method for Q vector normalization
-  QnCorrectionsCorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
+  CorrectionQnVector fPlainQnVector;     ///< Qn vector from the post processed input data
+  CorrectionQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
+  CorrectionQnVector fCorrectedQnVector; ///< Qn vector after subsequent correction steps
+  CorrectionQnVector fCorrectedQ2nVector; ///< Q2n vector after subsequent correction steps
+  CorrectionQnVectorBuild fTempQnVector; ///< temporary Qn vector for efficient Q vector building
+  CorrectionQnVectorBuild fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
+  CorrectionQnVector::Normalization fQnNormalizationMethod; ///< the method for Q vector normalization
+  CorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
   /// set of variables that define event classes
-  QnCorrectionsEventClassVariablesSet *fEventClassVariables; //->
+  EventClassVariablesSet *fEventClassVariables; //->
 
  private:
   /// Copy constructor
@@ -302,5 +304,5 @@ class DetectorConfiguration : public TNamed {
  ClassDef(DetectorConfiguration, 3);
 /// \endcond
 };
-
+}
 #endif // QNCORRECTIONS_DETECTORCONFIGBASE_H

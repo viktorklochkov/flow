@@ -29,7 +29,7 @@
 #pragma link C++ class Qn::DataVector+;
 #pragma link C++ class vector<Qn::DataVector >+;
 #pragma link C++ class vector<vector <Qn::DataVector> >+;
-#pragma link C++ class vector<QnCorrectionsQnVector >+;
+#pragma link C++ class vector<Qn::CorrectionQnVector >+;
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;

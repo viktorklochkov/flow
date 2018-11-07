@@ -25,18 +25,18 @@
 #include "VariableManager.h"
 #include "EventInfo.h"
 #include "VariableCutBase.h"
-#include "QnCorrectionsProfile3DCorrelations.h"
-#include "QnCorrectionsProfileCorrelationComponents.h"
+#include "CorrectionProfile3DCorrelations.h"
+#include "CorrectionProfileCorrelationComponents.h"
 #include "DetectorConfigurationChannels.h"
 #include "DetectorConfiguration.h"
-#include "QnCorrectionsDetectorConfigurationTracks.h"
+#include "DetectorConfigurationTracks.h"
 #include "Recentering.h"
 #include "TwistAndRescale.h"
-#include "QnCorrectionsCutSetBit.h"
-#include "QnCorrectionsCutWithin.h"
+#include "CutSetBit.h"
+#include "CutWithin.h"
 #include "GainEqualization.h"
 #include "Alignment.h"
-#include "QnCorrectionsManager.h"
+#include "CorrectionCalculator.h"
 #include "DataContainer.h"
 #include "EventInfo.h"
 
@@ -257,11 +257,11 @@ class CorrectionManager {
 
   void SaveTree(const std::shared_ptr<TFile> &file);
 
-  QnCorrectionsEventClassVariablesSet *qncorrections_varset_ = nullptr;
+  EventClassVariablesSet *qncorrections_varset_ = nullptr;
   std::unique_ptr<Cuts> event_cuts_;
   std::unique_ptr<Qn::EventInfoF> event_variables_;
   std::vector<Qn::Axis> qncorrections_axis_;
-  QnCorrectionsManager qncorrections_manager_;
+  CorrectionCalculator qncorrections_manager_;
   std::shared_ptr<VariableManager> var_manager_;
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track;
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel;

@@ -212,7 +212,7 @@ void Qn::CorrectionManager::Reset() {
 void Qn::CorrectionManager::Finalize() { qncorrections_manager_.FinalizeQnCorrectionsFramework(); }
 
 void Qn::CorrectionManager::CalculateCorrectionAxis() {
-  qncorrections_varset_ = new QnCorrectionsEventClassVariablesSet(qncorrections_axis_.size());
+  qncorrections_varset_ = new EventClassVariablesSet(qncorrections_axis_.size());
   int kMaxCorrectionArrayLength = 200;
   for (const auto &axis : qncorrections_axis_) {
     double axisbins[kMaxCorrectionArrayLength];
@@ -221,7 +221,7 @@ void Qn::CorrectionManager::CalculateCorrectionAxis() {
       axisbins[ibin] = *(axis.begin() + ibin);
     }
     auto variable =
-        new QnCorrectionsEventClassVariable(var_manager_->FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
+        new EventClassVariable(var_manager_->FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
     qncorrections_varset_->Add(variable);
   }
 }

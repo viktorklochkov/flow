@@ -21,10 +21,10 @@
 #include <memory>
 #include <utility>
 
-#include "QnCorrectionsDetector.h"
-#include "QnCorrectionsEventClassVariablesSet.h"
+#include "CorrectionDetector.h"
+#include "EventClassVariablesSet.h"
 #include "DetectorConfigurationChannels.h"
-#include "QnCorrectionsDetectorConfigurationTracks.h"
+#include "DetectorConfigurationTracks.h"
 
 #include "VariableManager.h"
 #include "DataContainer.h"
@@ -46,10 +46,10 @@ class DetectorBase {
   virtual std::unique_ptr<DataContainerDataVector> &GetDataContainer() = 0;
   virtual std::unique_ptr<DataContainerQVector> &GetQnDataContainer() = 0;
 
-  virtual QnCorrectionsDetector *GenerateDetector(const std::string &detname, int globalid, int binid,
-                                                  QnCorrectionsEventClassVariablesSet *set) = 0;
+  virtual CorrectionDetector *GenerateDetector(const std::string &detname, int globalid, int binid,
+                                                  EventClassVariablesSet *set) = 0;
   virtual DetectorConfiguration *CreateDetectorConfiguration(const std::string &name,
-                                                                              QnCorrectionsEventClassVariablesSet *set) = 0;
+                                                                              EventClassVariablesSet *set) = 0;
   virtual void SetConfig(std::function<void(DetectorConfiguration *config)> conf) = 0;
   virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
   virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
@@ -100,10 +100,10 @@ class Detector : public DetectorBase {
     qvector_->ClearData();
   }
 
-  QnCorrectionsDetector *GenerateDetector(const std::string &detname,
+  CorrectionDetector *GenerateDetector(const std::string &detname,
                                           int globalid,
                                           int binid,
-                                          QnCorrectionsEventClassVariablesSet *set) override {
+                                          EventClassVariablesSet *set) override {
     if (!configuration_) {
       throw (std::runtime_error("No Qn correction configuration found for " + detname));
     }
@@ -114,7 +114,7 @@ class Detector : public DetectorBase {
       auto binname = datavector_->GetBinDescription(binid);
       name = detname + std::to_string(binid);
     }
-    auto detector = new QnCorrectionsDetector(name.data(), globalid);
+    auto detector = new CorrectionDetector(name.data(), globalid);
     auto configuration = CreateDetectorConfiguration(name, set);
     configuration_(configuration);
     detector->AddDetectorConfiguration(configuration);
@@ -122,14 +122,14 @@ class Detector : public DetectorBase {
   }
 
   DetectorConfiguration *CreateDetectorConfiguration(const std::string &name,
-                                                                      QnCorrectionsEventClassVariablesSet *set) override {
+                                                                      EventClassVariablesSet *set) override {
     DetectorConfiguration *configuration = nullptr;
     if (type_==DetectorType::CHANNEL) {
       configuration =
           new DetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
     }
     if (type_==DetectorType::TRACK)
-      configuration = new QnCorrectionsDetectorConfigurationTracks(name.data(), set, nharmonics_, harmonics_.get());
+      configuration = new DetectorConfigurationTracks(name.data(), set, nharmonics_, harmonics_.get());
     return configuration;
   }
   std::unique_ptr<DataContainerDataVector> &GetDataContainer() override { return datavector_; }

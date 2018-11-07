@@ -25,7 +25,7 @@ namespace Qn {
  * @param norm normalisation method
  * @param vector QnCorrectionsQnVector to construct the QVector from. It is used internally by the framework but not exposed to the user.
  */
-QVector::QVector(QVector::Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits) :
+QVector::QVector(QVector::Normalization norm, const CorrectionQnVector *vector, std::bitset<8> bits) :
     norm_(norm),
     bits_(bits) {
   q_.resize(static_cast<size_t>(bits.count()));

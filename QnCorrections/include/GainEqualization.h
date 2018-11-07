@@ -50,11 +50,13 @@
 /// in the calibration one, collecting data for producing, once merged in a
 /// further phase, the calibration histograms.
 
-#include "QnCorrectionsCorrectionOnInputData.h"
+#include "CorrectionOnInputData.h"
 
-class QnCorrectionsProfileChannelizedIngress;
-class QnCorrectionsProfileChannelized;
-class QnCorrectionsHistogramChannelizedSparse;
+namespace Qn {
+
+class CorrectionProfileChannelizedIngress;
+class CorrectionProfileChannelized;
+class CorrectionHistogramChannelizedSparse;
 
 /// \class QnCorrectionsInputGainEqualization
 /// \brief Encapsulates the gain equalization on input data correction step
@@ -99,8 +101,8 @@ class QnCorrectionsHistogramChannelizedSparse;
 /// in the calibration one, collecting data for producing, once merged in a
 /// further phase, the calibration histograms.
 
-class GainEqualization : public QnCorrectionsCorrectionOnInputData {
-public:
+class GainEqualization : public CorrectionOnInputData {
+ public:
   /// \enum QnGainEqualizationMethod
   /// \brief The class of the id of the supported gain equalization methods
   ///
@@ -119,21 +121,17 @@ public:
 
   /// Stores the passed equalization method
   /// \param method the desired equalization method
-  void SetEqualizationMethod(Method method)
-  { fEqualizationMethod = method; }
+  void SetEqualizationMethod(Method method) { fEqualizationMethod = method; }
 
   /// Set the shift (A) width equalization parameter
   /// \param shift the shift parameter value
-  void SetShift(Float_t shift)
-  { fShift = shift; }
+  void SetShift(Float_t shift) { fShift = shift; }
   /// Set the scale (B) equalization parameter
   /// \param scale the scale parameter value
-  void SetScale(Float_t scale)
-  { fScale = scale; }
+  void SetScale(Float_t scale) { fScale = scale; }
   /// Enable or disable the group weights extracted from channel multiplicity
   /// \param enable kTRUE / kFALSE for enable / disable it
-  void SetUseChannelGroupsWeights(Bool_t enable)
-  { fUseChannelGroupsWeights = enable; }
+  void SetUseChannelGroupsWeights(Bool_t enable) { fUseChannelGroupsWeights = enable; }
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
@@ -155,19 +153,22 @@ public:
   virtual void ClearCorrectionStep() {}
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
-private:
-  static const Float_t  fMinimumSignificantValue;     ///< the minimum value that will be considered as meaningful for processing
+ private:
+  static const Float_t
+      fMinimumSignificantValue;     ///< the minimum value that will be considered as meaningful for processing
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const char *szCorrectionName;               ///< the name of the correction step
   static const char *szKey;                          ///< the key of the correction step for ordering purpose
   static const char *szSupportHistogramName;         ///< the name and title for support histograms
   static const char *szQAHistogramName;              ///< the name and title for QA histograms
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
-  QnCorrectionsProfileChannelizedIngress *fInputHistograms; //!<! the histogram with calibration information
-  QnCorrectionsProfileChannelized *fCalibrationHistograms; //!<! the histogram for building calibration information
-  QnCorrectionsProfileChannelized *fQAMultiplicityBefore;  //!<! the channel multiplicity histogram before gain equalization
-  QnCorrectionsProfileChannelized *fQAMultiplicityAfter;   //!<! the channel multiplicity histogram after gain equalization
-  QnCorrectionsHistogramChannelizedSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
+  CorrectionProfileChannelizedIngress *fInputHistograms; //!<! the histogram with calibration information
+  CorrectionProfileChannelized *fCalibrationHistograms; //!<! the histogram for building calibration information
+  CorrectionProfileChannelized
+      *fQAMultiplicityBefore;  //!<! the channel multiplicity histogram before gain equalization
+  CorrectionProfileChannelized
+      *fQAMultiplicityAfter;   //!<! the channel multiplicity histogram after gain equalization
+  CorrectionHistogramChannelizedSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
   Method fEqualizationMethod; ///< the selected equalization method
 
   Float_t fShift;                               ///< the shift (A) parameter for width equalization
@@ -177,8 +178,8 @@ private:
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP
-  ClassDef(GainEqualization, 2);
+ ClassDef(GainEqualization, 2);
 /// \endcond
 };
-
+}
 #endif // QNCORRECTIONS_INPUTGAINEQUALIZATION_H

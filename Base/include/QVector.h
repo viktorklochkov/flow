@@ -23,9 +23,7 @@
 #include <math.h>
 
 #include "Rtypes.h"
-#include "QnCorrectionsQnVector.h"
-
-//class QnCorrectionsQnVector;
+#include "CorrectionQnVector.h"
 
 namespace Qn {
 
@@ -51,7 +49,7 @@ class QVector {
 
  public:
 
-  using Normalization = QnCorrectionsQnVector::Normalization;
+  using Normalization = CorrectionQnVector::Normalization;
 
 //  enum class Normalization : short {
 //    NOCALIB,
@@ -80,7 +78,7 @@ class QVector {
 
   double Mean() const {return 0;}
 
-  QVector(Normalization norm, const QnCorrectionsQnVector *vector, std::bitset<8> bits);
+  QVector(Normalization norm, const CorrectionQnVector *vector, std::bitset<8> bits);
 
   inline float x(const unsigned int i) const {
     if (bits_.test(i)) {

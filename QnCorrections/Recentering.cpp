@@ -31,13 +31,16 @@
 
 /// \file QnCorrectionsQnVectorRecentering.cxx
 /// \brief Implementation of procedures for Qn vector recentering.
-#include "QnCorrectionsEventClassVariablesSet.h"
-#include "QnCorrectionsProfileComponents.h"
-#include "QnCorrectionsHistogramSparse.h"
-#include "QnCorrectionsDetector.h"
-#include "QnCorrectionsLog.h"
+#include "EventClassVariablesSet.h"
+#include "CorrectionProfileComponents.h"
+#include "CorrectionHistogramSparse.h"
+#include "CorrectionDetector.h"
+#include "CorrectionLog.h"
 #include "Recentering.h"
-
+/// \cond CLASSIMP
+ClassImp(Qn::Recentering);
+/// \endcond
+namespace Qn {
 const Int_t Recentering::fDefaultMinNoOfEntries = 2;
 const char *Recentering::szCorrectionName = "Recentering and width equalization";
 const char *Recentering::szKey = "CCCC";
@@ -46,14 +49,10 @@ const char *Recentering::szCorrectedQnVectorName = "rec";
 const char *Recentering::szQANotValidatedHistogramName = "Rec NvE";
 const char *Recentering::szQAQnAverageHistogramName = "Rec Qn avg ";
 
-/// \cond CLASSIMP
-ClassImp(Recentering);
-/// \endcond
-
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
 Recentering::Recentering() :
-    QnCorrectionsCorrectionOnQvector(szCorrectionName, szKey) {
+    CorrectionOnQvector(szCorrectionName, szKey) {
   fInputHistograms = NULL;
   fCalibrationHistograms = NULL;
   fQANotValidatedBin = NULL;
@@ -65,13 +64,13 @@ Recentering::Recentering() :
 /// Default destructor
 /// Releases the memory taken
 Recentering::~Recentering() {
-  if (fInputHistograms != NULL)
+  if (fInputHistograms!=NULL)
     delete fInputHistograms;
-  if (fCalibrationHistograms != NULL)
+  if (fCalibrationHistograms!=NULL)
     delete fCalibrationHistograms;
-  if (fQANotValidatedBin != NULL)
+  if (fQANotValidatedBin!=NULL)
     delete fQANotValidatedBin;
-  if (fQAQnAverageHistogram != NULL)
+  if (fQAQnAverageHistogram!=NULL)
     delete fQAQnAverageHistogram;
 }
 
@@ -83,9 +82,9 @@ void Recentering::CreateSupportDataStructures() {
   Int_t nNoOfHarmonics = fDetectorConfiguration->GetNoOfHarmonics();
   Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
   fDetectorConfiguration->GetHarmonicMap(harmonicsMap);
-  fCorrectedQnVector = new QnCorrectionsQnVector(szCorrectedQnVectorName, nNoOfHarmonics, harmonicsMap);
+  fCorrectedQnVector = new CorrectionQnVector(szCorrectedQnVectorName, nNoOfHarmonics, harmonicsMap);
   fInputQnVector = fDetectorConfiguration->GetPreviousCorrectedQnVector(this);
-  delete [] harmonicsMap;
+  delete[] harmonicsMap;
 }
 
 /// Asks for support histograms creation
@@ -102,22 +101,24 @@ void Recentering::CreateSupportDataStructures() {
 Bool_t Recentering::CreateSupportHistograms(TList *list) {
 
   TString histoNameAndTitle = Form("%s %s ",
-      szSupportHistogramName,
-      fDetectorConfiguration->GetName());
+                                   szSupportHistogramName,
+                                   fDetectorConfiguration->GetName());
 
-  if (fInputHistograms != NULL) delete fInputHistograms;
-  fInputHistograms = new QnCorrectionsProfileComponents((const char *) histoNameAndTitle, (const char *) histoNameAndTitle,
-      fDetectorConfiguration->GetEventClassVariablesSet(), "s");
+  if (fInputHistograms!=NULL) delete fInputHistograms;
+  fInputHistograms =
+      new CorrectionProfileComponents((const char *) histoNameAndTitle, (const char *) histoNameAndTitle,
+                                         fDetectorConfiguration->GetEventClassVariablesSet(), "s");
   fInputHistograms->SetNoOfEntriesThreshold(fMinNoOfEntriesToValidate);
-  fCalibrationHistograms = new QnCorrectionsProfileComponents((const char *) histoNameAndTitle, (const char *) histoNameAndTitle,
-      fDetectorConfiguration->GetEventClassVariablesSet(), "s");
+  fCalibrationHistograms =
+      new CorrectionProfileComponents((const char *) histoNameAndTitle, (const char *) histoNameAndTitle,
+                                         fDetectorConfiguration->GetEventClassVariablesSet(), "s");
 
   /* get information about the configured harmonics to pass it for histogram creation */
   Int_t nNoOfHarmonics = fDetectorConfiguration->GetNoOfHarmonics();
   Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
   fDetectorConfiguration->GetHarmonicMap(harmonicsMap);
-  fCalibrationHistograms->CreateComponentsProfileHistograms(list,nNoOfHarmonics, harmonicsMap);
-  delete [] harmonicsMap;
+  fCalibrationHistograms->CreateComponentsProfileHistograms(list, nNoOfHarmonics, harmonicsMap);
+  delete[] harmonicsMap;
   return kTRUE;
 }
 
@@ -141,7 +142,7 @@ Bool_t Recentering::AttachInput(TList *list) {
 /// \return kTRUE if everything went OK
 Bool_t Recentering::CreateQAHistograms(TList *list) {
 
-  fQAQnAverageHistogram = new QnCorrectionsProfileComponents(
+  fQAQnAverageHistogram = new CorrectionProfileComponents(
       Form("%s %s", szQAQnAverageHistogramName, fDetectorConfiguration->GetName()),
       Form("%s %s", szQAQnAverageHistogramName, fDetectorConfiguration->GetName()),
       fDetectorConfiguration->GetEventClassVariablesSet());
@@ -150,8 +151,8 @@ Bool_t Recentering::CreateQAHistograms(TList *list) {
   Int_t nNoOfHarmonics = fDetectorConfiguration->GetNoOfHarmonics();
   Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
   fDetectorConfiguration->GetHarmonicMap(harmonicsMap);
-  fQAQnAverageHistogram->CreateComponentsProfileHistograms(list,nNoOfHarmonics, harmonicsMap);
-  delete [] harmonicsMap;
+  fQAQnAverageHistogram->CreateComponentsProfileHistograms(list, nNoOfHarmonics, harmonicsMap);
+  delete[] harmonicsMap;
   return kTRUE;
 }
 
@@ -162,7 +163,7 @@ Bool_t Recentering::CreateQAHistograms(TList *list) {
 /// \return kTRUE if everything went OK
 Bool_t Recentering::CreateNveQAHistograms(TList *list) {
 
-  fQANotValidatedBin = new QnCorrectionsHistogramSparse(
+  fQANotValidatedBin = new CorrectionHistogramSparse(
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
       Form("%s %s", szQANotValidatedHistogramName, fDetectorConfiguration->GetName()),
       fDetectorConfiguration->GetEventClassVariablesSet());
@@ -177,55 +178,55 @@ Bool_t Recentering::CreateNveQAHistograms(TList *list) {
 Bool_t Recentering::ProcessCorrections(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
-  case QCORRSTEP_calibration:
-    /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
-    /* we have not perform any correction yet */
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
-    /* and proceed to ... */
-  case QCORRSTEP_apply: /* apply the correction if the current Qn vector is good enough */
-    QnCorrectionsInfo(Form("Recentering process in detector %s: applying correction.", fDetectorConfiguration->GetName()));
-    if (fDetectorConfiguration->GetCurrentQnVector()->IsGoodQuality()) {
-      /* we get the properties of the current Qn vector but its name */
-      fCorrectedQnVector->Set(fDetectorConfiguration->GetCurrentQnVector(),kFALSE);
-      harmonic = fDetectorConfiguration->GetCurrentQnVector()->GetFirstHarmonic();
+    case QCORRSTEP_calibration:
+      /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
+      /* we have not perform any correction yet */
+      return kFALSE;
+      break;
+    case QCORRSTEP_applyCollect:
+      /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
+      /* and proceed to ... */
+    case QCORRSTEP_apply: /* apply the correction if the current Qn vector is good enough */
+      QnCorrectionsInfo(Form("Recentering process in detector %s: applying correction.",
+                             fDetectorConfiguration->GetName()));
+      if (fDetectorConfiguration->GetCurrentQnVector()->IsGoodQuality()) {
+        /* we get the properties of the current Qn vector but its name */
+        fCorrectedQnVector->Set(fDetectorConfiguration->GetCurrentQnVector(), kFALSE);
+        harmonic = fDetectorConfiguration->GetCurrentQnVector()->GetFirstHarmonic();
 
-      /* let's check the correction histograms */
-      Long64_t bin = fInputHistograms->GetBin(variableContainer);
-      if (fInputHistograms->BinContentValidated(bin)) {
-        /* correction information validated */
-        while (harmonic != -1) {
-          Float_t widthX = 1.0;
-          Float_t widthY = 1.0;
-          if (fApplyWidthEqualization) {
-            widthX = fInputHistograms->GetXBinError(harmonic, bin);
-            widthY = fInputHistograms->GetYBinError(harmonic, bin);
+        /* let's check the correction histograms */
+        Long64_t bin = fInputHistograms->GetBin(variableContainer);
+        if (fInputHistograms->BinContentValidated(bin)) {
+          /* correction information validated */
+          while (harmonic!=-1) {
+            Float_t widthX = 1.0;
+            Float_t widthY = 1.0;
+            if (fApplyWidthEqualization) {
+              widthX = fInputHistograms->GetXBinError(harmonic, bin);
+              widthY = fInputHistograms->GetYBinError(harmonic, bin);
+            }
+            fCorrectedQnVector->SetQx(harmonic, (fDetectorConfiguration->GetCurrentQnVector()->Qx(harmonic)
+                - fInputHistograms->GetXBinContent(harmonic, bin))
+                /widthX);
+            fCorrectedQnVector->SetQy(harmonic, (fDetectorConfiguration->GetCurrentQnVector()->Qy(harmonic)
+                - fInputHistograms->GetYBinContent(harmonic, bin))
+                /widthY);
+            harmonic = fDetectorConfiguration->GetCurrentQnVector()->GetNextHarmonic(harmonic);
           }
-          fCorrectedQnVector->SetQx(harmonic, (fDetectorConfiguration->GetCurrentQnVector()->Qx(harmonic)
-              - fInputHistograms->GetXBinContent(harmonic, bin))
-              / widthX);
-          fCorrectedQnVector->SetQy(harmonic, (fDetectorConfiguration->GetCurrentQnVector()->Qy(harmonic)
-              - fInputHistograms->GetYBinContent(harmonic, bin))
-              / widthY);
-          harmonic = fDetectorConfiguration->GetCurrentQnVector()->GetNextHarmonic(harmonic);
+        } /* correction information not validated, we leave the Q vector untouched */
+        else {
+          if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, 1.0);
         }
-      } /* correction information not validated, we leave the Q vector untouched */
-      else {
-        if (fQANotValidatedBin != NULL) fQANotValidatedBin->Fill(variableContainer, 1.0);
+      } else {
+        /* not done! input vector with bad quality */
+        fCorrectedQnVector->SetGood(kFALSE);
       }
-    }
-    else {
-      /* not done! input vector with bad quality */
-      fCorrectedQnVector->SetGood(kFALSE);
-    }
-    /* and update the current Qn vector */
-    fDetectorConfiguration->UpdateCurrentQnVector(fCorrectedQnVector);
-    break;
-  default:
-    /* we are in passive state waiting for proper conditions, no corrections applied */
-    return kFALSE;
+      /* and update the current Qn vector */
+      fDetectorConfiguration->UpdateCurrentQnVector(fCorrectedQnVector);
+      break;
+    default:
+      /* we are in passive state waiting for proper conditions, no corrections applied */
+      return kFALSE;
   }
   /* if we reached here is because we applied the correction */
   return kTRUE;
@@ -238,46 +239,46 @@ Bool_t Recentering::ProcessCorrections(const double *variableContainer) {
 Bool_t Recentering::ProcessDataCollection(const double *variableContainer) {
   Int_t harmonic;
   switch (fState) {
-  case QCORRSTEP_calibration:
-    QnCorrectionsInfo(Form("Recentering process in detector %s: collecting data.", fDetectorConfiguration->GetName()));
-    /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
-    if (fInputQnVector->IsGoodQuality()) {
-      harmonic = fInputQnVector->GetFirstHarmonic();
-      while (harmonic != -1) {
-        fCalibrationHistograms->FillX(harmonic,variableContainer,fInputQnVector->Qx(harmonic));
-        fCalibrationHistograms->FillY(harmonic,variableContainer,fInputQnVector->Qy(harmonic));
-        harmonic = fInputQnVector->GetNextHarmonic(harmonic);
+    case QCORRSTEP_calibration:QnCorrectionsInfo(Form("Recentering process in detector %s: collecting data.",
+                                                      fDetectorConfiguration->GetName()));
+      /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
+      if (fInputQnVector->IsGoodQuality()) {
+        harmonic = fInputQnVector->GetFirstHarmonic();
+        while (harmonic!=-1) {
+          fCalibrationHistograms->FillX(harmonic, variableContainer, fInputQnVector->Qx(harmonic));
+          fCalibrationHistograms->FillY(harmonic, variableContainer, fInputQnVector->Qy(harmonic));
+          harmonic = fInputQnVector->GetNextHarmonic(harmonic);
+        }
       }
-    }
-    /* we have not perform any correction yet */
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    QnCorrectionsInfo(Form("Recentering process in detector %s: collecting data.", fDetectorConfiguration->GetName()));
-    /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
-    if (fInputQnVector->IsGoodQuality()) {
-      harmonic = fInputQnVector->GetFirstHarmonic();
-      while (harmonic != -1) {
-        fCalibrationHistograms->FillX(harmonic,variableContainer,fInputQnVector->Qx(harmonic));
-        fCalibrationHistograms->FillY(harmonic,variableContainer,fInputQnVector->Qy(harmonic));
-        harmonic = fInputQnVector->GetNextHarmonic(harmonic);
+      /* we have not perform any correction yet */
+      return kFALSE;
+      break;
+    case QCORRSTEP_applyCollect:QnCorrectionsInfo(Form("Recentering process in detector %s: collecting data.",
+                                                       fDetectorConfiguration->GetName()));
+      /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
+      if (fInputQnVector->IsGoodQuality()) {
+        harmonic = fInputQnVector->GetFirstHarmonic();
+        while (harmonic!=-1) {
+          fCalibrationHistograms->FillX(harmonic, variableContainer, fInputQnVector->Qx(harmonic));
+          fCalibrationHistograms->FillY(harmonic, variableContainer, fInputQnVector->Qy(harmonic));
+          harmonic = fInputQnVector->GetNextHarmonic(harmonic);
+        }
       }
-    }
-    /* and proceed to ... */
-  case QCORRSTEP_apply: /* apply the correction if the current Qn vector is good enough */
-    /* provide QA info if required */
-    if (fQAQnAverageHistogram != NULL) {
-      harmonic = fCorrectedQnVector->GetFirstHarmonic();
-      while (harmonic != -1) {
-        fQAQnAverageHistogram->FillX(harmonic, variableContainer, fCorrectedQnVector->Qx(harmonic));
-        fQAQnAverageHistogram->FillY(harmonic, variableContainer, fCorrectedQnVector->Qy(harmonic));
-        harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
+      /* and proceed to ... */
+    case QCORRSTEP_apply: /* apply the correction if the current Qn vector is good enough */
+      /* provide QA info if required */
+      if (fQAQnAverageHistogram!=NULL) {
+        harmonic = fCorrectedQnVector->GetFirstHarmonic();
+        while (harmonic!=-1) {
+          fQAQnAverageHistogram->FillX(harmonic, variableContainer, fCorrectedQnVector->Qx(harmonic));
+          fQAQnAverageHistogram->FillY(harmonic, variableContainer, fCorrectedQnVector->Qy(harmonic));
+          harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
+        }
       }
-    }
-    break;
-  default:
-    /* we are in passive state waiting for proper conditions, no corrections applied */
-    return kFALSE;
+      break;
+    default:
+      /* we are in passive state waiting for proper conditions, no corrections applied */
+      return kFALSE;
   }
   /* if we reached here is because we applied the correction */
   return kTRUE;
@@ -294,19 +295,18 @@ void Recentering::ClearCorrectionStep() {
 /// \return TRUE if the correction step is being applied
 Bool_t Recentering::IsBeingApplied() const {
   switch (fState) {
-  case QCORRSTEP_calibration:
-    /* we are collecting */
-    /* but not applying */
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    /* we are collecting */
-  case QCORRSTEP_apply:
-    /* and applying */
-    return kTRUE;
-    break;
-  default:
-    break;
+    case QCORRSTEP_calibration:
+      /* we are collecting */
+      /* but not applying */
+      return kFALSE;
+      break;
+    case QCORRSTEP_applyCollect:
+      /* we are collecting */
+    case QCORRSTEP_apply:
+      /* and applying */
+      return kTRUE;
+      break;
+    default:break;
   }
   return kFALSE;
 }
@@ -321,23 +321,22 @@ Bool_t Recentering::IsBeingApplied() const {
 /// \return kTRUE if the correction step is being applied
 Bool_t Recentering::ReportUsage(TList *calibrationList, TList *applyList) {
   switch (fState) {
-  case QCORRSTEP_calibration:
-    /* we are collecting */
-    calibrationList->Add(new TObjString(szCorrectionName));
-    /* but not applying */
-    return kFALSE;
-    break;
-  case QCORRSTEP_applyCollect:
-    /* we are collecting */
-    calibrationList->Add(new TObjString(szCorrectionName));
-  case QCORRSTEP_apply:
-    /* and applying */
-    applyList->Add(new TObjString(szCorrectionName));
-    break;
-  default:
-    return kFALSE;
-    break;
+    case QCORRSTEP_calibration:
+      /* we are collecting */
+      calibrationList->Add(new TObjString(szCorrectionName));
+      /* but not applying */
+      return kFALSE;
+      break;
+    case QCORRSTEP_applyCollect:
+      /* we are collecting */
+      calibrationList->Add(new TObjString(szCorrectionName));
+    case QCORRSTEP_apply:
+      /* and applying */
+      applyList->Add(new TObjString(szCorrectionName));
+      break;
+    default:return kFALSE;
+      break;
   }
   return kTRUE;
 }
-
+}

@@ -82,8 +82,8 @@
 
 /* harmonic multiplier */
 
-#include "QnCorrectionsCorrectionOnQvector.h"
-
+#include "CorrectionOnQvector.h"
+namespace Qn {
 /// \class QnCorrectionsQnVectorTwistAndRescale
 /// \brief Encapsulates twist and rescale on Q vector
 ///
@@ -127,42 +127,39 @@
 /// Correction are performed for the harmonics for which there are data collection support.
 ///
 
-class QnCorrectionsHistogramSparse;
+class CorrectionHistogramSparse;
 
-class TwistAndRescale : public QnCorrectionsCorrectionOnQvector {
-public:
-   /// \enum QnTwistAndRescaleMethod
-   /// \brief The class of the id of the supported twist and rescale methods
-   ///
-   /// Actually it is not a class because the C++ level of implementation.
-   /// But full protection will be reached when were possible declaring it
-   /// as a class.
-   ///
-   enum QnTwistAndRescaleMethod {
-     TWRESCALE_doubleHarmonic,      ///< \f$ A^{\pm}_{2n} = 1 \pm \langle X_{2n} \rangle, \qquad \Lambda ^{\pm}_{2n} = \frac{\langle Y_{2n} \rangle}{A^{\pm}_{2n}} \f$
-     TWRESCALE_correlations,    ///< \f$ A^{A+}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle X^{A}_{n} X^{B}_{n} \rangle}
-     /// {\sqrt{\langle X^{A}_{n} X^{B}_{n} \rangle \langle X^{B}_{n} X^{C}_{n} \rangle + \langle X^{A}_{n} Y^{B}_{n} \rangle \langle X^{B}_{n} Y^{C}_{n} \rangle}}, \\ \,
-     /// A^{A-}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle Y^{A}_{n} Y^{B}_{n} \rangle}
-     /// {\sqrt{\langle X^{A}_{n} X^{B}_{n} \rangle \langle X^{B}_{n} X^{C}_{n} \rangle + \langle X^{A}_{n} Y^{B}_{n} \rangle \langle X^{B}_{n} Y^{C}_{n} \rangle}}, \\ \,
-     ///  \Lambda^{A,+}_{2n} =  \frac{\langle X^{A}_{n} Y^{B}_{n} \rangle}{\langle X^{A}_{n} X^{B}_{n} \rangle}, \quad
-     ///  \Lambda^{A,-}_{2n} =  \frac{\langle X^{A}_{n} Y^{B}_{n} \rangle}{\langle Y^{A}_{n} Y^{B}_{n} \rangle} \f$
-   };
+class TwistAndRescale : public CorrectionOnQvector {
+ public:
+  /// \enum QnTwistAndRescaleMethod
+  /// \brief The class of the id of the supported twist and rescale methods
+  ///
+  /// Actually it is not a class because the C++ level of implementation.
+  /// But full protection will be reached when were possible declaring it
+  /// as a class.
+  ///
+  enum QnTwistAndRescaleMethod {
+    TWRESCALE_doubleHarmonic,      ///< \f$ A^{\pm}_{2n} = 1 \pm \langle X_{2n} \rangle, \qquad \Lambda ^{\pm}_{2n} = \frac{\langle Y_{2n} \rangle}{A^{\pm}_{2n}} \f$
+    TWRESCALE_correlations,    ///< \f$ A^{A+}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle X^{A}_{n} X^{B}_{n} \rangle}
+    /// {\sqrt{\langle X^{A}_{n} X^{B}_{n} \rangle \langle X^{B}_{n} X^{C}_{n} \rangle + \langle X^{A}_{n} Y^{B}_{n} \rangle \langle X^{B}_{n} Y^{C}_{n} \rangle}}, \\ \,
+    /// A^{A-}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle Y^{A}_{n} Y^{B}_{n} \rangle}
+    /// {\sqrt{\langle X^{A}_{n} X^{B}_{n} \rangle \langle X^{B}_{n} X^{C}_{n} \rangle + \langle X^{A}_{n} Y^{B}_{n} \rangle \langle X^{B}_{n} Y^{C}_{n} \rangle}}, \\ \,
+    ///  \Lambda^{A,+}_{2n} =  \frac{\langle X^{A}_{n} Y^{B}_{n} \rangle}{\langle X^{A}_{n} X^{B}_{n} \rangle}, \quad
+    ///  \Lambda^{A,-}_{2n} =  \frac{\langle X^{A}_{n} Y^{B}_{n} \rangle}{\langle Y^{A}_{n} Y^{B}_{n} \rangle} \f$
+  };
 
-   TwistAndRescale();
+  TwistAndRescale();
   ~TwistAndRescale();
 
   /// Sets the method for extracting twist and rescale correction parameters
   /// \param method the chosen method
-  void SetTwistAndRescaleMethod(QnTwistAndRescaleMethod method)
-  { fTwistAndRescaleMethod = method; }
+  void SetTwistAndRescaleMethod(QnTwistAndRescaleMethod method) { fTwistAndRescaleMethod = method; }
   /// Controls if twist step shall be applied
   /// \param apply kTRUE for applying the twist step
-  void SetApplyTwist(Bool_t apply)
-  { fApplyTwist = apply; }
+  void SetApplyTwist(Bool_t apply) { fApplyTwist = apply; }
   /// Controls if rescale step shall be applied
   /// \param apply kTRUE for applying the rescale step
-  void SetApplyRescale(Bool_t apply)
-  { fApplyRescale = apply; }
+  void SetApplyRescale(Bool_t apply) { fApplyRescale = apply; }
   void SetReferenceConfigurationsForTwistAndRescale(const char *nameB, const char *nameC);
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
@@ -171,7 +168,7 @@ public:
   virtual void AttachedToFrameworkManager();
   virtual Bool_t AttachInput(TList *list);
   virtual void AfterInputsAttachActions();
-virtual void CreateSupportDataStructures();
+  virtual void CreateSupportDataStructures();
   virtual Bool_t CreateSupportHistograms(TList *list);
   virtual Bool_t CreateQAHistograms(TList *list);
   virtual Bool_t CreateNveQAHistograms(TList *list);
@@ -183,28 +180,41 @@ virtual void CreateSupportDataStructures();
   virtual Bool_t IsBeingApplied() const;
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
-private:
+ private:
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const Double_t fMaxThreshold;               ///< highest absolute value for meaningful results
   static const char *szTwistCorrectionName;          ///< the name of the twist correction step
   static const char *szRescaleCorrectionName;        ///< the name of the rescale correction step
   static const char *szKey;                          ///< the key of the correction step for ordering purpose
-  static const char *szDoubleHarmonicSupportHistogramName;         ///< the name and title for double harmonic method support histograms
-  static const char *szCorrelationsSupportHistogramName;         ///< the name and title for correlations method support histograms
-  static const char *szTwistCorrectedQnVectorName;        ///< the name of the Qn vector after applying the twist correction
-  static const char *szRescaleCorrectedQnVectorName;        ///< the name of the Qn vector after applying the rescale correction
+  static const char *
+      szDoubleHarmonicSupportHistogramName;         ///< the name and title for double harmonic method support histograms
+  static const char
+      *szCorrelationsSupportHistogramName;         ///< the name and title for correlations method support histograms
+  static const char
+      *szTwistCorrectedQnVectorName;        ///< the name of the Qn vector after applying the twist correction
+  static const char
+      *szRescaleCorrectedQnVectorName;        ///< the name of the Qn vector after applying the rescale correction
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
-  static const char *szQATwistQnAverageHistogramName;     ///< the name and title for after twist Qn components average QA histograms
-  static const char *szQARescaleQnAverageHistogramName;     ///< the name and title for after rescale Qn components average QA histograms
-  QnCorrectionsProfileComponents *fDoubleHarmonicInputHistograms; //!<! the histogram with calibration information for the double harmonic method
-  QnCorrectionsProfileComponents *fDoubleHarmonicCalibrationHistograms; //!<! the histogram for building calibration information for the doubel harmonic method
-  QnCorrectionsProfile3DCorrelations *fCorrelationsInputHistograms; //!<! the histogram with calibration information for the correlations method
-  QnCorrectionsProfile3DCorrelations *fCorrelationsCalibrationHistograms; //!<! the histogram for building calibration information for the correlations method
-  QnCorrectionsHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  QnCorrectionsProfileComponents *fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
-  QnCorrectionsProfileComponents *fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
+  static const char
+      *szQATwistQnAverageHistogramName;     ///< the name and title for after twist Qn components average QA histograms
+  static const char *
+      szQARescaleQnAverageHistogramName;     ///< the name and title for after rescale Qn components average QA histograms
+  CorrectionProfileComponents
+      *fDoubleHarmonicInputHistograms; //!<! the histogram with calibration information for the double harmonic method
+  CorrectionProfileComponents *
+      fDoubleHarmonicCalibrationHistograms; //!<! the histogram for building calibration information for the doubel harmonic method
+  CorrectionProfile3DCorrelations
+      *fCorrelationsInputHistograms; //!<! the histogram with calibration information for the correlations method
+  CorrectionProfile3DCorrelations *
+      fCorrelationsCalibrationHistograms; //!<! the histogram for building calibration information for the correlations method
+  CorrectionHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
+  CorrectionProfileComponents
+      *fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
+  CorrectionProfileComponents
+      *fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
 
-  QnTwistAndRescaleMethod fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
+  QnTwistAndRescaleMethod
+      fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
   Bool_t fApplyTwist;              ///< apply the twist step
   Bool_t fApplyRescale;            ///< apply the rescale step
   TString fBDetectorConfigurationName; ///< the name of the B detector configuration
@@ -212,12 +222,12 @@ private:
   TString fCDetectorConfigurationName; ///< the name of the C detector configuration
   DetectorConfiguration *fCDetectorConfiguration; ///< pointer to the C detector configuration
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
-  QnCorrectionsQnVector *fTwistCorrectedQnVector;   ///< twisted Qn vector
-  QnCorrectionsQnVector *fRescaleCorrectedQnVector; ///< rescaled Qn vector
+  CorrectionQnVector *fTwistCorrectedQnVector;   ///< twisted Qn vector
+  CorrectionQnVector *fRescaleCorrectedQnVector; ///< rescaled Qn vector
 
 /// \cond CLASSIMP
-  ClassDef(TwistAndRescale, 2);
+ ClassDef(TwistAndRescale, 2);
 /// \endcond
 };
-
+}
 #endif // QNCORRECTIONS_QNVECTORTWISTANDRESCALE_H
