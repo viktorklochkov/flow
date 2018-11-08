@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
-project(flow VERSION 1.2 LANGUAGES CXX)
+project(flow VERSION 1.3 LANGUAGES CXX)
 
 #set(CMAKE_CXX_STANDARD 11)
 if (APPLE)
