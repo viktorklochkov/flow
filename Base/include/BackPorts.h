@@ -1,7 +1,8 @@
 #ifndef FLOW_BACKPORTS_H
 #define FLOW_BACKPORTS_H
 
-#if __cplusplus==201103L
+#if __cplusplus < 201402L && !defined(_MSC_VER)
+
 #include <cstddef> // for std::size_t
 #include <memory>
 namespace std {
@@ -15,7 +16,6 @@ struct index_sequence {
     return sizeof ... (i);
   }
 };
-
 
 // this structure doubles index_sequence elements.
 // s- is number of template arguments in IS.
@@ -40,8 +40,6 @@ struct inc_index_sequence< true, index_sequence<i...> > {
   typedef index_sequence<i..., sizeof...(i)> type;
 };
 
-
-
 // helper structure for make_index_sequence.
 template< std::size_t N >
 struct make_index_sequence_impl :
@@ -61,6 +59,7 @@ struct make_index_sequence : make_index_sequence_impl<N>::type {};
 template< typename ... T >
 struct index_sequence_for : make_index_sequence< sizeof...(T) >{};
 
+//make_unique
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
