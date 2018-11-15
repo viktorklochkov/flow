@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
-project(flow VERSION 1.3 LANGUAGES CXX)
+project(flow VERSION 1.5 LANGUAGES CXX)
 
 #set(CMAKE_CXX_STANDARD 11)
 if (APPLE)
@@ -180,7 +180,7 @@ target_link_libraries(QnCorrections PRIVATE ${ROOT_LIBRARIES})
 #add_custom_command(TARGET QnCorrections PRE_BUILD COMMAND ${CMAKE_COMMAND}
 #        -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/QnCorrections/include ${CMAKE_BINARY_DIR}/include)
 
-ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINKDEF Base/BaseLinkDef.h)
+ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINKDEF Base/BaseLinkDef.h OPTIONS "-noIncludePaths")
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
