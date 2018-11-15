@@ -163,8 +163,18 @@ include(${ROOT_USE_FILE})
 
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
-include_directories(QnCorrections Base QnCorrections/include Base/include)
-ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnCorrections/QnLinkDef.h OPTIONS "-noIncludePaths")
+#include_directories(QnCorrections Base QnCorrections/include Base/include)
+set(ROOTCLING ${ROOT_DIR}/../bin/rootcling)
+add_custom_command(OUTPUT G__QnCorrections.cxx
+        COMMAND ${ROOTCLING} -v -f G__QnCorrections.cxx
+        -rml libQnCorrections${CMAKE_SHARED_LIBRARY_SUFFIX}
+        -rmf libQnCorrections.rootmap
+        -s libQnCorrections
+        -I${CMAKE_SOURCE_DIR}/QnCorrections -I${CMAKE_SOURCE_DIR}/QnCorrections/include
+        ${QNCORR_HEADERS}
+        ${CMAKE_SOURCE_DIR}/QnCorrections/QnLinkDef.h
+        )
+#ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnLinkDef.h OPTIONS "-noIncludePaths")
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)
 target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
@@ -179,8 +189,16 @@ target_include_directories(QnCorrections
 target_link_libraries(QnCorrections PRIVATE ${ROOT_LIBRARIES})
 #add_custom_command(TARGET QnCorrections PRE_BUILD COMMAND ${CMAKE_COMMAND}
 #        -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/QnCorrections/include ${CMAKE_BINARY_DIR}/include)
-
-ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINKDEF Base/BaseLinkDef.h OPTIONS "-noIncludePaths")
+add_custom_command(OUTPUT G__Base.cxx
+        COMMAND ${ROOTCLING} -v -f G__Base.cxx
+        -rml libBase${CMAKE_SHARED_LIBRARY_SUFFIX}
+        -rmf libBase.rootmap
+        -s libBase
+        -I${CMAKE_SOURCE_DIR}/Base -I${CMAKE_SOURCE_DIR}/Base/include -I${CMAKE_SOURCE_DIR}/QnCorrections/include -I${CMAKE_SOURCE_DIR}/QnCorrections
+        ${BASE_HEADERS}
+        ${CMAKE_SOURCE_DIR}/Base/BaseLinkDef.h
+        )
+#ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINKDEF Base/BaseLinkDef.h OPTIONS "-noIncludePaths")
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
