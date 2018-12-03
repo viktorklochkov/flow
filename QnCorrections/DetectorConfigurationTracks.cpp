@@ -92,7 +92,7 @@ void DetectorConfigurationTracks::AttachCorrectionsManager(CorrectionCalculator 
 void DetectorConfigurationTracks::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
-  fDataVectorBank = new TClonesArray("CorrectionDataVector", INITIALDATAVECTORBANKSIZE);
+  fDataVectorBank = new TClonesArray("Qn::CorrectionDataVector", INITIALDATAVECTORBANKSIZE);
 
   for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
     fQnVectorCorrections.At(ixCorrection)->CreateSupportDataStructures();

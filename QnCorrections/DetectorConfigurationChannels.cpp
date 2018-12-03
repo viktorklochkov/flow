@@ -187,7 +187,7 @@ void DetectorConfigurationChannels::AttachCorrectionsManager(CorrectionCalculato
 void DetectorConfigurationChannels::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
-  fDataVectorBank = new TClonesArray("CorrectionDataVectorChannelized", INITIALDATAVECTORBANKSIZE);
+  fDataVectorBank = new TClonesArray("Qn::CorrectionDataVectorChannelized", INITIALDATAVECTORBANKSIZE);
 
   for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
     fInputDataCorrections.At(ixCorrection)->CreateSupportDataStructures();
