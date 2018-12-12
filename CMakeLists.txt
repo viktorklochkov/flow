@@ -245,6 +245,8 @@ add_subdirectory(test)
 
 # Install configuration
 
+set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
+
 install(DIRECTORY QnCorrections/include/ Base/include/ Correction/include/ Correlation/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 # Installion of ROOT dictionaries
 install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
