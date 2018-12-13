@@ -18,9 +18,9 @@
 #include <memory>
 
 #include "CorrelationManager.h"
-#if !Qn_COMPILER_CXX_14
-#include "BackPorts.h"
-#endif
+
+#include "ROOT/RMakeUnique.hxx"
+#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 /**
