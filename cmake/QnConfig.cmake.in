@@ -1,3 +1,12 @@
 include(CMakeFindDependencyMacro)
 find_dependency(ROOT COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
 include("${CMAKE_CURRENT_LIST_DIR}/QnTargets.cmake")
+
+
+get_filename_component(_thisdir "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(Qn_INCLUDE_DIR ${_thisdir}/../../../include)
+set(Qn_LIBS_DIR ${_thisdir}/../../../lib)
+
+if(Qn_FOUND)
+    message("Qn lib found.")
+endif(Qn_FOUND)
