@@ -22,6 +22,7 @@
 #include <vector>
 #include <TH1.h>
 #include <TH2.h>
+#include "TList.h"
 #include "VariableManager.h"
 #include "ROOT/RMakeUnique.hxx"
 #include "ROOT/RIntegerSequence.hxx"
@@ -34,6 +35,7 @@ struct QAHistoBase {
   virtual void Draw(const char *option) = 0;
   virtual void Write(const char *name) = 0;
   virtual const char* Name() = 0;
+  virtual void AddToList(TList*) = 0;
 
 };
 
@@ -56,6 +58,9 @@ class QAHisto : public QAHistoBase {
   void Write(const char *name) override { histo_.Write(name); }
 
   const char* Name() override { return histo_.GetName(); }
+
+  void AddToList(TList *list) override {list->Add(new HISTO(histo_));}
+
 
  private:
   std::array<VAR, N> vars_;

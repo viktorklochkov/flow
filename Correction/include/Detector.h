@@ -58,6 +58,7 @@ class DetectorBase {
   virtual void FillData() = 0;
   virtual void ClearData() = 0;
   virtual void SaveReport() = 0;
+  virtual TList* GetReportList() = 0;
   virtual void ReserveDataVectors(int number) = 0;
   virtual std::bitset<8> GetHarmonics() const = 0;
 
@@ -192,6 +193,16 @@ class Detector : public DetectorBase {
     for (auto &histo : histograms_) {
       histo->Write(histo->Name());
     }
+  }
+
+  TList* GetReportList() override {
+    auto list = new TList();
+    int_cuts_->AddToList(list);
+    cuts_->AddToList(list);
+    for (auto &histo : histograms_) {
+      histo->AddToList(list);
+    }
+    return list;
   }
 
   void FillReport() override {

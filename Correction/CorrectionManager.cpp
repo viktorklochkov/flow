@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CorrectionManager.h"
+#include "TList.h"
 
 void Qn::CorrectionManager::SetCorrectionSteps(const std::string &name,
                                                std::function<void(DetectorConfiguration *config)> config) {
@@ -120,6 +121,28 @@ void Qn::CorrectionManager::SaveHistograms(std::shared_ptr<TFile> file) {
   }
 }
 
+TList* Qn::CorrectionManager::GetDetectorQAList() {
+  auto list = new TList();
+  for (auto &det: detectors_channel) {
+    auto detlist = det.second->GetReportList();
+    detlist->SetName(det.first.data());
+    list->Add(detlist);
+
+  }
+  for (auto &det: detectors_track) {
+    auto detlist = det.second->GetReportList();
+    detlist->SetName(det.first.data());
+    list->Add(detlist);
+  }
+  auto evlist = new TList();
+  event_cuts_->AddToList(evlist);
+  for (auto &histo : event_histograms_) {
+    histo->AddToList(evlist);
+  }
+  list->Add(evlist);
+  return list;
+}
+
 void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_file_) {
   for (auto &pair : detectors_track) {
     out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
@@ -141,7 +164,29 @@ void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_fi
   qncorrections_manager_.SetShouldFillQAHistograms();
   qncorrections_manager_.SetShouldFillOutputHistograms();
   qncorrections_manager_.InitializeQnCorrectionsFramework();
-  qncorrections_manager_.SetCurrentProcessListName("correction");
+}
+
+void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
+  for (auto &pair : detectors_track) {
+    out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
+  }
+  for (auto &pair : detectors_channel) {
+    out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
+  }
+  event_variables_->SetToTree(*out_tree_);
+  CalculateCorrectionAxis();
+  CreateDetectors();
+  for (auto &det : detectors_track) {
+    det.second->Initialize(det.first);
+  }
+  for (auto &det : detectors_channel) {
+    det.second->Initialize(det.first);
+  }
+  event_cuts_->CreateCutReport("Event", 1);
+  qncorrections_manager_.SetCalibrationHistogramsList(in_calibration_file_);
+  qncorrections_manager_.SetShouldFillQAHistograms();
+  qncorrections_manager_.SetShouldFillOutputHistograms();
+  qncorrections_manager_.InitializeQnCorrectionsFramework();
 }
 
 void Qn::CorrectionManager::ProcessEvent() {

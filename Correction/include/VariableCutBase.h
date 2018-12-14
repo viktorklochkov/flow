@@ -182,6 +182,10 @@ class Cuts {
     report_.release();
   }
 
+  void AddToList(TList *list) {
+    if (report_) report_->AddToList(list);
+  }
+
  private:
   std::size_t nchannels_ = 0;
   double *var_values_ = nullptr;

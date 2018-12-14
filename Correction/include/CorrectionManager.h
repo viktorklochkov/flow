@@ -210,6 +210,9 @@ class CorrectionManager {
 
   void Initialize(std::shared_ptr<TFile> &in_calibration_file_);
 
+  void Initialize(TFile *in_calibration_file_);
+
+
   void ProcessEvent();
 
   void ProcessQnVectors();
@@ -235,6 +238,14 @@ class CorrectionManager {
   }
 
   double* GetVariableContainer() {return var_manager_->GetVariableContainer();}
+
+  TList* GetCalibrationList() {return qncorrections_manager_.GetOutputHistogramsList();}
+
+  TList* GetCalibrationQAList() {return qncorrections_manager_.GetQAHistogramsList();}
+
+  TList* GetDetectorQAList();
+
+  void SetProcessName(std::string name) {qncorrections_manager_.SetCurrentProcessListName(name.data());}
 
  private:
 
