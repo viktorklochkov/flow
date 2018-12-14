@@ -121,8 +121,7 @@ void Qn::CorrectionManager::SaveHistograms(std::shared_ptr<TFile> file) {
   }
 }
 
-TList* Qn::CorrectionManager::GetDetectorQAList() {
-  auto list = new TList();
+void Qn::CorrectionManager::FillDetectorQAToList(TList *list) {
   for (auto &det: detectors_channel) {
     auto detlist = det.second->GetReportList();
     detlist->SetName(det.first.data());
@@ -140,7 +139,7 @@ TList* Qn::CorrectionManager::GetDetectorQAList() {
     histo->AddToList(evlist);
   }
   list->Add(evlist);
-  return list;
+
 }
 
 void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_file_) {

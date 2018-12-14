@@ -243,7 +243,7 @@ class CorrectionManager {
 
   TList* GetCalibrationQAList() {return qncorrections_manager_.GetQAHistogramsList();}
 
-  TList* GetDetectorQAList();
+  void FillDetectorQAToList(TList*);
 
   void SetProcessName(std::string name) {qncorrections_manager_.SetCurrentProcessListName(name.data());}
 
