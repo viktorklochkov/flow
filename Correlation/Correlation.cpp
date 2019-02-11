@@ -38,9 +38,11 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
         }
       }
       contents[iteration] = bin;
-      auto is_n = std::all_of(contents.begin(),contents.end(),[](QVector q) {return q.n() > 0;});
-      data_correlation_.At(c_index_).first = is_n;
-      data_correlation_.At(c_index_).second = function_(contents);
+      auto is_valid = std::all_of(contents.begin(),contents.end(),[](QVector q) {return q.n() > 0;});
+      long long entries = 0;
+      for (const auto &q : contents) {entries += q.n_;}
+      Qn::Product prod(entries, function_(contents), is_valid);
+      data_correlation_.At(c_index_) = prod;
       ++ibin;
     }
     return;

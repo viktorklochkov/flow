@@ -17,7 +17,7 @@ TEST(BootStrapSamplerTest, Constructor) {
   for (auto vec : test.GetSamples()) {
     for (auto b : vec) {
       for (int i = 0; i < nsamples; ++i) {
-        if ((int)b==i) size_of_sample[i] = size_of_sample[i] + 1;
+        if ((int) b==i) size_of_sample[i] = size_of_sample[i] + 1;
       }
     }
   }
@@ -35,7 +35,7 @@ TEST(BootStrapSamplerTest, Constructor3) {
   for (auto vec : test.GetSamples()) {
     for (auto b : vec) {
       for (int i = 0; i < nsamples; ++i) {
-        if ((int)  b==i) size_of_sample[i] = size_of_sample[i] + 1;
+        if ((int) b==i) size_of_sample[i] = size_of_sample[i] + 1;
       }
     }
   }
@@ -68,25 +68,25 @@ TEST(BootStrapSamplerTest, SubSampling) {
     auto position = sample.at(0);
     samplesizes.at(position)++;
   }
-  for (auto & samplesize : samplesizes) {
+  for (auto &samplesize : samplesizes) {
     std::cout << samplesize << std::endl;
-    ASSERT_NEAR(samplesize,nevents/nsamples,(nevents/nsamples)-1);
+    ASSERT_NEAR(samplesize, nevents/nsamples, (nevents/nsamples) - 1);
   }
 }
 
 TEST(BootStrapSamplerTest, Bootstraptest) {
   TRandom3 rndm;
   int nevents = 100000;
-  int nsamples = 100;
+  int nsamples = 10;
   Qn::Sampler test(nevents, nsamples);
   test.CreateSubSamples();
   Qn::DataContainerSample a;
   a.At(0).SetNumberOfSamples(10);
-  TH1D hdist("dist","dist",100,-2,2);
-  TH1D hboot("boot","boot",100,-2,2);
-  for ( int i = 0; i<nevents; ++i) {
+  TH1D hdist("dist", "dist", 100, -2, 2);
+  TH1D hboot("boot", "boot", 100, -2, 2);
+  for (int i = 0; i < nevents; ++i) {
     auto g1 = rndm.Gaus(0., 1.);
-    a.At(0).Fill(g1,test.GetFillVector(i));
+    a.At(0).Fill(g1, test.GetFillVector(i));
     hdist.Fill(g1);
   }
   for (int i = 0; i < nsamples; ++i) {
@@ -94,13 +94,13 @@ TEST(BootStrapSamplerTest, Bootstraptest) {
   }
   auto d = hdist.Integral("width");
   auto b = hboot.Integral("width");
-  hdist.Scale(1. / d * b);
-  hboot.Scale(1. / b * d);
-  TCanvas c1("c1","c1",800,600);
+  hdist.Scale(1./d*b);
+  hboot.Scale(1./b*d);
+  TCanvas c1("c1", "c1", 800, 600);
   c1.cd();
-  hdist.Draw();
+//  hdist.Draw();
   hboot.Draw();
-  c1.SaveAs("boottest.root");
+  c1.SaveAs("boottest1.root");
   a.At(0).CalculateCorrelatedError();
 //  ASSERT_NEAR(a.At(0).Error(),a.At(0).CorrelatedError(),0.00001);
 }

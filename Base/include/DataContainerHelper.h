@@ -80,6 +80,8 @@ class DataContainerHelper {
                                     const std::string &axisname,
                                     Errors x = Errors::Yonly);
 
+  static void UseCorrelatedErrors(Qn::DataContainer<Qn::Sample> &data, bool use);
+
  private:
   friend DataContainer<Qn::Sample>;
   friend DataContainer<Qn::EventShape>;

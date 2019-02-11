@@ -90,6 +90,7 @@ set(BASE_HEADERS DataContainer.h
         Efficiency.h
         QVector.h
         Sample.h
+        Product.h
         )
 
 set(QNCORR_HEADERS CorrectionOnInputData.h

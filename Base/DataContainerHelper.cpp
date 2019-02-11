@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <iterator>
+#include <DataContainerHelper.h>
 
 #include "TGraphAsymmErrors.h"
 
@@ -178,7 +179,7 @@ void DataContainerHelper::NDraw(DataContainer<Sample> &data,
       mgraph->Draw(option.data());
     } catch (std::exception &) {
       std::string axes_in_dc = "Axis \"" + axis_name + "\" not found.\n";
-      axes_in_dc += "Avaiable axes:";
+      axes_in_dc += "Available axes:";
       axes_in_dc += " \"" + data.axes_.at(0).Name() + "\"";
       for (size_t i = 1; i < data.axes_.size(); ++i) {
         axes_in_dc += ", \"" + data.axes_.at(i).Name() + "\"";
@@ -188,6 +189,16 @@ void DataContainerHelper::NDraw(DataContainer<Sample> &data,
   } else {
     std::cout << "Not drawn because the DataContainer has dimension: " << data.dimension_ << std::endl;
     std::cout << "Only DataContainers with dimension <=2 can be drawn." << std::endl;
+  }
+}
+
+/**
+ * Set
+ * @param data
+ */
+void DataContainerHelper::UseCorrelatedErrors(Qn::DataContainer<Qn::Sample> &data, bool use) {
+  for (auto &bin : data) {
+    bin.UseCorrelatedError(use);
   }
 }
 

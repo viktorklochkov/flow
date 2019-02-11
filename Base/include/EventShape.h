@@ -52,6 +52,8 @@ class EventShape : public TObject {
 
   inline float GetPercentile(float q) { return static_cast<float>(spline_->Eval(q)); }
 
+  inline float GetPercentile(double q) { return static_cast<float>(spline_->Eval(q)); }
+
   void IntegrateHist();
 
   void FitWithSpline();

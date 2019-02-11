@@ -24,9 +24,9 @@ void Qn::Correlator::FillCorrelation(const std::vector<Qn::DataContainerQVector>
   auto sample_id_vector = sampler_.GetFillVector(event_id);
   int ibin = 0;
   for (const auto &bin : correlation_.GetCorrelation()) {
-    if (bin.first) result_.At(ibin).Fill(bin.second, sample_id_vector);
-    if (bin.first && binned_result_) {
-      binned_result_->At(ibin).Fill(bin.second);
+    if (bin.validity) result_.At(ibin).Fill(bin.result, bin.entries, sample_id_vector);
+    if (bin.validity && binned_result_) {
+      binned_result_->At(ibin).Fill(bin.result);
     }
     ++ibin;
   }

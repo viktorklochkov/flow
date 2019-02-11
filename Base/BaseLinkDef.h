@@ -34,6 +34,7 @@
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
 #pragma link C++ class Qn::Profile+;
+#pragma link C++ class Qn::Product+;
 #pragma link C++ class Qn::StatisticMean+;
 #pragma link C++ class Qn::Sample+;
 #pragma link C++ class Qn::EventShape+;
@@ -42,11 +43,13 @@
 #pragma link C++ class Qn::DataContainer<float >+;
 #pragma link C++ class Qn::DataContainer<std::pair<bool,float> >+;
 #pragma link C++ class Qn::DataContainer<Qn::Profile>+;
+#pragma link C++ class Qn::DataContainer<Qn::Product>+;
 #pragma link C++ class Qn::DataContainer<Qn::Sample>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector >+;
 #pragma link C++ class Qn::DataContainer<TH1F>+;
 #pragma link C++ class Qn::DataContainerHelper+;
 #pragma link C++ typedef Qn::DataContainerProfile;
+#pragma link C++ typedef Qn::DataContainerProduct;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ typedef Qn::DataContainerF;

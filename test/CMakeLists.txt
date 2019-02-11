@@ -4,15 +4,10 @@ project(flow VERSION 1)
 set(CMAKE_MACOSX_RPATH 1)
 
 include_directories(${gtest_SOURCE_DIR}/include)
-set(TEST_SOURCES DataContainerUnitTest.cpp
-#        CorrelationUnitTest.cpp
-#        ProfileUnitTest.cpp
-#        CorrelationManagerUnitTest.cpp
-#        EfficiencyUnitTest.cpp
-#        BootstrapSamplerUnitTest.cpp
-#        SampleUnitTest.cpp
-#        CorrelatorUnitTest.cpp
-#        VarManagerUnitTest.cpp
+set(TEST_SOURCES
+        ProductUnitTest.cpp
+        BootstrapSamplerUnitTest.cpp
+        SampleUnitTest.cpp
         )
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 

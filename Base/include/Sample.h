@@ -28,6 +28,7 @@ struct StatisticMean {
   double mean = 0;
   double sum = 0;
   int n = 0;
+  double weight = 1;
 
   StatisticMean() = default;
 
@@ -37,28 +38,43 @@ struct StatisticMean {
     mean = sum/(float) n;
   }
 
+  void Update(double value, double upweight) {
+    sum += value;
+    double multsum = weight*n + upweight;
+    n++;
+    mean = sum/(float) n;
+    weight = multsum/n;
+  }
+
   void operator+=(StatisticMean b) {
-    sum += b.sum;
-    n += b.n;
     mean = 0;
-    if (n > 0) mean = sum/(float) n;
+    sum = 2*(weight*sum + b.weight*b.sum)/(weight + b.weight);
+    if ((n + b.n) > 0) {
+      weight = (weight*n + b.weight*b.n)/(n + b.n);
+      mean = sum/(n + b.n);
+    }
+    n += b.n;
   }
 
   void operator*=(StatisticMean b) {
     sum *= b.sum;
     n += b.n;
+    weight += b.weight;
+
     mean *= b.mean;
   }
 
   void operator/=(StatisticMean b) {
     sum /= b.sum;
     n += b.n;
+    weight += b.weight;
     mean /= b.mean;
   }
 
   void operator-=(StatisticMean b) {
     sum -= b.sum;
     n -= b.n;
+    weight -= b.weight;
     mean = sum/(float) n;
   }
 
@@ -84,13 +100,20 @@ class Sample : public Profile {
   void Fill(const double value, const std::vector<size_type> &samples) {
     Profile::Update(value);
     for (const auto sample : samples) {
-      samples_stat_[sample].Update(value);
+      samples_stat_.at(sample).Update(value);
+    }
+  }
+
+  void Fill(const double value, const long long trackingentries, const std::vector<size_type> &samples) {
+    Profile::Update(value, trackingentries);
+    for (const auto sample : samples) {
+      samples_stat_.at(sample).Update(value, trackingentries);
     }
   }
 
   void SetNumberOfSamples(size_type nsamples) { samples_stat_.resize(nsamples); }
 
-  inline  double SampleMean(size_type isample) const { return samples_stat_[isample].mean; }
+  inline double SampleMean(size_type isample) const { return samples_stat_[isample].mean; }
 //
   void CalculateCorrelatedError() {
     subsample_sum = 0;
@@ -105,7 +128,10 @@ class Sample : public Profile {
   }
 
   inline double CorrelatedError() const { return correlated_error_; }
-//
+  inline void UseCorrelatedError(bool use = true) { use_correlated_error_ = use; }
+  inline virtual double Error() const { if (use_correlated_error_) { return correlated_error_; } else { return error_; }}
+
+  //
   friend Sample operator+(const Sample &a, const Sample &b);
   friend Sample operator-(const Sample &a, const Sample &b);
   friend Sample operator*(const Sample &a, const Sample &b);
@@ -129,8 +155,9 @@ class Sample : public Profile {
   double subsample_sum = 0.;
   double subsample_sum2_ = 0.;
   double correlated_error_ = 0.;
+  bool use_correlated_error_ = false;
   /// \cond CLASSIMP
- ClassDef(Sample, 1);
+ ClassDef(Sample, 2);
   /// \endcond
 };
 

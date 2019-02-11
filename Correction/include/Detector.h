@@ -68,7 +68,7 @@ template <std::size_t N>
 class Detector : public DetectorBase {
  public:
   Detector(const DetectorType type,
-           const std::vector<Qn::Axis> &axes,
+           std::vector<Qn::Axis> axes,
            const Variable phi,
            const Variable weight,
            const std::vector<Variable> &vars,

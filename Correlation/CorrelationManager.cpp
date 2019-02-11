@@ -280,9 +280,9 @@ bool CorrelationManager::CheckESEEvent() {
   if (use_ese_) {
     for (const auto &bin : ese_correlations_) {
       auto ese = bin.second.GetCorrelation().GetCorrelation();
-      auto pair = ese.At(eventbin_);
-      float value = -999.;
-      if (pair.first) value = pair.second;
+      auto correlation = ese.At(eventbin_);
+      double value = -999.;
+      if (correlation.validity) value = correlation.result;
       event_values_.back() = event_shape_->At(eventbin_).GetPercentile(value);
     }
   }

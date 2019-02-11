@@ -35,6 +35,7 @@
 #include "QVector.h"
 #include "Sample.h"
 #include "EventShape.h"
+#include "Product.h"
 #include "DataContainerHelper.h"
 
 /**
@@ -750,6 +751,7 @@ class DataContainer : public TObject {
 //-----------------------------------------//
 using DataContainerF = DataContainer<float>;
 using DataContainerFB = DataContainer<std::pair<bool, float>>;
+using DataContainerProduct = DataContainer<Qn::Product>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerProfile = DataContainer<Qn::Profile>;
 using DataContainerSample = DataContainer<Qn::Sample>;
