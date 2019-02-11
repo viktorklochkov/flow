@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
 project(flow VERSION 2.0 LANGUAGES CXX)
 
-#set(CMAKE_CXX_STANDARD 11)
 if (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)
