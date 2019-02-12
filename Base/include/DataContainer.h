@@ -365,6 +365,7 @@ class DataContainer : public TObject {
   DataContainer<T>
   Projection(const std::vector<std::string> axis_names = {}) const {
     auto lambda = [](const T &a, const T &b) { return a + b; };
+//    auto lambda = [](const T &a, const T &b) { return Qn::AddBins(a,b); };
     return Projection(axis_names, lambda);
   }
 
@@ -833,6 +834,20 @@ Long64_t DataContainer<std::pair<bool,float>>::Merge(TCollection *inputlist) = d
 template<>
 Long64_t DataContainer<std::vector<DataVector>>::Merge(TCollection *inputlist) = delete;
 
+//--------------------------------//
+//     Template specialization    //
+//        for projections         //
+//--------------------------------//
+/**
+* Projects datacontainer on a subset of axes
+* @param axis_names subset of axes used for the projection.
+* @return projected datacontainer.
+*/
+template<>
+inline DataContainer<Sample> DataContainer<Sample>::Projection(const std::vector<std::string> axis_names) const {
+  auto lambda = [](const Sample &a, const Sample &b) { return Qn::AddBins(a,b); };
+  return Projection(axis_names, lambda);
+}
 
 };
 #endif

@@ -138,7 +138,9 @@ class Sample : public Profile {
   friend Sample operator/(const Sample &a, const Sample &b);
   friend Sample operator*(const Sample &a, double b);
   friend Sample Merge(const Sample &a, const Sample &b);
-//
+  friend Sample AddBins(const Qn::Sample &a, const Qn::Sample &b);
+
+  //
   inline Sample Sqrt() const {
     Sample a(*this);
     a.mean_ = std::sqrt(std::abs(mean_));
@@ -160,6 +162,20 @@ class Sample : public Profile {
  ClassDef(Sample, 2);
   /// \endcond
 };
+
+inline Sample AddBins(const Sample &a, const Sample &b) {
+  std::vector<StatisticMean> sums(a.samples_stat_);
+  int i = 0;
+  if (!b.samples_stat_.empty()) {
+    for (auto &sum : sums) {
+      sum += b.samples_stat_[i];
+      ++i;
+    }
+  }
+  Sample c(AddBins((Profile) a, (Profile) b), sums);
+  c.CalculateCorrelatedError();
+  return c;
+}
 
 inline Sample operator+(const Sample &a, const Sample &b) {
   std::vector<StatisticMean> sums(a.samples_stat_);
