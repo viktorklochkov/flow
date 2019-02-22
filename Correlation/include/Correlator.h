@@ -23,18 +23,33 @@
 #include "Sampler.h"
 
 namespace Qn {
+enum Weight {
+  OBSERVABLE = false,
+  REFERENCE = true,
+};
 class Correlator {
  public:
   using size_type = std::size_t;
   using corr_func = std::function<double(std::vector<Qn::QVector> &)>;
   Correlator(std::vector<std::string> input_names, corr_func lambda)
-      : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {}
+      : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {
+    is_reference_.resize(input_names.size());
+    for (auto q : is_reference_) {
+      q = false;
+    }
+    is_reference_[0] = true;
+  }
 
   Correlator(std::vector<std::string> input_names, corr_func lambda, const TH1F &base)
-      : binned_result_(new Qn::DataContainerTH1F()),
+      : binned_result_(new Qn::DataContainer<TH1F>()),
         lambda_correlation_(std::move(lambda)),
         input_names_(std::move(input_names)) {
     binned_result_->InitializeEntries(base);
+    is_reference_.resize(input_names.size());
+    for (auto q : is_reference_) {
+      q = false;
+    }
+    is_reference_[0] = true;
   }
 
   void ConfigureSampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
@@ -55,18 +70,27 @@ class Correlator {
 
   Qn::Correlation GetCorrelation() const { return correlation_; }
 
-  DataContainerSample GetResult() const { return result_; }
+  DataContainerStats GetResult() const { return result_; }
 
-  std::shared_ptr<DataContainerTH1F> GetBinnedResult() const { return binned_result_; }
+  std::shared_ptr<DataContainer<TH1F>> GetBinnedResult() const { return binned_result_; }
+
+  void SetReferenceQVectors(std::vector<Weight> weights) {
+    int i = 0;
+    for (auto b : is_reference_) {
+      b = weights[i];
+      ++i;
+    }
+  }
 
  private:
   Qn::Sampler sampler_;
   Qn::Correlation correlation_;
-  Qn::DataContainerSample result_;
-  std::shared_ptr<Qn::DataContainerTH1F> binned_result_;
+  Qn::DataContainerStats result_;
+  std::shared_ptr<Qn::DataContainer<TH1F>> binned_result_;
   std::function<double(std::vector<Qn::QVector> &)> lambda_correlation_;
   std::vector<std::string> input_names_;
   std::vector<std::vector<size_type>> autocorrelated_bins_;
+  std::vector<bool> is_reference_;
 };
 }
 

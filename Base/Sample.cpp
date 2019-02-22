@@ -16,3 +16,107 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Sample.h"
+
+namespace Qn {
+
+Sample Merge(const Sample &lhs, const Sample &rhs) {
+  std::vector<StatisticMean> sums(lhs.samples_);
+  int i = 0;
+  if (!rhs.samples_.empty()) {
+    for (auto &sum : sums) {
+      sum.merge(rhs.samples_[i]);
+      ++i;
+    }
+  }
+  Sample c(sums);
+  return c;
+}
+
+Sample operator+(const Sample &lhs, const Sample &rhs) {
+  std::vector<StatisticMean> sums(lhs.samples_);
+  int i = 0;
+  if (!rhs.samples_.empty()) {
+    for (auto &sum : sums) {
+      sum += rhs.samples_[i];
+      ++i;
+    }
+  }
+  Sample c(sums);
+  return c;
+}
+
+Sample operator-(const Sample &lhs, const Sample &rhs) {
+  std::vector<StatisticMean> sums(lhs.samples_);
+  int i = 0;
+  if (!rhs.samples_.empty()) {
+    for (auto &sum : sums) {
+      sum -= rhs.samples_[i];
+      ++i;
+    }
+  }
+  Sample c(sums);
+  return c;
+}
+
+Sample operator*(const Sample &lhs, const Sample &rhs) {
+  std::vector<StatisticMean> sums(lhs.samples_);
+  int i = 0;
+  if (!rhs.samples_.empty()) {
+    for (auto &sum : sums) {
+      sum *= rhs.samples_[i];
+      ++i;
+    }
+  }
+  Sample c(sums);
+  return c;
+}
+
+Sample operator/(const Sample &num, const Sample &den) {
+  std::vector<StatisticMean> sums(num.samples_);
+  int i = 0;
+  if (!den.samples_.empty()) {
+    for (auto &sum : sums) {
+      sum /= den.samples_[i];
+      ++i;
+    }
+  }
+  Sample c(sums);
+  return c;
+}
+
+Sample operator*(const Sample &lhs, const double rhs) {
+  std::vector<StatisticMean> sums(lhs.samples_);
+  for (auto &sum : sums) {
+    sum *= rhs;
+  }
+  Sample c(sums);
+  return c;
+}
+
+Sample Sqrt(const Sample &a) {
+  std::vector<StatisticMean> sums(a.samples_);
+  for (auto &sum : sums) {
+    sum.Sqrt();
+  }
+  Sample c(sums);
+  return c;
+}
+
+void Sample::Print(double real_mean) {
+  int isample = samples_.size()/3;
+  std::cout << "SAMPLES EXCERPT: " << isample << ", " << isample*2 << ", " << isample*3 << std::endl;
+  std::cout << "S" << isample << " ";
+  samples_[isample].Print();
+  std::cout << "S" << isample*2 << " ";
+  samples_[isample*2].Print();
+  std::cout << "S" << isample*3 << " ";
+  samples_[isample*3].Print();
+  std::cout << "SUMMARY   " << std::endl;
+  std::cout << "N_samples " << samples_.size() << std::endl;
+  std::cout << "Mean      " << Mean() << std::endl;
+  std::cout << "Error Hi  " << ErrorHi(real_mean) << std::endl;
+  std::cout << "Error Lo  " << ErrorLo(real_mean) << std::endl;
+  std::cout << "Error Sym " << (ErrorHi(real_mean) + ErrorLo(real_mean))/2 << std::endl;
+}
+
+}

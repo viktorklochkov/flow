@@ -5,9 +5,11 @@ set(CMAKE_MACOSX_RPATH 1)
 
 include_directories(${gtest_SOURCE_DIR}/include)
 set(TEST_SOURCES
+#        BootstrapSamplerUnitTest.cpp
+#        SampleUnitTest.cpp
+        DataContainerUnitTest.cpp
         ProductUnitTest.cpp
-        BootstrapSamplerUnitTest.cpp
-        SampleUnitTest.cpp
+        StatsUnitTest.cpp
         )
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 

@@ -38,10 +38,17 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
         }
       }
       contents[iteration] = bin;
-      auto is_valid = std::all_of(contents.begin(),contents.end(),[](QVector q) {return q.n() > 0;});
-      long long entries = 0;
-      for (const auto &q : contents) {entries += q.n_;}
-      Qn::Product prod(entries, function_(contents), is_valid);
+      auto is_valid = std::all_of(contents.begin(), contents.end(), [](QVector q) { return q.n() > 0; });
+      int iq = 0;
+      int iw = 0;
+      for (const auto &q : contents) {
+        if (use_weights_[iq]) {
+          w_vec_[iw] = q.sum_weights_;
+          ++iw;
+        }
+        ++iq;
+      }
+      Qn::Product prod(w_vec_, function_(contents), is_valid);
       data_correlation_.At(c_index_) = prod;
       ++ibin;
     }
@@ -69,10 +76,6 @@ void Correlation::Fill(const Correlation::DataContainers &input, const std::vect
   std::vector<QVector> contents;
   contents.resize(input.size());
   uint iteration = 0;
-//  auto size = eventindex.size();
-//  for (const auto &i : input) {
-//    size += i.GetAxes().size();
-//  }
   int ii = 0;
   for (auto eventind : eventindex) {
     c_index_[ii] = eventind;
@@ -98,8 +101,8 @@ void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &
       auto axes = input.GetAxes();
       for (auto &axis : axes) {
         auto original_name = axis.Name();
-        if (!names_.empty()) {axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name);}
-        else {axis.SetName(std::to_string(i) + "_" + original_name);}
+        if (!names_.empty()) { axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name); }
+        else { axis.SetName(std::to_string(i) + "_" + original_name); }
         data_correlation_.AddAxis(axis);
       }
       ++i;

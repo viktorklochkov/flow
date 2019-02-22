@@ -19,235 +19,151 @@
 #define FLOW_SAMPLE_H
 
 #include <utility>
+#include <vector>
+#include <iostream>
+
+#include "Rtypes.h"
+#include "TH1F.h"
 
 #include "Profile.h"
+#include "Product.h"
 
 namespace Qn {
 
 struct StatisticMean {
-  double mean = 0;
-  double sum = 0;
-  int n = 0;
-  double weight = 1;
+  double sumwy = 0;
+  double sumw = 0;
+  int entries = 0;
 
-  StatisticMean() = default;
-
-  void Update(double value) {
-    sum += value;
-    n++;
-    mean = sum/(float) n;
+  void Fill(const Product &prod) {
+    sumwy += prod.result;
+    sumw += prod.GetProdWeight();
+    ++entries;
   }
 
-  void Update(double value, double upweight) {
-    sum += value;
-    double multsum = weight*n + upweight;
-    n++;
-    mean = sum/(float) n;
-    weight = multsum/n;
-  }
+  double Mean() const { if (sumw > 0.) { return sumwy/sumw; } else { return sumwy; }; }
 
   void operator+=(StatisticMean b) {
-    mean = 0;
-    sum = 2*(weight*sum + b.weight*b.sum)/(weight + b.weight);
-    if ((n + b.n) > 0) {
-      weight = (weight*n + b.weight*b.n)/(n + b.n);
-      mean = sum/(n + b.n);
-    }
-    n += b.n;
-  }
-
-  void operator*=(StatisticMean b) {
-    sum *= b.sum;
-    n += b.n;
-    weight += b.weight;
-
-    mean *= b.mean;
-  }
-
-  void operator/=(StatisticMean b) {
-    sum /= b.sum;
-    n += b.n;
-    weight += b.weight;
-    mean /= b.mean;
+    sumwy += b.sumwy;
+    sumw  += b.sumw;
   }
 
   void operator-=(StatisticMean b) {
-    sum -= b.sum;
-    n -= b.n;
-    weight -= b.weight;
-    mean = sum/(float) n;
+    sumwy -= b.sumwy;
+    sumw  -= b.sumw;
   }
 
-  void operator*=(double b) {
-    sum *= b;
-    mean *= b;
+  void operator*=(StatisticMean b) {
+    sumwy *= b.sumwy;
+    sumw *= b.sumw;
+  }
+
+  void operator/=(StatisticMean b) {
+    sumwy /= b.sumwy;
+    sumw /= b.sumw;
+  }
+
+  void merge(StatisticMean b) {
+    sumwy += b.sumwy;
+    sumw += b.sumw;
+  }
+
+  void operator*=(double b) { sumwy *= b; }
+
+  void Sqrt() {
+    sumw = sqrt(sumw);
+    sumwy = sqrt(sumwy);
+  }
+
+  void Print() {
+    std::cout << "Sum{w x} " << sumwy << std::endl;
+    std::cout << "Sum{w}   " << sumw << std::endl;
+    std::cout << "Entries  " << entries << std::endl;
+    std::cout << "Mean     " << Mean() << std::endl;
   }
 };
 
-class Sample : public Profile {
+class Sample {
  public:
   using size_type = std::size_t;
   Sample() = default;
 
   virtual ~Sample() = default;
 
-  explicit Sample(std::size_t n_samples) { samples_stat_.resize(n_samples); }
+  explicit Sample(std::size_t n_samples) { samples_.resize(n_samples); }
 
-  Sample(Profile a, std::vector<StatisticMean> means) :
-      Profile(a),
-      samples_stat_(std::move(means)) {}
+  explicit Sample(std::vector<StatisticMean> means) :
+      samples_(std::move(means)) {}
 
-  void Fill(const double value, const std::vector<size_type> &samples) {
-    Profile::Update(value);
-    for (const auto sample : samples) {
-      samples_stat_.at(sample).Update(value);
+  void Fill(const Product &product, const std::vector<size_type> &samples) {
+    for (auto &sample : samples) {
+      samples_.at(sample).Fill(product);
     }
   }
 
-  void Fill(const double value, const long long trackingentries, const std::vector<size_type> &samples) {
-    Profile::Update(value, trackingentries);
-    for (const auto sample : samples) {
-      samples_stat_.at(sample).Update(value, trackingentries);
+  void SetNumberOfSamples(size_type nsamples) { samples_.resize(nsamples); }
+
+  void Print(double real_mean);
+
+  double Mean() const {
+    double ssum = 0;
+    int sentries = 0;
+    for (const auto &stat : samples_) {
+      ssum += stat.Mean();
+      sentries++;
+    }
+    if (sentries > 0) {
+      return ssum/sentries;
+    } else {
+      return ssum;
     }
   }
 
-  void SetNumberOfSamples(size_type nsamples) { samples_stat_.resize(nsamples); }
+  double ErrorHi(double real_mean) const {
+    std::vector<StatisticMean> means = samples_;
+    return fabs(quantiles(means, real_mean, 0.84135,1));
+  }
 
-  inline double SampleMean(size_type isample) const { return samples_stat_[isample].mean; }
-//
-  void CalculateCorrelatedError() {
-    subsample_sum = 0;
-    subsample_sum2_ = 0;
-    subsample_entries_ = 0;
-    for (const auto &stat : samples_stat_) {
-      subsample_sum += stat.mean;
-      subsample_sum2_ += stat.mean*stat.mean;
-      subsample_entries_++;
+  double ErrorLo(double real_mean) const {
+    std::vector<StatisticMean> means = samples_;
+    return fabs(quantiles(means, real_mean, 0.15865,0));
+  }
+
+  TH1F SampleMeanHisto(std::string name) {
+    auto means = samples_;
+    std::sort(means.begin(),
+              means.end(),
+              [](StatisticMean a, StatisticMean b) { return (a.Mean()) > (b.Mean()); });
+    TH1F histo(name.data(), name.data(), 50, means.begin()->Mean(), (means.end() - 1)->Mean());
+    for (auto sample : samples_) {
+      histo.Fill(sample.Mean());
     }
-    correlated_error_ = Statistics::Sigma(subsample_sum/subsample_entries_, subsample_sum2_, subsample_entries_);
+    return histo;
   }
 
-  inline double CorrelatedError() const { return correlated_error_; }
-  inline void UseCorrelatedError(bool use = true) { use_correlated_error_ = use; }
-  inline virtual double Error() const { if (use_correlated_error_) { return correlated_error_; } else { return error_; }}
-
-  //
-  friend Sample operator+(const Sample &a, const Sample &b);
-  friend Sample operator-(const Sample &a, const Sample &b);
-  friend Sample operator*(const Sample &a, const Sample &b);
-  friend Sample operator/(const Sample &a, const Sample &b);
-  friend Sample operator*(const Sample &a, double b);
-  friend Sample Merge(const Sample &a, const Sample &b);
-  friend Sample AddBins(const Qn::Sample &a, const Qn::Sample &b);
-
-  //
-  inline Sample Sqrt() const {
-    Sample a(*this);
-    a.mean_ = std::sqrt(std::abs(mean_));
-    a.sum_ = std::sqrt(std::abs(sum_));
-    a.sum2_ = std::sqrt(std::abs(sum2_));
-    a.binentries_ = std::sqrt(std::abs(binentries_));
-    a.error_ = 1./2.*a.error_/a.mean_;
-    return a;
-  }
+  friend Sample operator+(const Sample &, const Sample &);
+  friend Sample operator-(const Sample &, const Sample &);
+  friend Sample operator*(const Sample &, const Sample &);
+  friend Sample operator/(const Sample &, const Sample &);
+  friend Sample operator*(const Sample &, double);
+  friend Sample Sqrt(const Sample &);
+  friend Sample Merge(const Sample &, const Sample &);
 
  private:
-  std::vector<StatisticMean> samples_stat_;
-  int subsample_entries_ = 0;
-  double subsample_sum = 0.;
-  double subsample_sum2_ = 0.;
-  double correlated_error_ = 0.;
-  bool use_correlated_error_ = false;
+  std::vector<StatisticMean> samples_;
+  template<typename T>
+  double quantiles(std::vector<T> &quantiles, double rmean, double pos, int  off=0) const {
+    auto const quant = quantiles.size()*pos;
+    std::nth_element(quantiles.begin(),
+                     quantiles.begin() + quant,
+                     quantiles.end(),
+                     [rmean](T a, T b) { return (a.Mean() - rmean) > (b.Mean() - rmean); });
+    return quantiles[quant+off].Mean() - rmean;
+  }
   /// \cond CLASSIMP
- ClassDef(Sample, 2);
+ ClassDef(Sample, 3);
   /// \endcond
 };
-
-inline Sample AddBins(const Sample &a, const Sample &b) {
-  std::vector<StatisticMean> sums(a.samples_stat_);
-  int i = 0;
-  if (!b.samples_stat_.empty()) {
-    for (auto &sum : sums) {
-      sum += b.samples_stat_[i];
-      ++i;
-    }
-  }
-  Sample c(AddBins((Profile) a, (Profile) b), sums);
-  c.CalculateCorrelatedError();
-  return c;
-}
-
-inline Sample operator+(const Sample &a, const Sample &b) {
-  std::vector<StatisticMean> sums(a.samples_stat_);
-  int i = 0;
-  if (!b.samples_stat_.empty()) {
-    for (auto &sum : sums) {
-      sum += b.samples_stat_[i];
-      ++i;
-    }
-  }
-  Sample c(operator+((Profile) a, (Profile) b), sums);
-  c.CalculateCorrelatedError();
-  return c;
-}
-
-inline Sample operator-(const Sample &a, const Sample &b) {
-  std::vector<StatisticMean> sums(a.samples_stat_);
-  int i = 0;
-  if (!b.samples_stat_.empty()) {
-    for (auto &sum : sums) {
-      sum -= b.samples_stat_[i];
-      ++i;
-    }
-  }
-  Sample c(operator-((Profile) a, (Profile) b), sums);
-  c.CalculateCorrelatedError();
-  return c;
-}
-
-inline Sample operator*(const Sample &a, const Sample &b) {
-  std::vector<StatisticMean> sums(a.samples_stat_);
-  int i = 0;
-  if (!b.samples_stat_.empty()) {
-    for (auto &sum : sums) {
-      sum *= b.samples_stat_[i];
-      ++i;
-    }
-  }
-  Sample c(operator*((Profile) a, (Profile) b), sums);
-  c.CalculateCorrelatedError();
-  return c;
-}
-
-inline Sample operator/(const Sample &a, const Sample &b) {
-  std::vector<StatisticMean> sums(a.samples_stat_);
-  int i = 0;
-  if (!b.samples_stat_.empty()) {
-    for (auto &sum : sums) {
-      sum /= b.samples_stat_[i];
-      ++i;
-    }
-  }
-  Sample c(operator/((Profile) a, (Profile) b), sums);
-  c.CalculateCorrelatedError();
-  return c;
-}
-
-inline Sample operator*(const Sample &a, const double b) {
-  std::vector<StatisticMean> sums(a.samples_stat_);
-  int i = 0;
-  for (auto &sum : sums) {
-    sum *= b;
-    ++i;
-  }
-  Sample c(operator*((Profile) a, b), sums);
-  c.CalculateCorrelatedError();
-  return c;
-}
-
-inline Sample Merge(const Sample &a, const Sample &b) {
-  return a + b;
-}
 
 }
 

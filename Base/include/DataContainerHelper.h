@@ -18,7 +18,7 @@
 #ifndef FLOW_DATACONTAINERHELPER_H
 #define FLOW_DATACONTAINERHELPER_H
 
-#include <TGraphAsymmErrors.h>
+#include "TGraphAsymmErrors.h"
 #include "TGraphErrors.h"
 #include "TMultiGraph.h"
 #include "TBrowser.h"
@@ -26,6 +26,7 @@
 
 #include "Profile.h"
 #include "Sample.h"
+#include "Stats.h"
 #include "EventShape.h"
 
 namespace Qn {
@@ -41,17 +42,12 @@ namespace Internal {
  */
 template<typename T>
 struct ProjectionDrawable : public TNamed {
-
   ProjectionDrawable() = default;
-  ~ProjectionDrawable() override {
-    if (graph) delete graph;
-  }
-  explicit ProjectionDrawable(T projection) :
-      graph(std::move(projection)) {
+  ~ProjectionDrawable() override { delete graph; }
+  explicit ProjectionDrawable(T projection) : graph(std::move(projection)) {
     SetName(projection->GetName());
     SetTitle(projection->GetTitle());
   }
-
   void Browse(TBrowser *b) override {
     TString opt = gEnv->GetValue("TGraph.BrowseOption", "");
     if (opt.IsNull()) {
@@ -63,7 +59,11 @@ struct ProjectionDrawable : public TNamed {
   }
   T graph = nullptr;
 };
+
+//template<>
+//void SetBits(Qn::Stats bin) { std::cout << "setting " << std::endl; }
 }
+
 /**
  * Helper class for DataContainer used for visualization.
  */
@@ -71,23 +71,21 @@ class DataContainerHelper {
  public:
   enum class Errors { Yonly, XandY };
 
-  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Qn::Sample> &data, Errors x = Errors::Yonly);
-  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Qn::Sample> &data,
+  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Qn::Stats> &data, Errors x = Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Qn::Stats> &data,
                                             int i,
                                             int max,
                                             Errors x = Errors::Yonly);
-  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Qn::Sample> &data,
+  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Qn::Stats> &data,
                                     const std::string &axisname,
                                     Errors x = Errors::Yonly);
 
-  static void UseCorrelatedErrors(Qn::DataContainer<Qn::Sample> &data, bool use);
-
  private:
-  friend DataContainer<Qn::Sample>;
+  friend DataContainer<Qn::Stats>;
   friend DataContainer<Qn::EventShape>;
-  static void SampleBrowse(Qn::DataContainer<Qn::Sample> *data, TBrowser *b);
+  static void StatsBrowse(Qn::DataContainer<Qn::Stats> *data, TBrowser *b);
   static void EventShapeBrowse(Qn::DataContainer<Qn::EventShape> *data, TBrowser *b);
-  static void NDraw(Qn::DataContainer<Qn::Sample> &data, std::string option, const std::string &axis_name);
+  static void NDraw(Qn::DataContainer<Qn::Stats> &data, std::string option, const std::string &axis_name);
 
 };
 

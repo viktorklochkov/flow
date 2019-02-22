@@ -79,6 +79,7 @@ set(BASE_SOURCES
         Base/Efficiency.cpp
         Base/Sample.cpp
         Base/EventShape.cpp
+        Base/Stats.cpp
         )
 
 set(BASE_HEADERS DataContainer.h
@@ -90,6 +91,7 @@ set(BASE_HEADERS DataContainer.h
         QVector.h
         Sample.h
         Product.h
+        Stats.h
         )
 
 set(QNCORR_HEADERS CorrectionOnInputData.h
@@ -139,6 +141,7 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
+IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 # Googletest
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
@@ -156,6 +159,7 @@ endif ()
 # Prevent overriding the parent project's compiler/linker settings on Windows
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
+ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # ROOT
 find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
@@ -163,7 +167,6 @@ include(${ROOT_USE_FILE})
 
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
-#include_directories(QnCorrections Base QnCorrections/include Base/include)
 set(ROOTCLING ${ROOT_DIR}/../bin/rootcling)
 add_custom_command(OUTPUT G__QnCorrections.cxx
         COMMAND ${ROOTCLING} -v -f G__QnCorrections.cxx
@@ -174,11 +177,10 @@ add_custom_command(OUTPUT G__QnCorrections.cxx
         ${QNCORR_HEADERS}
         ${CMAKE_SOURCE_DIR}/QnCorrections/QnLinkDef.h
         )
-#ROOT_GENERATE_DICTIONARY(G__QnCorrections ${QNCORR_HEADERS} LINKDEF QnLinkDef.h OPTIONS "-noIncludePaths")
+
 add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
 add_library(Qn::QnCorrections ALIAS QnCorrections)
 target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
-#target_compile_features(QnCorrections PUBLIC cxx_std_11)
 target_include_directories(QnCorrections
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
@@ -187,8 +189,6 @@ target_include_directories(QnCorrections
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/QnCorrections/include>
         )
 target_link_libraries(QnCorrections PRIVATE ${ROOT_LIBRARIES})
-#add_custom_command(TARGET QnCorrections PRE_BUILD COMMAND ${CMAKE_COMMAND}
-#        -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/QnCorrections/include ${CMAKE_BINARY_DIR}/include)
 add_custom_command(OUTPUT G__Base.cxx
         COMMAND ${ROOTCLING} -v -f G__Base.cxx
         -rml libBase${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -198,7 +198,6 @@ add_custom_command(OUTPUT G__Base.cxx
         ${BASE_HEADERS}
         ${CMAKE_SOURCE_DIR}/Base/BaseLinkDef.h
         )
-#ROOT_GENERATE_DICTIONARY(G__Base ${BASE_HEADERS} DEPENDENCIES QnCorrections LINKDEF Base/BaseLinkDef.h OPTIONS "-noIncludePaths")
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
@@ -241,11 +240,14 @@ target_include_directories(Correlation
         )
 target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
+IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 add_subdirectory(test)
+ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # Install configuration
 
 set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
+set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
 
 install(DIRECTORY QnCorrections/include/ Base/include/ Correction/include/ Correlation/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 # Installion of ROOT dictionaries
