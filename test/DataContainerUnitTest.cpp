@@ -8,7 +8,10 @@
 #include <TList.h>
 #include <TFile.h>
 #include <TRandom3.h>
+#include <random>
 #include <TProfile.h>
+
+#include "Sampler.h"
 
 TEST(DataContainerTest, Copy) {
   Qn::DataContainer<Qn::QVector> container;
@@ -146,6 +149,25 @@ TEST(DataContainerTest, Addition) {
   }
   EXPECT_EQ(100, numberofbins);
 }
+
+TEST(DataContainerTest, Bits) {
+  Qn::DataContainer<Qn::Stats> dcstat;
+  dcstat.SetBits(Qn::Stats::Settings::CORRELATEDERRORS);
+  std::default_random_engine generator;
+  std::normal_distribution<double> gauss(0,1);
+  int nsamples = 100;
+  int nevents = 1000;
+  std::for_each(dcstat.begin(),dcstat.end(),[nsamples](Qn::Stats &a){a.SetNumberOfSubSamples(nsamples);});
+  Qn::Sampler sampler(nsamples,Qn::Sampler::Method::BOOTSTRAP);
+  sampler.SetNumberOfEvents(nevents);
+  sampler.CreateBootstrapSamples();
+  for (int i = 0; i < nevents; ++i) {
+    dcstat.At(0).Fill({{1.},gauss(generator),true}, sampler.GetFillVector(i));
+  }
+  dcstat.TestBit(Qn::Stats::Settings::CORRELATEDERRORS);
+  EXPECT_TRUE(dcstat.At(0).TestBit(Qn::Stats::Settings::CORRELATEDERRORS));
+}
+
 //
 //TEST(DataContainerTest, Hadd) {
 //  auto container_a = new Qn::DataContainerEventShape();
