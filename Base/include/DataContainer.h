@@ -33,9 +33,10 @@
 #include "Axis.h"
 #include "DataVector.h"
 #include "QVector.h"
-#include "Sample.h"
 #include "EventShape.h"
 #include "Product.h"
+#include "Stats.h"
+
 #include "DataContainerHelper.h"
 
 /**
@@ -53,6 +54,11 @@ T Merge(const T&a, const T&b) {return a + b;}
 template<typename T>
 class DataContainer : public TObject {
  public:
+  enum Settings {
+    IsMergable = BIT(14),
+    NCentralSettings = BIT(15)
+  };
+
 /**
  * Default constructor
  * Axes can be added later. If no axes are added the DataContainer is integrated with only one entry.
@@ -722,6 +728,12 @@ class DataContainer : public TObject {
   }
 
  public:
+  /**
+   * Set Bits of the Container to configure contents
+   * see contents for possible settings
+   * @param bits settings bits
+   */
+  void SetBits(unsigned int bits) {(void)bits;}
 //--------------------------------//
 // Visualization methods for ROOT //
 // Template specialization needed //
@@ -750,14 +762,11 @@ class DataContainer : public TObject {
 // Common alias for types of DataContainer //
 // needed for ROOT IO                      //
 //-----------------------------------------//
-using DataContainerF = DataContainer<float>;
-using DataContainerFB = DataContainer<std::pair<bool, float>>;
+
 using DataContainerProduct = DataContainer<Qn::Product>;
+using DataContainerStats = DataContainer<Qn::Stats>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
-using DataContainerProfile = DataContainer<Qn::Profile>;
-using DataContainerSample = DataContainer<Qn::Sample>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
-using DataContainerTH1F = DataContainer<TH1F>;
 using DataContainerEventShape = DataContainer<Qn::EventShape>;
 
 //--------------------------------------------//
@@ -765,17 +774,30 @@ using DataContainerEventShape = DataContainer<Qn::EventShape>;
 //--------------------------------------------//
 
 template<>
-inline void DataContainer<Qn::Sample>::Browse(TBrowser *b) {
-  Qn::DataContainerHelper::SampleBrowse(this, b);
+inline void DataContainer<Stats>::Browse(TBrowser *b) {
+  DataContainerHelper::StatsBrowse(this, b);
 }
 template<>
-inline void DataContainer<Qn::EventShape>::Browse(TBrowser *b) {
-  Qn::DataContainerHelper::EventShapeBrowse(this, b);
+inline void DataContainer<EventShape>::Browse(TBrowser *b) {
+  DataContainerHelper::EventShapeBrowse(this, b);
 }
 template<>
-inline void DataContainer<Qn::Sample>::NDraw(Option_t *option, const std::string &axis_name) {
-  Qn::DataContainerHelper::NDraw(*this, option, axis_name);
+inline void DataContainer<Stats>::NDraw(Option_t *option, const std::string &axis_name) {
+  DataContainerHelper::NDraw(*this, option, axis_name);
 }
+
+//-----------------------------------//
+// Template specializations for bits //
+//-----------------------------------//
+template<>
+inline void DataContainer<Stats>::SetBits(unsigned int bits) {
+  auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
+  SetBit(bits, true);
+  for (auto &bin : data_) {
+    bin.SetBits(cleanbits);
+  }
+}
+
 
 //-----------------------------------------//
 // Operations for DataContainer arithmetic //
@@ -830,24 +852,8 @@ DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
 
 template<>
 Long64_t DataContainer<std::pair<bool,float>>::Merge(TCollection *inputlist) = delete;
-
 template<>
 Long64_t DataContainer<std::vector<DataVector>>::Merge(TCollection *inputlist) = delete;
-
-//--------------------------------//
-//     Template specialization    //
-//        for projections         //
-//--------------------------------//
-/**
-* Projects datacontainer on a subset of axes
-* @param axis_names subset of axes used for the projection.
-* @return projected datacontainer.
-*/
-template<>
-inline DataContainer<Sample> DataContainer<Sample>::Projection(const std::vector<std::string> axis_names) const {
-  auto lambda = [](const Sample &a, const Sample &b) { return Qn::AddBins(a,b); };
-  return Projection(axis_names, lambda);
-}
 
 };
 #endif

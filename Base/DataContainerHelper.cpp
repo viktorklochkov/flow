@@ -17,7 +17,6 @@
 
 #include <iostream>
 #include <iterator>
-#include <DataContainerHelper.h>
 
 #include "TGraphAsymmErrors.h"
 
@@ -26,7 +25,7 @@
 
 namespace Qn {
 
-TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerSample &data,
+TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats &data,
                                                         int i,
                                                         int maxi, Errors drawerrors) {
   if (data.GetAxes().size() > 1) {
@@ -54,7 +53,7 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerSampl
   return graph;
 };
 
-TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerSample &data,
+TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerStats &data,
                                                  Errors drawerrors) {
   return ToTGraphShifted(data, 1, 2, drawerrors);
 };
@@ -65,7 +64,7 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerSample &data
  * @param axisname name of the axis which is used for the multigraph.
  * @return graph containing a profile graph for each bin.
  */
-TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerSample &data,
+TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
                                                 const std::string &axisname,
                                                 Errors drawerrors) {
   auto multigraph = new TMultiGraph();
@@ -88,7 +87,7 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerSample &data,
   return multigraph;
 }
 
-void DataContainerHelper::SampleBrowse(DataContainer<Sample> *data, TBrowser *b) {
+void DataContainerHelper::StatsBrowse(DataContainer<Stats> *data, TBrowser *b) {
   using DrawErrorGraph = Internal::ProjectionDrawable<TGraphAsymmErrors *>;
   using DrawMultiGraph = Internal::ProjectionDrawable<TMultiGraph *>;
   if (!data->list_) data->list_ = new TList();
@@ -160,7 +159,7 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
     b->Add(data->list_->At(j));
   }
 }
-void DataContainerHelper::NDraw(DataContainer<Sample> &data,
+void DataContainerHelper::NDraw(DataContainer<Stats> &data,
                                 std::string option,
                                 const std::string &axis_name = {}) {
   option = (option.empty()) ? std::string("ALP PMC PLC Z") : option;
@@ -189,16 +188,6 @@ void DataContainerHelper::NDraw(DataContainer<Sample> &data,
   } else {
     std::cout << "Not drawn because the DataContainer has dimension: " << data.dimension_ << std::endl;
     std::cout << "Only DataContainers with dimension <=2 can be drawn." << std::endl;
-  }
-}
-
-/**
- * Set
- * @param data
- */
-void DataContainerHelper::UseCorrelatedErrors(Qn::DataContainer<Qn::Sample> &data, bool use) {
-  for (auto &bin : data) {
-    bin.UseCorrelatedError(use);
   }
 }
 

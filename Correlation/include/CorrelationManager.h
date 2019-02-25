@@ -53,6 +53,10 @@ class CorrelationManager {
 
   void AddCorrelation(std::string name, const std::string &containernames, FUNCTION &&lambda);
 
+  void SetRefQinCorrelation(const std::string &name, const std::vector<Qn::Weight> &use_weights) {
+    correlations_.at(name).SetReferenceQVectors(use_weights);
+  }
+
 
   void AddESE(const std::string &name, int harmonic, float qmax);
 
@@ -78,7 +82,7 @@ class CorrelationManager {
  private:
   void MakeProjections();
 
-  DataContainerSample GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
+  DataContainerStats GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
 
   void SaveToFile(std::string name);
 

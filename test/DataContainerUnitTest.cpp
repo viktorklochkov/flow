@@ -10,48 +10,48 @@
 #include <TRandom3.h>
 #include <TProfile.h>
 
-//TEST(DataContainerTest, Copy) {
-//  Qn::DataContainer<Qn::QVector> container;
-//  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-//  Qn::DataContainer<Qn::QVector> copy(container);
-//  EXPECT_EQ(copy.size(), container.size());
-//}
-//
-//TEST(DataContainerTest, AddAxes) {
-//  Qn::DataContainer<Qn::QVector> container;
-//  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-//  EXPECT_EQ(100, container.size());
-//}
-//
+TEST(DataContainerTest, Copy) {
+  Qn::DataContainer<Qn::QVector> container;
+  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  Qn::DataContainer<Qn::QVector> copy(container);
+  EXPECT_EQ(copy.size(), container.size());
+}
 
-//TEST(DataContainerTest, Projection) {
-//  Qn::DataContainerF container;
-//  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
-//  for (auto &bin : container) {
-//  bin = 1;
-//  }
-//  auto projection = container.Projection({"a1","a2"},[](float a, float b) { return a + b; });
-//  for (const auto &bin : projection) {
-//  EXPECT_EQ(10, bin);
-//  }
-//}
+TEST(DataContainerTest, AddAxes) {
+  Qn::DataContainer<Qn::QVector> container;
+  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  EXPECT_EQ(100, container.size());
+}
 
-//TEST(DataContainerTest, Division) {
-//  Qn::DataContainerF container;
-//  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 40, 0, 20}, {"a3", 40, 0, 20}});
-//  for (auto &bin : container) {
-//    bin = 4;
-//  }
-//  Qn::DataContainerF b;
-//  b.AddAxes({{"a2", 40, 0, 20}, {"a3", 40, 0, 20}});
-//  for (auto &bin : b) {
-//    bin = 2;
-//  }
-//  auto projection = container / b;
-//  for (const auto &bin : projection) {
-//    EXPECT_EQ(2, bin);
-//  }
-//}
+
+TEST(DataContainerTest, Projection) {
+  Qn::DataContainer<float> container;
+  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
+  for (auto &bin : container) {
+  bin = 1;
+  }
+  auto projection = container.Projection({"a1","a2"},[](float a, float b) { return a + b; });
+  for (const auto &bin : projection) {
+  EXPECT_EQ(10, bin);
+  }
+}
+
+TEST(DataContainerTest, Division) {
+  Qn::DataContainer<float> container;
+  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 40, 0, 20}, {"a3", 40, 0, 20}});
+  for (auto &bin : container) {
+    bin = 4;
+  }
+  Qn::DataContainer<float> b;
+  b.AddAxes({{"a1", 30, 0, 10}, {"a2", 40, 0, 20}});
+  for (auto &bin : b) {
+    bin = 2;
+  }
+  auto projection = container / b;
+  for (const auto &bin : projection) {
+    EXPECT_EQ(2, bin);
+  }
+}
 
 
 //TEST(DataContainerTest, ExclusiveSum) {
@@ -97,92 +97,99 @@
 //  std::cout << pa.GetBinContent(1) << " " << pa.GetBinError(1) << std::endl;
 //}
 //
-//TEST(DataContainerTest, Rebin) {
-//  Qn::DataContainer<float> container;
-//  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-//  for (auto &bin : container) {
-//    bin = 1;
-//  }
-//  auto rebin = container.Rebin({"a1", 5, 0, 10}, [](float a, float b) { return a + b; });
-//  int numberofbins = 0;
-//  for (const auto &bin : rebin) {
-//    EXPECT_EQ(2, bin);
-//    numberofbins++;
-//  }
-//  EXPECT_EQ(50, numberofbins);
-//}
-//
-//TEST(DataContainerTest, Select) {
-//  Qn::DataContainer<float> container;
-//  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-//  for (auto &bin : container) {
-//    bin = 1;
-//  }
-//  auto rebin = container.Select({"a1", 5, 0, 5});
-//  int numberofbins = 0;
-//  for (const auto &bin : rebin) {
-//    EXPECT_EQ(1, bin);
-//    numberofbins++;
-//  }
-//  EXPECT_EQ(50, numberofbins);
-//}
-//
-//TEST(DataContainerTest, Addition) {
-//  Qn::DataContainer<float> container_a;
-//  container_a.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-//  for (auto &bin : container_a) {
-//    bin = 1;
-//  }
-//  Qn::DataContainer<float> container_b;
-//  container_b.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-//  for (auto &bin : container_b) {
-//    bin = 1;
-//  }
-//  auto container_sum = container_a + container_b;
-//  int numberofbins = 0;
-//  for (const auto &bin : container_sum) {
-//    EXPECT_EQ(2, bin);
-//    numberofbins++;
-//  }
-//  EXPECT_EQ(100, numberofbins);
-//}
-//
-TEST(DataContainerTest, Hadd) {
-  auto container_a = new Qn::DataContainerEventShape();
-  container_a->AddAxes({{"a1", 1, 0, 10}});
-  for (auto &bin : *container_a) {
-    bin.SetHisto(TH1F("test","test",1,0,1));
-    bin.histo_->Fill(0.5);
+TEST(DataContainerTest, Rebin) {
+  Qn::DataContainer<float> container;
+  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : container) {
+    bin = 1;
   }
-  auto file_a = new TFile("testa.root", "RECREATE");
-  file_a->WriteObject(container_a, "container");
-  file_a->Write();
-  system("rm test.root");
-  system("hadd test.root testa.root testa.root");
-  auto file_c = new TFile("test.root", "OPEN");
-  auto container_c = (Qn::DataContainerEventShape *) file_c->Get("container");
-  for (auto &bin : *container_c) {
-    EXPECT_FLOAT_EQ(2, bin.histo_->GetEntries());
+  auto rebin = container.Rebin({"a1", 5, 0, 10}, [](float a, float b) { return a + b; });
+  int numberofbins = 0;
+  for (const auto &bin : rebin) {
+    EXPECT_EQ(2, bin);
+    numberofbins++;
   }
+  EXPECT_EQ(50, numberofbins);
 }
-TEST(DataContainerTest, HaddProfile) {
-  auto file_a = new TFile("testa.root", "RECREATE");
-  file_a->cd();
-  auto container_a = new Qn::DataContainerProfile();
-  container_a->AddAxes({{"a1", 1, 0, 10}});
-  for (auto &bin : *container_a) {
-    bin.Update(1.0);
+//
+TEST(DataContainerTest, Select) {
+  Qn::DataContainer<float> container;
+  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : container) {
+    bin = 1;
   }
-  file_a->WriteObject(container_a, "container");
-  file_a->Write();
-  system("rm test.root");
-  system("hadd test.root testa.root testa.root");
-  auto file_c = new TFile("test.root", "OPEN");
-  auto container_c = (Qn::DataContainerProfile *) file_c->Get("container");
-  for (auto &bin : *container_c) {
-    EXPECT_FLOAT_EQ(2, bin.Sum());
+  auto rebin = container.Select({"a1", 5, 0, 5});
+  int numberofbins = 0;
+  for (const auto &bin : rebin) {
+    EXPECT_EQ(1, bin);
+    numberofbins++;
   }
+  EXPECT_EQ(50, numberofbins);
 }
+//
+TEST(DataContainerTest, Addition) {
+  Qn::DataContainer<float> container_a;
+  container_a.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : container_a) {
+    bin = 1;
+  }
+  Qn::DataContainer<float> container_b;
+  container_b.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : container_b) {
+    bin = 1;
+  }
+  auto container_sum = container_a + container_b;
+  int numberofbins = 0;
+  for (const auto &bin : container_sum) {
+    EXPECT_EQ(2, bin);
+    numberofbins++;
+  }
+  EXPECT_EQ(100, numberofbins);
+}
+//
+//TEST(DataContainerTest, Hadd) {
+//  auto container_a = new Qn::DataContainerEventShape();
+//  container_a->AddAxes({{"a1", 1, 0, 10}});
+//  for (auto &bin : *container_a) {
+//    bin.SetHisto(TH1F("test","test",1,0,1));
+//    bin.histo_->Fill(0.5);
+//  }
+//  auto file_a = new TFile("testa.root", "RECREATE");
+//  file_a->WriteObject(container_a, "container");
+//  file_a->Write();
+//  system("rm test.root");
+//  system("hadd test.root testa.root testa.root");
+//  auto file_c = new TFile("test.root", "OPEN");
+//  auto container_c = (Qn::DataContainerEventShape *) file_c->Get("container");
+//  for (auto &bin : *container_c) {
+//    EXPECT_FLOAT_EQ(2, bin.histo_->GetEntries());
+//  }
+//}
+//TEST(DataContainerTest, HaddProfile) {
+//  auto file_a = new TFile("testa.root", "RECREATE");
+//  file_a->cd();
+//  auto container_a = new Qn::DataContainerProfile();
+//  container_a->AddAxes({{"a1", 1, 0, 10}});
+//  for (auto &bin : *container_a) {
+//    bin.Update(1.0);
+//  }
+//  file_a->WriteObject(container_a, "container");
+//  file_a->Write();
+//  system("rm test.root");
+//  system("hadd test.root testa.root testa.root");
+//  auto file_c = new TFile("test.root", "OPEN");
+//  auto container_c = (Qn::DataContainerProfile *) file_c->Get("container");
+//  for (auto &bin : *container_c) {
+//    EXPECT_FLOAT_EQ(2, bin.Sum());
+//  }
+//}
+
+//TEST(DataContainerTest, ProjectionFile) {
+//  auto file_c = new TFile("v2pttest.root", "OPEN");
+//  auto tpcpt = (Qn::DataContainerSample *) file_c->Get("TPCPTV0A");
+//  auto tpc = (Qn::DataContainerSample *) file_c->Get("TPCV0A");
+//  tpcpt->Projection({"CentralityV0M"});
+//}
 
 //TEST(DataContainerTest, ProjectionExclude) {
 //  Qn::DataContainerF container_a;

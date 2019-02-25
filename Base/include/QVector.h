@@ -20,9 +20,10 @@
 
 #include <vector>
 #include <bitset>
-#include <math.h>
+#include <cmath>
 
 #include "Rtypes.h"
+
 #include "CorrectionQnVector.h"
 
 namespace Qn {

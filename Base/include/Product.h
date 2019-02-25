@@ -19,40 +19,64 @@
 #define FLOW_PRODUCT_H
 
 #include <cmath>
+#include <vector>
+#include <numeric>
+
+#include "Rtypes.h"
 
 namespace Qn {
-
+/**
+ * avg_w_vect =
+ * avg_prod_w =
+ */
 struct Product {
   Product() = default;
-  Product(long long ent, double res, bool val) : entries(ent), result(res), validity(val) {}
-  long long entries;
-  double result;
-  bool validity;
+
+  Product(std::vector<double> vec, double res, bool val) :
+      result(res),
+      validity(val),
+      w_vect(vec) {}
+
+  virtual ~Product() = default;
+
+  double result = 0.;                   ///!<! value of the product
+  bool validity = false;                ///!<! flag to show if product is valid
+  std::vector<double> w_vect = {1.};    ///!<! vector of the weights
 
   inline Product Sqrt() const {
     Product a(*this);
     a.result = std::sqrt(a.result);
     return a;
   }
-};
 
-inline void SetToZero(Qn::Product &a) {
-  a.result = 0;
-  a.entries = 0;
-  a.validity = false;
-}
+  double GetProdWeight() const {return std::accumulate(w_vect.begin(), w_vect.end(),1.,std::multiplies<double>());}
+
+  void SetDim(size_t dim) { w_vect.resize(dim); }
+  size_t GetDim() const { return w_vect.size(); }
+};
 
 inline Qn::Product operator*(Qn::Product a, double b) {
   Product c;
-  c.entries = a.entries;
-  c.result = a.result * b;
+  int i = 0;
+  c.SetDim(a.GetDim());
+  for (auto weight : a.w_vect) {
+    c.w_vect[i] = weight;
+  }
+  c.result = a.result*b;
   c.validity = a.validity;
   return c;
 }
 
 inline Qn::Product operator+(Qn::Product a, Qn::Product b) {
   Product c;
-  c.entries = a.entries + b.entries;
+  int i = 0;
+  c.SetDim(a.GetDim());
+  if (a.GetDim()==b.GetDim()) {
+    for (auto &weight : c.w_vect) {
+      weight = a.w_vect[i] + b.w_vect[i];
+      ++i;
+    }
+  }
   c.result = a.result + b.result;
   c.validity = a.validity && b.validity;
   return c;
@@ -60,7 +84,14 @@ inline Qn::Product operator+(Qn::Product a, Qn::Product b) {
 
 inline Qn::Product Merge(Qn::Product a, Qn::Product b) {
   Product c;
-  c.entries = a.entries + b.entries;
+  int i = 0;
+  c.SetDim(a.GetDim());
+  if (a.GetDim()==b.GetDim()) {
+    for (auto &weight : c.w_vect) {
+      weight = a.w_vect[i] + b.w_vect[i];
+      ++i;
+    }
+  }
   c.result = a.result + b.result;
   c.validity = a.validity && b.validity;
   return c;
@@ -68,7 +99,14 @@ inline Qn::Product Merge(Qn::Product a, Qn::Product b) {
 
 inline Qn::Product operator-(Qn::Product a, Qn::Product b) {
   Product c;
-  c.entries = a.entries + b.entries;
+  int i = 0;
+  c.SetDim(a.GetDim());
+  if (a.GetDim()==b.GetDim()) {
+    for (auto &weight : c.w_vect) {
+      weight = a.w_vect[i] + b.w_vect[i];
+      ++i;
+    }
+  }
   c.result = a.result - b.result;
   c.validity = a.validity && b.validity;
   return c;
@@ -76,16 +114,30 @@ inline Qn::Product operator-(Qn::Product a, Qn::Product b) {
 
 inline Qn::Product operator*(Qn::Product a, Qn::Product b) {
   Product c;
-  c.entries = a.entries + b.entries;
-  c.result = a.result * b.result;
+  int i = 0;
+  c.SetDim(a.GetDim());
+  if (a.GetDim()==b.GetDim()) {
+    for (auto &weight : c.w_vect) {
+      weight = a.w_vect[i] + b.w_vect[i];
+      ++i;
+    }
+  }
+  c.result = a.result*b.result;
   c.validity = a.validity && b.validity;
   return c;
 }
 
 inline Qn::Product operator/(Qn::Product a, Qn::Product b) {
   Product c;
-  c.entries = a.entries + b.entries;
-  c.result = a.result / b.result;
+  int i = 0;
+  c.SetDim(a.GetDim());
+  if (a.GetDim()==b.GetDim()) {
+    for (auto &weight : c.w_vect) {
+      weight = a.w_vect[i] + b.w_vect[i];
+      ++i;
+    }
+  }
+  c.result = a.result/b.result;
   c.validity = a.validity && b.validity;
   return c;
 }
