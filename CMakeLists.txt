@@ -77,7 +77,7 @@ set(BASE_SOURCES
         Base/Profile.cpp
         Base/DataContainerHelper.cpp
         Base/Efficiency.cpp
-        Base/Sample.cpp
+        Base/SubSamples.cpp
         Base/EventShape.cpp
         Base/Stats.cpp
         )
@@ -89,7 +89,7 @@ set(BASE_HEADERS DataContainer.h
         Profile.h
         Efficiency.h
         QVector.h
-        Sample.h
+        SubSamples.h
         Product.h
         Stats.h
         )

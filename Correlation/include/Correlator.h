@@ -23,21 +23,23 @@
 #include "Sampler.h"
 
 namespace Qn {
-enum Weight {
-  OBSERVABLE = false,
-  REFERENCE = true,
+
+enum class Weight {
+  REFERENCE,
+  OBSERVABLE
 };
+
 class Correlator {
  public:
   using size_type = std::size_t;
   using corr_func = std::function<double(std::vector<Qn::QVector> &)>;
   Correlator(std::vector<std::string> input_names, corr_func lambda)
       : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {
-    is_reference_.resize(input_names.size());
-    for (auto q : is_reference_) {
+    use_weights_.resize(input_names.size());
+    for (auto q : use_weights_) {
       q = false;
     }
-    is_reference_[0] = true;
+    use_weights_[0] = true;
   }
 
   Correlator(std::vector<std::string> input_names, corr_func lambda, const TH1F &base)
@@ -45,11 +47,11 @@ class Correlator {
         lambda_correlation_(std::move(lambda)),
         input_names_(std::move(input_names)) {
     binned_result_->InitializeEntries(base);
-    is_reference_.resize(input_names.size());
-    for (auto q : is_reference_) {
+    use_weights_.resize(input_names.size());
+    for (auto q : use_weights_) {
       q = false;
     }
-    is_reference_[0] = true;
+    use_weights_[0] = true;
   }
 
   void ConfigureSampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
@@ -74,11 +76,10 @@ class Correlator {
 
   std::shared_ptr<DataContainer<TH1F>> GetBinnedResult() const { return binned_result_; }
 
-  void SetReferenceQVectors(std::vector<Weight> weights) {
-    int i = 0;
-    for (auto b : is_reference_) {
-      b = weights[i];
-      ++i;
+  void SetReferenceQVectors(std::vector<Qn::Weight> weights) {
+    for (size_type i = 0; i < use_weights_.size(); ++i) {
+      if (weights.at(i)==Qn::Weight::REFERENCE) use_weights_[i] = false;
+      if (weights.at(i)==Qn::Weight::OBSERVABLE) use_weights_[i] = true;
     }
   }
 
@@ -90,7 +91,7 @@ class Correlator {
   std::function<double(std::vector<Qn::QVector> &)> lambda_correlation_;
   std::vector<std::string> input_names_;
   std::vector<std::vector<size_type>> autocorrelated_bins_;
-  std::vector<bool> is_reference_;
+  std::vector<bool> use_weights_;
 };
 }
 

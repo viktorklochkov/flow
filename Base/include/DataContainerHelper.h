@@ -25,7 +25,7 @@
 #include "TEnv.h"
 
 #include "Profile.h"
-#include "Sample.h"
+#include "SubSamples.h"
 #include "Stats.h"
 #include "EventShape.h"
 

@@ -68,13 +68,26 @@ class Profile {
     std::cout << "Error      " << Error() << std::endl;
   }
 
-  friend Profile operator+(Profile, Profile);
-  friend Profile operator-(Profile, Profile);
-  friend Profile operator*(Profile, double);
-  friend Profile operator*(Profile, Profile);
-  friend Profile operator/(Profile, Profile);
-  friend Profile Merge(Profile, Profile);
-  friend Profile Sqrt(Profile);
+  static Profile MergeNormal(const Profile &, const Profile &);
+  static Profile MergePointAverage(const Profile &, const Profile &);
+
+  static Profile AdditionNormal(const Profile &, const Profile &);
+  static Profile AdditionPointAverage(const Profile &, const Profile &);
+
+  static Profile SubtractionNormal(const Profile &, const Profile &);
+  static Profile SubtractionPointAverage(const Profile &, const Profile &);
+
+  static Profile MultiplicationNormal(const Profile &, const Profile &);
+  static Profile MultiplicationPointAverage(const Profile &, const Profile &);
+
+  static Profile DivisionNormal(const Profile &, const Profile &);
+  static Profile DivisionPointAverage(const Profile &, const Profile &);
+
+  static Profile SqrtNormal(const Profile &);
+  static Profile SqrtPointAverage(const Profile &);
+
+  static Profile ScaleNormal(const Profile &, double);
+  static Profile ScalePointAverage(const Profile &, double);
 
  private:
   double sumwy_ = 0.;

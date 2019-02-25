@@ -35,8 +35,8 @@
 #pragma link C++ class Qn::QVector+;
 #pragma link C++ class Qn::Profile+;
 #pragma link C++ class Qn::Product+;
-#pragma link C++ class Qn::StatisticMean+;
 #pragma link C++ class Qn::Sample+;
+#pragma link C++ class Qn::SubSamples+;
 #pragma link C++ class Qn::Stats+;
 #pragma link C++ class Qn::EventShape+;
 #pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;

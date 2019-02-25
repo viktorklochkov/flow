@@ -25,7 +25,7 @@
 #include "Rtypes.h"
 
 #include "Profile.h"
-#include "Sample.h"
+#include "SubSamples.h"
 
 namespace Qn {
 
@@ -39,8 +39,9 @@ class Stats {
   };
 
   enum class Status {
-    UNI,
-    MIXTURE
+    REFERENCE,
+    OBSERVABLE,
+    POINTAVERAGE,
   };
 
   using size_type = std::size_t;
@@ -48,37 +49,30 @@ class Stats {
   Stats() = default;
 
   double Mean() const { return profile_.Mean(); }
-  double BootstrapMean() const {return subsamples_.Mean();}
+  double BootstrapMean() const { return subsamples_.Mean(); }
   double Error() const {
-    if (bits_ & Settings::CORRELATEDERRORS) { return (subsamples_.ErrorHi(profile_.Mean())+subsamples_.ErrorLo(profile_.Mean()))/2; }
-    else { return profile_.Error(); }
+    if (bits_ & Settings::CORRELATEDERRORS) {
+      return (subsamples_.ErrorHi(profile_.Mean()) + subsamples_.ErrorLo(profile_.Mean()))/2;
+    } else { return profile_.Error(); }
   }
+  double ErrorLo() const { return subsamples_.ErrorLo(profile_.Mean()); }
+  double ErrorHi() const { return subsamples_.ErrorHi(profile_.Mean()); }
 
+  friend Stats Merge(const Stats &, const Stats &);
   friend Stats operator+(const Stats &, const Stats &);
   friend Stats operator-(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, double);
   friend Stats operator*(double, const Stats &);
   friend Stats operator/(const Stats &, const Stats &);
-  friend Stats Merge(const Stats &, const Stats &);
+  friend Stats Sqrt(const Stats &);
 
   virtual ~Stats() = default;
 
   void SetBits(unsigned int bits) { bits_ = bits; }
   void ResetBits(UInt_t bits) { bits_ &= ~(bits & 0x00ffffff); }
 
-
-  void Print() {
-    std::cout << std::endl;
-    std::cout << "-----Bits------" << std::endl;
-    std::cout << std::bitset<32>(bits_) << std::endl;
-    std::cout << "CORRELATEDERRORS " <<  (bits_ & BIT(16) ? 1 : 0) << std::endl;
-    std::cout << "PRODAVGWEIGHTS   " << (bits_ & BIT(17) ? 1 : 0) << std::endl;
-    std::cout << "--SubSampling--" << std::endl;
-    subsamples_.Print(profile_.Mean());
-    std::cout << "----Profile----" << std::endl;
-    profile_.Print();
-  }
+  void Print();
 
   void Fill(const Product &product, const std::vector<size_type> &samples) {
     subsamples_.Fill(product, samples);
@@ -89,19 +83,32 @@ class Stats {
     subsamples_.SetNumberOfSamples(nsamples);
   }
 
-  TH1F SampleMeanHisto(std::string name) {
-    return subsamples_.SampleMeanHisto(name);
+  TH1F SampleMeanHisto(const std::string &name) {
+    return subsamples_.SubSampleMeanHisto(name);
   }
 
+  void SetStatus(Stats::Status status) { status_ = status; }
+  Status GetStatus(Stats::Status status) const{ return status; }
+
  private:
-  Sample subsamples_;
+  SubSamples subsamples_;
   Profile profile_;
   unsigned int bits_ = 0;
+  Status status_ = Status::REFERENCE;
 
   /// \cond CLASSIMP
  ClassDef(Stats, 1);
   /// \endcond
 };
+
+ Stats Merge(const Stats &, const Stats &);
+ Stats operator+(const Stats &, const Stats &);
+ Stats operator-(const Stats &, const Stats &);
+ Stats operator*(const Stats &, const Stats &);
+ Stats operator*(const Stats &, double);
+ Stats operator*(double, const Stats &);
+ Stats operator/(const Stats &, const Stats &);
+ Stats Sqrt(const Stats &);
 }
 
 #endif //FLOW_STATS_H

@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "TRandom3.h"
-#include "Sample.h"
+#include "SubSamples.h"
 
 
 TEST(SampleUnitTest, create) {
