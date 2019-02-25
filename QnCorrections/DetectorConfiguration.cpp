@@ -153,36 +153,4 @@ void DetectorConfiguration::ActivateHarmonic(Int_t harmonic) {
   fTempQ2nVector.ActivateHarmonic(harmonic);
 }
 
-/// Checks if the current content of the variable bank applies to
-/// the detector configuration
-///
-/// Interface declaration function.
-/// Default behavior. Base class should not be instantiated.
-/// Run time error to support debugging.
-///
-/// \param variableContainer pointer to the variable content bank
-/// \return kTRUE if the current content applies to the configuration
-//Bool_t DetectorConfiguration::IsSelected(const double *variableContainer) {
-//  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
-//      "you are using a channelized detector configuration without passing the channel number. FIX IT, PLEASE.",
-//      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
-//  return kFALSE;
-//}
-
-/// Checks if the current content of the variable bank applies to
-/// the detector configuration for the passed channel.
-///
-/// Interface declaration function.
-/// Default behavior. Base class should not be instantiated.
-/// Run time error to support debugging.
-///
-/// \param variableContainer pointer to the variable content bank
-/// \param nChannel the interested external channel number
-/// \return kTRUE if the current content applies to the configuration
-//Bool_t DetectorConfiguration::IsSelected(const double *variableContainer, Int_t nChannel) {
-//  QnCorrectionsFatal(Form("You have reached base member %s. This means you have instantiated a base class or\n" \
-//      "you are using a non channelized detector configuration but passing a channel number. FIX IT, PLEASE.",
-//      "QnCorrectionsDetectorConfigurationBase::IsSelected()"));
-//  return kFALSE;
-//}
 }

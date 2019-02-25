@@ -343,6 +343,7 @@ Bool_t Alignment::ProcessDataCollection(const double *variableContainer) {
                                                fHarmonicForAlignment));
       }
       /* and proceed to ... */
+      /* FALLTHRU */
     case QCORRSTEP_apply: /* apply the correction if the current Qn vector is good enough */
       /* provide QA info if required */
       if (fQAQnAverageHistogram!=NULL) {
@@ -408,6 +409,7 @@ Bool_t Alignment::ReportUsage(TList *calibrationList, TList *applyList) {
     case QCORRSTEP_applyCollect:
       /* we are collecting */
       calibrationList->Add(new TObjString(szCorrectionName));
+      /* FALLTHRU */
     case QCORRSTEP_apply:
       /* and applying */
       applyList->Add(new TObjString(szCorrectionName));

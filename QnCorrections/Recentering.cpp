@@ -265,6 +265,7 @@ Bool_t Recentering::ProcessDataCollection(const double *variableContainer) {
         }
       }
       /* and proceed to ... */
+      /* FALLTHRU */
     case QCORRSTEP_apply: /* apply the correction if the current Qn vector is good enough */
       /* provide QA info if required */
       if (fQAQnAverageHistogram!=NULL) {
@@ -330,6 +331,7 @@ Bool_t Recentering::ReportUsage(TList *calibrationList, TList *applyList) {
     case QCORRSTEP_applyCollect:
       /* we are collecting */
       calibrationList->Add(new TObjString(szCorrectionName));
+      /* FALLTHRU */
     case QCORRSTEP_apply:
       /* and applying */
       applyList->Add(new TObjString(szCorrectionName));

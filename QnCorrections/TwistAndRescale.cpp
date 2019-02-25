@@ -414,6 +414,7 @@ Bool_t TwistAndRescale::ProcessCorrections(const double *variableContainer) {
     case QCORRSTEP_applyCollect:
       /* collect the data needed to further produce correction parameters if Qn vectors are good enough */
       /* and proceed to ... */
+      /* FALLTHRU */
     case QCORRSTEP_apply: { /* apply the correction if the current Qn vector is good enough */
       /* logging */
       switch (fTwistAndRescaleMethod) {
@@ -701,6 +702,7 @@ Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
       }
     }
       /* and proceed to ... */
+      /* FALLTHRU */
     case QCORRSTEP_apply: { /* apply the correction if the current Qn vector is good enough */
       /* provide QA info if required */
       if (fQATwistQnAverageHistogram!=NULL) {
@@ -809,6 +811,7 @@ Bool_t TwistAndRescale::ReportUsage(TList *calibrationList, TList *applyList) {
     case QCORRSTEP_applyCollect:
       /* we are collecting */
       calibrationList->Add(new TObjString(GetName()));
+      /* FALLTHRU */
     case QCORRSTEP_apply:
       /* and applying */
       applyList->Add(new TObjString(GetName()));

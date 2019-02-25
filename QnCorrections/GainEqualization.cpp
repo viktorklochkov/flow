@@ -233,6 +233,7 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
         fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
       }
       /* and proceed to ... */
+      /* FALLTHRU */
     case QCORRSTEP_apply: /* apply the equalization */
       /* collect QA data if asked */
       if (fQAMultiplicityBefore!=NULL) {
@@ -371,6 +372,7 @@ Bool_t GainEqualization::ReportUsage(TList *calibrationList, TList *applyList) {
     case QCORRSTEP_applyCollect:
       /* we are collecting */
       calibrationList->Add(new TObjString(szCorrectionName));
+      /* FALLTHRU */
     case QCORRSTEP_apply:
       /* and applying */
       applyList->Add(new TObjString(szCorrectionName));
