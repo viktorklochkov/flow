@@ -88,7 +88,9 @@ class Stats {
   }
 
   void SetStatus(Stats::Status status) { status_ = status; }
-  Status GetStatus(Stats::Status status) const{ return status; }
+  Status GetStatus() const { return status_; }
+
+  bool TestBit(unsigned int bit) {return bits_ & bit;}
 
  private:
   SubSamples subsamples_;
@@ -101,14 +103,14 @@ class Stats {
   /// \endcond
 };
 
- Stats Merge(const Stats &, const Stats &);
- Stats operator+(const Stats &, const Stats &);
- Stats operator-(const Stats &, const Stats &);
- Stats operator*(const Stats &, const Stats &);
- Stats operator*(const Stats &, double);
- Stats operator*(double, const Stats &);
- Stats operator/(const Stats &, const Stats &);
- Stats Sqrt(const Stats &);
+Stats Merge(const Stats &, const Stats &);
+Stats operator+(const Stats &, const Stats &);
+Stats operator-(const Stats &, const Stats &);
+Stats operator*(const Stats &, const Stats &);
+Stats operator*(const Stats &, double);
+Stats operator*(double, const Stats &);
+Stats operator/(const Stats &, const Stats &);
+Stats Sqrt(const Stats &);
 }
 
 #endif //FLOW_STATS_H
