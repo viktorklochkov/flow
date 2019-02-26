@@ -31,14 +31,14 @@ class Profile {
  public:
 
   Profile() = default;
-  Profile(const Profile &a) : sumwy_(a.sumwy_), sumwy2_(a.sumwy2_), sumw_(a.sumw_), sumw2_(a.sumw2_) {}
+
   virtual ~Profile() = default;
 
   void Fill(const Product &prod) {
-    sumwy_ += prod.GetProdWeight()*prod.result;
-    sumwy2_ += prod.GetProdWeight()*prod.result*prod.result;
-    sumw_ += prod.GetProdWeight();
-    sumw2_ += prod.GetProdWeight()*prod.GetProdWeight();
+    sumwy_ += prod.GetWeight()*prod.result;
+    sumwy2_ += prod.GetWeight()*prod.result*prod.result;
+    sumw_ += prod.GetWeight();
+    sumw2_ += prod.GetWeight()*prod.GetWeight();
     ++entries_;
   }
 
@@ -48,14 +48,18 @@ class Profile {
     } else { return sumwy_; }
   }
 
-  inline
-  double Error() const {
+  inline double Error() const {
     double mean = sumwy_/sumw_;
     double variance = fabs(sumwy2_/sumw_ - mean*mean);
     double neff = sumw_*sumw_/sumw2_;
     if (neff > 0.) {
       return std::sqrt(variance/neff);
     } else { return 0.; }
+  }
+
+  void CalculatePointAverage() {
+    mean_ = Mean();
+    var_ = Error();
   }
 
   void Print() {

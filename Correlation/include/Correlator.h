@@ -35,7 +35,7 @@ class Correlator {
   using corr_func = std::function<double(std::vector<Qn::QVector> &)>;
   Correlator(std::vector<std::string> input_names, corr_func lambda)
       : lambda_correlation_(std::move(lambda)), input_names_(std::move(input_names)) {
-    use_weights_.resize(input_names.size());
+    use_weights_.resize(input_names_.size());
     for (auto q : use_weights_) {
       q = false;
     }
@@ -47,7 +47,7 @@ class Correlator {
         lambda_correlation_(std::move(lambda)),
         input_names_(std::move(input_names)) {
     binned_result_->InitializeEntries(base);
-    use_weights_.resize(input_names.size());
+    use_weights_.resize(input_names_.size());
     for (auto q : use_weights_) {
       q = false;
     }

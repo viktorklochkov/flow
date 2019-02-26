@@ -25,10 +25,7 @@
 #include "Rtypes.h"
 
 namespace Qn {
-/**
- * avg_w_vect =
- * avg_prod_w =
- */
+
 struct Product {
   Product() = default;
 
@@ -49,38 +46,11 @@ struct Product {
     return a;
   }
 
-  double GetProdWeight() const {return std::accumulate(w_vect.begin(), w_vect.end(),1.,std::multiplies<double>());}
+  double GetWeight() const {return std::accumulate(w_vect.begin(), w_vect.end(),1.,std::multiplies<double>());}
 
   void SetDim(size_t dim) { w_vect.resize(dim); }
   size_t GetDim() const { return w_vect.size(); }
 };
-
-inline Qn::Product operator*(Qn::Product a, double b) {
-  Product c;
-  int i = 0;
-  c.SetDim(a.GetDim());
-  for (auto weight : a.w_vect) {
-    c.w_vect[i] = weight;
-  }
-  c.result = a.result*b;
-  c.validity = a.validity;
-  return c;
-}
-
-inline Qn::Product operator+(Qn::Product a, Qn::Product b) {
-  Product c;
-  int i = 0;
-  c.SetDim(a.GetDim());
-  if (a.GetDim()==b.GetDim()) {
-    for (auto &weight : c.w_vect) {
-      weight = a.w_vect[i] + b.w_vect[i];
-      ++i;
-    }
-  }
-  c.result = a.result + b.result;
-  c.validity = a.validity && b.validity;
-  return c;
-}
 
 inline Qn::Product Merge(Qn::Product a, Qn::Product b) {
   Product c;
@@ -93,51 +63,6 @@ inline Qn::Product Merge(Qn::Product a, Qn::Product b) {
     }
   }
   c.result = a.result + b.result;
-  c.validity = a.validity && b.validity;
-  return c;
-}
-
-inline Qn::Product operator-(Qn::Product a, Qn::Product b) {
-  Product c;
-  int i = 0;
-  c.SetDim(a.GetDim());
-  if (a.GetDim()==b.GetDim()) {
-    for (auto &weight : c.w_vect) {
-      weight = a.w_vect[i] + b.w_vect[i];
-      ++i;
-    }
-  }
-  c.result = a.result - b.result;
-  c.validity = a.validity && b.validity;
-  return c;
-}
-
-inline Qn::Product operator*(Qn::Product a, Qn::Product b) {
-  Product c;
-  int i = 0;
-  c.SetDim(a.GetDim());
-  if (a.GetDim()==b.GetDim()) {
-    for (auto &weight : c.w_vect) {
-      weight = a.w_vect[i] + b.w_vect[i];
-      ++i;
-    }
-  }
-  c.result = a.result*b.result;
-  c.validity = a.validity && b.validity;
-  return c;
-}
-
-inline Qn::Product operator/(Qn::Product a, Qn::Product b) {
-  Product c;
-  int i = 0;
-  c.SetDim(a.GetDim());
-  if (a.GetDim()==b.GetDim()) {
-    for (auto &weight : c.w_vect) {
-      weight = a.w_vect[i] + b.w_vect[i];
-      ++i;
-    }
-  }
-  c.result = a.result/b.result;
   c.validity = a.validity && b.validity;
   return c;
 }

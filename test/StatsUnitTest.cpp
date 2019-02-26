@@ -35,8 +35,8 @@ TEST(StatsTest, Addition) {
   stats_A.Fill({{1.},1,true},{});
   stats_B.Fill({{2.},2,true},{});
   auto stats_C = stats_A + stats_B;
-  EXPECT_EQ(5./3, stats_C.Mean());
-  EXPECT_EQ(0.351364, stats_C.Error());
+  EXPECT_FLOAT_EQ(5./3, stats_C.Mean());
+  EXPECT_FLOAT_EQ(0.35136418, stats_C.Error());
 }
 
 TEST(StatsTest, Gaussian) {
@@ -44,7 +44,7 @@ TEST(StatsTest, Gaussian) {
   std::normal_distribution<double> gauss(0,1);
   Qn::Stats stats;
   int nsamples = 1000;
-  int nevents = 100000;
+  int nevents = 10000;
   stats.SetNumberOfSubSamples(nsamples);
   Qn::Sampler sampler(nsamples,Qn::Sampler::Method::BOOTSTRAP);
   sampler.SetNumberOfEvents(nevents);
@@ -52,7 +52,6 @@ TEST(StatsTest, Gaussian) {
   for (int i = 0; i < nevents; ++i) {
   stats.Fill({{1.},gauss(generator),true}, sampler.GetFillVector(i));
   }
-  stats.Print();
   auto histo = stats.SampleMeanHisto("SampleMean");
   TCanvas c1("c","c",800,600);
   c1.cd();

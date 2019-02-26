@@ -43,9 +43,9 @@
  * QnCorrectionsframework
  */
 namespace Qn {
-
-template<typename T>
-T Merge(const T&a, const T&b) {return a + b;}
+//
+//template<typename T>
+//T Merge(const T&a, const T&b) {return Merge(a,b);}
 
 /**
  * @brief      Template container class for Q-vectors and correlations
@@ -370,8 +370,7 @@ class DataContainer : public TObject {
  */
   DataContainer<T>
   Projection(const std::vector<std::string> axis_names = {}) const {
-    auto lambda = [](const T &a, const T &b) { return a + b; };
-//    auto lambda = [](const T &a, const T &b) { return Qn::AddBins(a,b); };
+    auto lambda = [](const T &a, const T &b) { return Qn::Merge(a,b); };
     return Projection(axis_names, lambda);
   }
 
@@ -561,7 +560,7 @@ class DataContainer : public TObject {
  * @return rebinned datacontainer.
  */
   DataContainer<T> Rebin(const Axis &rebinaxis) const {
-    auto lambda = [](const T &a, const T &b) { return a + b; };
+    auto lambda = [](const T &a, const T &b) { return Qn::Merge(a,b); };
     return Rebin(rebinaxis, lambda);
   }
 
@@ -643,7 +642,7 @@ class DataContainer : public TObject {
   Long64_t Merge(TCollection *inputlist) {
     TIter next(inputlist);
     while (auto data = (DataContainer<T> *) next()) {
-      auto lambda = [](const T &a, const T &b) -> T { return Qn::Merge<T>(a, b); };
+      auto lambda = [](const T &a, const T &b) -> T { return Qn::Merge(a, b); };
       *this = this->Apply(*data, lambda);
     }
     return this->size();
@@ -854,6 +853,10 @@ template<>
 Long64_t DataContainer<std::pair<bool,float>>::Merge(TCollection *inputlist) = delete;
 template<>
 Long64_t DataContainer<std::vector<DataVector>>::Merge(TCollection *inputlist) = delete;
+template<>
+Long64_t DataContainer<Qn::Product>::Merge(TCollection *inputlist) = delete;
+template<>
+Long64_t DataContainer<Qn::QVector>::Merge(TCollection *inputlist) = delete;
 
 };
 #endif

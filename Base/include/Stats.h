@@ -48,6 +48,8 @@ class Stats {
 
   Stats() = default;
 
+  virtual ~Stats() = default;
+
   double Mean() const { return profile_.Mean(); }
   double BootstrapMean() const { return subsamples_.Mean(); }
   double Error() const {
@@ -67,13 +69,6 @@ class Stats {
   friend Stats operator/(const Stats &, const Stats &);
   friend Stats Sqrt(const Stats &);
 
-  virtual ~Stats() = default;
-
-  void SetBits(unsigned int bits) { bits_ = bits; }
-  void ResetBits(UInt_t bits) { bits_ &= ~(bits & 0x00ffffff); }
-
-  void Print();
-
   void Fill(const Product &product, const std::vector<size_type> &samples) {
     subsamples_.Fill(product, samples);
     profile_.Fill(product);
@@ -87,10 +82,16 @@ class Stats {
     return subsamples_.SubSampleMeanHisto(name);
   }
 
-  void SetStatus(Stats::Status status) { status_ = status; }
+  void SetStatus(Stats::Status status) {
+    status_ = status;
+  if (status_ == Status::POINTAVERAGE) profile_.CalculatePointAverage();
+  }
   Status GetStatus() const { return status_; }
-
   bool TestBit(unsigned int bit) {return bits_ & bit;}
+  void SetBits(unsigned int bits) { bits_ = bits; }
+  void ResetBits(unsigned int bits) { bits_ &= ~(bits & 0x00ffffff); }
+
+  void Print();
 
  private:
   SubSamples subsamples_;

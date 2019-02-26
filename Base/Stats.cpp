@@ -43,19 +43,27 @@ Stats Merge(const Stats &lhs, const Stats &rhs) {
 
 Stats operator+(const Stats &lhs, const Stats &rhs) {
   Stats result;
+  result.status_ = lhs.status_;
+  result.bits_ = lhs.bits_;
   if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
       || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-      (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
+      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE)) {
     result.profile_ = Profile::AdditionNormal(lhs.profile_, rhs.profile_);
     result.subsamples_ = SubSamples::AdditionNormal(lhs.subsamples_, rhs.subsamples_);
+  }
+  if ((lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE))  {
+    auto t_lhs =  lhs;
+    auto t_rhs =  rhs;
+    t_lhs.profile_.CalculatePointAverage();
+    t_rhs.profile_.CalculatePointAverage();
+    result.status_ = STAT::POINTAVERAGE;
+    result.profile_ = Profile::AdditionPointAverage(t_lhs.profile_, t_rhs.profile_);
+    result.subsamples_ = SubSamples::AdditionPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
   if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
     result.profile_ = Profile::AdditionPointAverage(lhs.profile_, rhs.profile_);
     result.subsamples_ = SubSamples::AdditionPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
-  result.status_ = lhs.status_;
-  result.bits_ = lhs.bits_;
   return result;
 }
 
@@ -63,10 +71,18 @@ Stats operator-(const Stats &lhs, const Stats &rhs) {
   Stats result;
   if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
       || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-      (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
+      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE)) {
     result.profile_ = Profile::SubtractionNormal(lhs.profile_, rhs.profile_);
     result.subsamples_ = SubSamples::SubtractionNormal(lhs.subsamples_, rhs.subsamples_);
+  }
+  if (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)  {
+    auto t_lhs =  lhs;
+    auto t_rhs =  rhs;
+    t_lhs.profile_.CalculatePointAverage();
+    t_rhs.profile_.CalculatePointAverage();
+    result.status_ = STAT::POINTAVERAGE;
+    result.profile_ = Profile::SubtractionPointAverage(t_lhs.profile_, t_rhs.profile_);
+    result.subsamples_ = SubSamples::AdditionPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
   if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
     result.profile_ = Profile::SubtractionPointAverage(lhs.profile_, rhs.profile_);
@@ -79,19 +95,27 @@ Stats operator-(const Stats &lhs, const Stats &rhs) {
 
 Stats operator*(const Stats &lhs, const Stats &rhs) {
   Stats result;
+  result.status_ = lhs.status_;
+  result.bits_ = lhs.bits_;
   if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
       || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-      (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
+      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE)) {
     result.profile_ = Profile::MultiplicationNormal(lhs.profile_, rhs.profile_);
     result.subsamples_ = SubSamples::MultiplicationNormal(lhs.subsamples_, rhs.subsamples_);
+  }
+  if (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE) {
+    auto t_lhs =  lhs;
+    auto t_rhs =  rhs;
+    t_lhs.profile_.CalculatePointAverage();
+    t_rhs.profile_.CalculatePointAverage();
+    result.status_ = STAT::POINTAVERAGE;
+    result.profile_ = Profile::MultiplicationPointAverage(t_lhs.profile_, t_rhs.profile_);
+    result.subsamples_ = SubSamples::MultiplicationPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
   if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
     result.profile_ = Profile::MultiplicationPointAverage(lhs.profile_, rhs.profile_);
     result.subsamples_ = SubSamples::MultiplicationPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
-  result.status_ = lhs.status_;
-  result.bits_ = lhs.bits_;
   return result;
 }
 
@@ -127,19 +151,26 @@ Stats operator*(double lhs, const Stats &rhs) {
 
 Stats operator/(const Stats &num, const Stats &den) {
   Stats result;
-  if (((num.status_==STAT::REFERENCE && den.status_==STAT::OBSERVABLE)
-      || (num.status_==STAT::OBSERVABLE && den.status_==STAT::REFERENCE)) ||
-      (num.status_==STAT::REFERENCE && den.status_==STAT::REFERENCE) ||
-      (num.status_==STAT::OBSERVABLE && den.status_==STAT::OBSERVABLE)) {
+  result.status_ = num.status_;
+  result.bits_ = num.bits_;
+  if ((num.status_==STAT::OBSERVABLE && den.status_==STAT::REFERENCE) ||
+      (num.status_==STAT::REFERENCE && den.status_==STAT::REFERENCE)) {
     result.profile_ = Profile::DivisionNormal(num.profile_, den.profile_);
     result.subsamples_ = SubSamples::DivisionNormal(num.subsamples_, den.subsamples_);
+  }
+  if ((num.status_==STAT::OBSERVABLE && den.status_==STAT::OBSERVABLE) || den.status_==STAT::OBSERVABLE) {
+    auto t_lhs =  num;
+    auto t_rhs =  den;
+    t_lhs.profile_.CalculatePointAverage();
+    t_rhs.profile_.CalculatePointAverage();
+    result.status_ = STAT::POINTAVERAGE;
+    result.profile_ = Profile::MultiplicationPointAverage(t_lhs.profile_, t_rhs.profile_);
+    result.subsamples_ = SubSamples::MultiplicationPointAverage(t_lhs.subsamples_, t_rhs.subsamples_);
   }
   if (num.status_==STAT::POINTAVERAGE || den.status_==STAT::POINTAVERAGE) {
     result.profile_ = Profile::DivisionPointAverage(num.profile_, den.profile_);
     result.subsamples_ = SubSamples::DivisionPointAverage(num.subsamples_, den.subsamples_);
   }
-  result.status_ = num.status_;
-  result.bits_ = num.bits_;
   return result;
 }
 

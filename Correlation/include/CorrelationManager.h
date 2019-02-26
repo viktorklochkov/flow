@@ -36,7 +36,7 @@ class CorrelationManager {
   using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
   using size_type = std::size_t;
  public:
-  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) : reader_(std::move(reader)) {}
+  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) : reader_(std::move(reader)) { num_events_ = reader_->GetEntries(true);}
   CorrelationManager(std::shared_ptr<TTreeReader> reader, size_type num_events)
       : reader_(std::move(reader)), num_events_(num_events) {}
 
@@ -49,7 +49,7 @@ class CorrelationManager {
   void AddEventVariable(const Qn::Axis &eventaxis);
 
   void AddCorrelation(std::string name, const std::string &input_names, FUNCTION &&lambda, int nsamples,
-                      Sampler::Method method);
+                      Sampler::Method method=Sampler::Method::BOOTSTRAP);
 
   void AddCorrelation(std::string name, const std::string &containernames, FUNCTION &&lambda);
 
@@ -79,10 +79,10 @@ class CorrelationManager {
    */
   void SetESECalibrationFile(const std::string &ese_name) { ese_file_name_ = ese_name; }
 
+  DataContainerStats GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
+
  private:
   void MakeProjections();
-
-  DataContainerStats GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
 
   void SaveToFile(std::string name);
 

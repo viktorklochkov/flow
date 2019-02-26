@@ -127,7 +127,7 @@ void CorrelationManager::AddESE(const std::string &names, int harmonic, float qm
   };
   Qn::Correlator correlator(esenames, Mag, TH1F("q", ";q;%;", 100, 0., qmax));
   correlator.ConfigureSampler(Sampler::Method::NONE, 0);
-  ese_correlations_.emplace("ESE_" + esenames[0]+esenames[1], std::move(correlator));
+  ese_correlations_.emplace("ESE_" + esenames[0] + esenames[1], std::move(correlator));
 }
 /**
  * Initializes the Correlation task.
@@ -180,9 +180,9 @@ void CorrelationManager::Process() {
 void CorrelationManager::Finalize() {
   if (use_ese_) {
     FitEventShape();
-    SaveEventShape(ese_file_name_);
+    if (!ese_file_name_.empty()) SaveEventShape(ese_file_name_);
   }
-  SaveToFile(correlation_file_name_);
+  if (!correlation_file_name_.empty()) SaveToFile(correlation_file_name_);
 }
 
 void CorrelationManager::SaveToFile(std::string name) {

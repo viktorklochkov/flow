@@ -45,8 +45,8 @@ Profile Profile::AdditionNormal(const Profile &lhs, const Profile &rhs) {
 }
 Profile Profile::AdditionPointAverage(const Profile &lhs, const Profile &rhs) {
   Profile result;
-  result.mean_ = lhs.Mean() + rhs.Mean();
-  result.var_ =  sqrt(lhs.Error()*lhs.Error() + rhs.Error()*rhs.Error());
+  result.mean_ = lhs.mean_ + rhs.mean_;
+  result.var_ =  sqrt(lhs.var_*lhs.var_ + rhs.var_*rhs.var_);
   return result;
 }
 Profile Profile::SubtractionNormal(const Profile &lhs, const Profile &rhs) {
@@ -61,8 +61,8 @@ Profile Profile::SubtractionNormal(const Profile &lhs, const Profile &rhs) {
 
 Profile Profile::SubtractionPointAverage(const Profile &lhs, const Profile &rhs) {
   Profile result;
-  result.mean_ = lhs.Mean() - rhs.Mean();
-  result.var_ =  sqrt(lhs.Error()*lhs.Error() + rhs.Error()*rhs.Error());
+  result.mean_ = lhs.mean_ - rhs.mean_;
+  result.var_ =  sqrt(lhs.var_*lhs.var_ + rhs.var_*rhs.var_);
   return result;
 }
 
@@ -78,8 +78,8 @@ Profile Profile::MultiplicationNormal(const Profile &lhs, const Profile &rhs) {
 
 Profile Profile::MultiplicationPointAverage(const Profile &lhs, const Profile &rhs) {
   Profile result;
-  result.mean_ = lhs.Mean() * rhs.Mean();
-  result.var_ =  sqrt(rhs.Mean()*rhs.Mean()*lhs.Error()*lhs.Error()+lhs.Mean()*lhs.Mean()*rhs.Error()*rhs.Error());
+  result.mean_ = lhs.mean_ * rhs.mean_;
+  result.var_ =  sqrt(rhs.mean_*rhs.mean_*lhs.var_*lhs.var_+lhs.mean_*lhs.mean_*rhs.var_*rhs.var_);
   return result;
 }
 
@@ -95,9 +95,9 @@ Profile Profile::DivisionNormal(const Profile &num, const Profile &den) {
 
 Profile Profile::DivisionPointAverage(const Profile &num, const Profile &den) {
   Profile result;
-  result.mean_ = num.Mean() / den.Mean();
-  double den2 = den.Mean() * den.Mean();
-  result.var_ =  sqrt((den2*num.Error()*num.Error()+num.Mean()*num.Mean()*den.Error()*den.Error())/(den2*den2));
+  result.mean_ = num.mean_ / den.mean_;
+  double den2 = den.mean_ * den.mean_;
+  result.var_ =  sqrt((den2*num.var_*num.var_+num.mean_*num.mean_*den.var_*den.var_)/(den2*den2));
   return result;
 }
 
@@ -113,8 +113,8 @@ Profile Profile::SqrtNormal(const Profile &prof) {
 
 Profile Profile::SqrtPointAverage(const Profile &prof) {
   Profile result;
-  result.mean_ = sqrt(prof.Mean());
-  result.var_ =  sqrt(prof.Error());
+  result.mean_ = sqrt(prof.mean_);
+  result.var_ =  sqrt(prof.var_);
   return result;
 }
 
@@ -130,8 +130,8 @@ Profile Profile::ScaleNormal(const Profile &lhs, double scale) {
 
 Profile Profile::ScalePointAverage(const Profile &lhs, double scale) {
   Profile result;
-  result.mean_ = scale*lhs.Mean();
-  result.var_ =  scale*lhs.Error();
+  result.mean_ = scale*lhs.mean_;
+  result.var_ =  scale*lhs.var_;
   return result;
 }
 
