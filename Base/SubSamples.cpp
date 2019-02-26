@@ -177,19 +177,21 @@ SubSamples SubSamples::ScalePointAverage(const SubSamples &lhs, double rhs) {
 
 void SubSamples::Print(double real_mean) {
   auto isample = samples_.size()/3;
-  std::cout << "SAMPLES EXCERPT: " << isample << ", " << isample*2 << ", " << isample*3 << std::endl;
-  std::cout << "S" << isample << " ";
-  samples_[isample].Print();
-  std::cout << "S" << isample*2 << " ";
-  samples_[isample*2].Print();
-  std::cout << "S" << isample*3 << " ";
-  samples_[isample*3].Print();
-  std::cout << "SUMMARY   " << std::endl;
-  std::cout << "N_samples " << samples_.size() << std::endl;
-  std::cout << "Mean      " << Mean() << std::endl;
-  std::cout << "Error Hi  " << ErrorHi(real_mean) << std::endl;
-  std::cout << "Error Lo  " << ErrorLo(real_mean) << std::endl;
-  std::cout << "Error Sym " << (ErrorHi(real_mean) + ErrorLo(real_mean))/2 << std::endl;
+  if (samples_.size() > 3) {
+    std::cout << "SAMPLES EXCERPT: " << isample << ", " << isample*2 << ", " << isample*3 << std::endl;
+    std::cout << "S" << isample << " ";
+    samples_[isample].Print();
+    std::cout << "S" << isample*2 << " ";
+    samples_[isample*2].Print();
+    std::cout << "S" << isample*3 << " ";
+    samples_[isample*3].Print();
+    std::cout << "SUMMARY   " << std::endl;
+    std::cout << "N_samples " << samples_.size() << std::endl;
+    std::cout << "Mean      " << Mean() << std::endl;
+    std::cout << "Error Hi  " << ErrorHi(real_mean) << std::endl;
+    std::cout << "Error Lo  " << ErrorLo(real_mean) << std::endl;
+    std::cout << "Error Sym " << (ErrorHi(real_mean) + ErrorLo(real_mean))/2 << std::endl;
+  }
 }
 
 }

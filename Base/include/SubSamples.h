@@ -36,7 +36,7 @@ struct Sample {
   int entries = 0;
 
   void Fill(const Product &prod) {
-    sumwy += prod.result;
+    sumwy += prod.result*prod.GetWeight();
     sumw += prod.GetWeight();
     ++entries;
   }
