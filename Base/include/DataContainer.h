@@ -823,7 +823,7 @@ DataContainer<T> operator*(const DataContainer<T> &a, double b) {
 }
 template<typename T>
 DataContainer<T> Sqrt(const DataContainer<T> &a) {
-  return a.Map([](const T &x) { return x.Sqrt(); });
+  return a.Map([](const T &x) { return Qn::Sqrt(x); });
 }
 /**
  * Transformation of a DataContainer providing the operation:
