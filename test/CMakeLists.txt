@@ -6,7 +6,7 @@ set(CMAKE_MACOSX_RPATH 1)
 include_directories(${gtest_SOURCE_DIR}/include)
 set(TEST_SOURCES
         BootstrapSamplerUnitTest.cpp
-#        SampleUnitTest.cpp
+        SampleUnitTest.cpp
         CorrelationManagerUnitTest.cpp
         DataContainerUnitTest.cpp
         ProductUnitTest.cpp

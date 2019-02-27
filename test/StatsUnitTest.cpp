@@ -39,6 +39,15 @@ TEST(StatsTest, Addition) {
   EXPECT_FLOAT_EQ(0.35136418, stats_C.Error());
 }
 
+TEST(StatsTest, Merging) {
+  Qn::Stats stats_A;
+  Qn::Stats stats_B;
+  stats_A.SetNumberOfSubSamples(10);
+  stats_B.SetNumberOfSubSamples(10);
+  auto stats_C = Qn::Merge(stats_A,stats_B);
+  EXPECT_EQ(stats_A.GetNSamples(),stats_C.GetNSamples());
+}
+
 TEST(StatsTest, Gaussian) {
   std::default_random_engine generator;
   std::normal_distribution<double> gauss(0,1);

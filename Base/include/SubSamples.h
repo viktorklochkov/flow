@@ -45,12 +45,12 @@ struct Sample {
 
   void operator+=(Sample b) {
     sumwy += b.sumwy;
-    sumw  += b.sumw;
+    sumw += b.sumw;
   }
 
   void operator-=(Sample b) {
     sumwy -= b.sumwy;
-    sumw  -= b.sumw;
+    sumw -= b.sumw;
   }
 
   void operator*=(Sample b) {
@@ -89,7 +89,7 @@ struct Sample {
  * @param rhs the other sample
  * @return true is smaller, false if larger
  */
-inline bool operator<(const Sample &lhs, const Sample &rhs) { return lhs.Mean() < rhs.Mean();}
+inline bool operator<(const Sample &lhs, const Sample &rhs) { return lhs.Mean() < rhs.Mean(); }
 
 class SubSamples {
  public:
@@ -102,6 +102,8 @@ class SubSamples {
   explicit SubSamples(std::vector<Sample> means) : samples_(std::move(means)) {}
 
   virtual ~SubSamples() = default;
+
+  SubSamples(const SubSamples &subsample) : samples_(subsample.samples_) {}
 
   using iterator = typename std::vector<Sample>::iterator;
   using const_iterator = typename std::vector<Sample>::const_iterator;
@@ -120,9 +122,9 @@ class SubSamples {
 
   void Print(double real_mean);
 
-  bool empty() const {return samples_.empty();}
+  bool empty() const { return samples_.empty(); }
 
-
+  size_type size() const { return samples_.size(); }
 
   double Mean() const {
     double ssum = 0;
@@ -160,14 +162,6 @@ class SubSamples {
     return histo;
   }
 
-  friend SubSamples operator+(const SubSamples &, const SubSamples &);
-  friend SubSamples operator-(const SubSamples &, const SubSamples &);
-  friend SubSamples operator*(const SubSamples &, const SubSamples &);
-  friend SubSamples operator/(const SubSamples &, const SubSamples &);
-  friend SubSamples operator*(const SubSamples &, double);
-  friend SubSamples Sqrt(const SubSamples &);
-  friend SubSamples Merge(const SubSamples &, const SubSamples &);
-
   static SubSamples MergeNormal(const SubSamples &, const SubSamples &);
   static SubSamples MergePointAverage(const SubSamples &, const SubSamples &);
 
@@ -194,8 +188,8 @@ class SubSamples {
 
   Sample Quantiles(std::vector<Sample> quantiles, double pos, size_type offset) const {
     size_type quant = quantiles.size()*pos;
-    std::nth_element(quantiles.begin(), quantiles.begin()+quant, quantiles.end());
-    return quantiles[quant+offset];
+    std::nth_element(quantiles.begin(), quantiles.begin() + quant, quantiles.end());
+    return quantiles[quant + offset];
   }
 
   /// \cond CLASSIMP

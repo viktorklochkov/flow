@@ -39,6 +39,19 @@ TEST(DataContainerTest, Projection) {
   }
 }
 
+TEST(DataContainerTest, ProjectionStats) {
+  Qn::DataContainerStats container;
+  container.AddAxes({{"a1", 30, 0, 10}});
+  for (auto &bin : container) {
+    bin.SetNumberOfSubSamples(10);
+    bin.Fill({{2.},1,true},{});
+  }
+  auto projection = container.Projection();
+  for (const auto &bin : projection) {
+    EXPECT_EQ(bin.GetNSamples(),10);
+  }
+}
+
 //TEST(DataContainerTest, ProjectionStats) {
 //  Qn::DataContainerStats container;
 //  container.AddAxes({{"a1", 30, 0, 10}});

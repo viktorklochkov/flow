@@ -50,6 +50,9 @@ class Stats {
 
   virtual ~Stats() = default;
 
+  Stats(const Stats &stats)
+      : subsamples_(stats.subsamples_), profile_(stats.profile_), bits_(stats.bits_), status_(stats.status_) {}
+
   double Mean() const { return profile_.Mean(); }
   double BootstrapMean() const { return subsamples_.Mean(); }
   double Error() const {
@@ -84,14 +87,16 @@ class Stats {
 
   void SetStatus(Stats::Status status) {
     status_ = status;
-  if (status_ == Status::POINTAVERAGE) profile_.CalculatePointAverage();
+    if (status_==Status::POINTAVERAGE) profile_.CalculatePointAverage();
   }
   Status GetStatus() const { return status_; }
-  bool TestBit(unsigned int bit) {return bits_ & bit;}
+  bool TestBit(unsigned int bit) { return bits_ & bit; }
   void SetBits(unsigned int bits) { bits_ = bits; }
   void ResetBits(unsigned int bits) { bits_ &= ~(bits & 0x00ffffff); }
 
   void Print();
+
+  size_type GetNSamples() const {return subsamples_.size();}
 
  private:
   SubSamples subsamples_;
