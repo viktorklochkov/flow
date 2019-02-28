@@ -56,26 +56,23 @@ class Stats {
   double Mean() const { if (status_!=Status::POINTAVERAGE) return profile_.Mean(); else return profile_.MeanPA(); }
   double BootstrapMean() const { return subsamples_.Mean(); }
   inline double Error() const {
-    if (status_!=Status::POINTAVERAGE) {
-      if (bits_ & Settings::CORRELATEDERRORS) {
-        return (subsamples_.ErrorHi(profile_.Mean()) + subsamples_.ErrorLo(profile_.Mean()))/2;
-      } else { return profile_.Error(); }
+    if (bits_ & Settings::CORRELATEDERRORS) {
+      return (subsamples_.ErrorHi(Mean()) + subsamples_.ErrorLo(Mean()))/2;
     } else {
-      if (bits_ & Settings::CORRELATEDERRORS) {
-        return (subsamples_.ErrorHi(profile_.MeanPA()) + subsamples_.ErrorLo(profile_.MeanPA()))/2;
-      } else { return profile_.ErrorPA(); }
+      return profile_.Error();
     }
   }
+
   double ErrorLo() const {
     if (TestBit(ASYMMERRORS)) {
-      return (subsamples_.ErrorHi(profile_.MeanPA()) + subsamples_.ErrorLo(profile_.MeanPA()))/2;
+      return subsamples_.ErrorLo(Mean());
     } else {
       return Error();
     }
   }
   double ErrorHi() const {
     if (TestBit(ASYMMERRORS)) {
-      return (subsamples_.ErrorHi(profile_.MeanPA()) + subsamples_.ErrorLo(profile_.MeanPA()))/2;
+      return subsamples_.ErrorHi(Mean());
     } else {
       return Error();
     }
