@@ -53,15 +53,33 @@ class Stats {
   Stats(const Stats &stats)
       : subsamples_(stats.subsamples_), profile_(stats.profile_), bits_(stats.bits_), status_(stats.status_) {}
 
-  double Mean() const { return profile_.Mean(); }
+  double Mean() const { if (status_!=Status::POINTAVERAGE) return profile_.Mean(); else return profile_.MeanPA(); }
   double BootstrapMean() const { return subsamples_.Mean(); }
-  double Error() const {
-    if (bits_ & Settings::CORRELATEDERRORS) {
-      return (subsamples_.ErrorHi(profile_.Mean()) + subsamples_.ErrorLo(profile_.Mean()))/2;
-    } else { return profile_.Error(); }
+  inline double Error() const {
+    if (status_!=Status::POINTAVERAGE) {
+      if (bits_ & Settings::CORRELATEDERRORS) {
+        return (subsamples_.ErrorHi(profile_.Mean()) + subsamples_.ErrorLo(profile_.Mean()))/2;
+      } else { return profile_.Error(); }
+    } else {
+      if (bits_ & Settings::CORRELATEDERRORS) {
+        return (subsamples_.ErrorHi(profile_.MeanPA()) + subsamples_.ErrorLo(profile_.MeanPA()))/2;
+      } else { return profile_.ErrorPA(); }
+    }
   }
-  double ErrorLo() const { return subsamples_.ErrorLo(profile_.Mean()); }
-  double ErrorHi() const { return subsamples_.ErrorHi(profile_.Mean()); }
+  double ErrorLo() const {
+    if (TestBit(ASYMMERRORS)) {
+      return (subsamples_.ErrorHi(profile_.MeanPA()) + subsamples_.ErrorLo(profile_.MeanPA()))/2;
+    } else {
+      return Error();
+    }
+  }
+  double ErrorHi() const {
+    if (TestBit(ASYMMERRORS)) {
+      return (subsamples_.ErrorHi(profile_.MeanPA()) + subsamples_.ErrorLo(profile_.MeanPA()))/2;
+    } else {
+      return Error();
+    }
+  }
 
   friend Stats Merge(const Stats &, const Stats &);
   friend Stats operator+(const Stats &, const Stats &);
@@ -90,13 +108,13 @@ class Stats {
     if (status_==Status::POINTAVERAGE) profile_.CalculatePointAverage();
   }
   Status GetStatus() const { return status_; }
-  bool TestBit(unsigned int bit) { return bits_ & bit; }
+  bool TestBit(unsigned int bit) const { return static_cast<bool>(bits_ & bit); }
   void SetBits(unsigned int bits) { bits_ = bits; }
   void ResetBits(unsigned int bits) { bits_ &= ~(bits & 0x00ffffff); }
 
   void Print();
 
-  size_type GetNSamples() const {return subsamples_.size();}
+  size_type GetNSamples() const { return subsamples_.size(); }
 
  private:
   SubSamples subsamples_;

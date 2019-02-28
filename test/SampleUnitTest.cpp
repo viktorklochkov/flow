@@ -10,10 +10,8 @@
 
 TEST(SampleUnitTest, create) {
   TRandom3 rndm;
-  int nsamples = 1000;
   Qn::SubSamples a(10);
   Qn::SubSamples b(10);
-
   auto c = Qn::SubSamples::MergeNormal(a,b);
   EXPECT_EQ(std::distance(c.begin(),c.end()),std::distance(a.begin(),a.end()));
 }

@@ -46,7 +46,7 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
       exh = xhi - x;
     }
     graph->SetPoint(ibin, x, bin.Mean());
-    graph->SetPointError(ibin, exl, exh, bin.Error(), bin.Error());
+    graph->SetPointError(ibin, exl, exh, bin.ErrorLo(), bin.ErrorHi());
     graph->SetMarkerStyle(kFullCircle);
     ibin++;
   }

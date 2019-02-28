@@ -164,8 +164,8 @@ Stats operator/(const Stats &num, const Stats &den) {
     t_lhs.profile_.CalculatePointAverage();
     t_rhs.profile_.CalculatePointAverage();
     result.status_ = STAT::POINTAVERAGE;
-    result.profile_ = Profile::MultiplicationPointAverage(t_lhs.profile_, t_rhs.profile_);
-    result.subsamples_ = SubSamples::MultiplicationPointAverage(t_lhs.subsamples_, t_rhs.subsamples_);
+    result.profile_ = Profile::DivisionPointAverage(t_lhs.profile_, t_rhs.profile_);
+    result.subsamples_ = SubSamples::DivisionPointAverage(t_lhs.subsamples_, t_rhs.subsamples_);
   }
   if (num.status_==STAT::POINTAVERAGE || den.status_==STAT::POINTAVERAGE) {
     result.profile_ = Profile::DivisionPointAverage(num.profile_, den.profile_);
@@ -193,6 +193,10 @@ void Stats::Print() {
   std::cout << std::bitset<32>(bits_) << std::endl;
   std::cout << "CORRELATEDERRORS " << (bits_ & BIT(16) ? 1 : 0) << std::endl;
   std::cout << "PRODAVGWEIGHTS   " << (bits_ & BIT(17) ? 1 : 0) << std::endl;
+  std::cout << "Status           ";
+  if (status_ == Status::OBSERVABLE){std::cout << "observable" << std::endl;}
+  if (status_ == Status::REFERENCE){std::cout << "reference" << std::endl;}
+  if (status_ == Status::POINTAVERAGE){std::cout << "point average" << std::endl;}
   std::cout << "--SubSampling--" << std::endl;
   subsamples_.Print(profile_.Mean());
   std::cout << "----Profile----" << std::endl;

@@ -62,6 +62,9 @@ class Profile {
     var_ = Error();
   }
 
+  inline double MeanPA() const { return mean_;}
+  inline double ErrorPA() const { return var_;}
+
   void Print() {
     std::cout << "Sum{w y}   " << sumwy_ << std::endl;
     std::cout << "Sum{w y^2} " << sumwy2_ << std::endl;

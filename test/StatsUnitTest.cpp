@@ -39,6 +39,30 @@ TEST(StatsTest, Addition) {
   EXPECT_FLOAT_EQ(0.35136418, stats_C.Error());
 }
 
+TEST(StatsTest, MultiplicationPA) {
+  Qn::Stats stats_A;
+  Qn::Stats stats_B;
+  stats_A.Fill({{1.},1,true},{});
+  stats_B.Fill({{2.},2,true},{});
+  stats_A.SetStatus(Qn::Stats::Status::OBSERVABLE);
+  stats_B.SetStatus(Qn::Stats::Status::OBSERVABLE);
+  auto stats_C = stats_A * stats_B;
+  EXPECT_FLOAT_EQ(2, stats_C.Mean());
+  EXPECT_FLOAT_EQ(0, stats_C.Error());
+}
+
+TEST(StatsTest, DivisionPA) {
+  Qn::Stats stats_A;
+  Qn::Stats stats_B;
+  stats_A.Fill({{1.},1,true},{});
+  stats_B.Fill({{2.},2,true},{});
+  stats_A.SetStatus(Qn::Stats::Status::OBSERVABLE);
+  stats_B.SetStatus(Qn::Stats::Status::OBSERVABLE);
+  auto stats_C = stats_A * stats_B;
+  EXPECT_FLOAT_EQ(1./2 , stats_C.Mean());
+  EXPECT_FLOAT_EQ(0, stats_C.Error());
+}
+
 TEST(StatsTest, Merging) {
   Qn::Stats stats_A;
   Qn::Stats stats_B;
