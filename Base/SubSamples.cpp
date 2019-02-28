@@ -23,6 +23,7 @@ namespace Qn {
 
 SubSamples SubSamples::MergeNormal(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
@@ -34,6 +35,7 @@ SubSamples SubSamples::MergeNormal(const SubSamples &lhs, const SubSamples &rhs)
 
 SubSamples SubSamples::MergePointAverage(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
@@ -45,6 +47,7 @@ SubSamples SubSamples::MergePointAverage(const SubSamples &lhs, const SubSamples
 
 SubSamples SubSamples::AdditionNormal(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
@@ -56,6 +59,7 @@ SubSamples SubSamples::AdditionNormal(const SubSamples &lhs, const SubSamples &r
 
 SubSamples SubSamples::AdditionPointAverage(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
@@ -67,6 +71,7 @@ SubSamples SubSamples::AdditionPointAverage(const SubSamples &lhs, const SubSamp
 
 SubSamples SubSamples::SubtractionNormal(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy - rhs.samples_[i].sumwy;
@@ -78,6 +83,7 @@ SubSamples SubSamples::SubtractionNormal(const SubSamples &lhs, const SubSamples
 
 SubSamples SubSamples::SubtractionPointAverage(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy - rhs.samples_[i].sumwy;
@@ -89,6 +95,7 @@ SubSamples SubSamples::SubtractionPointAverage(const SubSamples &lhs, const SubS
 
 SubSamples SubSamples::MultiplicationNormal(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy*rhs.samples_[i].sumwy;
@@ -100,6 +107,7 @@ SubSamples SubSamples::MultiplicationNormal(const SubSamples &lhs, const SubSamp
 
 SubSamples SubSamples::MultiplicationPointAverage(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
+  subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy*rhs.samples_[i].sumwy;
@@ -111,6 +119,7 @@ SubSamples SubSamples::MultiplicationPointAverage(const SubSamples &lhs, const S
 
 SubSamples SubSamples::DivisionNormal(const SubSamples &num, const SubSamples &den) {
   SubSamples subsamples(num);
+  subsamples.samples_.resize(den.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy/den.samples_[i].sumwy;
@@ -122,6 +131,7 @@ SubSamples SubSamples::DivisionNormal(const SubSamples &num, const SubSamples &d
 
 SubSamples SubSamples::DivisionPointAverage(const SubSamples &num, const SubSamples &den) {
   SubSamples subsamples(num);
+  subsamples.samples_.resize(den.size());
   int i = 0;
   for (auto &sample : subsamples) {
     sample.sumwy = sample.sumwy/den.samples_[i].sumwy;
