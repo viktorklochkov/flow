@@ -370,7 +370,7 @@ class DataContainer : public TObject {
  */
   DataContainer<T>
   Projection(const std::vector<std::string> axis_names = {}) const {
-    auto lambda = [](const T &a, const T &b) { return Qn::Merge(a,b); };
+    auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a,b); };
     return Projection(axis_names, lambda);
   }
 
@@ -560,7 +560,7 @@ class DataContainer : public TObject {
  * @return rebinned datacontainer.
  */
   DataContainer<T> Rebin(const Axis &rebinaxis) const {
-    auto lambda = [](const T &a, const T &b) { return Qn::Merge(a,b); };
+    auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a,b); };
     return Rebin(rebinaxis, lambda);
   }
 
@@ -732,7 +732,10 @@ class DataContainer : public TObject {
    * see contents for possible settings
    * @param bits settings bits
    */
-  void SetBits(unsigned int bits) {(void)bits;}
+  void SetSetting(unsigned int bits) {(void)bits;}
+
+  void ResetSetting(unsigned int bits) {(void)bits;}
+
 //--------------------------------//
 // Visualization methods for ROOT //
 // Template specialization needed //
@@ -789,13 +792,23 @@ inline void DataContainer<Stats>::NDraw(Option_t *option, const std::string &axi
 // Template specializations for bits //
 //-----------------------------------//
 template<>
-inline void DataContainer<Stats>::SetBits(unsigned int bits) {
+inline void DataContainer<Stats>::SetSetting(const unsigned int bits) {
   auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
-  SetBit(bits, true);
+  SetBit(cleanbits, true);
   for (auto &bin : data_) {
     bin.SetBits(cleanbits);
   }
 }
+
+template<>
+inline void DataContainer<Stats>::ResetSetting(const unsigned int bits) {
+  auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
+  ResetBit(cleanbits);
+  for (auto &bin : data_) {
+    bin.ResetBits(cleanbits);
+  }
+}
+
 
 
 //-----------------------------------------//

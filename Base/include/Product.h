@@ -52,7 +52,7 @@ struct Product {
   size_t GetDim() const { return w_vect.size(); }
 };
 
-inline Qn::Product Merge(Qn::Product a, Qn::Product b) {
+inline Qn::Product MergeBins(Qn::Product a, Qn::Product b) {
   Product c;
   int i = 0;
   c.SetDim(a.GetDim());

@@ -162,8 +162,10 @@ class SubSamples {
     return histo;
   }
 
-  static SubSamples MergeNormal(const SubSamples &, const SubSamples &);
-  static SubSamples MergePointAverage(const SubSamples &, const SubSamples &);
+  static SubSamples MergeBinsNormal(const SubSamples &, const SubSamples &);
+  static SubSamples MergeBinsPointAverage(const SubSamples &, const SubSamples &);
+
+  static SubSamples MergeConcat(const SubSamples &, const SubSamples &);
 
   static SubSamples AdditionNormal(const SubSamples &, const SubSamples &);
   static SubSamples AdditionPointAverage(const SubSamples &, const SubSamples &);

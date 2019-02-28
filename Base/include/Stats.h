@@ -79,6 +79,7 @@ class Stats {
   }
 
   friend Stats Merge(const Stats &, const Stats &);
+  friend Stats MergeBins(const Stats &, const Stats &);
   friend Stats operator+(const Stats &, const Stats &);
   friend Stats operator-(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, const Stats &);
@@ -124,6 +125,7 @@ class Stats {
   /// \endcond
 };
 
+Stats MergeBins(const Stats &, const Stats&);
 Stats Merge(const Stats &, const Stats &);
 Stats operator+(const Stats &, const Stats &);
 Stats operator-(const Stats &, const Stats &);

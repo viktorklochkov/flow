@@ -200,7 +200,7 @@ TEST(DataContainerTest, Addition) {
 
 TEST(DataContainerTest, Bits) {
   Qn::DataContainer<Qn::Stats> dcstat;
-  dcstat.SetBits(Qn::Stats::Settings::CORRELATEDERRORS);
+  dcstat.SetSetting(Qn::Stats::Settings::CORRELATEDERRORS);
   std::default_random_engine generator;
   std::normal_distribution<double> gauss(0,1);
   int nsamples = 100;
@@ -214,6 +214,18 @@ TEST(DataContainerTest, Bits) {
   }
   dcstat.TestBit(Qn::Stats::Settings::CORRELATEDERRORS);
   EXPECT_TRUE(dcstat.At(0).TestBit(Qn::Stats::Settings::CORRELATEDERRORS));
+  dcstat.ResetSetting(Qn::Stats::Settings::CORRELATEDERRORS);
+  unsigned int testbit = BIT(1);
+  dcstat.SetBit(testbit);
+  EXPECT_TRUE(dcstat.TestBit(testbit));
+  EXPECT_FALSE(dcstat.At(0).TestBit(testbit));
+  dcstat.ResetSetting(testbit);
+  EXPECT_TRUE(dcstat.TestBit(testbit));
+  dcstat.SetBit(testbit,false);
+  EXPECT_FALSE(dcstat.TestBit(testbit));
+  EXPECT_FALSE(dcstat.At(0).TestBit(testbit));
+  EXPECT_FALSE(dcstat.At(0).TestBit(Qn::Stats::Settings::CORRELATEDERRORS));
+
 }
 
 //

@@ -21,7 +21,7 @@
 
 namespace Qn {
 
-SubSamples SubSamples::MergeNormal(const SubSamples &lhs, const SubSamples &rhs) {
+SubSamples SubSamples::MergeBinsNormal(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
   subsamples.samples_.resize(rhs.size());
   int i = 0;
@@ -33,7 +33,7 @@ SubSamples SubSamples::MergeNormal(const SubSamples &lhs, const SubSamples &rhs)
   return subsamples;
 }
 
-SubSamples SubSamples::MergePointAverage(const SubSamples &lhs, const SubSamples &rhs) {
+SubSamples SubSamples::MergeBinsPointAverage(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
   subsamples.samples_.resize(rhs.size());
   int i = 0;
@@ -42,6 +42,12 @@ SubSamples SubSamples::MergePointAverage(const SubSamples &lhs, const SubSamples
     sample.sumw = sample.sumw + rhs.samples_[i].sumw;
     ++i;
   }
+  return subsamples;
+}
+
+SubSamples SubSamples::MergeConcat(const SubSamples &lhs, const SubSamples &rhs) {
+  SubSamples subsamples(lhs);
+  subsamples.samples_.insert(subsamples.end(),rhs.begin(),rhs.end());
   return subsamples;
 }
 
