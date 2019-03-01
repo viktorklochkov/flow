@@ -63,11 +63,6 @@ class Correlation {
     names_ = names;
     function_ = function;
     use_weights_ = weights;
-    int size_weights = 0;
-    for (auto w : use_weights_) {
-      if (w) ++size_weights;
-    }
-    w_vec_.resize(size_weights);
     CreateCorrelationContainer(input);
   }
 
@@ -81,7 +76,6 @@ class Correlation {
   AXES axes_event_; ///< vector of event axes used in the correlation
   std::function<double(std::vector<Qn::QVector> &)> function_; ///< correlation function
   std::vector<std::string> names_; ///< vector of input names
-  std::vector<double> w_vec_; ///< vector of weights of the input q vectors reused for every event
   std::vector<bool> use_weights_;
 
 /**

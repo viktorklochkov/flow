@@ -38,18 +38,17 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
         }
       }
       contents[iteration] = bin;
-      auto is_valid = std::all_of(contents.begin(), contents.end(), [](QVector q) { return q.n() > 0; });
+      data_correlation_.At(c_index_).validity = std::all_of(contents.begin(), contents.end(), [](QVector q) { return q.n() > 0; });
+      data_correlation_.At(c_index_).result = function_(contents);
       int iq = 0;
       int iw = 0;
       for (const auto &q : contents) {
         if (use_weights_[iq]) {
-          w_vec_[iw] = q.sum_weights_;
+          data_correlation_.At(c_index_).w_vect[iw] = q.sum_weights_;
           ++iw;
         }
         ++iq;
       }
-      Qn::Product prod(w_vec_, function_(contents), is_valid);
-      data_correlation_.At(c_index_) = prod;
       ++ibin;
     }
     return;
@@ -72,7 +71,9 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
 }
 
 void Correlation::Fill(const Correlation::DataContainers &input, const std::vector<unsigned long> &eventindex) {
-  data_correlation_.ClearData();
+  for (auto &data : data_correlation_) {
+    data.validity = false;
+  }
   std::vector<QVector> contents;
   contents.resize(input.size());
   uint iteration = 0;
@@ -109,6 +110,13 @@ void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &
     }
   }
   c_index_.resize(size);
+  auto size_weights = 0;
+  for (auto w : use_weights_) {
+    if (w) ++size_weights;
+  }
+  for (auto &data : data_correlation_) {
+    data.w_vect.resize(size_weights);
+  }
 }
 
 }
