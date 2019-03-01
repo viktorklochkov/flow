@@ -43,11 +43,12 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   manager.AddQVectors("Det1, Det2");
   std::cout << "add correlation" << std::endl;
   TTreeReaderValue<float> eventvalue(*reader, "Ev1");
-  manager.AddCorrelation("Correlation1","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1); },10);
-  manager.SetRefQinCorrelation("Correlation1",{Qn::Weight::REFERENCE, Qn::Weight::REFERENCE});
-  manager.AddCorrelation("Correlation2","Det1",[](std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n()); },10);
-  manager.SetRefQinCorrelation("Correlation2",{Qn::Weight::OBSERVABLE});
-  manager.AddCorrelation("Correlation3","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1); },10);
+  manager.AddCorrelation("c1","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
+  manager.SetRefQinCorrelation("c1",{Qn::Weight::REFERENCE, Qn::Weight::REFERENCE});
+  manager.AddCorrelation("avg","Det1",[](std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n());}, Qn::Sampler::Resample::OFF);
+  manager.SetRefQinCorrelation("avg",{Qn::Weight::OBSERVABLE});
+  manager.AddCorrelation("c2","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
+  manager.ConfigureResampler(Qn::Sampler::Method::BOOTSTRAP,10);
   int events = 0;
   reader->SetEntry(0);
   std::cout << "init" << std::endl;
@@ -60,13 +61,15 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   }
   EXPECT_EQ(3, events);
   manager.Finalize();
-  auto correlation = manager.GetResult("Correlation1");
-  auto correlation2 = manager.GetResult("Correlation3");
+  auto correlation = manager.GetResult("c1");
+  auto correlation2 = manager.GetResult("c2");
   for (auto &bin : correlation) {
     EXPECT_FLOAT_EQ(2.0, bin.Mean());
+    EXPECT_EQ(10,bin.GetNSamples());
   }
-  auto average = manager.GetResult("Correlation2");
+  auto average = manager.GetResult("avg");
   for (auto &bin : average) {
     EXPECT_FLOAT_EQ(sqrt(2.0), bin.Mean());
+    EXPECT_EQ(0,bin.GetNSamples());
   }
 }

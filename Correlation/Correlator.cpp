@@ -21,7 +21,12 @@ void Qn::Correlator::FillCorrelation(const std::vector<Qn::DataContainerQVector>
                                      const std::vector<unsigned long> &eventindex,
                                      std::size_t event_id) {
   correlation_.Fill(inputs, eventindex);
-  auto sample_id_vector = sampler_.GetFillVector(event_id);
+  std::vector<size_type> sample_id_vector;
+  if (use_resampling_) {
+    sample_id_vector = sampler_->GetFillVector(event_id);
+  } else {
+    sample_id_vector = {};
+  }
   int ibin = 0;
   for (const auto &corr_in_event : correlation_.GetCorrelation()) {
     if (corr_in_event.validity) result_.At(ibin).Fill(corr_in_event, sample_id_vector);
@@ -80,14 +85,4 @@ void Qn::Correlator::RemoveAutoCorrelation() {
       correlation_.GetCorrelation().ClearDataAt(bin);
     }
   }
-}
-
-void Qn::Correlator::BuildSamples(std::size_t nevents) {
-  sampler_.SetNumberOfEvents(nevents);
-  auto nsamples = sampler_.GetNumSamples();
-  result_ = result_.Map([nsamples](Stats stat) {
-    stat.SetNumberOfSubSamples(nsamples);
-    return stat;
-  });
-  sampler_.CreateSamples();
 }

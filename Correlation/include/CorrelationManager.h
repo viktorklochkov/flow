@@ -48,21 +48,18 @@ class CorrelationManager {
 
   void AddEventVariable(const Qn::Axis &eventaxis);
 
-  void AddCorrelation(std::string name, const std::string &input_names, FUNCTION &&lambda, int nsamples,
-                      Sampler::Method method=Sampler::Method::BOOTSTRAP);
-
-  void AddCorrelation(std::string name, const std::string &containernames, FUNCTION &&lambda);
+  void AddCorrelation(std::string name, const std::string &input_names, FUNCTION &&lambda, Qn::Sampler::Resample resample = Qn::Sampler::Resample::ON);
 
   void SetRefQinCorrelation(const std::string &name, const std::vector<Qn::Weight> &use_weights) {
     correlations_.at(name).SetReferenceQVectors(use_weights);
   }
 
+  void ConfigureResampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
+
 
   void AddESE(const std::string &name, int harmonic, float qmax);
 
-
   void Initialize();
-
 
   void Process();
 
@@ -106,7 +103,28 @@ class CorrelationManager {
 
   bool IsESE() const;
 
-/**
+ private:
+  Qn::Sampler sampler_;
+  std::string correlation_file_name_;
+  std::string ese_file_name_;
+  std::unique_ptr<TFile> ese_file_;
+  std::shared_ptr<TTreeReader> reader_;
+  std::map<std::string, Qn::Correlator> correlations_;
+  std::map<std::string, Qn::Correlator> ese_correlations_;
+  std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
+  std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
+  std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
+  std::map<std::string, Qn::DataContainerQVector> qvectors_;
+  std::vector<float> event_values_;
+  std::vector<unsigned long> eventbin_;
+  std::vector<Qn::Axis> event_axes_;
+  std::vector<Qn::Axis> eventshape_axes_;
+  std::unique_ptr<Qn::DataContainerEventShape> event_shape_ = nullptr;
+  bool fill_ese_ = false;
+  bool use_ese_ = false;
+  size_type num_events_ = 0;
+
+  /**
  * Tokenize input string
  * @tparam ContainerT
  * @param str
@@ -131,26 +149,6 @@ class CorrelationManager {
       lastPos = pos + 1;
     }
   }
-
- private:
-  std::string correlation_file_name_;
-  std::string ese_file_name_;
-  std::unique_ptr<TFile> ese_file_;
-  std::shared_ptr<TTreeReader> reader_;
-  std::map<std::string, Qn::Correlator> correlations_;
-  std::map<std::string, Qn::Correlator> ese_correlations_;
-  std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
-  std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
-  std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
-  std::map<std::string, Qn::DataContainerQVector> qvectors_;
-  std::vector<float> event_values_;
-  std::vector<unsigned long> eventbin_;
-  std::vector<Qn::Axis> event_axes_;
-  std::vector<Qn::Axis> eventshape_axes_;
-  std::unique_ptr<Qn::DataContainerEventShape> event_shape_ = nullptr;
-  bool fill_ese_ = false;
-  bool use_ese_ = false;
-  size_type num_events_ = 0;
 
 };
 }

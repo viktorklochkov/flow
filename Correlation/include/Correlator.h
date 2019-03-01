@@ -54,9 +54,19 @@ class Correlator {
     use_weights_[0] = true;
   }
 
-  void ConfigureSampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
+//  void ConfigureSampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
 
-  void BuildSamples(std::size_t nevents);
+//  void BuildSamples(std::size_t nevents);
+
+  void SetSampler(Qn::Sampler *sampler_ptr) {
+    sampler_ = sampler_ptr;
+    size_type nsamples = 0;
+    if (use_resampling_) nsamples = sampler_->GetNumSamples();
+    result_ = result_.Map([nsamples](Stats stat) {
+      stat.SetNumberOfSubSamples(nsamples);
+      return stat;
+    });
+  }
 
   const std::vector<std::string> &GetInputNames() const { return input_names_; }
 
@@ -74,7 +84,7 @@ class Correlator {
 
   DataContainerStats GetResult() const { return result_; }
 
-  std::shared_ptr<DataContainer<TH1F>> GetBinnedResult() const { return binned_result_; }
+  std::shared_ptr<DataContainer < TH1F>> GetBinnedResult() const { return binned_result_; }
 
   void SetReferenceQVectors(std::vector<Qn::Weight> weights) {
     for (size_type i = 0; i < use_weights_.size(); ++i) {
@@ -83,8 +93,11 @@ class Correlator {
     }
   }
 
+  void UseResampling(bool use_resampling) { use_resampling_ = use_resampling; }
+
  private:
-  Qn::Sampler sampler_;
+  bool use_resampling_;
+  Qn::Sampler *sampler_;
   Qn::Correlation correlation_;
   Qn::DataContainerStats result_;
   std::shared_ptr<Qn::DataContainer<TH1F>> binned_result_;

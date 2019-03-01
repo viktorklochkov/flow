@@ -30,6 +30,11 @@ class Sampler {
     SUBSAMPLING,
   };
 
+  enum class Resample {
+    ON = true,
+    OFF = false
+  };
+
   Sampler() = default;
 
   explicit Sampler(size_type nevents, size_type nsamples) :
@@ -74,6 +79,9 @@ class Sampler {
   inline void UpdateEvent() { ievent_++; }
   inline void ResetEvent() { ievent_ = 0; }
   inline std::vector<std::vector<size_type>> GetSamples() const { return samples_; }
+  void SetSamples(const std::vector<std::vector<size_type>> &samples) {
+    samples_ = samples;
+  }
 
  private:
   Method method_ = Method::NONE;

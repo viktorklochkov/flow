@@ -90,27 +90,11 @@ void CorrelationManager::AddEventVariable(const Qn::Axis &eventaxis) {
 void CorrelationManager::AddCorrelation(std::string name,
                                         const std::string &input_names,
                                         CorrelationManager::FUNCTION &&lambda,
-                                        int nsamples,
-                                        Sampler::Method method) {
+                                        Qn::Sampler::Resample resample) {
   std::vector<std::string> containernamelist;
   tokenize(input_names, containernamelist, ", ", true);
   Qn::Correlator correlator(containernamelist, lambda);
-  correlator.ConfigureSampler(method, nsamples);
-  correlations_.emplace(name, std::move(correlator));
-}
-/**
- * Adds a correlation to the output.
- * @param name Name of the correlation under which it is saved to the file
- * @param containernames Names of the input datacontainers.
- * @param lambda Function which is used to calculate the correlation.
- */
-void CorrelationManager::AddCorrelation(std::string name,
-                                        const std::string &containernames,
-                                        CorrelationManager::FUNCTION &&lambda) {
-  std::vector<std::string> containernamelist;
-  tokenize(containernames, containernamelist, ", ", true);
-  Qn::Correlator correlator(containernamelist, lambda);
-  correlator.ConfigureSampler(Qn::Sampler::Method::NONE, 0);
+  if (resample == Sampler::Resample::ON) correlator.UseResampling(true);
   correlations_.emplace(name, std::move(correlator));
 }
 /**
@@ -126,7 +110,7 @@ void CorrelationManager::AddESE(const std::string &names, int harmonic, float qm
     return 1./TMath::Sqrt(a[0].sumweights())*a[0].DeNormal().mag(harmonic);
   };
   Qn::Correlator correlator(esenames, Mag, TH1F("q", ";q;%;", 100, 0., qmax));
-  correlator.ConfigureSampler(Sampler::Method::NONE, 0);
+  correlator.UseResampling(false);
   ese_correlations_.emplace("ESE_" + esenames[0] + esenames[1], std::move(correlator));
 }
 /**
@@ -154,6 +138,8 @@ void CorrelationManager::Initialize() {
     i++;
   }
   MakeProjections();
+  sampler_.SetNumberOfEvents(num_events_);
+  sampler_.CreateSamples();
   BuildESECorrelation();
   BuildCorrelations();
 }
@@ -219,7 +205,33 @@ void CorrelationManager::BuildCorrelations() {
       axes.push_back(eventshape_axes_.at(0));
     }
     corr.second.ConfigureCorrelation(qvectors, axes);
-    corr.second.BuildSamples(num_events_);
+    corr.second.SetSampler(&sampler_);
+  }
+}
+
+void CorrelationManager::BuildESECorrelation() {
+  if (!use_ese_) return;
+  for (const auto &ese : ese_correlations_) {
+    if (!event_shape_) {
+      event_shape_ = std::make_unique<Qn::DataContainerEventShape>();
+      event_shape_->AddAxes(event_axes_);
+    }
+    if (event_shape_ && !fill_ese_) {
+      eventshape_axes_.emplace_back(ese.first, 10, 0., 1.);
+    }
+    if (event_shape_ && !fill_ese_) {
+      event_values_.emplace_back(-999);
+    }
+  }
+  std::vector<Qn::DataContainerQVector> qvectors;
+  for (auto &corr : ese_correlations_) {
+    qvectors.clear();
+    qvectors.reserve(corr.second.GetInputNames().size());
+    for (const auto &cname : corr.second.GetInputNames()) {
+      qvectors.push_back(qvectors_.at(cname));
+    }
+    corr.second.ConfigureCorrelation(qvectors, event_axes_);
+    corr.second.SetSampler(&sampler_);
   }
 }
 
@@ -232,7 +244,6 @@ void CorrelationManager::FillESE(std::map<std::string, Qn::Correlator> &corr) {
       inputs.at(i) = qvectors_.at(name);
       ++i;
     }
-
     pair.second.FillCorrelation(inputs, eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
   }
 }
@@ -301,32 +312,6 @@ bool CorrelationManager::CheckESEEvent() {
     return true;
   } else {
     return false;
-  }
-}
-
-void CorrelationManager::BuildESECorrelation() {
-  if (!use_ese_) return;
-  for (const auto &ese : ese_correlations_) {
-    if (!event_shape_) {
-      event_shape_ = std::make_unique<Qn::DataContainerEventShape>();
-      event_shape_->AddAxes(event_axes_);
-    }
-    if (event_shape_ && !fill_ese_) {
-      eventshape_axes_.emplace_back(ese.first, 10, 0., 1.);
-    }
-    if (event_shape_ && !fill_ese_) {
-      event_values_.emplace_back(-999);
-    }
-  }
-  std::vector<Qn::DataContainerQVector> qvectors;
-  for (auto &corr : ese_correlations_) {
-    qvectors.clear();
-    qvectors.reserve(corr.second.GetInputNames().size());
-    for (const auto &cname : corr.second.GetInputNames()) {
-      qvectors.push_back(qvectors_.at(cname));
-    }
-    corr.second.ConfigureCorrelation(qvectors, event_axes_);
-    corr.second.BuildSamples(num_events_);
   }
 }
 
