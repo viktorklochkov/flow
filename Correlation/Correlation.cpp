@@ -20,7 +20,6 @@
 namespace Qn {
 
 void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
-                                  std::vector<QVector> &contents,
                                   int iterationoffset,
                                   u_int iteration,
                                   const DataContainers &input) {
@@ -37,12 +36,13 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
           ++i_index;
         }
       }
-      contents[iteration] = bin;
-      data_correlation_.At(c_index_).validity = std::all_of(contents.begin(), contents.end(), [](QVector q) { return q.n() > 0; });
-      data_correlation_.At(c_index_).result = function_(contents);
+      contents_[iteration] = bin;
+      data_correlation_.At(c_index_).validity =
+          std::all_of(contents_.begin(), contents_.end(), [](const QVector &q) { return q.n() > 0; });
+      data_correlation_.At(c_index_).result = function_(contents_);
       int iq = 0;
       int iw = 0;
-      for (const auto &q : contents) {
+      for (const auto &q : contents_) {
         if (use_weights_[iq]) {
           data_correlation_.At(c_index_).w_vect[iw] = q.sum_weights_;
           ++iw;
@@ -64,8 +64,8 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
         ++i_index;
       }
     }
-    contents[iteration] = bin;
-    FillCorrelation(eventindex, contents, offset, iteration + 1, input);
+    contents_[iteration] = bin;
+    FillCorrelation(eventindex, offset, iteration + 1, input);
     ++ibin;
   }
 }
@@ -74,19 +74,21 @@ void Correlation::Fill(const Correlation::DataContainers &input, const std::vect
   for (auto &data : data_correlation_) {
     data.validity = false;
   }
-  std::vector<QVector> contents;
-  contents.resize(input.size());
+  for (auto &q : contents_) {
+    q.n_ = 0;
+  }
   uint iteration = 0;
   int ii = 0;
   for (auto eventind : eventindex) {
     c_index_[ii] = eventind;
     ++ii;
   }
-  FillCorrelation(eventindex, contents, ii, iteration, input);
+  FillCorrelation(eventindex, ii, iteration, input);
 }
 
 void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &inputs) {
   int i = 0;
+  contents_.resize(inputs.size());
   data_correlation_.AddAxes(axes_event_);
   auto size = axes_event_.size();
   for (auto &input : inputs) {

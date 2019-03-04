@@ -17,19 +17,17 @@
 
 #include "Correlator.h"
 
-void Qn::Correlator::FillCorrelation(const std::vector<Qn::DataContainerQVector> &inputs,
-                                     const std::vector<unsigned long> &eventindex,
-                                     std::size_t event_id) {
-  correlation_.Fill(inputs, eventindex);
-  std::vector<size_type> sample_id_vector;
-  if (use_resampling_) {
-    sample_id_vector = sampler_->GetFillVector(event_id);
-  } else {
-    sample_id_vector = {};
-  }
+void Qn::Correlator::FillCorrelation(const std::vector<unsigned long> &eventindex, std::size_t event_id) {
+  correlation_.Fill(inputs_, eventindex);
   int ibin = 0;
-  for (const auto &corr_in_event : correlation_.GetCorrelation()) {
-    if (corr_in_event.validity) result_.At(ibin).Fill(corr_in_event, sample_id_vector);
+  for (const auto &corr_in_event : *correlation_.GetCorrelation()) {
+    if (corr_in_event.validity) {
+      if (use_resampling_) {
+        result_.At(ibin).Fill(corr_in_event, sampler_->GetFillVector(event_id));
+      } else {
+        result_.At(ibin).Fill(corr_in_event);
+      }
+    }
     if (corr_in_event.validity && binned_result_) {
       binned_result_->At(ibin).Fill(corr_in_event.result);
     }
@@ -37,33 +35,11 @@ void Qn::Correlator::FillCorrelation(const std::vector<Qn::DataContainerQVector>
   }
 }
 
-void Qn::Correlator::FindAutoCorrelations() {
-  std::vector<std::vector<size_type>> auto_correlations;
-  auto n_event_axes = correlation_.GetEventAxes().size();
-  for (unsigned long i_input = 0; i_input < input_names_.size(); ++i_input) {
-    std::vector<unsigned long> correlated_inputs;
-    correlated_inputs.push_back(i_input + n_event_axes);
-    for (unsigned long j_input = i_input + 1; j_input < input_names_.size(); ++j_input) {
-      if (input_names_[i_input]==input_names_[j_input]) {
-        correlated_inputs.push_back(j_input + n_event_axes);
-      }
-    }
-    if (correlated_inputs.size() > 1) auto_correlations.push_back(correlated_inputs);
-  }
-  auto correlation_axes = correlation_.GetCorrelation().GetAxes();
-  for (const auto &correlation : auto_correlations) {
-    std::vector<Qn::Axis> axes;
-    for (const auto id : correlation) {
-      axes.push_back(correlation_axes[id]);
-    }
-    autocorrelated_bins_.push_back(correlation_.GetCorrelation().GetDiagonal(axes));
-  }
-}
-
 void Qn::Correlator::ConfigureCorrelation(const std::vector<Qn::DataContainerQVector> &input,
                                           std::vector<Qn::Axis> event) {
+  inputs_.resize(input.size());
   correlation_.ConfigureCorrelation(input, event, lambda_correlation_, input_names_, use_weights_);
-  result_.AddAxes(correlation_.GetCorrelation().GetAxes());
+  result_.AddAxes(correlation_.GetCorrelation()->GetAxes());
   auto use_weights = std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; });
   for (auto &bin : result_) {
     if (use_weights) {
@@ -74,15 +50,38 @@ void Qn::Correlator::ConfigureCorrelation(const std::vector<Qn::DataContainerQVe
   }
   if (binned_result_) {
     auto base_hist = binned_result_->At(0);
-    binned_result_->AddAxes(correlation_.GetCorrelation().GetAxes());
+    binned_result_->AddAxes(correlation_.GetCorrelation()->GetAxes());
     binned_result_->InitializeEntries(base_hist);
   }
 }
 
-void Qn::Correlator::RemoveAutoCorrelation() {
-  for (auto bins : autocorrelated_bins_) {
-    for (auto bin : bins) {
-      correlation_.GetCorrelation().ClearDataAt(bin);
-    }
-  }
-}
+//void Qn::Correlator::FindAutoCorrelations() {
+//  std::vector<std::vector<size_type>> auto_correlations;
+//  auto n_event_axes = correlation_.GetEventAxes().size();
+//  for (unsigned long i_input = 0; i_input < input_names_.size(); ++i_input) {
+//    std::vector<unsigned long> correlated_inputs;
+//    correlated_inputs.push_back(i_input + n_event_axes);
+//    for (unsigned long j_input = i_input + 1; j_input < input_names_.size(); ++j_input) {
+//      if (input_names_[i_input]==input_names_[j_input]) {
+//        correlated_inputs.push_back(j_input + n_event_axes);
+//      }
+//    }
+//    if (correlated_inputs.size() > 1) auto_correlations.push_back(correlated_inputs);
+//  }
+//  auto correlation_axes = correlation_.GetCorrelation()->GetAxes();
+//  for (const auto &correlation : auto_correlations) {
+//    std::vector<Qn::Axis> axes;
+//    for (const auto id : correlation) {
+//      axes.push_back(correlation_axes[id]);
+//    }
+//    autocorrelated_bins_.push_back(correlation_.GetCorrelation()->GetDiagonal(axes));
+//  }
+//}
+
+//void Qn::Correlator::RemoveAutoCorrelation() {
+//  for (auto bins : autocorrelated_bins_) {
+//    for (auto bin : bins) {
+//      correlation_.GetCorrelation().ClearDataAt(bin);
+//    }
+//  }
+//}

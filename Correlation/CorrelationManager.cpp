@@ -238,26 +238,22 @@ void CorrelationManager::BuildESECorrelation() {
 void CorrelationManager::FillESE(std::map<std::string, Qn::Correlator> &corr) {
   for (auto &pair : corr) {
     u_long i = 0;
-    std::vector<DataContainerQVector> inputs;
-    inputs.resize(pair.second.GetInputNames().size());
     for (const auto &name : pair.second.GetInputNames()) {
-      inputs.at(i) = qvectors_.at(name);
+      pair.second.Inputs()->at(i) = qvectors_.at(name);
       ++i;
     }
-    pair.second.FillCorrelation(inputs, eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
+    pair.second.FillCorrelation(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
   }
 }
 
 void CorrelationManager::FillCorrelations(std::map<std::string, Qn::Correlator> &corr) {
   for (auto &pair : corr) {
     u_long i = 0;
-    std::vector<DataContainerQVector> inputs;
-    inputs.resize(pair.second.GetInputNames().size());
     for (const auto &name : pair.second.GetInputNames()) {
-      inputs.at(i) = qvectors_.at(name);
+      pair.second.Inputs()->at(i) = qvectors_.at(name);
       ++i;
     }
-    pair.second.FillCorrelation(inputs, eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
+    pair.second.FillCorrelation(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
   }
 }
 
@@ -290,7 +286,7 @@ bool CorrelationManager::CheckEvent() {
 bool CorrelationManager::CheckESEEvent() {
   if (use_ese_) {
     for (const auto &bin : ese_correlations_) {
-      auto ese = bin.second.GetCorrelation().GetCorrelation();
+      auto ese = *bin.second.GetCorrelation().GetCorrelation();
       auto correlation = ese.At(eventbin_);
       double value = -999.;
       if (correlation.validity) value = correlation.result;

@@ -66,7 +66,7 @@ class Correlation {
     CreateCorrelationContainer(input);
   }
 
-  DataContainerProduct GetCorrelation() const { return data_correlation_; }
+  DataContainerProduct* GetCorrelation() { return &data_correlation_; }
   AXES GetEventAxes() const { return axes_event_; }
   inline double &At(size_type index) { return data_correlation_.At(index).result; }
  private:
@@ -77,6 +77,7 @@ class Correlation {
   std::function<double(std::vector<Qn::QVector> &)> function_; ///< correlation function
   std::vector<std::string> names_; ///< vector of input names
   std::vector<bool> use_weights_;
+  std::vector<QVector> contents_;
 
 /**
  * Create the correlation function. Automatically called at creation of Correlation object.
@@ -103,7 +104,6 @@ class Correlation {
  * @param cindex compacted index of the bin in the correlation datacontainer.
  */
   void FillCorrelation(const std::vector<unsigned long> &eventindex,
-                       std::vector<QVector> &contents,
                        int iterationoffset,
                        u_int iteration,
                        const DataContainers &input);

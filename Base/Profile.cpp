@@ -103,7 +103,7 @@ Profile Profile::DivisionPointAverage(const Profile &num, const Profile &den) {
 
 Profile Profile::SqrtNormal(const Profile &prof) {
   Profile result;
-  result.sumwy_ = sqrt(prof.sumwy_);
+  result.sumwy_ = std::signbit(prof.sumwy_) ? -1*sqrt(fabs(prof.sumwy_)) : sqrt(fabs(prof.sumwy_));
   result.sumwy2_ = sqrt(prof.sumwy2_);
   result.sumw_ = sqrt(prof.sumw_);
   result.sumw2_ = sqrt(prof.sumw2_);

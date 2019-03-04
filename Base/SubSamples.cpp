@@ -151,7 +151,7 @@ SubSamples SubSamples::SqrtNormal(const SubSamples &samp) {
   SubSamples subsamples(samp);
   int i = 0;
   for (auto &sum : subsamples) {
-    sum.sumwy = sqrt(samp.samples_[i].sumwy);
+    sum.sumwy = std::signbit(samp.samples_[i].sumwy) ? -1*sqrt(fabs(samp.samples_[i].sumwy)) : sqrt(fabs(samp.samples_[i].sumwy));
     sum.sumw = sqrt(samp.samples_[i].sumw);
     ++i;
   }
@@ -162,7 +162,7 @@ SubSamples SubSamples::SqrtPointAverage(const SubSamples &samp) {
   SubSamples subsamples(samp);
   int i = 0;
   for (auto &sum : subsamples) {
-    sum.sumwy = sqrt(samp.samples_[i].sumwy);
+    sum.sumwy = std::signbit(samp.samples_[i].sumwy) ? -1*sqrt(fabs(samp.samples_[i].sumwy)) : sqrt(fabs(samp.samples_[i].sumwy));
     sum.sumw = sqrt(samp.samples_[i].sumw);
     ++i;
   }

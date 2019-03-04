@@ -22,18 +22,22 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   tree.Branch("Det1", &data1);
   tree.Branch("Det2", &data1);
 
-  event->SetVariable("Ev1", 0.5);
-  tree.Fill();
+  auto ne = 100000;
 
-  event->Reset();
-  event->SetVariable("Ev1", 1.5);
-  tree.Fill();
+  for (int i = 0; i < ne; ++i) {
+    event->SetVariable("Ev1", 0.5);
+    tree.Fill();
+  }
+  for (int i = 0; i < ne; ++i) {
+    event->SetVariable("Ev1", 1.5);
+    tree.Fill();
+  }
+  for (int i = 0; i < ne; ++i) {
+    event->SetVariable("Ev1", 2.5);
+    tree.Fill();
+  }
 
-  event->Reset();
-  event->SetVariable("Ev1", 2.5);
-  tree.Fill();
-
-  EXPECT_EQ(3, tree.GetEntries());
+  EXPECT_EQ(3*ne, tree.GetEntries());
   std::cout << "create manager" << std::endl;
   std::shared_ptr<TTreeReader> reader(new TTreeReader(&tree));
   Qn::CorrelationManager manager(reader);
@@ -55,11 +59,12 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 
   manager.Initialize();
   reader->Restart();
+  std::cout << "run" << std::endl;
   while (reader->Next()) {
     manager.Process();
     events++;
   }
-  EXPECT_EQ(3, events);
+  EXPECT_EQ(3*ne, events);
   manager.Finalize();
   auto correlation = manager.GetResult("c1");
   auto correlation2 = manager.GetResult("c2");

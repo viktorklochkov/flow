@@ -93,6 +93,10 @@ class Stats {
     profile_.Fill(product);
   }
 
+  void Fill(const Product &product) {
+    profile_.Fill(product);
+  }
+
   void SetNumberOfSubSamples(size_type nsamples) {
     subsamples_.SetNumberOfSamples(nsamples);
   }

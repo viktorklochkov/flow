@@ -47,7 +47,6 @@ class Correlator {
         lambda_correlation_(std::move(lambda)),
         input_names_(std::move(input_names)) {
     binned_result_->InitializeEntries(base);
-    use_weights_.resize(input_names_.size());
     for (auto q : use_weights_) {
       q = false;
     }
@@ -70,9 +69,7 @@ class Correlator {
 
   const std::vector<std::string> &GetInputNames() const { return input_names_; }
 
-  void FillCorrelation(const std::vector<DataContainerQVector> &inputs,
-                       const std::vector<unsigned long> &eventindex,
-                       std::size_t event_id);
+  void FillCorrelation(const std::vector<unsigned long> &eventindex, std::size_t event_id);
 
   void FindAutoCorrelations();
 
@@ -83,6 +80,8 @@ class Correlator {
   Qn::Correlation GetCorrelation() const { return correlation_; }
 
   DataContainerStats GetResult() const { return result_; }
+
+  std::vector<DataContainerQVector> *Inputs() { return &inputs_; }
 
   std::shared_ptr<DataContainer < TH1F>> GetBinnedResult() const { return binned_result_; }
 
@@ -105,6 +104,7 @@ class Correlator {
   std::vector<std::string> input_names_;
   std::vector<std::vector<size_type>> autocorrelated_bins_;
   std::vector<bool> use_weights_;
+  std::vector<DataContainerQVector> inputs_;
 };
 }
 
