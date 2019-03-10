@@ -45,6 +45,8 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 
   manager.AddEventVariable({"Ev1", 3, 0, 3});
   manager.AddQVectors("Det1, Det2");
+  manager.SetESECalibrationFile("testese.root");
+  manager.AddESE("Det1, Det1", 1, 10);
   std::cout << "add correlation" << std::endl;
   TTreeReaderValue<float> eventvalue(*reader, "Ev1");
   manager.AddCorrelation("c1","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});

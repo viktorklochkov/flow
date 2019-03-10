@@ -47,7 +47,7 @@ SubSamples SubSamples::MergeBinsPointAverage(const SubSamples &lhs, const SubSam
 
 SubSamples SubSamples::MergeConcat(const SubSamples &lhs, const SubSamples &rhs) {
   SubSamples subsamples(lhs);
-  subsamples.samples_.insert(subsamples.end(),rhs.begin(),rhs.end());
+  subsamples.samples_.insert(subsamples.end(), rhs.begin(), rhs.end());
   return subsamples;
 }
 
@@ -68,8 +68,9 @@ SubSamples SubSamples::AdditionPointAverage(const SubSamples &lhs, const SubSamp
   subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
-    sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
-    sample.sumw = sample.sumw + rhs.samples_[i].sumw;
+    sample.sumwy =
+        (sample.sumwy*sample.sumw + rhs.samples_[i].sumwy*rhs.samples_[i].sumw)/(rhs.samples_[i].sumw + sample.sumw);
+    sample.sumw = (sample.sumw*sample.sumw + rhs.samples_[i].sumw *rhs.samples_[i].sumw)/(rhs.samples_[i].sumw + sample.sumw);
     ++i;
   }
   return subsamples;
@@ -151,7 +152,8 @@ SubSamples SubSamples::SqrtNormal(const SubSamples &samp) {
   SubSamples subsamples(samp);
   int i = 0;
   for (auto &sum : subsamples) {
-    sum.sumwy = std::signbit(samp.samples_[i].sumwy) ? -1*sqrt(fabs(samp.samples_[i].sumwy)) : sqrt(fabs(samp.samples_[i].sumwy));
+    sum.sumwy = std::signbit(samp.samples_[i].sumwy) ? -1*sqrt(fabs(samp.samples_[i].sumwy))
+                                                     : sqrt(fabs(samp.samples_[i].sumwy));
     sum.sumw = sqrt(samp.samples_[i].sumw);
     ++i;
   }
@@ -162,7 +164,8 @@ SubSamples SubSamples::SqrtPointAverage(const SubSamples &samp) {
   SubSamples subsamples(samp);
   int i = 0;
   for (auto &sum : subsamples) {
-    sum.sumwy = std::signbit(samp.samples_[i].sumwy) ? -1*sqrt(fabs(samp.samples_[i].sumwy)) : sqrt(fabs(samp.samples_[i].sumwy));
+    sum.sumwy = std::signbit(samp.samples_[i].sumwy) ? -1*sqrt(fabs(samp.samples_[i].sumwy))
+                                                     : sqrt(fabs(samp.samples_[i].sumwy));
     sum.sumw = sqrt(samp.samples_[i].sumw);
     ++i;
   }

@@ -107,11 +107,11 @@ void CorrelationManager::AddESE(const std::string &names, int harmonic, float qm
   tokenize(names, esenames, ", ", true);
   use_ese_ = true;
   auto Mag = [harmonic](const std::vector<Qn::QVector> &a) {
-    return 1./TMath::Sqrt(a[0].sumweights())*a[0].DeNormal().mag(harmonic);
+    return 1./TMath::Sqrt(a[0].sumweights()+a[1].sumweights())*(a[0].DeNormal().mag(harmonic)+a[1].DeNormal().mag(harmonic));
   };
   Qn::Correlator correlator(esenames, Mag, TH1F("q", ";q;%;", 100, 0., qmax));
   correlator.UseResampling(false);
-  ese_correlations_.emplace("ESE_" + esenames[0] + esenames[1], std::move(correlator));
+  ese_correlations_.emplace("ESE_" + esenames.at(0) + esenames.at(1), std::move(correlator));
 }
 /**
  * Initializes the Correlation task.

@@ -47,15 +47,12 @@ class Correlator {
         lambda_correlation_(std::move(lambda)),
         input_names_(std::move(input_names)) {
     binned_result_->InitializeEntries(base);
+    use_weights_.resize(input_names_.size());
     for (auto q : use_weights_) {
       q = false;
     }
     use_weights_[0] = true;
   }
-
-//  void ConfigureSampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
-
-//  void BuildSamples(std::size_t nevents);
 
   void SetSampler(Qn::Sampler *sampler_ptr) {
     sampler_ = sampler_ptr;
