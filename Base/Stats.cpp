@@ -36,8 +36,8 @@ Stats MergeBins(const Stats &lhs, const Stats &rhs) {
     result.profile_ = Profile::MergePointAverage(lhs.profile_, rhs.profile_);
     result.subsamples_ = SubSamples::MergeBinsPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
-  result.status_ = lhs.status_;
-  result.bits_ = lhs.bits_;
+  result.status_ = rhs.status_;
+  result.bits_ = rhs.bits_;
   return result;
 }
 
@@ -194,6 +194,8 @@ Stats operator/(const Stats &num, const Stats &den) {
 
 Stats Sqrt(const Stats &stats) {
   Stats result;
+  result.status_ = stats.status_;
+  result.bits_ = stats.bits_;
   if (stats.status_==STAT::REFERENCE || stats.status_==STAT::OBSERVABLE) {
     result.profile_ = Profile::SqrtNormal(stats.profile_);
     result.subsamples_ = SubSamples::SqrtNormal(stats.subsamples_);

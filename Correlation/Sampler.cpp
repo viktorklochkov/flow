@@ -47,6 +47,16 @@ void Qn::Sampler::CreateBootstrapSamples() {
     }
   }
 }
+
+void Qn::Sampler::CreateMoutofNBootstrapSamples(float m_fraction) {
+  TRandom3 random;
+  for (unsigned int isample = 0; isample < n_samples_; ++isample) {
+    for (unsigned int ievent = 0; ievent < n_events_*m_fraction; ++ievent) {
+      samples_[(int) (random.Rndm()*n_events_)].push_back(isample);
+    }
+  }
+}
+
 void Qn::Sampler::CreateDividedBootstrapSamples(const size_type ndivisions) {
   TRandom3 random;
   std::vector<unsigned long> divisions = {0};

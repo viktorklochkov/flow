@@ -56,10 +56,18 @@ class Stats {
   double Mean() const { if (status_!=Status::POINTAVERAGE) return profile_.Mean(); else return profile_.MeanPA(); }
   double BootstrapMean() const { return subsamples_.Mean(); }
   inline double Error() const {
-    if (bits_ & Settings::CORRELATEDERRORS) {
-      return (subsamples_.ErrorHi(Mean()) + subsamples_.ErrorLo(Mean()))/2;
+    if (status_!=Status::POINTAVERAGE) {
+      if (bits_ & Settings::CORRELATEDERRORS) {
+        return (subsamples_.ErrorHi(Mean()) + subsamples_.ErrorLo(Mean()))/2;
+      } else {
+        return profile_.Error();
+      }
     } else {
-      return profile_.Error();
+      if (bits_ & Settings::CORRELATEDERRORS) {
+        return (subsamples_.ErrorHi(Mean()) + subsamples_.ErrorLo(Mean()))/2;
+      } else {
+        return profile_.ErrorPA();
+      }
     }
   }
 
@@ -118,6 +126,8 @@ class Stats {
 
   size_type GetNSamples() const { return subsamples_.size(); }
 
+  SubSamples GetSubSamples() const { return subsamples_; }
+
  private:
   SubSamples subsamples_;
   Profile profile_;
@@ -129,7 +139,7 @@ class Stats {
   /// \endcond
 };
 
-Stats MergeBins(const Stats &, const Stats&);
+Stats MergeBins(const Stats &, const Stats &);
 Stats Merge(const Stats &, const Stats &);
 Stats operator+(const Stats &, const Stats &);
 Stats operator-(const Stats &, const Stats &);
