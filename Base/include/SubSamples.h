@@ -20,6 +20,7 @@
 
 #include <utility>
 #include <vector>
+#include <algorithm>
 #include <iostream>
 
 #include "Rtypes.h"
