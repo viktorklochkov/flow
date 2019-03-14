@@ -19,6 +19,7 @@
 #define FLOW_BOOTSTRAPSAMPLER_H
 
 #include <vector>
+#include <ctime>
 
 namespace Qn {
 class Sampler {
@@ -50,10 +51,12 @@ class Sampler {
     samples_.resize(0);
   }
 
-  void Configure(Method method, size_type nsamples) {
+  void Configure(Method method, size_type nsamples, unsigned long seed = time(0)) {
     method_ = method;
     n_samples_ = nsamples;
+    seed = time(0);
   }
+
   void SetNumberOfEvents(size_type num) {
     n_events_ = num;
     samples_.resize(num);
@@ -70,6 +73,7 @@ class Sampler {
 
   void CreateBootstrapSamples();
 
+  void CreateMoutofNBootstrapSamples(float m_fraction);
   void CreateDividedBootstrapSamples(size_type ndivisions);
 
   void CreateResamples();
@@ -84,6 +88,7 @@ class Sampler {
   }
 
  private:
+  unsigned long seed_ = static_cast<unsigned long>(time(0));
   Method method_ = Method::NONE;
   size_type ievent_ = 0;
   size_type n_events_ = 0;

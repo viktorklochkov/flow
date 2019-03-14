@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Sampler.h"
+
 #include <random>
 #include <algorithm>
 
@@ -30,6 +31,7 @@ void Qn::Sampler::CreateSubSamples() {
   }
   std::random_device rd;
   std::mt19937 g(rd());
+  g.seed(seed_);
   std::shuffle(event_vector.begin(), event_vector.end(), g);
   auto div = n_events_/n_samples_;
   for (unsigned int i = 0; i < n_events_ - (n_events_%n_samples_); ++i) {
@@ -41,6 +43,7 @@ void Qn::Sampler::CreateSubSamples() {
 }
 void Qn::Sampler::CreateBootstrapSamples() {
   TRandom3 random;
+  random.SetSeed(seed_);
   for (unsigned int isample = 0; isample < n_samples_; ++isample) {
     for (unsigned int ievent = 0; ievent < n_events_; ++ievent) {
       samples_[(int) (random.Rndm()*n_events_)].push_back(isample);
@@ -50,6 +53,7 @@ void Qn::Sampler::CreateBootstrapSamples() {
 
 void Qn::Sampler::CreateMoutofNBootstrapSamples(float m_fraction) {
   TRandom3 random;
+  random.SetSeed(seed_);
   for (unsigned int isample = 0; isample < n_samples_; ++isample) {
     for (unsigned int ievent = 0; ievent < n_events_*m_fraction; ++ievent) {
       samples_[(int) (random.Rndm()*n_events_)].push_back(isample);
@@ -59,6 +63,7 @@ void Qn::Sampler::CreateMoutofNBootstrapSamples(float m_fraction) {
 
 void Qn::Sampler::CreateDividedBootstrapSamples(const size_type ndivisions) {
   TRandom3 random;
+  random.SetSeed(seed_);
   std::vector<unsigned long> divisions = {0};
   divisions.resize(ndivisions + 1);
   std::vector<std::vector<std::vector<int>>> chunks = {{{0}}};
@@ -86,6 +91,7 @@ void Qn::Sampler::CreateDividedBootstrapSamples(const size_type ndivisions) {
 }
 void Qn::Sampler::CreateResamples() {
   TRandom3 random;
+  random.SetSeed(seed_);
   for (unsigned int ievent = 0; ievent < n_events_; ++ievent) {
     samples_[ievent].push_back((unsigned int) (random.Rndm()*n_samples_));
   }

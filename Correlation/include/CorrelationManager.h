@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <utility>
+#include <ctime>
 
 #include "TTreeReader.h"
 #include "TFile.h"
@@ -54,7 +55,7 @@ class CorrelationManager {
     correlations_.at(name).SetReferenceQVectors(use_weights);
   }
 
-  void ConfigureResampler(Sampler::Method method, size_type nsamples) { sampler_.Configure(method, nsamples); }
+  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) { sampler_.Configure(method, nsamples, seed); }
 
 
   void AddESE(const std::string &name, int harmonic, float qmax);
