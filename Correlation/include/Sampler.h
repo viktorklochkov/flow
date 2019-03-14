@@ -54,7 +54,7 @@ class Sampler {
   void Configure(Method method, size_type nsamples, unsigned long seed = time(0)) {
     method_ = method;
     n_samples_ = nsamples;
-    seed = time(0);
+    seed_ = seed;
   }
 
   void SetNumberOfEvents(size_type num) {
