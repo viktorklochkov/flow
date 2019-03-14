@@ -57,8 +57,7 @@ class CorrelationManager {
 
   void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) { sampler_.Configure(method, nsamples, seed); }
 
-
-  void AddESE(const std::string &name, int harmonic, float qmax);
+  void AddESE(const std::string &name, FUNCTION &&lambda, float qmax);
 
   void Initialize();
 

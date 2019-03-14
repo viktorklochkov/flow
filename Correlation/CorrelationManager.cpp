@@ -97,22 +97,25 @@ void CorrelationManager::AddCorrelation(std::string name,
   if (resample == Sampler::Resample::ON) correlator.UseResampling(true);
   correlations_.emplace(name, std::move(correlator));
 }
+
 /**
  * Adds a ESE axis to all correlations
  * @param name Name of the datacontainer used to calculate the Q-vector magnitude.
  * @param harmonic harmonic used for calculation
  */
-void CorrelationManager::AddESE(const std::string &names, int harmonic, float qmax) {
+void CorrelationManager::AddESE(const std::string &names, CorrelationManager::FUNCTION &&lambda, float qmax) {
   std::vector<std::string> esenames;
   tokenize(names, esenames, ", ", true);
   use_ese_ = true;
-  auto Mag = [harmonic](const std::vector<Qn::QVector> &a) {
-    return 1./TMath::Sqrt(a[0].sumweights()+a[1].sumweights())*(a[0].DeNormal().mag(harmonic)+a[1].DeNormal().mag(harmonic));
-  };
-  Qn::Correlator correlator(esenames, Mag, TH1F("q", ";q;%;", 100, 0., qmax));
+  Qn::Correlator correlator(esenames, lambda, TH1F("q", ";q;%;", 100, 0., qmax));
   correlator.UseResampling(false);
-  ese_correlations_.emplace("ESE_" + esenames.at(0) + esenames.at(1), std::move(correlator));
+  std::string name = "ESE";
+  for (auto esen : esenames) {
+    name += "_" + esen;
+  }
+  ese_correlations_.emplace(name, std::move(correlator));
 }
+
 /**
  * Initializes the Correlation task.
  */
