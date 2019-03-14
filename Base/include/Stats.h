@@ -97,12 +97,14 @@ class Stats {
   friend Stats Sqrt(const Stats &);
 
   void Fill(const Product &product, const std::vector<size_type> &samples) {
-    subsamples_.Fill(product, samples);
-    profile_.Fill(product);
+    double weight =  product.GetWeight();
+    subsamples_.Fill(product, samples, weight);
+    profile_.Fill(product, weight);
   }
 
   void Fill(const Product &product) {
-    profile_.Fill(product);
+    double weight = product.GetWeight();
+    profile_.Fill(product, weight);
   }
 
   void SetNumberOfSubSamples(size_type nsamples) {

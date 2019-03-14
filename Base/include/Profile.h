@@ -34,11 +34,11 @@ class Profile {
 
   virtual ~Profile() = default;
 
-  void Fill(const Product &prod) {
-    sumwy_ += prod.GetWeight()*prod.result;
-    sumwy2_ += prod.GetWeight()*prod.result*prod.result;
-    sumw_ += prod.GetWeight();
-    sumw2_ += prod.GetWeight()*prod.GetWeight();
+  void Fill(const Product &prod, double weight) {
+    sumwy_ += weight*prod.result;
+    sumwy2_ += weight*prod.result*prod.result;
+    sumw_ += weight;
+    sumw2_ += weight*weight;
     ++entries_;
   }
 

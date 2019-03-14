@@ -46,7 +46,7 @@ struct Product {
     return a;
   }
 
-  double GetWeight() const {return std::accumulate(w_vect.begin(), w_vect.end(),1.,std::multiplies<double>());}
+  inline double GetWeight() const {return std::accumulate(w_vect.begin(), w_vect.end(),1.,std::multiplies<double>());}
 
   void SetDim(size_t dim) { w_vect.resize(dim); }
   size_t GetDim() const { return w_vect.size(); }
