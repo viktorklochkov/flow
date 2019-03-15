@@ -96,13 +96,13 @@ class Stats {
   friend Stats operator/(const Stats &, const Stats &);
   friend Stats Sqrt(const Stats &);
 
-  void Fill(const Product &product, const std::vector<size_type> &samples) {
+  inline void Fill(const Product &product, const std::vector<size_type> &samples) {
     double weight =  product.GetWeight();
     subsamples_.Fill(product, samples, weight);
     profile_.Fill(product, weight);
   }
 
-  void Fill(const Product &product) {
+  inline void Fill(const Product &product) {
     double weight = product.GetWeight();
     profile_.Fill(product, weight);
   }

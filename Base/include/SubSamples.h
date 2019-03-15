@@ -113,7 +113,7 @@ class SubSamples {
   const_iterator begin() const { return samples_.cbegin(); } ///< iterator for external use
   const_iterator end() const { return samples_.cend(); } ///< iterator for external use
 
-  void Fill(const Product &product, const std::vector<size_type> &samples, const double weight) {
+  inline void Fill(const Product &product, const std::vector<size_type> &samples, const double weight) {
     for (auto &sample : samples) {
       samples_[sample].Fill(product, weight);
     }

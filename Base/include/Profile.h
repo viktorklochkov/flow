@@ -34,7 +34,7 @@ class Profile {
 
   virtual ~Profile() = default;
 
-  void Fill(const Product &prod, double weight) {
+  inline void Fill(const Product &prod, double weight) {
     sumwy_ += weight*prod.result;
     sumwy2_ += weight*prod.result*prod.result;
     sumw_ += weight;

@@ -27,7 +27,7 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
   iterationoffset += iteration;
   if (iteration + 1==input.size()) {
     int ibin = 0;
-    for (auto &bin : datacontainer) {
+    for (const auto &bin : datacontainer) {
       if (!datacontainer.IsIntegrated()) {
         int i_index = 0;
         for (auto index : index_[iteration][ibin]) {

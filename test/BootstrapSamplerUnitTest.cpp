@@ -9,8 +9,8 @@
 #include "TRandom3.h"
 
 TEST(BootStrapSamplerTest, Constructor) {
-  const int nsamples = 3;
-  const int nevents = 10;
+  const int nsamples = 3000;
+  const int nevents = 10000;
   Qn::Sampler test(nevents, nsamples);
   test.CreateBootstrapSamples();
   std::array<int, nsamples> size_of_sample{{0}};
