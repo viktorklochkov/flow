@@ -74,7 +74,7 @@ class Correlator {
 
   void ConfigureCorrelation(const std::vector<DataContainerQVector*> &input, std::vector<Qn::Axis> event);
 
-  Qn::Correlation GetCorrelation() const { return correlation_; }
+  Qn::Correlation* GetCorrelationPtr() { return &correlation_; }
 
   DataContainerStats GetResult() const { return result_; }
 

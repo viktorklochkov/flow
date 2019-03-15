@@ -32,8 +32,7 @@ void CorrelationManager::AddDataContainer(const std::string &name) {
   TTreeReaderValue<Qn::DataContainerQVector>
       value(*reader_, name.data());
   tree_values_.emplace(name, value);
-  DataContainerQVector a;
-  qvectors_.emplace(name, a);
+  qvectors_.emplace(name, nullptr);
 }
 
 /**
@@ -59,12 +58,12 @@ void CorrelationManager::AddQVectors(const std::string &namelist) {
 void CorrelationManager::AddProjection(const std::string &input_name,
                                        const std::string &output_name,
                                        const std::string &axis_names) {
-  auto toproject = qvectors_.at(input_name);
   DataContainerQVector projection;
   std::vector<std::string> name_vector;
   tokenize(axis_names, name_vector, ", ", true);
   projections_.emplace(output_name, std::make_tuple(input_name, name_vector));
-  qvectors_.emplace(output_name, projection);
+  qvectors_.emplace(output_name, nullptr);
+  qvectors_proj_.emplace(output_name,projection);
 }
 /**
  * Adds a new event variable to the correlation manager.
@@ -133,7 +132,7 @@ void CorrelationManager::Initialize() {
 
   // initialize values to be able to build the correlations.
   for (auto &value : tree_values_) {
-    qvectors_.at(value.first) = *value.second.Get();
+    qvectors_.at(value.first) = value.second.Get();
   }
   int i = 0;
   for (auto &value : tree_event_values_) {
@@ -184,13 +183,14 @@ void CorrelationManager::SaveToFile(std::string name) {
 
 void CorrelationManager::MakeProjections() {
   for (const auto &projection : projections_) {
-    qvectors_.at(projection.first) =
-        qvectors_.at(std::get<0>(projection.second)).Projection(std::get<1>(projection.second),
+    qvectors_proj_[projection.first] =
+        qvectors_[std::get<0>(projection.second)]->Projection(std::get<1>(projection.second),
                                                                 [](Qn::QVector a, const Qn::QVector &b) {
                                                                   a.CopyHarmonics(b);
                                                                   auto norm = b.GetNorm();
                                                                   return (a + b).Normal(norm);
                                                                 });
+    qvectors_[projection.first] = &qvectors_proj_[projection.first];
   }
 }
 
@@ -200,7 +200,7 @@ void CorrelationManager::BuildCorrelations() {
     qvectors.clear();
     qvectors.reserve(corr.second.GetInputNames().size());
     for (const auto &cname : corr.second.GetInputNames()) {
-      qvectors.push_back(&qvectors_.at(cname));
+      qvectors.push_back(qvectors_.at(cname));
     }
     std::vector<Qn::Axis> axes;
     axes = event_axes_;
@@ -231,7 +231,7 @@ void CorrelationManager::BuildESECorrelation() {
     qvectors.clear();
     qvectors.reserve(corr.second.GetInputNames().size());
     for (const auto &cname : corr.second.GetInputNames()) {
-      qvectors.push_back(&qvectors_.at(cname));
+      qvectors.push_back(qvectors_.at(cname));
     }
     corr.second.ConfigureCorrelation(qvectors, event_axes_);
     corr.second.SetSampler(&sampler_);
@@ -242,7 +242,7 @@ void CorrelationManager::FillESE(std::map<std::string, Qn::Correlator> &corr) {
   for (auto &pair : corr) {
     u_long i = 0;
     for (const auto &name : pair.second.GetInputNames()) {
-      (*pair.second.Inputs())[i] = &qvectors_[name];
+      (*pair.second.Inputs())[i] = qvectors_[name];
       ++i;
     }
     pair.second.FillCorrelation(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
@@ -253,7 +253,7 @@ void CorrelationManager::FillCorrelations(std::map<std::string, Qn::Correlator> 
   for (auto &pair : corr) {
     u_long i = 0;
     for (const auto &name : pair.second.GetInputNames()) {
-      (*pair.second.Inputs())[i] = &qvectors_[name];
+      (*pair.second.Inputs())[i] = qvectors_[name];
       ++i;
     }
     pair.second.FillCorrelation(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
@@ -262,7 +262,7 @@ void CorrelationManager::FillCorrelations(std::map<std::string, Qn::Correlator> 
 
 void CorrelationManager::UpdateEvent() {
   for (auto &value : tree_values_) {
-    qvectors_[value.first] = *value.second.Get();
+    qvectors_[value.first] = value.second.Get();
   }
   unsigned long i = 0;
   for (auto &value : tree_event_values_) {
@@ -275,9 +275,9 @@ void CorrelationManager::UpdateEvent() {
 bool CorrelationManager::CheckEvent() {
   u_long ie = 0;
   for (const auto &ae : event_axes_) {
-    auto bin = ae.FindBin(event_values_[ie]);
+    const auto &bin = ae.FindBin(event_values_[ie]);
     if (bin!=-1) {
-      eventbin_.at(ie) = (unsigned long) bin;
+      eventbin_[ie] = (unsigned long) bin;
     } else {
       return false;
     }
@@ -288,9 +288,9 @@ bool CorrelationManager::CheckEvent() {
 
 bool CorrelationManager::CheckESEEvent() {
   if (use_ese_) {
-    for (const auto &bin : ese_correlations_) {
-      auto ese = *bin.second.GetCorrelation().GetCorrelation();
-      auto correlation = ese.At(eventbin_);
+    for (auto &bin : ese_correlations_) {
+      const auto &ese = *bin.second.GetCorrelationPtr()->GetCorrelation();
+      const auto &correlation = ese.At(eventbin_);
       double value = -999.;
       if (correlation.validity) value = correlation.result;
       event_values_.back() = event_shape_->At(eventbin_).GetPercentile(value);
@@ -300,9 +300,9 @@ bool CorrelationManager::CheckESEEvent() {
     u_long ie = 0;
     auto event_axis_size = event_axes_.size();
     for (const auto &ae : eventshape_axes_) {
-      auto bin = ae.FindBin(event_values_.back());
+      const auto &bin = ae.FindBin(event_values_.back());
       if (bin!=-1) {
-        eventbin_.at(event_axis_size + ie) = (unsigned long) bin;
+        eventbin_[event_axis_size + ie] = (unsigned long) bin;
       } else {
         return false;
       }
