@@ -71,9 +71,6 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
 }
 
 void Correlation::Fill(const Correlation::DataContainers &input, const std::vector<unsigned long> &eventindex) {
-  for (auto &data : data_correlation_) {
-    data.validity = false;
-  }
   for (auto &q : contents_) {
     q.n_ = 0;
   }
