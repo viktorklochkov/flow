@@ -72,13 +72,13 @@ class Correlator {
 
   void RemoveAutoCorrelation();
 
-  void ConfigureCorrelation(const std::vector<DataContainerQVector> &input, std::vector<Qn::Axis> event);
+  void ConfigureCorrelation(const std::vector<DataContainerQVector*> &input, std::vector<Qn::Axis> event);
 
   Qn::Correlation GetCorrelation() const { return correlation_; }
 
   DataContainerStats GetResult() const { return result_; }
 
-  std::vector<DataContainerQVector> *Inputs() { return &inputs_; }
+  std::vector<DataContainerQVector*> *Inputs() { return &inputs_; }
 
   std::shared_ptr<DataContainer < TH1F>> GetBinnedResult() const { return binned_result_; }
 
@@ -101,7 +101,7 @@ class Correlator {
   std::vector<std::string> input_names_;
   std::vector<std::vector<size_type>> autocorrelated_bins_;
   std::vector<bool> use_weights_;
-  std::vector<DataContainerQVector> inputs_;
+  std::vector<DataContainerQVector*> inputs_;
 };
 }
 

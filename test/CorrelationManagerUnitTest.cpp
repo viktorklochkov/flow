@@ -46,7 +46,7 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   manager.AddEventVariable({"Ev1", 3, 0, 3});
   manager.AddQVectors("Det1, Det2");
   manager.SetESECalibrationFile("testese.root");
-  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
+//  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
   std::cout << "add correlation" << std::endl;
   TTreeReaderValue<float> eventvalue(*reader, "Ev1");
   manager.AddCorrelation("c1","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
@@ -54,7 +54,7 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   manager.AddCorrelation("avg","Det1",[](std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n());}, Qn::Sampler::Resample::OFF);
   manager.SetRefQinCorrelation("avg",{Qn::Weight::OBSERVABLE});
   manager.AddCorrelation("c2","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
-  manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,10);
+  manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,100);
   int events = 0;
   reader->SetEntry(0);
   std::cout << "init" << std::endl;
@@ -72,7 +72,7 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   auto correlation2 = manager.GetResult("c2");
   for (auto &bin : correlation) {
     EXPECT_FLOAT_EQ(2.0, bin.Mean());
-    EXPECT_EQ(10,bin.GetNSamples());
+    EXPECT_EQ(100,bin.GetNSamples());
   }
   auto average = manager.GetResult("avg");
   for (auto &bin : average) {

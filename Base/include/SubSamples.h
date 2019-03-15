@@ -115,7 +115,7 @@ class SubSamples {
 
   void Fill(const Product &product, const std::vector<size_type> &samples, const double weight) {
     for (auto &sample : samples) {
-      samples_.at(sample).Fill(product, weight);
+      samples_[sample].Fill(product, weight);
     }
   }
 

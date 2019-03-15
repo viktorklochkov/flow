@@ -23,7 +23,7 @@ void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
                                   int iterationoffset,
                                   u_int iteration,
                                   const DataContainers &input) {
-  const auto &datacontainer = input[iteration];
+  const auto &datacontainer = *input[iteration];
   iterationoffset += iteration;
   if (iteration + 1==input.size()) {
     int ibin = 0;
@@ -91,17 +91,17 @@ void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &
   contents_.resize(inputs.size());
   data_correlation_.AddAxes(axes_event_);
   auto size = axes_event_.size();
-  for (auto &input : inputs) {
-    if (!input.IsIntegrated()) size += input.GetAxes().size();
+  for (const auto &input : inputs) {
+    if (!input->IsIntegrated()) size += input->GetAxes().size();
     std::vector<std::vector<unsigned long>> indexmap;
-    for (std::size_t j = 0; j < input.size(); ++j) {
+    for (std::size_t j = 0; j < input->size(); ++j) {
       std::vector<unsigned long> indices;
-      input.GetIndex(indices, j);
+      input->GetIndex(indices, j);
       indexmap.push_back(indices);
     }
     index_.push_back(indexmap);
-    if (!input.IsIntegrated()) {
-      auto axes = input.GetAxes();
+    if (!input->IsIntegrated()) {
+      auto axes = input->GetAxes();
       for (auto &axis : axes) {
         auto original_name = axis.Name();
         if (!names_.empty()) { axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name); }

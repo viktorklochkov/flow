@@ -30,7 +30,7 @@ namespace Qn {
 class Correlation {
   using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
-  using DataContainers = std::vector<DataContainerQVector>;
+  using DataContainers = std::vector<DataContainerQVector*>;
  public:
   Correlation() = default;
 

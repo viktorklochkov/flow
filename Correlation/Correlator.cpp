@@ -35,7 +35,7 @@ void Qn::Correlator::FillCorrelation(const std::vector<unsigned long> &eventinde
   }
 }
 
-void Qn::Correlator::ConfigureCorrelation(const std::vector<Qn::DataContainerQVector> &input,
+void Qn::Correlator::ConfigureCorrelation(const std::vector<Qn::DataContainerQVector*> &input,
                                           std::vector<Qn::Axis> event) {
   inputs_.resize(input.size());
   correlation_.ConfigureCorrelation(input, event, lambda_correlation_, input_names_, use_weights_);

@@ -195,12 +195,12 @@ void CorrelationManager::MakeProjections() {
 }
 
 void CorrelationManager::BuildCorrelations() {
-  std::vector<Qn::DataContainerQVector> qvectors;
+  std::vector<Qn::DataContainerQVector*> qvectors;
   for (auto &corr : correlations_) {
     qvectors.clear();
     qvectors.reserve(corr.second.GetInputNames().size());
     for (const auto &cname : corr.second.GetInputNames()) {
-      qvectors.push_back(qvectors_.at(cname));
+      qvectors.push_back(&qvectors_.at(cname));
     }
     std::vector<Qn::Axis> axes;
     axes = event_axes_;
@@ -226,12 +226,12 @@ void CorrelationManager::BuildESECorrelation() {
       event_values_.emplace_back(-999);
     }
   }
-  std::vector<Qn::DataContainerQVector> qvectors;
+  std::vector<Qn::DataContainerQVector*> qvectors;
   for (auto &corr : ese_correlations_) {
     qvectors.clear();
     qvectors.reserve(corr.second.GetInputNames().size());
     for (const auto &cname : corr.second.GetInputNames()) {
-      qvectors.push_back(qvectors_.at(cname));
+      qvectors.push_back(&qvectors_.at(cname));
     }
     corr.second.ConfigureCorrelation(qvectors, event_axes_);
     corr.second.SetSampler(&sampler_);
@@ -242,7 +242,7 @@ void CorrelationManager::FillESE(std::map<std::string, Qn::Correlator> &corr) {
   for (auto &pair : corr) {
     u_long i = 0;
     for (const auto &name : pair.second.GetInputNames()) {
-      pair.second.Inputs()->at(i) = qvectors_.at(name);
+      (*pair.second.Inputs())[i] = &qvectors_[name];
       ++i;
     }
     pair.second.FillCorrelation(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
@@ -253,7 +253,7 @@ void CorrelationManager::FillCorrelations(std::map<std::string, Qn::Correlator> 
   for (auto &pair : corr) {
     u_long i = 0;
     for (const auto &name : pair.second.GetInputNames()) {
-      pair.second.Inputs()->at(i) = qvectors_.at(name);
+      (*pair.second.Inputs())[i] = &qvectors_[name];
       ++i;
     }
     pair.second.FillCorrelation(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
@@ -262,11 +262,11 @@ void CorrelationManager::FillCorrelations(std::map<std::string, Qn::Correlator> 
 
 void CorrelationManager::UpdateEvent() {
   for (auto &value : tree_values_) {
-    qvectors_.at(value.first) = *value.second.Get();
+    qvectors_[value.first] = *value.second.Get();
   }
   unsigned long i = 0;
   for (auto &value : tree_event_values_) {
-    event_values_.at(i) = *value.second.Get();
+    event_values_[i] = *value.second.Get();
     i++;
   }
   MakeProjections();
