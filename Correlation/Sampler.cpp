@@ -44,6 +44,7 @@ void Qn::Sampler::CreateSubSamples() {
 void Qn::Sampler::CreateBootstrapSamples() {
   TRandom3 random;
   random.SetSeed(seed_);
+  for (auto &sample : samples_) {sample.reserve(static_cast<unsigned long>(n_samples_*(2./3.)));}
   for (unsigned int isample = 0; isample < n_samples_; ++isample) {
     for (unsigned int ievent = 0; ievent < n_events_; ++ievent) {
       samples_[(int) (random.Rndm()*n_events_)].push_back(isample);
