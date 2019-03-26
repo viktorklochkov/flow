@@ -16,7 +16,7 @@ int main() {
   tree.Branch("Det1", &data1);
   tree.Branch("Det2", &data1);
 
-  auto ne = 100000;
+  auto ne = 10000;
 
   for (int i = 0; i < ne; ++i) {
     event->SetVariable("Ev1", 0.5);
@@ -40,11 +40,11 @@ int main() {
   manager.AddQVectors("Det1, Det2");
   std::cout << "add correlation" << std::endl;
   TTreeReaderValue<float> eventvalue(*reader, "Ev1");
-  manager.AddCorrelation("c1","Det1, Det2",[](std::vector<Qn::QVector*> &q) { return q[0]->x(1) + q[1]->x(1);});
+  manager.AddCorrelation("c1","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
   manager.SetWeightsInCorrelation("c1", {Qn::Weight::REFERENCE, Qn::Weight::REFERENCE});
-  manager.AddCorrelation("avg","Det1",[](std::vector<Qn::QVector*> &q) { return q[0]->mag(2)/sqrt(q[0]->n());}, Qn::Sampler::Resample::OFF);
+  manager.AddCorrelation("avg","Det1",[](std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n());}, Qn::Sampler::Resample::OFF);
   manager.SetWeightsInCorrelation("avg", {Qn::Weight::OBSERVABLE});
-  manager.AddCorrelation("c2","Det1, Det2",[](std::vector<Qn::QVector*> &q) { return q[0]->x(1) + q[1]->x(1);});
+  manager.AddCorrelation("c2","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
   manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,100);
   int events = 0;
   reader->SetEntry(0);

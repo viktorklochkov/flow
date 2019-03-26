@@ -40,7 +40,7 @@ class Correlation {
   using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
   using DataContainers = std::vector<DataContainerQVector *>;
-  using FUNCTION = std::function<double(std::vector<Qn::QVector*> &)>;
+  using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
  public:
   Correlation() = default;
 
@@ -82,7 +82,7 @@ class Correlation {
   FUNCTION function_; ///< correlation function
   std::vector<std::string> names_; ///< vector of input names
   std::vector<bool> use_weights_;
-  std::vector<QVector *> qvectors_;
+  std::vector<QVector> qvectors_;
   std::vector<DataContainerQVector *> inputs_;
 
  public:

@@ -26,7 +26,7 @@ void Correlation::FillCorrelation(size_type initial_offset,
   initial_offset += n;
   if (n + 1==inputs_.size()) {
     size_type ibin = 0;
-    for (auto qvector : i_input) {
+    for (const auto &qvector : i_input) {
       if (!i_input.IsIntegrated()) {
         size_type i_index = 0;
         for (const auto &index : index_[n][ibin]) {
@@ -35,13 +35,13 @@ void Correlation::FillCorrelation(size_type initial_offset,
           ++i_index;
         }
       }
-      qvectors_[n] = &qvector;
-      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](QVector *q) { return q->n() > 0; });
+      qvectors_[n] = qvector;
+      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](const QVector &q) { return q.n() > 0; });
       size_type i_weight = 0;
       double weight = 1.;
       for (const auto &q : qvectors_) {
         if (use_weights_[i_weight]) {
-          weight *= q->sum_weights_;
+          weight *= q.sum_weights_;
         }
         ++i_weight;
       }
@@ -54,7 +54,7 @@ void Correlation::FillCorrelation(size_type initial_offset,
     return;
   }
   size_type ibin = 0;
-  for (auto bin : i_input) {
+  for (const auto &bin : i_input) {
     size_type offset = initial_offset;
     if (!i_input.IsIntegrated()) {
       size_type i_index = 0;
@@ -64,7 +64,7 @@ void Correlation::FillCorrelation(size_type initial_offset,
         ++i_index;
       }
     }
-    qvectors_[n] = &bin;
+    qvectors_[n] = bin;
     FillCorrelation(offset, n + 1, event_id);
     ++ibin;
   }
@@ -77,7 +77,7 @@ void Correlation::FillCorrelationNoResampling(size_type initial_offset,
   initial_offset += n;
   if (n + 1==inputs_.size()) {
     size_type ibin = 0;
-    for (auto qvector : i_input) {
+    for (const auto &qvector : i_input) {
       if (!i_input.IsIntegrated()) {
         size_type i_index = 0;
         for (auto index : index_[n][ibin]) {
@@ -86,13 +86,13 @@ void Correlation::FillCorrelationNoResampling(size_type initial_offset,
           ++i_index;
         }
       }
-      qvectors_[n] = &qvector;
-      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](const Qn::QVector* q) { return q->n() > 0; });
+      qvectors_[n] = qvector;
+      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](const Qn::QVector& q) { return q.n() > 0; });
       size_type i_weight = 0;
       double weight = 1.;
       for (const auto &q : qvectors_) {
         if (use_weights_[i_weight]) {
-          weight *= q->sum_weights_;
+          weight *= q.sum_weights_;
         }
         ++i_weight;
       }
@@ -106,7 +106,7 @@ void Correlation::FillCorrelationNoResampling(size_type initial_offset,
     return;
   }
   size_type ibin = 0;
-  for (auto bin : i_input) {
+  for (const auto &bin : i_input) {
     auto offset = initial_offset;
     if (!i_input.IsIntegrated()) {
       int i_index = 0;
@@ -116,7 +116,7 @@ void Correlation::FillCorrelationNoResampling(size_type initial_offset,
         ++i_index;
       }
     }
-    qvectors_[n] = &bin;
+    qvectors_[n] = bin;
     FillCorrelationNoResampling(offset, n + 1, event_id);
     ++ibin;
   }
