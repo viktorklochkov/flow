@@ -125,7 +125,7 @@ class Correlation {
     double weight = 1.;
     for (const auto &q : qvectors_) {
       if (use_weights_[i_weight]==Qn::Weight::OBSERVABLE) {
-//        weight *= q.sumweights();
+        weight *= q.sumweights();
       }
       ++i_weight;
     }
