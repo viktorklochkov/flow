@@ -33,7 +33,7 @@
 namespace Qn {
 
 class CorrelationManager {
-  using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
+  using FUNCTION = std::function<double(const std::vector<Qn::QVector> &)>;
   using size_type = std::size_t;
  public:
   explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :

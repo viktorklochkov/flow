@@ -40,7 +40,7 @@ class Correlation {
   using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
   using DataContainers = std::vector<DataContainerQVector *>;
-  using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
+  using FUNCTION = std::function<double(const std::vector<Qn::QVector> &)>;
  public:
   Correlation() = default;
 
@@ -76,6 +76,7 @@ class Correlation {
 
   std::vector<std::vector<std::vector<size_type>>> index_; ///< map of indices of all inputs
   std::vector<size_type> c_index_; ///< flattened index of correlation
+  DataContainerProduct current_event_result_;
   DataContainerStats result_;
   DataContainer<TH1F> histo_result_;
   AXES axes_event_; ///< vector of event axes used in the correlation

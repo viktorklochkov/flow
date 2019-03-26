@@ -44,7 +44,7 @@ TEST(DataContainerTest, ProjectionStats) {
   container.AddAxes({{"a1", 30, 0, 10}});
   for (auto &bin : container) {
     bin.SetNumberOfSubSamples(10);
-    bin.Fill({{2.},1,true},{});
+    bin.Fill({1,true,2.},{});
   }
   auto projection = container.Projection();
   for (const auto &bin : projection) {
@@ -57,7 +57,7 @@ TEST(DataContainerTest, ProjectionStats2d) {
   container.AddAxes({{"a1", 30, 0, 10},{"a2", 30, 0, 10}});
   for (auto &bin : container) {
     bin.SetNumberOfSubSamples(10);
-    bin.Fill({{2.},1,true},{});
+    bin.Fill({1,true,2.});
   }
   auto projection = container.Projection({"a2"});
   for (const auto &bin : projection) {
@@ -81,7 +81,7 @@ TEST(DataContainerTest, SqrtStats) {
   Qn::DataContainerStats container;
   container.AddAxes({{"a1", 30, 0, 10}});
   for (auto &bin : container) {
-    bin.Fill({{2.}, 2., true}, {});
+    bin.Fill({2., true, 2.}, {});
   }
   auto srt = Sqrt(container);
   EXPECT_FLOAT_EQ(sqrt(2),srt.At(0).Mean());
@@ -210,7 +210,7 @@ TEST(DataContainerTest, Bits) {
   sampler.SetNumberOfEvents(nevents);
   sampler.CreateBootstrapSamples();
   for (int i = 0; i < nevents; ++i) {
-    dcstat.At(0).Fill({{1.},gauss(generator),true}, sampler.GetFillVector(i));
+    dcstat.At(0).Fill({gauss(generator),true,1.}, sampler.GetFillVector(i));
   }
   dcstat.TestBit(Qn::Stats::Settings::CORRELATEDERRORS);
   EXPECT_TRUE(dcstat.At(0).TestBit(Qn::Stats::Settings::CORRELATEDERRORS));

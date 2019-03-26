@@ -36,9 +36,9 @@ struct Sample {
   double sumw = 0;
   int entries = 0;
 
-  void Fill(const Product &prod, const double weight) {
-    sumwy += prod.result*weight;
-    sumw += weight;
+  void Fill(const Product &prod) {
+    sumwy += prod.result*prod.weight;
+    sumw += prod.weight;
     ++entries;
   }
 
@@ -119,9 +119,9 @@ class SubSamples {
   const_iterator begin() const { return samples_.cbegin(); } ///< iterator for external use
   const_iterator end() const { return samples_.cend(); } ///< iterator for external use
 
-  inline void Fill(const Product &product, const std::vector<size_type> &samples, const double weight) {
+  inline void Fill(const Product &product, const std::vector<size_type> &samples) {
     for (auto &sample : samples) {
-      samples_[sample].Fill(product, weight);
+      samples_[sample].Fill(product);
     }
   }
 

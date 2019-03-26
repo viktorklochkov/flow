@@ -45,8 +45,9 @@ void Correlation::FillCorrelation(size_type initial_offset,
         }
         ++i_weight;
       }
+      current_event_result_.At(c_index_) = Qn::Product(function_(qvectors_),valid,weight);
       if (valid) {
-        result_.At(c_index_).Fill(function_(qvectors_), weight, sampler_->GetFillVector(event_id));
+//        result_.At(c_index_).Fill(function_(qvectors_), weight, sampler_->GetFillVector(event_id));
         if (use_histo_result_) histo_result_.At(c_index_).Fill(function_(qvectors_));
       }
       ++ibin;
@@ -96,8 +97,9 @@ void Correlation::FillCorrelationNoResampling(size_type initial_offset,
         }
         ++i_weight;
       }
+      current_event_result_.At(c_index_) = Qn::Product(function_(qvectors_),valid,weight);
       if (valid) {
-        result_.At(c_index_).Fill(function_(qvectors_), weight, {});
+//        result_.At(c_index_).Fill(function_(qvectors_), weight, {});
         if (use_histo_result_) histo_result_.At(c_index_).Fill(function_(qvectors_));
       }
 
@@ -132,8 +134,18 @@ void Correlation::Fill(const std::vector<unsigned long> &eventindices,
   }
   if (use_resampling_) {
     FillCorrelation(ii, iteration, event_id);
+    unsigned int ibin = 0;
+    for (auto &bin : result_) {
+      if (current_event_result_.At(ibin).validity) bin.Fill(current_event_result_.At(ibin), sampler_->GetFillVector(event_id));
+      ++ibin;
+    }
   } else {
     FillCorrelationNoResampling(ii, iteration, event_id);
+    unsigned int ibin = 0;
+    for (auto &bin : result_) {
+      if (current_event_result_.At(ibin).validity) bin.Fill(current_event_result_.At(ibin), {});
+      ++ibin;
+    }
   }
 }
 
@@ -178,6 +190,9 @@ void Correlation::ConfigureCorrelation(const Correlation::DataContainers &inputs
       bin.SetStatus(Stats::Status::REFERENCE);
     }
   }
+
+  // configure current event result
+  current_event_result_.AddAxes(result_.GetAxes());
 
   // configure histo_result
   if (use_histo_result_) {
