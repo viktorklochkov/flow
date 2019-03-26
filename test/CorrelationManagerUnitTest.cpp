@@ -11,6 +11,7 @@
 TEST(CorrelationManagerTest, AddingCorrelation) {
   using namespace Qn;
   auto data1 = new Qn::DataContainer<Qn::QVector>();
+  data1->AddAxis({"test",10,0,10});
   for (auto &bin : *data1) {
     Qn::QVec qvec(1.0, 1.0);
     bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
@@ -23,28 +24,32 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   tree.Branch("Det1", &data1);
   tree.Branch("Det2", &data1);
 
-  auto ne = 100000;
+  auto ne = 10000;
 
-  for (int i = 0; i < ne; ++i) {
+  for (int i = 0; i < ne/2; ++i) {
     event->SetVariable("Ev1", 0.5);
+    for (auto &bin : *data1) {
+      Qn::QVec qvec(1.0, 1.0);
+      bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
+    }
     tree.Fill();
   }
-  for (int i = 0; i < ne; ++i) {
-    event->SetVariable("Ev1", 1.5);
-    tree.Fill();
-  }
-  for (int i = 0; i < ne; ++i) {
-    event->SetVariable("Ev1", 2.5);
+  for (int i = ne/2; i < ne; ++i) {
+    event->SetVariable("Ev1", 0.5);
+    for (auto &bin : *data1) {
+      Qn::QVec qvec(2.0, 2.0);
+      bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
+    }
     tree.Fill();
   }
 
-  EXPECT_EQ(3*ne, tree.GetEntries());
+  EXPECT_EQ(ne, tree.GetEntries());
   std::cout << "create manager" << std::endl;
   std::shared_ptr<TTreeReader> reader(new TTreeReader(&tree));
   Qn::CorrelationManager manager(reader);
   std::cout << "add variables" << std::endl;
 
-  manager.AddEventVariable({"Ev1", 3, 0, 3});
+  manager.AddEventVariable({"Ev1", 1, 0, 2});
   manager.AddQVectors("Det1, Det2");
 //  manager.SetESECalibrationFile("testese.root");
 //  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
@@ -55,26 +60,16 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,100);
   int events = 0;
   reader->SetEntry(0);
-  std::cout << "init" << std::endl;
-
-  manager.Initialize();
-  reader->Restart();
   std::cout << "run" << std::endl;
-  while (reader->Next()) {
-    manager.Process();
-    events++;
-  }
-  EXPECT_EQ(3*ne, events);
-  manager.Finalize();
+  manager.Run();
   auto correlation = manager.GetResult("c1");
-  auto correlation2 = manager.GetResult("c2");
   for (auto &bin : correlation) {
-    EXPECT_FLOAT_EQ(2.0, bin.Mean());
+    EXPECT_FLOAT_EQ(3.0, bin.Mean());
     EXPECT_EQ(100,bin.GetNSamples());
   }
   auto average = manager.GetResult("avg");
   for (auto &bin : average) {
-    EXPECT_FLOAT_EQ(sqrt(2.0), bin.Mean());
+    EXPECT_FLOAT_EQ((sqrt(8)+sqrt(2))/2, bin.Mean());
     EXPECT_EQ(0,bin.GetNSamples());
   }
 }

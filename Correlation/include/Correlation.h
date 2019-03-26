@@ -40,7 +40,7 @@ class Correlation {
 
   using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
-  using INPUTS = std::vector<DataContainerQVector *>;
+  using INPUTS = std::vector<DataContainerQVector**>;
 
  public:
   using CorrelationFunction = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
@@ -65,7 +65,7 @@ class Correlation {
    * @param event Event variables used for this correlation
    * @param sampler Pointer to the resampler
    */
-  void ConfigureCorrelation(const INPUTS &input, const std::vector<Qn::Axis> &event, Qn::Sampler *sampler);
+  void ConfigureCorrelation(std::map<std::string,DataContainerQVector*> &qvectors, const std::vector<Qn::Axis> &event, Qn::Sampler *sampler);
 
   /**
    * @brief reference to the names of the Q-Vector inputs of the correlation.
@@ -80,12 +80,6 @@ class Correlation {
   DataContainerStats GetResult() const { return result_; }
 
   /**
-   * @brief Returns a reference to the pointers to the QVectors.
-   * @return reference to the inputs.
-   */
-  std::vector<DataContainerQVector *> &GetInputs() { return inputs_; }
-
-  /**
    * @brief Fill Correlation container with specified inputs.
    * Recursive function called N times, where N is the number of correlated datacontainers.
    * @param eventindices of the used for the event axes
@@ -94,11 +88,11 @@ class Correlation {
   void Fill(const std::vector<unsigned long> &eventindices, size_type event_id);
 
  private:
-  bool use_histo_result_ = false;
-  bool use_resampling_ = false;
+  bool use_histo_result_ = false; ///< histogram flag
+  bool use_resampling_ = false; ///< resampling flag
   CorrelationFunction function_; ///< correlation function
   AXES axes_event_; ///< vector of event axes used in the correlation
-  INPUTS inputs_; ///< Q-Vector inputs during the correlation
+  INPUTS inputs_; ///< pointer to the Q-Vector inputs during the correlation step.
   std::vector<std::string> names_; ///< vector of input names
   std::vector<Qn::Weight> use_weights_; ///< vector of input weights
   std::vector<QVectorPtr> qvectors_; ///< vector holding Q-Vectors during Fill step
@@ -107,7 +101,7 @@ class Correlation {
   std::vector<size_type> c_index_; ///<  multi-dimensional indices of a bin of the resulting correlation
   DataContainerProduct current_event_result_; ///< result of the correlation of the current event
   DataContainerStats result_; ///< averaged result of the correlation over all events
-  DataContainer<TH1F> histo_result_; ///< histogrammed result of the correlation
+  DataContainer<TH1F> histo_result_; ///< histogram result of the correlation
 
   /**
    * @brief Fills correlation using a recursive algorithm

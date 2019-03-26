@@ -41,24 +41,16 @@ class CorrelationManager {
     num_events_ = reader_->GetEntries(true);
   }
 
-  void AddDataContainer(const std::string &name);
-
   void AddQVectors(const std::string &namelist);
-
+  void AddQVectors(const std::vector<std::string> &qvectors);
   void AddProjection(const std::string &input_name, const std::string &output_name, const std::string &axis_names);
-
   void AddEventVariable(const Qn::Axis &eventaxis);
+  void AddCorrelation(std::string name, const std::string &input_names, FUNCTION &&lambda,
+                      const std::vector<Qn::Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
 
-  void AddCorrelation(std::string name,
-                      const std::string &input_names,
-                      FUNCTION &&lambda,
-                      const std::vector<Qn::Weight> &use_weights,
-                      Sampler::Resample resample = Sampler::Resample::ON);
+  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
 
-
-  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) {
-    sampler_.Configure(method, nsamples, seed);
-  }
+  void Run();
 
 //  void AddESE(const std::string &name, FUNCTION &&lambda, float qmax);
 
@@ -82,6 +74,9 @@ class CorrelationManager {
   DataContainerStats GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
 
  private:
+
+  void AddDataContainer(const std::string &name);
+
   void MakeProjections();
 
   void SaveToFile(std::string name);

@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
+#include <include/CorrelationManager.h>
 
 #include "CorrelationManager.h"
 
@@ -38,12 +39,23 @@ void CorrelationManager::AddDataContainer(const std::string &name) {
 /**
  * Adds a list of detectors to the correlation manager.
  * The actual values are retrieved when the tree is read from the file.
- * @param name
+ * @param name string of comma separated Q-Vector names
  */
 void CorrelationManager::AddQVectors(const std::string &namelist) {
   std::vector<std::string> names;
   tokenize(namelist, names, ", ", true);
   for (const auto &name : names) {
+    AddDataContainer(name);
+  }
+}
+
+/**
+ * Adds a list of detectors to the correlation manager.
+ * The actual values are retrieved when the tree is read from the file.
+ * @param name list of qvectors
+ */
+void CorrelationManager::AddQVectors(const std::vector<std::string> &qvectors) {
+  for (const auto &name : qvectors) {
     AddDataContainer(name);
   }
 }
@@ -97,6 +109,13 @@ void CorrelationManager::AddCorrelation(std::string name,
   Qn::Correlation correlation(input_names_vector, lambda, use_weights, use_resampling==Qn::Sampler::Resample::ON);
   correlations_.emplace(name, correlation);
 }
+
+void CorrelationManager::ConfigureResampling(Sampler::Method method,
+                                             CorrelationManager::size_type nsamples,
+                                             unsigned long seed) {
+  sampler_.Configure(method, nsamples, seed);
+}
+
 
 /**
  * Adds a ESE axis to all correlations
@@ -196,20 +215,23 @@ void CorrelationManager::MakeProjections() {
 }
 
 void CorrelationManager::BuildCorrelations() {
-  std::vector<Qn::DataContainerQVector*> qvectors;
   for (auto &corr : correlations_) {
-    auto &correlation = corr.second;
-    qvectors.clear();
-    qvectors.reserve(correlation.GetInputNames().size());
-    for (const auto &cname : correlation.GetInputNames()) {
-      qvectors.push_back(qvectors_.at(cname));
-    }
     auto axes = event_axes_;
     if (event_shape_ && !fill_ese_) {
       axes.push_back(eventshape_axes_.at(0));
     }
-    correlation.ConfigureCorrelation(qvectors, axes, &sampler_);
+    corr.second.ConfigureCorrelation(qvectors_, axes, &sampler_);
   }
+}
+
+void CorrelationManager::Run() {
+  reader_->SetEntry(0);
+  Initialize();
+  reader_->Restart();
+  while(reader_->Next()) {
+    Process();
+  }
+  Finalize();
 }
 
 //void CorrelationManager::BuildESECorrelation() {
@@ -249,11 +271,6 @@ void CorrelationManager::BuildCorrelations() {
 
 void CorrelationManager::FillCorrelations(std::map<std::string, Qn::Correlation> &corr) {
   for (auto &pair : corr) {
-    u_long i = 0;
-    for (const auto &name : pair.second.GetInputNames()) {
-      (pair.second.GetInputs())[i] = qvectors_[name];
-      ++i;
-    }
     pair.second.Fill(eventbin_, static_cast<size_t>(reader_->GetCurrentEntry()));
   }
 }

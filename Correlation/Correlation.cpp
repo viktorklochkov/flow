@@ -21,7 +21,7 @@ namespace Qn {
 
 void Correlation::FillCorrelation(size_type initial_offset,
                                   unsigned int n) {
-  const auto &i_input = *inputs_[n];
+  const auto &i_input = **inputs_[n];
   initial_offset += n;
   // End recursion if last input DataContainer is reached: n+1 = number of inputs.
   if (n + 1==inputs_.size()) {
@@ -75,17 +75,19 @@ void Correlation::FillCorrelation(size_type initial_offset,
 
 void Correlation::Fill(const std::vector<unsigned long> &eventindices,
                        const size_type event_id) {
-  int ieventvar = 0;
+  // Update eventindices in the result correlation index.
+  size_type ieventvar = 0;
   for (auto eventindex : eventindices) {
     c_index_[ieventvar] = eventindex;
     ++ieventvar;
   }
+  // Fill the per-event-correlation result using recursively.
   FillCorrelation(ieventvar, 0);
+  // Fill result to the event average statistic DataContainer.
   if (use_resampling_) {
     unsigned int ibin = 0;
     for (auto &bin : result_) {
-      bin.Fill(current_event_result_.At(ibin),
-               resampler_->GetFillVector(event_id));
+      bin.Fill(current_event_result_.At(ibin), resampler_->GetFillVector(event_id));
       ++ibin;
     }
   } else {
@@ -95,27 +97,32 @@ void Correlation::Fill(const std::vector<unsigned long> &eventindices,
       ++ibin;
     }
   }
+  // In case of enabled histograms also fill the histogram DataContainer.
   if (use_histo_result_) {
     unsigned int ibin = 0;
-    for (auto &bin : result_) {
-      if (use_histo_result_) bin.Fill(current_event_result_.At(ibin));
+    for (auto &bin : histo_result_) {
+      auto res = current_event_result_.At(ibin);
+      if (res.validity) bin.Fill(res.result);
       ++ibin;
     }
   }
 }
 
-void Correlation::ConfigureCorrelation(const Correlation::INPUTS &inputs,
+void Correlation::ConfigureCorrelation(std::map<std::string,DataContainerQVector*> &qvectors,
                                        const std::vector<Qn::Axis> &event,
                                        Sampler *sampler) {
-  inputs_ = inputs;
+  for (const auto &cname : names_) {
+    inputs_.push_back(&qvectors.at(cname));
+  }
   axes_event_ = event;
-  qvectors_.resize(inputs.size());
+  qvectors_.resize(inputs_.size());
   // Adds all the axes of event variables to the result of the correlation.
   result_.AddAxes(axes_event_);
   // Prepare a map of all indices of the correlation
   auto dimension = axes_event_.size();
   size_type i_input = 0;
-  for (const auto &input : inputs) {
+  for (const auto &inputptr : inputs_) {
+    auto input  = *inputptr;
     if (!input->IsIntegrated()) dimension += input->GetAxes().size();
     std::vector<std::vector<unsigned long>> indexmap; // vector of multi-dimensional indices of one Input Q-Vector.
     for (size_type ibin = 0; ibin < input->size(); ++ibin) {

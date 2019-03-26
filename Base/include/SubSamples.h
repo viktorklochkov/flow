@@ -36,13 +36,13 @@ struct Sample {
   double sumw = 0;
   int entries = 0;
 
-  void Fill(const Product &prod) {
+  inline void Fill(const Product &prod) {
     sumwy += prod.result*prod.weight;
     sumw += prod.weight;
     ++entries;
   }
 
-  void Fill(const double result, const double weight) {
+  inline void Fill(const double result, const double weight) {
     sumwy += result*weight;
     sumw += weight;
     ++entries;
