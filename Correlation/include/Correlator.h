@@ -24,10 +24,7 @@
 
 namespace Qn {
 
-enum class Weight {
-  REFERENCE,
-  OBSERVABLE
-};
+
 
 class Correlator {
  public:

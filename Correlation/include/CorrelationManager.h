@@ -27,19 +27,19 @@
 
 #include "Correlation.h"
 #include "Sampler.h"
-#include "Correlator.h"
 #include "EventShape.h"
 #include "DataContainer.h"
 
 namespace Qn {
 
 class CorrelationManager {
-  using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
+  using FUNCTION = std::function<double(std::vector<Qn::QVector *> &)>;
   using size_type = std::size_t;
  public:
-  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) : reader_(std::move(reader)) { num_events_ = reader_->GetEntries(true);}
-  CorrelationManager(std::shared_ptr<TTreeReader> reader, size_type num_events)
-      : reader_(std::move(reader)), num_events_(num_events) {}
+  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
+      reader_(std::move(reader)) {
+    num_events_ = reader_->GetEntries(true);
+  }
 
   void AddDataContainer(const std::string &name);
 
@@ -49,15 +49,20 @@ class CorrelationManager {
 
   void AddEventVariable(const Qn::Axis &eventaxis);
 
-  void AddCorrelation(std::string name, const std::string &input_names, FUNCTION &&lambda, Qn::Sampler::Resample resample = Qn::Sampler::Resample::ON);
+  void AddCorrelation(std::string name,
+                      const std::string &input_names,
+                      FUNCTION &&lambda,
+                      Sampler::Resample resample = Sampler::Resample::ON);
 
-  void SetRefQinCorrelation(const std::string &name, const std::vector<Qn::Weight> &use_weights) {
-    correlations_.at(name).SetReferenceQVectors(use_weights);
+  void SetWeightsInCorrelation(const std::string &name, const std::vector<Qn::Weight> &use_weights) {
+    correlations_.at(name).SetWeights(use_weights);
   }
 
-  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) { sampler_.Configure(method, nsamples, seed); }
+  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) {
+    sampler_.Configure(method, nsamples, seed);
+  }
 
-  void AddESE(const std::string &name, FUNCTION &&lambda, float qmax);
+//  void AddESE(const std::string &name, FUNCTION &&lambda, float qmax);
 
   void Initialize();
 
@@ -74,7 +79,7 @@ class CorrelationManager {
    * Set name of ese calibration file.
    * @param ese_name
    */
-  void SetESECalibrationFile(const std::string &ese_name) { ese_file_name_ = ese_name; }
+//  void SetESECalibrationFile(const std::string &ese_name) { ese_file_name_ = ese_name; }
 
   DataContainerStats GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
 
@@ -85,32 +90,37 @@ class CorrelationManager {
 
   void BuildCorrelations();
 
-  void FillESE(std::map<std::string, Qn::Correlator> &corr);
+//  void FillESE(std::map<std::string, Qn::Correlation> &corr);
 
-  void FillCorrelations(std::map<std::string, Qn::Correlator> &corr);
+  void FillCorrelations(std::map<std::string, Qn::Correlation> &corr);
 
   void UpdateEvent();
 
   bool CheckEvent();
 
-  bool CheckESEEvent();
-
-  void BuildESECorrelation();
-
-  void FitEventShape();
-
-  void SaveEventShape(const std::string &filename);
-
-  bool IsESE() const;
+//  bool CheckESEEvent();
+//
+//  void BuildESECorrelation();
+//
+//  void FitEventShape();
+//
+//  void SaveEventShape(const std::string &filename);
+//
+//  bool IsESE() const;
 
  private:
+  bool fill_ese_ = false;
+  bool use_ese_ = false;
+  size_type num_events_ = 0;
+
   Qn::Sampler sampler_;
+
   std::string correlation_file_name_;
   std::string ese_file_name_;
   std::unique_ptr<TFile> ese_file_;
   std::shared_ptr<TTreeReader> reader_;
-  std::map<std::string, Qn::Correlator> correlations_;
-  std::map<std::string, Qn::Correlator> ese_correlations_;
+  std::map<std::string, Qn::Correlation> correlations_;
+  std::map<std::string, Qn::Correlation> ese_correlations_;
   std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
   std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
@@ -121,9 +131,6 @@ class CorrelationManager {
   std::vector<Qn::Axis> event_axes_;
   std::vector<Qn::Axis> eventshape_axes_;
   std::unique_ptr<Qn::DataContainerEventShape> event_shape_ = nullptr;
-  bool fill_ese_ = false;
-  bool use_ese_ = false;
-  size_type num_events_ = 0;
 
   /**
  * Tokenize input string

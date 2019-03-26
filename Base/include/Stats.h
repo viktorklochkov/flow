@@ -107,6 +107,11 @@ class Stats {
     profile_.Fill(product, weight);
   }
 
+  inline void Fill(const double result, const double weight, const std::vector<size_type> &samples) {
+    subsamples_.Fill(result, samples, weight);
+    profile_.Fill(result, weight);
+  }
+
   void SetNumberOfSubSamples(size_type nsamples) {
     subsamples_.SetNumberOfSamples(nsamples);
   }

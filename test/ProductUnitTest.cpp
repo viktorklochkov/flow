@@ -4,7 +4,7 @@
 #include "DataContainer.h"
 #include "QVector.h"
 #include "Correlation.h"
-#include "Correlator.h"
+
 
 TEST(ProductTest, Trivial) {
   Qn::Product p({2.,10.}, 5, true);

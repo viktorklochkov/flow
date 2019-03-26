@@ -19,78 +19,141 @@
 
 namespace Qn {
 
-void Correlation::FillCorrelation(const std::vector<unsigned long> &eventindex,
-                                  int iterationoffset,
-                                  u_int iteration,
-                                  const DataContainers &input) {
-  const auto &datacontainer = *input[iteration];
-  iterationoffset += iteration;
-  if (iteration + 1==input.size()) {
-    int ibin = 0;
-    for (const auto &bin : datacontainer) {
-      if (!datacontainer.IsIntegrated()) {
-        int i_index = 0;
-        for (auto index : index_[iteration][ibin]) {
-          int pos = i_index + iterationoffset;
+void Correlation::FillCorrelation(size_type initial_offset,
+                                  unsigned int n,
+                                  const std::size_t event_id) {
+  const auto &i_input = *inputs_[n];
+  initial_offset += n;
+  if (n + 1==inputs_.size()) {
+    size_type ibin = 0;
+    for (auto qvector : i_input) {
+      if (!i_input.IsIntegrated()) {
+        size_type i_index = 0;
+        for (const auto &index : index_[n][ibin]) {
+          auto pos = i_index + initial_offset;
           c_index_[pos] = index;
           ++i_index;
         }
       }
-      contents_[iteration] = bin;
-      data_correlation_.At(c_index_).validity =
-          std::all_of(contents_.begin(), contents_.end(), [](const QVector &q) { return q.n() > 0; });
-      data_correlation_.At(c_index_).result = function_(contents_);
-      int iq = 0;
-      int iw = 0;
-      for (const auto &q : contents_) {
-        if (use_weights_[iq]) {
-          data_correlation_.At(c_index_).w_vect[iw] = q.sum_weights_;
-          ++iw;
+      qvectors_[n] = &qvector;
+      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](QVector *q) { return q->n() > 0; });
+      size_type i_weight = 0;
+      double weight = 1.;
+      for (const auto &q : qvectors_) {
+        if (use_weights_[i_weight]) {
+          weight *= q->sum_weights_;
         }
-        ++iq;
+        ++i_weight;
+      }
+      if (valid) {
+        result_.At(c_index_).Fill(function_(qvectors_), weight, sampler_->GetFillVector(event_id));
+        if (use_histo_result_) histo_result_.At(c_index_).Fill(function_(qvectors_));
       }
       ++ibin;
     }
     return;
   }
-  int ibin = 0;
-  for (const auto &bin : datacontainer) {
-    int offset = iterationoffset;
-    if (!datacontainer.IsIntegrated()) {
-      int i_index = 0;
-      for (auto index : index_[iteration][ibin]) {
+  size_type ibin = 0;
+  for (auto bin : i_input) {
+    size_type offset = initial_offset;
+    if (!i_input.IsIntegrated()) {
+      size_type i_index = 0;
+      for (const auto &index : index_[n][ibin]) {
         offset += i_index;
         c_index_[offset] = index;
         ++i_index;
       }
     }
-    contents_[iteration] = bin;
-    FillCorrelation(eventindex, offset, iteration + 1, input);
+    qvectors_[n] = &bin;
+    FillCorrelation(offset, n + 1, event_id);
     ++ibin;
   }
 }
 
-void Correlation::Fill(const Correlation::DataContainers &input, const std::vector<unsigned long> &eventindex) {
-  uint iteration = 0;
-  int ii = 0;
-  for (auto eventind : eventindex) {
-    c_index_[ii] = eventind;
-    ++ii;
+void Correlation::FillCorrelationNoResampling(size_type initial_offset,
+                                              unsigned int n,
+                                              const std::size_t event_id) {
+  const auto &i_input = *inputs_[n];
+  initial_offset += n;
+  if (n + 1==inputs_.size()) {
+    size_type ibin = 0;
+    for (auto qvector : i_input) {
+      if (!i_input.IsIntegrated()) {
+        size_type i_index = 0;
+        for (auto index : index_[n][ibin]) {
+          auto pos = i_index + initial_offset;
+          c_index_[pos] = index;
+          ++i_index;
+        }
+      }
+      qvectors_[n] = &qvector;
+      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](const Qn::QVector* q) { return q->n() > 0; });
+      size_type i_weight = 0;
+      double weight = 1.;
+      for (const auto &q : qvectors_) {
+        if (use_weights_[i_weight]) {
+          weight *= q->sum_weights_;
+        }
+        ++i_weight;
+      }
+      if (valid) {
+        result_.At(c_index_).Fill(function_(qvectors_), weight, {});
+        if (use_histo_result_) histo_result_.At(c_index_).Fill(function_(qvectors_));
+      }
+
+      ++ibin;
+    }
+    return;
   }
-  FillCorrelation(eventindex, ii, iteration, input);
+  size_type ibin = 0;
+  for (auto bin : i_input) {
+    auto offset = initial_offset;
+    if (!i_input.IsIntegrated()) {
+      int i_index = 0;
+      for (auto index : index_[n][ibin]) {
+        offset += i_index;
+        c_index_[offset] = index;
+        ++i_index;
+      }
+    }
+    qvectors_[n] = &bin;
+    FillCorrelationNoResampling(offset, n + 1, event_id);
+    ++ibin;
+  }
 }
 
-void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &inputs) {
-  int i = 0;
-  contents_.resize(inputs.size());
-  data_correlation_.AddAxes(axes_event_);
-  auto size = axes_event_.size();
+void Correlation::Fill(const std::vector<unsigned long> &eventindices,
+                       const std::size_t event_id) {
+  uint iteration = 0;
+  int ii = 0;
+  for (auto eventindex : eventindices) {
+    c_index_[ii] = eventindex;
+    ++ii;
+  }
+  if (use_resampling_) {
+    FillCorrelation(ii, iteration, event_id);
+  } else {
+    FillCorrelationNoResampling(ii, iteration, event_id);
+  }
+}
+
+void Correlation::ConfigureCorrelation(const Correlation::DataContainers &inputs,
+                                       const std::vector<Qn::Axis> &event,
+                                       Sampler *sampler) {
+  inputs_ = inputs;
+  axes_event_ = event;
+  qvectors_.resize(inputs.size());
+  result_.AddAxes(axes_event_);
+
+  //prepare correlation indices
+  auto event_variables_size = axes_event_.size();
+  int i_input = 0;
   for (const auto &input : inputs) {
-    if (!input->IsIntegrated()) size += input->GetAxes().size();
+    if (!input->IsIntegrated()) event_variables_size += input->GetAxes().size();
     std::vector<std::vector<unsigned long>> indexmap;
-    for (std::size_t j = 0; j < input->size(); ++j) {
+    for (std::size_t j_input = 0; j_input < input->size(); ++j_input) {
       std::vector<unsigned long> indices;
-      input->GetIndex(indices, j);
+      input->GetIndex(indices, j_input);
       indexmap.push_back(indices);
     }
     index_.push_back(indexmap);
@@ -98,21 +161,39 @@ void Correlation::CreateCorrelationContainer(const Correlation::DataContainers &
       auto axes = input->GetAxes();
       for (auto &axis : axes) {
         auto original_name = axis.Name();
-        if (!names_.empty()) { axis.SetName(std::to_string(i) + "_" + names_[i] + "_" + original_name); }
-        else { axis.SetName(std::to_string(i) + "_" + original_name); }
-        data_correlation_.AddAxis(axis);
+        if (!names_.empty()) { axis.SetName(std::to_string(i_input) + "_" + names_[i_input] + "_" + original_name); }
+        else { axis.SetName(std::to_string(i_input) + "_" + original_name); }
+        result_.AddAxis(axis);
       }
-      ++i;
+      ++i_input;
     }
   }
-  c_index_.resize(size);
-  auto size_weights = 0;
-  for (auto w : use_weights_) {
-    if (w) ++size_weights;
+  c_index_.resize(event_variables_size);
+
+  // configure weights
+  for (auto &bin : result_) {
+    if (std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; })) {
+      bin.SetStatus(Stats::Status::OBSERVABLE);
+    } else {
+      bin.SetStatus(Stats::Status::REFERENCE);
+    }
   }
-  for (auto &data : data_correlation_) {
-    data.w_vect.resize(size_weights);
+
+  // configure histo_result
+  if (use_histo_result_) {
+    auto base_hist = histo_result_.At(0);
+    histo_result_.AddAxes(result_.GetAxes());
+    histo_result_.InitializeEntries(base_hist);
   }
+
+  // configure sampler
+  if (use_resampling_) {
+    sampler_ = sampler;
+    for (auto &bin :result_) {
+      bin.SetNumberOfSubSamples(sampler_->GetNumSamples());
+    }
+  }
+
 }
 
 }

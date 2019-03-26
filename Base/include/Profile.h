@@ -42,6 +42,14 @@ class Profile {
     ++entries_;
   }
 
+  inline void Fill(const double result, const double weight) {
+    sumwy_ += weight*result;
+    sumwy2_ += weight*result*result;
+    sumw_ += weight;
+    sumw2_ += weight*weight;
+    ++entries_;
+  }
+
   inline double Mean() const {
     if (sumw_ > 0.) {
       return sumwy_/sumw_;

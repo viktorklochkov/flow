@@ -3,7 +3,6 @@
 //
 
 #include <gtest/gtest.h>
-#include "Correlator.h"
 
 //TEST(CorrelatorUnitTest, Basic) {
 //

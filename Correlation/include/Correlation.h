@@ -1,3 +1,5 @@
+#include <utility>
+
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -22,67 +24,66 @@
 
 #include "DataContainer.h"
 #include "QVector.h"
+#include "Sampler.h"
 
 namespace Qn {
 /**
  * @brief      Correlation of several input data containers.
  */
+
+enum class Weight {
+  REFERENCE,
+  OBSERVABLE
+};
+
 class Correlation {
   using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
-  using DataContainers = std::vector<DataContainerQVector*>;
+  using DataContainers = std::vector<DataContainerQVector *>;
+  using FUNCTION = std::function<double(std::vector<Qn::QVector*> &)>;
  public:
   Correlation() = default;
 
-  Correlation(const DataContainers &input,
-              AXES event,
-              std::function<double(std::vector<Qn::QVector> &)> lambda) :
-      data_correlation_(),
-      axes_event_(std::move(event)),
-      function_(std::move(lambda)) {
-    CreateCorrelationContainer(input);
-  }
-
   Correlation(std::vector<std::string> names,
-              const DataContainers &input,
-              AXES event,
-              std::function<double(std::vector<Qn::QVector> &)> lambda) :
-      data_correlation_(),
-      axes_event_(std::move(event)),
+              FUNCTION lambda,
+              bool use_resampling) :
+      use_resampling_(use_resampling),
       function_(std::move(lambda)),
       names_(std::move(names)) {
-    CreateCorrelationContainer(input);
+    use_weights_.resize(names_.size());
+    use_weights_[0] = true;
   }
 
-  void ConfigureCorrelation(const DataContainers &input,
-                            const std::vector<Qn::Axis> &event,
-                            std::function<double(std::vector<Qn::QVector> &)> function,
-                            const std::vector<std::string> &names,
-                            std::vector<bool> weights) {
-    axes_event_ = event;
-    names_ = names;
-    function_ = function;
-    use_weights_ = weights;
-    CreateCorrelationContainer(input);
+  void ConfigureCorrelation(const DataContainers &input, const std::vector<Qn::Axis> &event, Qn::Sampler* sampler);
+
+  void SetWeights(std::vector<Qn::Weight> weights) {
+    for (size_type iw = 0; iw < use_weights_.size(); ++iw) {
+      use_weights_[iw] = weights[iw]==Qn::Weight::OBSERVABLE;
+    }
   }
 
-  DataContainerProduct* GetCorrelation() { return &data_correlation_; }
-  AXES GetEventAxes() const { return axes_event_; }
-  inline double &At(size_type index) { return data_correlation_.At(index).result; }
+  std::vector<std::string> &GetInputNames() { return names_; }
+
+  DataContainerStats GetResult() const { return result_; }
+
+  std::vector<DataContainerQVector *> &GetInputs() { return inputs_; }
+
  private:
+  bool use_histo_result_ = false;
+  bool use_resampling_ = false;
+
+  Qn::Sampler *sampler_ = nullptr;
+
   std::vector<std::vector<std::vector<size_type>>> index_; ///< map of indices of all inputs
   std::vector<size_type> c_index_; ///< flattened index of correlation
-  DataContainerProduct data_correlation_; ///<  datacontainer containing the correlations
+  DataContainerStats result_;
+  DataContainer<TH1F> histo_result_;
   AXES axes_event_; ///< vector of event axes used in the correlation
-  std::function<double(std::vector<Qn::QVector> &)> function_; ///< correlation function
+  FUNCTION function_; ///< correlation function
   std::vector<std::string> names_; ///< vector of input names
   std::vector<bool> use_weights_;
-  std::vector<QVector> contents_;
-
-/**
- * Create the correlation function. Automatically called at creation of Correlation object.
- */
-  void CreateCorrelationContainer(const DataContainers &);
+  std::vector<QVector *> qvectors_;
+  std::vector<DataContainerQVector *> inputs_;
 
  public:
 
@@ -90,24 +91,32 @@ class Correlation {
  * Fill Correlation container with specified inputs.
  * Recursive function called N times, where N is the number of correlated datacontainers.
  * @param input vector of all input containers in correlation
- * @param eventindex of the used for the event axes
+ * @param eventindices of the used for the event axes
  * @param lambda correlation function
  */
-  void Fill(const DataContainers &input, const std::vector<unsigned long> &eventindex);
+  void Fill(const std::vector<unsigned long> &eventindices, std::size_t event_id);
+
 /**
- * Fill correlation recursive function
- * @param eventindex event index of event axes
- * @param index index in each new axis
- * @param contents content of each correlated datacontainer for one bin
- * @param iteration iterationstep
- * @param lambda function which is used for the correlation
- * @param cindex compacted index of the bin in the correlation datacontainer.
+ *
+ * @param initial_offset
+ * @param n
+ * @param event_id
  */
-  void FillCorrelation(const std::vector<unsigned long> &eventindex,
-                       int iterationoffset,
-                       u_int iteration,
-                       const DataContainers &input);
+  void FillCorrelation(size_type initial_offset,
+                       unsigned int n,
+                       std::size_t event_id);
+
+/**
+ *
+ * @param iterationoffset
+ * @param iteration
+ * @param event_id
+ */
+  void FillCorrelationNoResampling(size_type initial_offset,
+                                   unsigned int n,
+                                   std::size_t event_id);
 };
+
 }
 
 #endif //FLOW_CORRELATION_H

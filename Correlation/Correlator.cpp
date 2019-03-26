@@ -15,30 +15,31 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "Correlator.h"
+
 
 void Qn::Correlator::FillCorrelation(const std::vector<unsigned long> &eventindex, std::size_t event_id) {
   correlation_.Fill(inputs_, eventindex);
-  int ibin = 0;
-  for (const auto &corr_in_event : *correlation_.GetCorrelation()) {
-    if (corr_in_event.validity) {
-      if (use_resampling_) {
-        result_.At(ibin).Fill(corr_in_event, sampler_->GetFillVector(event_id));
-      } else {
-        result_.At(ibin).Fill(corr_in_event);
-      }
-    }
-    if (corr_in_event.validity && binned_result_) {
-      binned_result_->At(ibin).Fill(corr_in_event.result);
-    }
-    ++ibin;
-  }
+//  int ibin = 0;
+//  for (const auto &corr_in_event : *correlation_.GetCorrelation()) {
+//    if (corr_in_event.validity) {
+//      if (use_resampling_) {
+//        result_.At(ibin).Fill(corr_in_event, sampler_->GetFillVector(event_id));
+//      } else {
+//        result_.At(ibin).Fill(corr_in_event);
+//      }
+//    }
+//    if (corr_in_event.validity && binned_result_) {
+//      binned_result_->At(ibin).Fill(corr_in_event.result);
+//    }
+//    ++ibin;
+//  }
 }
 
 void Qn::Correlator::ConfigureCorrelation(const std::vector<Qn::DataContainerQVector*> &input,
                                           std::vector<Qn::Axis> event) {
   inputs_.resize(input.size());
   correlation_.ConfigureCorrelation(input, event, lambda_correlation_, input_names_, use_weights_);
+  correlation_.SetDataContainerPtr(&result_, binned_result_.get());
   result_.AddAxes(correlation_.GetCorrelation()->GetAxes());
   auto use_weights = std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; });
   for (auto &bin : result_) {

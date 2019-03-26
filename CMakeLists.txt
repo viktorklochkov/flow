@@ -68,7 +68,6 @@ set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/CorrelationManager.cpp
         Correlation/Sampler.cpp
-        Correlation/Correlator.cpp
         )
 
 set(DIFF_SOURCES

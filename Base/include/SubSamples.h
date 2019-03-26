@@ -42,6 +42,12 @@ struct Sample {
     ++entries;
   }
 
+  void Fill(const double result, const double weight) {
+    sumwy += result*weight;
+    sumw += weight;
+    ++entries;
+  }
+
   double Mean() const { if (sumw > 0.) { return sumwy/sumw; } else { return sumwy; }; }
 
   void operator+=(Sample b) {
@@ -116,6 +122,12 @@ class SubSamples {
   inline void Fill(const Product &product, const std::vector<size_type> &samples, const double weight) {
     for (auto &sample : samples) {
       samples_[sample].Fill(product, weight);
+    }
+  }
+
+  inline void Fill(const double result, const std::vector<size_type> &samples, const double weight) {
+    for (auto &sample : samples) {
+      samples_[sample].Fill(result, weight);
     }
   }
 
