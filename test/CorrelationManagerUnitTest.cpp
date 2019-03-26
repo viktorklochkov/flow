@@ -9,6 +9,7 @@
 #include "EventInfo.h"
 
 TEST(CorrelationManagerTest, AddingCorrelation) {
+  using namespace Qn;
   auto data1 = new Qn::DataContainer<Qn::QVector>();
   for (auto &bin : *data1) {
     Qn::QVec qvec(1.0, 1.0);
@@ -48,11 +49,9 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 //  manager.SetESECalibrationFile("testese.root");
 //  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
   std::cout << "add correlation" << std::endl;
-  manager.AddCorrelation("c1","Det1, Det2",[](const std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
-  manager.SetWeightsInCorrelation("c1", {Qn::Weight::REFERENCE, Qn::Weight::REFERENCE});
-  manager.AddCorrelation("avg","Det1",[](const std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n());}, Qn::Sampler::Resample::OFF);
-  manager.SetWeightsInCorrelation("avg", {Qn::Weight::OBSERVABLE});
-  manager.AddCorrelation("c2","Det1, Det2",[](const std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
+  manager.AddCorrelation("c1","Det1, Det2",[](QVectors q) { return q[0].y(1) + q[1].x(1);}, {Weight::REFERENCE, Weight::REFERENCE});
+  manager.AddCorrelation("avg","Det1",[](QVectors q) { return q[0].mag(2)/sqrt(q[0].n());},{Weight::OBSERVABLE}, Sampler::Resample::OFF);
+  manager.AddCorrelation("c2","Det1, Det2",[](QVectors q) { return q[0].x(1) + q[1].x(1);}, {Weight::OBSERVABLE, Weight::REFERENCE});
   manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,100);
   int events = 0;
   reader->SetEntry(0);

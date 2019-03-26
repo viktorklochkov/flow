@@ -90,10 +90,11 @@ void CorrelationManager::AddEventVariable(const Qn::Axis &eventaxis) {
 void CorrelationManager::AddCorrelation(std::string name,
                                         const std::string &input_names,
                                         CorrelationManager::FUNCTION &&lambda,
+                                        const std::vector<Qn::Weight> &use_weights,
                                         Qn::Sampler::Resample use_resampling) {
   std::vector<std::string> input_names_vector;
   tokenize(input_names, input_names_vector, ", ", true);
-  Qn::Correlation correlation(input_names_vector, lambda, use_resampling==Qn::Sampler::Resample::ON);
+  Qn::Correlation correlation(input_names_vector, lambda, use_weights, use_resampling==Qn::Sampler::Resample::ON);
   correlations_.emplace(name, correlation);
 }
 

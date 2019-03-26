@@ -48,11 +48,11 @@ Stats Merge(const Stats &lhs, const Stats &rhs) {
       (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
       (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
     result.profile_ = Profile::MergeNormal(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MergeConcat(lhs.subsamples_, rhs.subsamples_);
+    result.subsamples_ = SubSamples::MergeBinsNormal(lhs.subsamples_, rhs.subsamples_);
   }
   if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
     result.profile_ = Profile::MergePointAverage(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MergeConcat(lhs.subsamples_, rhs.subsamples_);
+    result.subsamples_ = SubSamples::MergeBinsPointAverage(lhs.subsamples_, rhs.subsamples_);
   }
   result.status_ = lhs.status_;
   result.bits_ = lhs.bits_;

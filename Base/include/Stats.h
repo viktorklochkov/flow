@@ -97,8 +97,10 @@ class Stats {
   friend Stats Sqrt(const Stats &);
 
   inline void Fill(const Product &product, const std::vector<size_type> &samples) {
-    subsamples_.Fill(product, samples);
-    profile_.Fill(product);
+    if (product.validity) {
+      subsamples_.Fill(product, samples);
+      profile_.Fill(product);
+    }
   }
 
   inline void Fill(const Product &product) {

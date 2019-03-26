@@ -67,7 +67,7 @@ class DataContainer : public TObject {
     axes_.push_back({"integrated", 1, 0, 1});
     dimension_ = 1;
     data_.resize(1);
-    stride_.resize(dimension_+1);
+    stride_.resize(dimension_ + 1);
     CalculateStride();
   };
 /**
@@ -78,7 +78,7 @@ class DataContainer : public TObject {
     AddAxes(axes);
   }
   virtual ~DataContainer() {
-     delete list_;
+    delete list_;
   };
 
   using QnAxes = std::vector<Axis>;
@@ -188,14 +188,12 @@ class DataContainer : public TObject {
  */
   T &At(size_type index) noexcept { return data_.at(index); }
 
-
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
   T const &At(size_type index) const noexcept { return data_.at(index); }
-
 
 /**
  * Calls function on element specified by indices.
@@ -271,7 +269,7 @@ class DataContainer : public TObject {
  * @param indices Outparameter for the indices
  * @param offset Index of linearized vector
  */
-  void GetIndex(typename std::vector<size_type> &indices, const unsigned long offset) const {
+  void GetIndex(std::vector<size_type> &indices, const unsigned long offset) const {
     unsigned long temp = offset;
     if (offset < data_.size()) {
       indices.resize(dimension_);
@@ -281,6 +279,25 @@ class DataContainer : public TObject {
       }
       indices[0] = temp;
     }
+  }
+
+/**
+ * Calculates indices in multiple dimensions from linearized index
+ * @param offset Index of linearized vector
+ * @return vector of indices
+ */
+  std::vector<size_type> GetIndex(const unsigned long offset) const {
+    std::vector<size_type> indices;
+    unsigned long temp = offset;
+    if (offset < data_.size()) {
+      indices.resize(dimension_);
+      for (unsigned int i = 0; i < dimension_ - 1; ++i) {
+        indices[dimension_ - i - 1] = temp%axes_[dimension_ - i - 1].size();
+        temp = temp/axes_[dimension_ - i - 1].size();
+      }
+      indices[0] = temp;
+    }
+    return indices;
   }
 
 /**
@@ -338,7 +355,7 @@ class DataContainer : public TObject {
     }
     if (axis_names.empty()) {
       projection.At(0) = data_.at(0);
-      for (auto bin = data_.begin()+1; bin < data_.end(); ++bin) {
+      for (auto bin = data_.begin() + 1; bin < data_.end(); ++bin) {
         projection.At(0) = lambda(projection.At(0), *bin);
       }
     } else {
@@ -370,7 +387,7 @@ class DataContainer : public TObject {
  */
   DataContainer<T>
   Projection(const std::vector<std::string> axis_names = {}) const {
-    auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a,b); };
+    auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a, b); };
     return Projection(axis_names, lambda);
   }
 
@@ -560,7 +577,7 @@ class DataContainer : public TObject {
  * @return rebinned datacontainer.
  */
   DataContainer<T> Rebin(const Axis &rebinaxis) const {
-    auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a,b); };
+    auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a, b); };
     return Rebin(rebinaxis, lambda);
   }
 
@@ -732,9 +749,9 @@ class DataContainer : public TObject {
    * see contents for possible settings
    * @param bits settings bits
    */
-  void SetSetting(unsigned int bits) {(void)bits;}
+  void SetSetting(unsigned int bits) { (void) bits; }
 
-  void ResetSetting(unsigned int bits) {(void)bits;}
+  void ResetSetting(unsigned int bits) { (void) bits; }
 
 //--------------------------------//
 // Visualization methods for ROOT //
@@ -746,14 +763,17 @@ class DataContainer : public TObject {
  * @param option draw option
  * @param axis_name name of axis used for second dimension.
  */
-  void NDraw(Option_t *option, const std::string &axis_name = "") {(void)option; (void)axis_name;}
+  void NDraw(Option_t *option, const std::string &axis_name = "") {
+    (void) option;
+    (void) axis_name;
+  }
 
 /**
  * Display contents of DataContainer in TBrowser.
  * Implementation for template specializations please see below.
  * @param b TBrowser
  */
-  virtual void Browse(TBrowser *b) {(void)b;}
+  virtual void Browse(TBrowser *b) { (void) b; }
 
 /// \cond CLASSIMP
  ClassDef(DataContainer, 12);
@@ -809,8 +829,6 @@ inline void DataContainer<Stats>::ResetSetting(const unsigned int bits) {
   }
 }
 
-
-
 //-----------------------------------------//
 // Operations for DataContainer arithmetic //
 //-----------------------------------------//
@@ -863,7 +881,7 @@ DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
 }
 
 template<>
-Long64_t DataContainer<std::pair<bool,float>>::Merge(TCollection *inputlist) = delete;
+Long64_t DataContainer<std::pair<bool, float>>::Merge(TCollection *inputlist) = delete;
 template<>
 Long64_t DataContainer<std::vector<DataVector>>::Merge(TCollection *inputlist) = delete;
 template<>

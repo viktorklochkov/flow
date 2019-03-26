@@ -27,95 +27,110 @@
 #include "Sampler.h"
 
 namespace Qn {
-/**
- * @brief      Correlation of several input data containers.
- */
 
 enum class Weight {
   REFERENCE,
   OBSERVABLE
 };
 
+/**
+ * @brief Correlation of several input Q-Vector DataContainers.
+ */
 class Correlation {
+
   using size_type = std::size_t;
   using AXES = std::vector<Qn::Axis>;
-  using DataContainers = std::vector<DataContainerQVector *>;
-  using FUNCTION = std::function<double(const std::vector<Qn::QVector> &)>;
- public:
-  Correlation() = default;
+  using INPUTS = std::vector<DataContainerQVector *>;
 
-  Correlation(std::vector<std::string> names,
-              FUNCTION lambda,
-              bool use_resampling) :
+ public:
+  using CorrelationFunction = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
+
+  /**
+   * @brief Constructs the Correlation step before information of the Q-Vectors is read from the tree.
+   * @param names input Q-Vector names.
+   * @param lambda correlation function
+   * @param use_resampling enable resampling (configured in the CorrelationManager).
+   */
+  Correlation(std::vector<std::string> names, CorrelationFunction lambda, std::vector<Qn::Weight> use_weights, bool use_resampling)
+      :
       use_resampling_(use_resampling),
       function_(std::move(lambda)),
-      names_(std::move(names)) {
-    use_weights_.resize(names_.size());
-    use_weights_[0] = true;
+      names_(std::move(names)),
+      use_weights_(use_weights) {
   }
 
-  void ConfigureCorrelation(const DataContainers &input, const std::vector<Qn::Axis> &event, Qn::Sampler* sampler);
+  /**
+   * @brief Configure the correlation using the Q-Vector inputs read from the tree.
+   * @param input Q-Vector inputs
+   * @param event Event variables used for this correlation
+   * @param sampler Pointer to the resampler
+   */
+  void ConfigureCorrelation(const INPUTS &input, const std::vector<Qn::Axis> &event, Qn::Sampler *sampler);
 
-  void SetWeights(std::vector<Qn::Weight> weights) {
-    for (size_type iw = 0; iw < use_weights_.size(); ++iw) {
-      use_weights_[iw] = weights[iw]==Qn::Weight::OBSERVABLE;
-    }
-  }
-
+  /**
+   * @brief reference to the names of the Q-Vector inputs of the correlation.
+   * @return vector of input Q-Vector names.
+   */
   std::vector<std::string> &GetInputNames() { return names_; }
 
+  /**
+   * @brief Returns the result of the correlation.
+   * @return Average over all events.
+   */
   DataContainerStats GetResult() const { return result_; }
 
+  /**
+   * @brief Returns a reference to the pointers to the QVectors.
+   * @return reference to the inputs.
+   */
   std::vector<DataContainerQVector *> &GetInputs() { return inputs_; }
+
+  /**
+   * @brief Fill Correlation container with specified inputs.
+   * Recursive function called N times, where N is the number of correlated datacontainers.
+   * @param eventindices of the used for the event axes
+   * @param event_id id of the current event used for resampling.
+   */
+  void Fill(const std::vector<unsigned long> &eventindices, size_type event_id);
 
  private:
   bool use_histo_result_ = false;
   bool use_resampling_ = false;
-
-  Qn::Sampler *sampler_ = nullptr;
-
-  std::vector<std::vector<std::vector<size_type>>> index_; ///< map of indices of all inputs
-  std::vector<size_type> c_index_; ///< flattened index of correlation
-  DataContainerProduct current_event_result_;
-  DataContainerStats result_;
-  DataContainer<TH1F> histo_result_;
+  CorrelationFunction function_; ///< correlation function
   AXES axes_event_; ///< vector of event axes used in the correlation
-  FUNCTION function_; ///< correlation function
+  INPUTS inputs_; ///< Q-Vector inputs during the correlation
   std::vector<std::string> names_; ///< vector of input names
-  std::vector<bool> use_weights_;
-  std::vector<QVector> qvectors_;
-  std::vector<DataContainerQVector *> inputs_;
+  std::vector<Qn::Weight> use_weights_; ///< vector of input weights
+  std::vector<QVectorPtr> qvectors_; ///< vector holding Q-Vectors during Fill step
+  Qn::Sampler *resampler_ = nullptr; ///< Pointer to the central Resampler. CorrelationManager manages lifetime.
+  std::vector<std::vector<std::vector<size_type>>> index_; ///< map of multi-dimensional indices of all inputs
+  std::vector<size_type> c_index_; ///<  multi-dimensional indices of a bin of the resulting correlation
+  DataContainerProduct current_event_result_; ///< result of the correlation of the current event
+  DataContainerStats result_; ///< averaged result of the correlation over all events
+  DataContainer<TH1F> histo_result_; ///< histogrammed result of the correlation
 
- public:
+  /**
+   * @brief Fills correlation using a recursive algorithm
+   * @param initial_offset offset determined by the number of event axes.
+   * @param n recursion step
+   */
+  void FillCorrelation(size_type initial_offset, unsigned int n);
 
-/**
- * Fill Correlation container with specified inputs.
- * Recursive function called N times, where N is the number of correlated datacontainers.
- * @param input vector of all input containers in correlation
- * @param eventindices of the used for the event axes
- * @param lambda correlation function
- */
-  void Fill(const std::vector<unsigned long> &eventindices, std::size_t event_id);
-
-/**
- *
- * @param initial_offset
- * @param n
- * @param event_id
- */
-  void FillCorrelation(size_type initial_offset,
-                       unsigned int n,
-                       std::size_t event_id);
-
-/**
- *
- * @param iterationoffset
- * @param iteration
- * @param event_id
- */
-  void FillCorrelationNoResampling(size_type initial_offset,
-                                   unsigned int n,
-                                   std::size_t event_id);
+  /**
+   * Calculate weight for correlation;
+   * @return
+   */
+  inline double CalculateWeight() {
+    size_type i_weight = 0;
+    double weight = 1.;
+    for (const auto &q : qvectors_) {
+      if (use_weights_[i_weight]==Qn::Weight::OBSERVABLE) {
+//        weight *= q.sumweights();
+      }
+      ++i_weight;
+    }
+    return weight;
+  }
 };
 
 }

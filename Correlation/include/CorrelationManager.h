@@ -31,9 +31,9 @@
 #include "DataContainer.h"
 
 namespace Qn {
-
+  using QVectors = const std::vector<Qn::QVectorPtr>&;
 class CorrelationManager {
-  using FUNCTION = std::function<double(const std::vector<Qn::QVector> &)>;
+  using FUNCTION = Correlation::CorrelationFunction;
   using size_type = std::size_t;
  public:
   explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
@@ -52,11 +52,9 @@ class CorrelationManager {
   void AddCorrelation(std::string name,
                       const std::string &input_names,
                       FUNCTION &&lambda,
+                      const std::vector<Qn::Weight> &use_weights,
                       Sampler::Resample resample = Sampler::Resample::ON);
 
-  void SetWeightsInCorrelation(const std::string &name, const std::vector<Qn::Weight> &use_weights) {
-    correlations_.at(name).SetWeights(use_weights);
-  }
 
   void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) {
     sampler_.Configure(method, nsamples, seed);
