@@ -15,11 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 #include "Correlation.h"
 
-namespace Qn {
-
-void Correlation::FillCorrelation(size_type initial_offset,
+void Qn::Correlation::FillCorrelation(size_type initial_offset,
                                   unsigned int n) {
   const auto &i_input = **inputs_[n];
   initial_offset += n;
@@ -42,11 +41,11 @@ void Correlation::FillCorrelation(size_type initial_offset,
         }
       }
       // Adds a pointer to the current Q-Vector to the temporary container used for calculation of the correlation.
-      qvectors_[n] = QVectorPtr(qvector);
+      qvector_ptrs_[n] = Qn::QVectorPtr(qvector);
       // Checks that all Q-Vectors are valid.
-      auto valid = std::all_of(qvectors_.begin(), qvectors_.end(), [](const QVectorPtr &q) { return q.n() > 0; });
+      auto valid = std::all_of(qvector_ptrs_.begin(), qvector_ptrs_.end(), [](const Qn::QVectorPtr &q) { return q.n() > 0; });
       // Store result of the correlation.
-      if (valid) current_event_result_.At(c_index_) = Qn::Product(function_(qvectors_), valid, CalculateWeight());
+      if (valid) current_event_result_.At(c_index_) = Qn::Product(function_(qvector_ptrs_), valid, CalculateWeight());
       ++ibin;
     }
     // end of recursion
@@ -66,63 +65,38 @@ void Correlation::FillCorrelation(size_type initial_offset,
       }
     }
     // Adds a pointer to the current Q-Vector to the temporary container used for calculation of the correlation.
-    qvectors_[n] = QVectorPtr(qvector);
+    qvector_ptrs_[n] = QVectorPtr(qvector);
     // next step of recursion
     FillCorrelation(offset, n + 1);
     ++ibin;
   }
 }
 
-void Correlation::Fill(const std::vector<unsigned long> &eventindices,
-                       const size_type event_id) {
+void Qn::Correlation::Fill(const std::vector<unsigned long> &eventindices) {
   // Update eventindices in the result correlation index.
   size_type ieventvar = 0;
   for (auto eventindex : eventindices) {
     c_index_[ieventvar] = eventindex;
     ++ieventvar;
   }
-  // Fill the per-event-correlation result using recursively.
+  // Fill the per-event-correlation result recursively.
   FillCorrelation(ieventvar, 0);
-  // Fill result to the event average statistic DataContainer.
-  if (use_resampling_) {
-    unsigned int ibin = 0;
-    for (auto &bin : result_) {
-      bin.Fill(current_event_result_.At(ibin), resampler_->GetFillVector(event_id));
-      ++ibin;
-    }
-  } else {
-    unsigned int ibin = 0;
-    for (auto &bin : result_) {
-      bin.Fill(current_event_result_.At(ibin), {});
-      ++ibin;
-    }
-  }
-  // In case of enabled histograms also fill the histogram DataContainer.
-  if (use_histo_result_) {
-    unsigned int ibin = 0;
-    for (auto &bin : histo_result_) {
-      auto res = current_event_result_.At(ibin);
-      if (res.validity) bin.Fill(res.result);
-      ++ibin;
-    }
-  }
 }
 
-void Correlation::ConfigureCorrelation(std::map<std::string,DataContainerQVector*> &qvectors,
-                                       const std::vector<Qn::Axis> &event,
-                                       Sampler *sampler) {
+void Qn::Correlation::Configure(const CorrelationSettings &settings) {
+  auto &inputs = settings.qvectors;
+  auto event_axes = *settings.event_axes;
   for (const auto &cname : names_) {
-    inputs_.push_back(&qvectors.at(cname));
+    inputs_.push_back(&inputs->at(cname));
   }
-  axes_event_ = event;
-  qvectors_.resize(inputs_.size());
+  qvector_ptrs_.resize(inputs_.size());
   // Adds all the axes of event variables to the result of the correlation.
-  result_.AddAxes(axes_event_);
+  current_event_result_.AddAxes(event_axes);
   // Prepare a map of all indices of the correlation
-  auto dimension = axes_event_.size();
+  auto dimension = event_axes.size();
   size_type i_input = 0;
   for (const auto &inputptr : inputs_) {
-    auto input  = *inputptr;
+    auto input = *inputptr;
     if (!input->IsIntegrated()) dimension += input->GetAxes().size();
     std::vector<std::vector<unsigned long>> indexmap; // vector of multi-dimensional indices of one Input Q-Vector.
     for (size_type ibin = 0; ibin < input->size(); ++ibin) {
@@ -134,33 +108,10 @@ void Correlation::ConfigureCorrelation(std::map<std::string,DataContainerQVector
       auto axes = input->GetAxes();
       for (auto &axis : axes) {
         axis.SetName(std::to_string(i_input) + "_" + names_.at(i_input) + "_" + axis.Name());
-        result_.AddAxis(axis);
+        current_event_result_.AddAxis(axis);
       }
       ++i_input;
     }
   }
   c_index_.resize(dimension);
-  // configure current event result
-  current_event_result_.AddAxes(result_.GetAxes());
-  // configure weights
-  if (std::any_of(use_weights_.begin(), use_weights_.end(), [](Qn::Weight x) { return x==Qn::Weight::OBSERVABLE; })) {
-    std::for_each(result_.begin(), result_.end(), [](Qn::Stats &stats) { stats.SetStatus(Stats::Status::OBSERVABLE); });
-  } else {
-    std::for_each(result_.begin(), result_.end(), [](Qn::Stats &stats) { stats.SetStatus(Stats::Status::REFERENCE); });
-  }
-  // configure histo_result
-  if (use_histo_result_) {
-    auto base_hist = histo_result_.At(0);
-    histo_result_.AddAxes(result_.GetAxes());
-    histo_result_.InitializeEntries(base_hist);
-  }
-  // configure sampler
-  if (use_resampling_) {
-    resampler_ = sampler;
-    for (auto &bin :result_) {
-      bin.SetNumberOfSubSamples(resampler_->GetNumSamples());
-    }
-  }
-}
-
 }

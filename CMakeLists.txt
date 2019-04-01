@@ -69,6 +69,7 @@ set(CORR_SOURCES
         Correlation/CorrelationManager.cpp
         Correlation/Sampler.cpp
         Correlation/EventShapeResult.cpp
+        Correlation/Correlation.cpp
 #        Correlation/ESE.cpp
         )
 
