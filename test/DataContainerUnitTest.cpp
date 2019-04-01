@@ -228,6 +228,26 @@ TEST(DataContainerTest, Bits) {
 
 }
 
+
+TEST(DataContainerTest, GetNameTest) {
+  auto file = new TFile("getnametest.root","RECREATE");
+  TDirectory *dir = file->mkdir("dir");
+  dir->cd();
+  auto a = new Qn::DataContainerEventShape();
+  a->Write("test",TObject::kSingleKey);
+  file->Close();
+  delete a;
+  delete file;
+  auto file2 = TFile::Open("getnametest.root");
+  auto dir2 = (TDirectory*) file2->Get("dir");
+  dir2->ls();
+  for (const auto &obj : *dir2->GetListOfKeys()) {
+    std::cout << obj->GetName() << std::endl;
+    std::cout << dir2->Get(obj->GetName())->GetName() << std::endl;
+  }
+
+}
+
 //
 //TEST(DataContainerTest, Hadd) {
 //  auto container_a = new Qn::DataContainerEventShape();

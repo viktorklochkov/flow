@@ -24,66 +24,79 @@
 #include "TSpline.h"
 #include "TCanvas.h"
 #include "TFile.h"
+#include "Product.h"
 
 namespace Qn {
 class EventShape : public TObject {
  public:
 
+  enum class State {
+    Uninitialized,
+    ReadyForCollecting,
+    ReadyForCalculation
+  };
+
   EventShape() = default;
-
-  EventShape(std::string name) : name_(name) {
-
-  }
-  ~EventShape() = default;
-
-  template<class... Args>
-  void SetHisto(Args &&... args) {
-    histo_ = new TH1F(std::forward<Args>(args)...);
-    integral_ = new TH1F(std::forward<Args>(args)...);
+  EventShape(std::string name, TH1F histo) : name_(name) {
+    auto nbins = histo.GetNbinsX();
+    auto lower = histo.GetXaxis()->GetBinLowEdge(1);
+    auto upper = histo.GetXaxis()->GetBinUpEdge(nbins);
+    histo_ = new TH1F((name_+"histo").data(),";ese;counts",nbins,lower, upper);
+    integral_ = new TH1F((name_+"integral").data(),";ese;counts",nbins,lower, upper);
   }
 
-  void SetName(const std::string &name) { name_ = name; }
+  virtual ~EventShape() {
+    delete spline_;
+    delete histo_;
+    delete integral_;
+  }
 
-  void SetReady() { ready_ = true; }
+  void SetHisto(const TH1F &histo) {
+    auto nbins = histo.GetNbinsX();
+    auto lower = histo.GetXaxis()->GetBinLowEdge(1);
+    auto upper = histo.GetXaxis()->GetBinUpEdge(nbins);
+    histo_ = new TH1F((name_+"histo").data(),";ese;counts",nbins,lower, upper);
+    integral_ = new TH1F((name_+"integral").data(),";ese;counts",nbins,lower, upper);
+  }
 
-  bool IsReady() const { return ready_; }
 
   std::string Name() const { return name_; }
 
   inline float GetPercentile(float q) { return static_cast<float>(spline_->Eval(q)); }
 
-  inline float GetPercentile(double q) { return static_cast<float>(spline_->Eval(q)); }
+//  inline float GetPercentile(double q) { return static_cast<float>(spline_->Eval(q)); }
 
   void IntegrateHist();
 
   void FitWithSpline();
 
+  void Fill( const Product & product) {if (product.validity) histo_->Fill(product.result);}
+
+  TH1F GetHist() const {return *histo_;}
+
   friend Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b);
   friend Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b);
 
-  bool ready_ = false;
   std::string name_;
   TSpline3 *spline_ = nullptr;
   TH1F *histo_ = nullptr;
   TH1F *integral_ = nullptr;
 
   /// \cond CLASSIMP
- ClassDef(EventShape, 4);
+ ClassDef(EventShape, 5);
   /// \endcond
 };
 
 
 inline Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b) {
-  Qn::EventShape c(a.name_);
-  c.SetHisto(*a.histo_);
+  Qn::EventShape c(a.name_, *a.histo_);
   c.histo_->Add(b.histo_);
   c.FitWithSpline();
   return c;
 }
 
 inline Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b) {
-  Qn::EventShape c(a.name_);
-  c.SetHisto(*a.histo_);
+  Qn::EventShape c(a.name_, *a.histo_);
   c.histo_->Add(b.histo_);
   c.FitWithSpline();
   return c;

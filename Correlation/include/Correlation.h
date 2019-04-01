@@ -1,5 +1,3 @@
-#include <utility>
-
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -17,14 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef FLOW_CORRELATION_H
-#define FLOW_CORRELATION_H
+#ifndef FLOW_CORRELATIONBASE_H
+#define FLOW_CORRELATIONBASE_H
 
 #include <utility>
 
 #include "DataContainer.h"
-#include "QVector.h"
-#include "Sampler.h"
 
 namespace Qn {
 
@@ -34,99 +30,86 @@ enum class Weight {
 };
 
 /**
- * @brief Correlation of several input Q-Vector DataContainers.
+ * @brief Struct used to pass the settings to the implementation of the CorrelationBase
+ * Every configuration dependent on the input data is passed using this object.
+ */
+struct CorrelationSettings {
+  std::map<std::string, Qn::DataContainerQVector *> *qvectors;
+  std::vector<Qn::Axis> *event_axes;
+};
+
+/**
+ * @class Correlation
+ * @brief abstract baseclass of the correlation
+ * Implements all the methods to calculate correlations of qvectors.
  */
 class Correlation {
-
+ protected:
   using size_type = std::size_t;
-  using AXES = std::vector<Qn::Axis>;
-  using INPUTS = std::vector<DataContainerQVector**>;
+  // all inputs of the correlation in a vector
+  using inputs_type = std::vector<DataContainerQVector *const *>;
+  // The Pointers to the input qvectors are updated once by the CorrelationManager.
+  // They always point to a valid entry in the TTree.
 
  public:
-  using CorrelationFunction = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
+  using function_type = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
 
-  /**
-   * @brief Constructs the Correlation step before information of the Q-Vectors is read from the tree.
-   * @param names input Q-Vector names.
-   * @param lambda correlation function
-   * @param use_resampling enable resampling (configured in the CorrelationManager).
-   */
-  Correlation(std::vector<std::string> names, CorrelationFunction lambda, std::vector<Qn::Weight> use_weights, bool use_resampling)
-      :
-      use_resampling_(use_resampling),
-      function_(std::move(lambda)),
+  Correlation(std::string name,
+              std::vector<std::string> names,
+              function_type function,
+              std::vector<Qn::Weight> use_weights) :
+      name_(std::move(name)),
       names_(std::move(names)),
-      use_weights_(use_weights) {
+      function_(std::move(function)) {
+    for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(use_weights[i]==Qn::Weight::OBSERVABLE); }
   }
 
-  /**
-   * @brief Configure the correlation using the Q-Vector inputs read from the tree.
-   * @param input Q-Vector inputs
-   * @param event Event variables used for this correlation
-   * @param sampler Pointer to the resampler
-   */
-  void ConfigureCorrelation(std::map<std::string,DataContainerQVector*> &qvectors, const std::vector<Qn::Axis> &event, Qn::Sampler *sampler);
+  Correlation(std::string name, std::vector<std::string> names, function_type function) :
+      name_(std::move(name)),
+      names_(std::move(names)),
+      function_(std::move(function)) {
+    for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(false); }
+  }
 
-  /**
-   * @brief reference to the names of the Q-Vector inputs of the correlation.
-   * @return vector of input Q-Vector names.
-   */
-  std::vector<std::string> &GetInputNames() { return names_; }
+  const std::vector<std::string> &GetInputNames() const { return names_; }
+  const Qn::DataContainerProduct &GetResult() const { return current_event_result_; };
+  bool UsingWeights() const { return std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; }); }
 
-  /**
-   * @brief Returns the result of the correlation.
-   * @return Average over all events.
-   */
-  DataContainerStats GetResult() const { return result_; }
+  void Fill(const std::vector<unsigned long> &eventindices);
+  void Configure(const CorrelationSettings &settings);
 
-  /**
-   * @brief Fill Correlation container with specified inputs.
-   * Recursive function called N times, where N is the number of correlated datacontainers.
-   * @param eventindices of the used for the event axes
-   * @param event_id id of the current event used for resampling.
-   */
-  void Fill(const std::vector<unsigned long> &eventindices, size_type event_id);
+  std::string GetName() const {return name_;}
 
  private:
-  bool use_histo_result_ = false; ///< histogram flag
-  bool use_resampling_ = false; ///< resampling flag
-  CorrelationFunction function_; ///< correlation function
-  AXES axes_event_; ///< vector of event axes used in the correlation
-  INPUTS inputs_; ///< pointer to the Q-Vector inputs during the correlation step.
+  std::string name_; ///< name of the correlation
   std::vector<std::string> names_; ///< vector of input names
-  std::vector<Qn::Weight> use_weights_; ///< vector of input weights
-  std::vector<QVectorPtr> qvectors_; ///< vector holding Q-Vectors during Fill step
-  Qn::Sampler *resampler_ = nullptr; ///< Pointer to the central Resampler. CorrelationManager manages lifetime.
+  inputs_type inputs_; ///< pointer to the Q-Vector inputs during the correlation step.
+  std::vector<QVectorPtr> qvector_ptrs_; ///< vector holding pointers to the Q-Vector during FillCorrelation step
+  std::vector<bool> use_weights_; ///< vector of input weights
+  function_type function_; ///< correlation function
   std::vector<std::vector<std::vector<size_type>>> index_; ///< map of multi-dimensional indices of all inputs
   std::vector<size_type> c_index_; ///<  multi-dimensional indices of a bin of the resulting correlation
-  DataContainerProduct current_event_result_; ///< result of the correlation of the current event
-  DataContainerStats result_; ///< averaged result of the correlation over all events
-  DataContainer<TH1F> histo_result_; ///< histogram result of the correlation
-
-  /**
-   * @brief Fills correlation using a recursive algorithm
-   * @param initial_offset offset determined by the number of event axes.
-   * @param n recursion step
-   */
-  void FillCorrelation(size_type initial_offset, unsigned int n);
+  Qn::DataContainerProduct current_event_result_; ///< result of the correlation of the current event
+  void FillCorrelation(size_type initial_offset, unsigned int n = 0);
 
   /**
    * Calculate weight for correlation;
-   * @return
+   * @return weight for the current event
    */
   inline double CalculateWeight() {
     size_type i_weight = 0;
     double weight = 1.;
-    for (const auto &q : qvectors_) {
-      if (use_weights_[i_weight]==Qn::Weight::OBSERVABLE) {
+    for (const auto &q : qvector_ptrs_) {
+      if (use_weights_[i_weight]) {
         weight *= q.sumweights();
       }
       ++i_weight;
     }
     return weight;
   }
+
 };
 
 }
 
-#endif //FLOW_CORRELATION_H
+#endif

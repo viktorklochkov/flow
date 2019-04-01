@@ -3,7 +3,7 @@
 #include "Product.h"
 #include "DataContainer.h"
 #include "QVector.h"
-#include "Correlation.h"
+#include "StatsResult.h"
 
 
 TEST(ProductTest, Trivial) {

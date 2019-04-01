@@ -4,7 +4,7 @@
 
 
 #include <gtest/gtest.h>
-#include "Correlation.h"
+#include "StatsResult.h"
 
 //TEST(CorrelationTest, IntegratedCorrelation) {
 //  Qn::DataContainer<Qn::QVector> container_a;

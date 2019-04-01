@@ -65,9 +65,11 @@ set(QNCORR_SOURCES
         )
 
 set(CORR_SOURCES
-        Correlation/Correlation.cpp
+        Correlation/StatsResult.cpp
         Correlation/CorrelationManager.cpp
         Correlation/Sampler.cpp
+        Correlation/EventShapeResult.cpp
+#        Correlation/ESE.cpp
         )
 
 set(DIFF_SOURCES
