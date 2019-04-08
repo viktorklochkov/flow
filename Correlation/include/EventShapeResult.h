@@ -1,3 +1,5 @@
+#include <utility>
+
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -24,8 +26,6 @@
 
 namespace Qn {
 
-
-
 class EventShapeResult {
  public:
 
@@ -36,37 +36,45 @@ class EventShapeResult {
     Reading
   };
 
-  EventShapeResult(Qn::Correlation* ptr,TH1F histo) :
-  correlation_current_event_(ptr),
-  event_shape_result_(new Qn::DataContainerEventShape()) {
-    event_shape_result_->InitializeEntries({correlation_current_event_->GetName(), histo});
+  EventShapeResult(Qn::Correlation *ptr, TH1F histo) :
+      correlation_current_event_(ptr),
+      event_shape_result_(new Qn::DataContainerEventShape()) {
+    for (auto &bin : *event_shape_result_) {
+      bin.SetHisto(&histo, correlation_current_event_->GetName());
+    }
   }
+
+  explicit EventShapeResult(Qn::Correlation *ptr) :
+      correlation_current_event_(ptr) {
+  }
+
   void FitSplines() {
     for (auto &bin : *event_shape_result_) {
       bin.FitWithSpline();
     }
   }
 
-  Qn::DataContainerEventShape GetCalibration() const {return *event_shape_result_;}
+  const Qn::DataContainerEventShape& GetCalibration() const { return *event_shape_result_; }
+
   void Configure();
-  void FillCalibrationHistogram(const std::vector<unsigned long> &eventindices);
+  void FillCalibrationHistogram();
   double GetPercentile(const std::vector<unsigned long> &eventindices) {
     auto prod = correlation_current_event_->GetResult().At(eventindices);
     double percentile = NAN;
-    if (prod.validity) percentile = event_shape_result_->At(eventindices).GetPercentile(prod.validity);
+    if (prod.validity) percentile = event_shape_result_->At(eventindices).GetPercentile(prod.result);
     return percentile;
   }
 
-  void SetInputData(std::unique_ptr<Qn::DataContainerEventShape> eventshape) {
-    event_shape_result_.reset(eventshape.get());
+  void SetInputData(std::shared_ptr<Qn::DataContainerEventShape> eventshape) {
+    event_shape_result_ = std::move(eventshape);
     state_ = State::Calibrating;
   }
 
-  State GetState() const {return state_;}
+  State GetState() const { return state_; }
  private:
   State state_ = State::Uninitialized;
   Correlation *correlation_current_event_ = nullptr; ///< Pointer to the correlation result.
-  std::unique_ptr<Qn::DataContainerEventShape> event_shape_result_;
+  std::shared_ptr<Qn::DataContainerEventShape> event_shape_result_ = nullptr;
 };
 }
 

@@ -26,15 +26,17 @@
 #include "TFile.h"
 
 #include "StatsResult.h"
-#include "ESE.h"
 #include "Sampler.h"
 #include "EventShape.h"
 #include "DataContainer.h"
+#include "EseHandler.h"
+#include "EventAxes.h"
 
 namespace Qn {
 using QVectors = const std::vector<QVectorPtr> &;
 class CorrelationManager {
   using function_type = Correlation::function_type;
+  using function_p = Correlation::function_p;
   using size_type = std::size_t;
  public:
 
@@ -49,83 +51,56 @@ class CorrelationManager {
   };
 
   explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
-      ese_manager_(this),
+      ese_handler_(this),
+      event_axes_(this),
       reader_(std::move(reader)),
-      qvectors_(new std::map<std::string, DataContainerQVector *>()),
-      event_axes_(new std::vector<Qn::Axis>()) {
+      qvectors_(new std::map<std::string, DataContainerQVector *>()) {
     num_events_ = reader_->GetEntries(true);
 
   }
 
-  void AddQVectors(const std::vector<std::string> &qvectors);
-  void AddProjection(const std::string &input_name, const std::string &output_name, const std::string &axis_names);
-  void AddEventVariable(const Axis &eventaxis);
-  void AddCorrelation(std::string name, const std::vector<std::string> &input, function_type &&lambda,
+  void AddProjection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
+  void AddEventAxis(const Axis &eventaxis);
+  void AddCorrelation(std::string name, const std::vector<std::string> &input, function_p lambda,
                       const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
-  void AddESE(const std::string &name,
-              const std::vector<std::string> &input,
-              CorrelationManager::function_type &&lambda,
-              const TH1F &histo);
+  void AddESE(const std::string &name, const std::vector<std::string> &input, function_p lambda, const TH1F &histo);
   void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
-
   void Run();
 
-  void Initialize();
+  void SetESEInputFile(const std::string &ese_name, const std::string &tree_file_name) {
+    ese_calib_in_ = std::make_unique<TFile>(ese_name.data());
+    ese_handler_.ConnectInput(tree_file_name, ese_calib_in_.get());
+  }
 
-  void Process();
-
-  void Finalize();
-
-  /**
-   * Set Name of correlation output file.
-   * @param output_name
-   */
   void SetOutputFile(const std::string &output_name) { correlation_file_name_ = output_name; }
-  /**
-   * Set name of ese calibration file.
-   * @param ese_name
-   */
-  void SetESECalibrationFile(const std::string &ese_name) {
-    ese_file_ = std::make_unique<TFile>(ese_name.data());
-    ese_manager_.SetCalibrationFile(ese_file_.get());
+
+  void SetESEOutputFile(const std::string &ese_name, const std::string &tree_file_name) {
+    ese_handler_.ConnectOutput(tree_file_name, ese_name, &ese_treefile_out_, &ese_calib_out_);
   }
 
   DataContainerStats GetResult(const std::string &name) const { return stats_results_.at(name).GetResult(); }
 
  private:
 
-  friend ESE;
-
-  void AddCorrelationOnly(std::string name, const std::vector<std::string> &input, function_type &&lambda,
-                          const std::vector<Weight> &use_weights) {
-    correlations_.emplace(name, std::make_unique<Qn::Correlation>(name, input, lambda, use_weights));
-  }
+  friend class Qn::EseSubEvent;
+  friend class Qn::EventAxes;
 
   void AddDataContainer(const std::string &name);
 
+  void AddQVectors(const std::vector<std::string> &qvectors);
+
+  void Initialize();
+
+  void Finalize();
+
   void MakeProjections();
 
-  void SaveToFile(std::string name);
-
-  void BuildCorrelations();
-
-//  void FillESE(std::map<std::string, Qn::Correlation> &corr);
-
-  void FillCorrelations();
+  void ConfigureCorrelations();
 
   void UpdateEvent();
 
-  bool CheckEvent();
-
-//  bool CheckESEEvent();
-//
-//  void BuildESECorrelation();
-//
-//  void FitEventShape();
-//
-//  void SaveEventShape(const std::string &filename);
-//
-//  bool IsESE() const;
+  Qn::Correlation *AddCorrelationOnly(const std::string &name, const std::vector<std::string> &inputs,
+                                      CorrelationManager::function_p lambda);
 
  private:
   ESEState ese_state_ = ESEState::ESEDisabled;
@@ -133,50 +108,23 @@ class CorrelationManager {
 
   size_type num_events_ = 0;
 
-  std::unique_ptr<Qn::Sampler> sampler_;
-  ESE ese_manager_;
+  std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
+  Qn::EseHandler ese_handler_;
+  Qn::EventAxes event_axes_;
 
   std::string correlation_file_name_;
-  std::string ese_file_name_;
-  std::unique_ptr<TFile> ese_file_;
+  std::unique_ptr<TFile> ese_calib_in_;
+  std::shared_ptr<TFile> ese_treefile_out_;
+  std::shared_ptr<TFile> ese_calib_out_;
+
   std::shared_ptr<TTreeReader> reader_;
   std::map<std::string, std::unique_ptr<Correlation>> correlations_;
   std::map<std::string, Qn::StatsResult> stats_results_;
   std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
-  std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
   std::unique_ptr<std::map<std::string, DataContainerQVector *>> qvectors_;
-  std::unique_ptr<std::vector<Qn::Axis>> event_axes_;
   std::map<std::string, DataContainerQVector> qvectors_proj_;
-  std::vector<float> event_values_;
-  std::vector<unsigned long> eventbin_;
-  std::vector<Qn::Axis> eventshape_axes_;
 
-  /**
- * Tokenize input string
- * @tparam ContainerT
- * @param str
- * @param tokens
- * @param delimiters
- * @param trimEmpty
- */
-  template<class ContainerT>
-  void tokenize(const std::string &str, ContainerT &tokens,
-                const std::string &delimiters = " ", bool trimEmpty = false) {
-    std::string::size_type pos, lastPos = 0, length = str.length();
-    using value_type = typename ContainerT::value_type;
-    using size_type  = typename ContainerT::size_type;
-    while (lastPos < length + 1) {
-      pos = str.find_first_of(delimiters, lastPos);
-      if (pos==std::string::npos) {
-        pos = length;
-      }
-      if (pos!=lastPos || !trimEmpty)
-        tokens.push_back(value_type(str.data() + lastPos,
-                                    (size_type) pos - lastPos));
-      lastPos = pos + 1;
-    }
-  }
 
 };
 }

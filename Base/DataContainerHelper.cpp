@@ -145,8 +145,7 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
     auto spline  = dynamic_cast<TSpline3*>(bin.spline_->Clone((std::string("S_") + (name)).data()));
     spline->SetTitle((std::string("S_") + (name)).data());
     slist->Add(spline);
-    auto integral  = dynamic_cast<TH1F*>(bin.integral_->Clone((std::string("S_") + (name)).data()));
-    integral->SetName((std::string("I_") + (name)).data());
+    auto integral  = dynamic_cast<TH1F*>(bin.integral_->Clone((std::string("I_") + (name)).data()));
     integral->SetTitle((std::string("I_") + (name)).data());
     integral->GetXaxis()->SetTitle("|Q|^{2}");
     ilist->Add(integral);

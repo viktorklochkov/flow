@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0048 NEW)
 
-if("${CMAKE_VERSION}" VERSION_GREATER "3.12.0")
+if ("${CMAKE_VERSION}" VERSION_GREATER "3.12.0")
     cmake_policy(SET CMP0074 NEW)
-endif()
+endif ()
 project(flow VERSION 2.0 LANGUAGES CXX)
 
 if (APPLE)
@@ -13,11 +13,11 @@ if (APPLE)
 endif (APPLE)
 
 add_compile_options("-Wall" "-Wextra"
-                    "$<$<CONFIG:RELEASE>:-O3;-march=native;-ftree-vectorize;-ffast-math>"
-                    "$<$<CONFIG:DEBUG>:-O0;-O0>")
-if ("${CMAKE_COMPILER_ID}" STREQUAL  "Clang")
+        "$<$<CONFIG:RELEASE>:-O3;-march=native;-ftree-vectorize;-ffast-math>"
+        "$<$<CONFIG:DEBUG>:-O0;-O0>")
+if ("${CMAKE_COMPILER_ID}" STREQUAL "Clang")
     add_compile_options("-stdlib=libc++")
-endif()
+endif ()
 
 set(QNCORR_SOURCES
         QnCorrections/CorrectionOnInputData.cpp
@@ -70,7 +70,10 @@ set(CORR_SOURCES
         Correlation/Sampler.cpp
         Correlation/EventShapeResult.cpp
         Correlation/Correlation.cpp
-#        Correlation/ESE.cpp
+        #        Correlation/ESE.cpp
+        Correlation/EseHandler.cpp
+        Correlation/EseSubEvent.cpp
+        Correlation/EventAxes.cpp
         )
 
 set(DIFF_SOURCES
@@ -147,25 +150,25 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
-# Googletest
-configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-        RESULT_VARIABLE result
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-if (result)
-    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-endif ()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-        RESULT_VARIABLE result
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-if (result)
-    message(FATAL_ERROR "Build step for googletest failed: ${result}")
-endif ()
-# Prevent overriding the parent project's compiler/linker settings on Windows
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
-ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
+IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    # Googletest
+    configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
+    if (result)
+        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif ()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
+    if (result)
+        message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif ()
+    # Prevent overriding the parent project's compiler/linker settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
+ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # ROOT
 find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
@@ -246,9 +249,9 @@ target_include_directories(Correlation
         )
 target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
-IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
-add_subdirectory(test)
-ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
+IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    add_subdirectory(test)
+ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # Install configuration
 
@@ -261,7 +264,6 @@ install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_
 install(FILES ${CMAKE_BINARY_DIR}/libBase.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
 
 
 install(TARGETS Base Correction Correlation QnCorrections

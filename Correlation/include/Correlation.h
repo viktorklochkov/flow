@@ -30,15 +30,6 @@ enum class Weight {
 };
 
 /**
- * @brief Struct used to pass the settings to the implementation of the CorrelationBase
- * Every configuration dependent on the input data is passed using this object.
- */
-struct CorrelationSettings {
-  std::map<std::string, Qn::DataContainerQVector *> *qvectors;
-  std::vector<Qn::Axis> *event_axes;
-};
-
-/**
  * @class Correlation
  * @brief abstract baseclass of the correlation
  * Implements all the methods to calculate correlations of qvectors.
@@ -53,6 +44,7 @@ class Correlation {
 
  public:
   using function_type = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
+  using function_p  = const function_type &;
 
   Correlation(std::string name,
               std::vector<std::string> names,
@@ -76,9 +68,8 @@ class Correlation {
   bool UsingWeights() const { return std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; }); }
 
   void Fill(const std::vector<unsigned long> &eventindices);
-  void Configure(const CorrelationSettings &settings);
-
-  std::string GetName() const {return name_;}
+  void Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::Axis> &eventaxes);
+  std::string GetName() const { return name_; }
 
  private:
   std::string name_; ///< name of the correlation

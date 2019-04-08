@@ -117,7 +117,7 @@ class DataContainer : public TObject {
     if (integrated_) this->Reset();
     if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name()==axis.Name(); })
         !=axes_.end())
-      throw std::runtime_error("Axis already defined in vector.");
+      throw std::logic_error("Axis already defined in vector.");
     axes_.push_back(axis);
     dimension_++;
     size_type totalbins = 1;

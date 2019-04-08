@@ -42,7 +42,7 @@ int main() {
   Qn::CorrelationManager manager(reader);
   std::cout << "add variables" << std::endl;
 
-  manager.AddEventVariable({"Ev1", 1, 0, 2});
+  manager.AddEventAxis({"Ev1", 1, 0, 2});
   manager.AddQVectors({"Det1", "Det2"});
 //  manager.SetESECalibrationFile("testese.root");
 //  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);

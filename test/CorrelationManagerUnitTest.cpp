@@ -11,12 +11,13 @@
 TEST(CorrelationManagerTest, AddingCorrelation) {
   using namespace Qn;
   auto data1 = new Qn::DataContainer<Qn::QVector>();
-  data1->AddAxis({"test",10,0,10});
+//  data1->AddAxis({"test",10,0,10});
   for (auto &bin : *data1) {
     Qn::QVec qvec(1.0, 1.0);
     bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
   }
-  TTree tree;
+  TFile testtree("testtree.root", "RECREATE");
+  TTree tree("tree", "tree");
   auto event = new Qn::EventInfoF();
   event->AddVariable("Ev1");
   event->SetToTree(tree);
@@ -25,8 +26,9 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   tree.Branch("Det2", &data1);
 
   auto ne = 10000;
-
+  int counter = 0;
   for (int i = 0; i < ne/2; ++i) {
+    ++counter;
     event->SetVariable("Ev1", 0.5);
     for (auto &bin : *data1) {
       Qn::QVec qvec(1.0, 1.0);
@@ -35,6 +37,7 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
     tree.Fill();
   }
   for (int i = ne/2; i < ne; ++i) {
+    ++counter;
     event->SetVariable("Ev1", 0.5);
     for (auto &bin : *data1) {
       Qn::QVec qvec(2.0, 2.0);
@@ -42,32 +45,53 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
     }
     tree.Fill();
   }
-
-  EXPECT_EQ(ne, tree.GetEntries());
+  tree.Write();
+  testtree.Close();
+  auto readtreefile = TFile::Open("testtree.root", "READ");
+  auto reading = (TTree *) readtreefile->Get("tree");
+  std::cout << counter << std::endl;
+  EXPECT_EQ(ne, reading->GetEntries());
   std::cout << "create manager" << std::endl;
-  std::shared_ptr<TTreeReader> reader(new TTreeReader(&tree));
+  reading->AddFriend("ESE", "percentiles.root");
+  std::shared_ptr<TTreeReader> reader(new TTreeReader(reading));
   Qn::CorrelationManager manager(reader);
   std::cout << "add variables" << std::endl;
 
-  manager.AddEventVariable({"Ev1", 1, 0, 2});
-  manager.AddQVectors({"Det1", "Det2"});
-//  manager.SetESECalibrationFile("testese.root");
-//  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
-  std::cout << "add correlation" << std::endl;
-  manager.AddCorrelation("c1",{"Det1", "Det2"},[](QVectors q) { return q[0].y(1) + q[1].x(1);}, {Weight::REFERENCE, Weight::REFERENCE});
-  manager.AddCorrelation("avg",{"Det1"},[](QVectors q) { return q[0].mag(2)/sqrt(q[0].n());},{Weight::OBSERVABLE}, Sampler::Resample::OFF);
-  manager.AddCorrelation("c2",{"Det1", "Det2"},[](QVectors q) { return q[0].x(1) + q[1].x(1);}, {Weight::OBSERVABLE, Weight::REFERENCE});
-  manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,100);
+  manager.AddEventAxis({"Ev1", 2, 0, 2});
+  manager.SetOutputFile("correlation.root");
+  manager.SetESEInputFile("calib.root", "percentiles.root");
+  manager.SetESEOutputFile("calib.root", "percentiles.root");
+  manager.AddESE("Det1ESE", {"Det1"}, [](QVectors q) { return q[0].x(1); }, {"h", "h", 2, 0., 3.});
+  manager.AddCorrelation("c1",
+                         {"Det1", "Det2"},
+                         [](QVectors q) { return q[0].y(1) + q[1].x(1); },
+                         {Weight::REFERENCE, Weight::REFERENCE});
+//  manager.AddCorrelation("avg",
+//                         {"Det1"},
+//                         [](QVectors q) { return q[0].mag(2)/sqrt(q[0].n()); },
+//                         {Weight::OBSERVABLE},
+//                         Sampler::Resample::OFF);
+//  manager.AddCorrelation("c2",
+//                         {"Det1", "Det2"},
+//                         [](QVectors q) { return q[0].x(1) + q[1].x(1); },
+//                         {Weight::OBSERVABLE, Weight::REFERENCE});
+  manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP, 100);
   std::cout << "run" << std::endl;
   manager.Run();
   auto correlation = manager.GetResult("c1");
-  for (auto &bin : correlation) {
-    EXPECT_FLOAT_EQ(3.0, bin.Mean());
-    EXPECT_EQ(100,bin.GetNSamples());
+  for (unsigned long i = 0; i < 10; ++i) {
+    auto bin = correlation.At({0,9,i});
+    EXPECT_FLOAT_EQ(4.0, bin.Mean());
+    EXPECT_EQ(100, bin.GetNSamples());
+  }
+  for (unsigned long i = 0; i < 10; ++i) {
+    auto bin = correlation.At({0,5,i});
+    EXPECT_FLOAT_EQ(2.0, bin.Mean());
+    EXPECT_EQ(100, bin.GetNSamples());
   }
 //  auto average = manager.GetResult("avg");
 //  for (auto &bin : average) {
-//    EXPECT_FLOAT_EQ((sqrt(8)+sqrt(2))/2, bin.Mean());
-//    EXPECT_EQ(0,bin.GetNSamples());
-  }
+//    EXPECT_FLOAT_EQ((sqrt(8) + sqrt(2))/2, bin.Mean());
+//    EXPECT_EQ(0, bin.GetNSamples());
+//  }
 }

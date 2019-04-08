@@ -41,24 +41,23 @@ class EventShape : public TObject {
     auto nbins = histo.GetNbinsX();
     auto lower = histo.GetXaxis()->GetBinLowEdge(1);
     auto upper = histo.GetXaxis()->GetBinUpEdge(nbins);
-    histo_ = new TH1F((name_+"histo").data(),";ese;counts",nbins,lower, upper);
-    integral_ = new TH1F((name_+"integral").data(),";ese;counts",nbins,lower, upper);
+    histo_ = new TH1F((name_ + "histo").data(), ";ese;counts", nbins, lower, upper);
+    integral_ = new TH1F((name_ + "integral").data(), ";ese;counts", nbins, lower, upper);
   }
 
   virtual ~EventShape() {
-    delete spline_;
-    delete histo_;
-    delete integral_;
+//    delete spline_;
+//    delete histo_;
+//    delete integral_;
   }
 
-  void SetHisto(const TH1F &histo) {
-    auto nbins = histo.GetNbinsX();
-    auto lower = histo.GetXaxis()->GetBinLowEdge(1);
-    auto upper = histo.GetXaxis()->GetBinUpEdge(nbins);
-    histo_ = new TH1F((name_+"histo").data(),";ese;counts",nbins,lower, upper);
-    integral_ = new TH1F((name_+"integral").data(),";ese;counts",nbins,lower, upper);
+  void SetHisto(TH1F *histo, std::string name) {
+    auto nbins = histo->GetNbinsX();
+    auto lower = histo->GetXaxis()->GetBinLowEdge(1);
+    auto upper = histo->GetXaxis()->GetBinUpEdge(nbins);
+    histo_ = new TH1F((std::string("histo") + name).data(), ";ese;counts", nbins, lower, upper);
+    integral_ = new TH1F((std::string("integral") +name).data(), ";ese;counts", nbins, lower, upper);
   }
-
 
   std::string Name() const { return name_; }
 
@@ -70,9 +69,9 @@ class EventShape : public TObject {
 
   void FitWithSpline();
 
-  void Fill( const Product & product) {if (product.validity) histo_->Fill(product.result);}
+  void Fill(const Product &product) { if (product.validity) histo_->Fill(product.result); }
 
-  TH1F GetHist() const {return *histo_;}
+  TH1F *GetHist() const { return histo_; }
 
   friend Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b);
   friend Qn::EventShape Merge(const Qn::EventShape &a, const Qn::EventShape &b);
@@ -86,7 +85,6 @@ class EventShape : public TObject {
  ClassDef(EventShape, 5);
   /// \endcond
 };
-
 
 inline Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b) {
   Qn::EventShape c(a.name_, *a.histo_);

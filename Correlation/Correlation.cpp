@@ -19,7 +19,7 @@
 #include "Correlation.h"
 
 void Qn::Correlation::FillCorrelation(size_type initial_offset,
-                                  unsigned int n) {
+                                      unsigned int n) {
   const auto &i_input = **inputs_[n];
   initial_offset += n;
   // End recursion if last input DataContainer is reached: n+1 = number of inputs.
@@ -43,7 +43,8 @@ void Qn::Correlation::FillCorrelation(size_type initial_offset,
       // Adds a pointer to the current Q-Vector to the temporary container used for calculation of the correlation.
       qvector_ptrs_[n] = Qn::QVectorPtr(qvector);
       // Checks that all Q-Vectors are valid.
-      auto valid = std::all_of(qvector_ptrs_.begin(), qvector_ptrs_.end(), [](const Qn::QVectorPtr &q) { return q.n() > 0; });
+      auto valid =
+          std::all_of(qvector_ptrs_.begin(), qvector_ptrs_.end(), [](const Qn::QVectorPtr &q) { return q.n() > 0; });
       // Store result of the correlation.
       if (valid) current_event_result_.At(c_index_) = Qn::Product(function_(qvector_ptrs_), valid, CalculateWeight());
       ++ibin;
@@ -75,6 +76,7 @@ void Qn::Correlation::FillCorrelation(size_type initial_offset,
 void Qn::Correlation::Fill(const std::vector<unsigned long> &eventindices) {
   // Update eventindices in the result correlation index.
   size_type ieventvar = 0;
+  for (auto &bin : current_event_result_) { bin.validity = false; }
   for (auto eventindex : eventindices) {
     c_index_[ieventvar] = eventindex;
     ++ieventvar;
@@ -83,15 +85,18 @@ void Qn::Correlation::Fill(const std::vector<unsigned long> &eventindices) {
   FillCorrelation(ieventvar, 0);
 }
 
-void Qn::Correlation::Configure(const CorrelationSettings &settings) {
-  auto &inputs = settings.qvectors;
-  auto event_axes = *settings.event_axes;
+void Qn::Correlation::Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::Axis> &event_axes) {
   for (const auto &cname : names_) {
-    inputs_.push_back(&inputs->at(cname));
+    inputs_.push_back(&qvectors->at(cname));
   }
   qvector_ptrs_.resize(inputs_.size());
   // Adds all the axes of event variables to the result of the correlation.
-  current_event_result_.AddAxes(event_axes);
+  try {
+    current_event_result_.AddAxes(event_axes);
+  } catch (std::logic_error &e) {
+    std::string errormsg = ("correlation ") + name_ + "trying to add axes, but they already exist.";
+    throw std::logic_error(errormsg);
+  }
   // Prepare a map of all indices of the correlation
   auto dimension = event_axes.size();
   size_type i_input = 0;
@@ -108,7 +113,12 @@ void Qn::Correlation::Configure(const CorrelationSettings &settings) {
       auto axes = input->GetAxes();
       for (auto &axis : axes) {
         axis.SetName(std::to_string(i_input) + "_" + names_.at(i_input) + "_" + axis.Name());
-        current_event_result_.AddAxis(axis);
+        try { current_event_result_.AddAxis(axis); }
+        catch (std::logic_error &e) {
+          std::string
+              errormsg = ("correlation ") + name_ + "trying to add axis " + axis.Name() + ",  but it already exists.";
+          throw std::logic_error(errormsg);
+        }
       }
       ++i_input;
     }

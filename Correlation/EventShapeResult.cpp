@@ -19,16 +19,28 @@
 
 void Qn::EventShapeResult::Configure() {
   const auto &current_event = correlation_current_event_->GetResult();
-  const auto &histo = event_shape_result_->At(0).GetHist();
-  event_shape_result_->AddAxes(current_event.GetAxes());
-  for (auto &bin : *event_shape_result_) { bin.SetHisto(histo); }
+  auto histo = dynamic_cast<TH1F*>(event_shape_result_->At(0).GetHist()->Clone("temp"));
+  try {
+    event_shape_result_->AddAxes(current_event.GetAxes());
+  } catch (std::logic_error &e) {
+    std::string errormsg = "ese correlation trying to add axes, but they already exist.";
+    throw std::logic_error(errormsg);
+  }
+  unsigned long ibin = 0;
+  for (auto &bin : *event_shape_result_) {
+    std::string name = event_shape_result_->GetBinDescription(ibin);
+    bin.SetHisto(histo, name);
+    ibin++;
+  }
   state_ = State::Collecting;
+  delete histo;
 }
 
-void Qn::EventShapeResult::FillCalibrationHistogram(const std::vector<unsigned long> &eventindices) {
+void Qn::EventShapeResult::FillCalibrationHistogram() {
   const auto &current_event = correlation_current_event_->GetResult();
   unsigned int ibin = 0;
   for (auto &bin : *event_shape_result_) {
+    if(current_event.At(ibin).result!=1 && current_event.At(ibin).result!=2 && current_event.At(ibin).validity) std::cout << "what" << std::endl;
     bin.Fill(current_event.At(ibin));
     ++ibin;
   }
