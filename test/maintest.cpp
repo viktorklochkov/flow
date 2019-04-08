@@ -43,7 +43,7 @@ int main() {
   std::cout << "add variables" << std::endl;
 
   manager.AddEventAxis({"Ev1", 1, 0, 2});
-  manager.AddQVectors({"Det1", "Det2"});
+//  manager.Add({"Det1", "Det2"});
 //  manager.SetESECalibrationFile("testese.root");
 //  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
   std::cout << "add correlation" << std::endl;

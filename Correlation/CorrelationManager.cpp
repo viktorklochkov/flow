@@ -16,12 +16,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <memory>
-#include <include/CorrelationManager.h>
 
 #include "CorrelationManager.h"
-
-#include "ROOT/RMakeUnique.hxx"
-#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 

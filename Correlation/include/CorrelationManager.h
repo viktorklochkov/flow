@@ -32,6 +32,9 @@
 #include "EseHandler.h"
 #include "EventAxes.h"
 
+#include "ROOT/RMakeUnique.hxx"
+#include "ROOT/RIntegerSequence.hxx"
+
 namespace Qn {
 using QVectors = const std::vector<QVectorPtr> &;
 class CorrelationManager {
