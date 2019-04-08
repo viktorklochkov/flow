@@ -53,10 +53,10 @@ class CorrelationManager {
     ResamplingEnabled
   };
 
-  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) :
+  explicit CorrelationManager(TTree *tree) :
       ese_handler_(this),
       event_axes_(this),
-      reader_(std::move(reader)),
+      reader_(new TTreeReader(tree)),
       qvectors_(new std::map<std::string, DataContainerQVector *>()) {
     num_events_ = reader_->GetEntries(true);
 
@@ -127,7 +127,6 @@ class CorrelationManager {
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
   std::unique_ptr<std::map<std::string, DataContainerQVector *>> qvectors_;
   std::map<std::string, DataContainerQVector> qvectors_proj_;
-
 
 };
 }

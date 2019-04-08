@@ -53,8 +53,7 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   EXPECT_EQ(ne, reading->GetEntries());
   std::cout << "create manager" << std::endl;
   reading->AddFriend("ESE", "percentiles.root");
-  std::shared_ptr<TTreeReader> reader(new TTreeReader(reading));
-  Qn::CorrelationManager manager(reader);
+  Qn::CorrelationManager manager(reading);
   std::cout << "add variables" << std::endl;
 
   manager.AddEventAxis({"Ev1", 2, 0, 2});
