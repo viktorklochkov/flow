@@ -40,7 +40,6 @@ void Qn::EventShapeResult::FillCalibrationHistogram() {
   const auto &current_event = correlation_current_event_->GetResult();
   unsigned int ibin = 0;
   for (auto &bin : *event_shape_result_) {
-    if(current_event.At(ibin).result!=1 && current_event.At(ibin).result!=2 && current_event.At(ibin).validity) std::cout << "what" << std::endl;
     bin.Fill(current_event.At(ibin));
     ++ibin;
   }
