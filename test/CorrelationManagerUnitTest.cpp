@@ -56,16 +56,16 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   Qn::CorrelationManager manager(reading);
   std::cout << "add variables" << std::endl;
 
-  manager.EventAxis({"Ev1", 2, 0, 2});
+  manager.AddEventAxis({"Ev1", 2, 0, 2});
   manager.SetOutputFile("correlation.root");
   manager.SetESEInputFile("/Users/lukas/phd/analysis/flow/cmake-build-debug/test/calib.root",
                           "/Users/lukas/phd/analysis/flow/cmake-build-debug/test/percentiles.root");
   manager.SetESEOutputFile("calib.root", "percentiles.root");
-  manager.EventShape("Det1ESE", {"Det1"}, [](QVectors q) { return q[0].x(1); }, {"h", "h", 2, 0., 3.});
-  manager.Correlation("c1",
-                      {"Det1", "Det2"},
-                      [](QVectors q) { return q[0].y(1) + q[1].x(1); },
-                      {kObs, kObs});
+  manager.AddEventShape("Det1ESE", {"Det1"}, [](QVectors q) { return q[0].x(1); }, {"h", "h", 2, 0., 3.});
+  manager.AddCorrelation("c1",
+                         {"Det1", "Det2"},
+                         [](QVectors q) { return q[0].y(1) + q[1].x(1); },
+                         {kObs, kObs});
 //  manager.AddCorrelation("avg",
 //                         {"Det1"},
 //                         [](QVectors q) { return q[0].mag(2)/sqrt(q[0].n()); },
@@ -75,7 +75,7 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 //                         {"Det1", "Det2"},
 //                         [](QVectors q) { return q[0].x(1) + q[1].x(1); },
 //                         {Weight::OBSERVABLE, Weight::REFERENCE});
-  manager.Resampling(Qn::Sampler::Method::BOOTSTRAP, 100);
+  manager.SetResampling(Qn::Sampler::Method::BOOTSTRAP, 100);
   std::cout << "run" << std::endl;
   manager.Run();
   auto correlation = manager.GetResult("c1");

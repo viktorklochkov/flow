@@ -45,4 +45,4 @@ Qn::Correlation *Qn::EseHandler::RequestCorrelation(const Qn::SubEventPrototype 
   return manager_->RegisterCorrelation(prototype.name, prototype.input, prototype.lambda, prototype.weights);
 }
 
-void Qn::EseHandler::RequestEventAxis(const Qn::Axis &axis) { manager_->EventAxis(axis); }
+void Qn::EseHandler::RequestEventAxis(const Qn::Axis &axis) { manager_->AddEventAxis(axis); }

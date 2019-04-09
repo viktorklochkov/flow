@@ -41,9 +41,9 @@ void CorrelationManager::AddDataContainer(const std::string &name) {
  * @param output_name  Name of the output projection
  * @param axis_names Names of axes to be projected upon.
  */
-void CorrelationManager::Projection(const std::string &name,
-                                    const std::string &input,
-                                    const std::vector<std::string> &axes) {
+void CorrelationManager::AddProjection(const std::string &name,
+                                       const std::string &input,
+                                       const std::vector<std::string> &axes) {
   DataContainerQVector projection;
   projections_.emplace(name, std::make_tuple(input, axes));
   qvectors_->emplace(name, nullptr);
@@ -56,7 +56,7 @@ void CorrelationManager::Projection(const std::string &name,
  * @param eventaxis Event variable defined as a Axis, which is used in the correlations.
  */
 
-void CorrelationManager::EventAxis(const Qn::Axis &eventaxis) {
+void CorrelationManager::AddEventAxis(const Qn::Axis &eventaxis) {
   event_axes_.RegisterEventAxis(eventaxis);
 }
 
@@ -68,11 +68,11 @@ void CorrelationManager::EventAxis(const Qn::Axis &eventaxis) {
  * @param nsamples number of samples used in the subsampling
  * @param method method which is used for the subsampling
  */
-void CorrelationManager::Correlation(std::string name,
-                                     const std::vector<std::string> &input,
-                                     CorrelationManager::function_t lambda,
-                                     const std::vector<Qn::Weight> &use_weights,
-                                     Qn::Sampler::Resample resample) {
+void CorrelationManager::AddCorrelation(std::string name,
+                                        const std::vector<std::string> &input,
+                                        CorrelationManager::function_t lambda,
+                                        const std::vector<Qn::Weight> &use_weights,
+                                        Qn::Sampler::Resample resample) {
   stats_results_.emplace(name, StatsResult{resample, RegisterCorrelation(name, input, lambda, use_weights)});
 }
 
@@ -83,14 +83,14 @@ void CorrelationManager::Correlation(std::string name,
  * @param lambda Correlation function
  * @param histo binning used for the calibration
  */
-void CorrelationManager::EventShape(const std::string &name, const std::vector<std::string> &input,
-                                    CorrelationManager::function_t lambda, const TH1F &histo) {
+void CorrelationManager::AddEventShape(const std::string &name, const std::vector<std::string> &input,
+                                       CorrelationManager::function_t lambda, const TH1F &histo) {
   ese_handler_.AddESE(name, input, lambda, histo);
 }
 
-void CorrelationManager::Resampling(Sampler::Method method,
-                                    CorrelationManager::size_type nsamples,
-                                    unsigned long seed) {
+void CorrelationManager::SetResampling(Sampler::Method method,
+                                       CorrelationManager::size_type nsamples,
+                                       unsigned long seed) {
   sampler_ = std::make_unique<Qn::Sampler>(num_events_, method, nsamples, seed);
 }
 

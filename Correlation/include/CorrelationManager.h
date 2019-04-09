@@ -37,20 +37,10 @@
 namespace Qn {
 using QVectors = const std::vector<QVectorPtr> &;
 class CorrelationManager {
-  using function_t = Correlation::function_t;
+  using function_t = Qn::Correlation::function_t;
   using size_type = std::size_t;
+
  public:
-
-  enum class ESEState {
-    ESEDisabled,
-    ESEEnabled
-  };
-
-  enum class ResamplingStatus {
-    ResamplingDisabled,
-    ResamplingEnabled
-  };
-
   explicit CorrelationManager(TTree *tree) :
       ese_handler_(this),
       event_axes_(this),
@@ -60,12 +50,12 @@ class CorrelationManager {
     num_events_ = reader_->GetEntries(true);
   }
 
-  void Projection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
-  void EventAxis(const Axis &eventaxis);
-  void Correlation(std::string name, const std::vector<std::string> &input, function_t lambda,
-                   const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
-  void EventShape(const std::string &name, const std::vector<std::string> &input, function_t lambda, const TH1F &histo);
-  void Resampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
+  void AddProjection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
+  void AddEventAxis(const Axis &eventaxis);
+  void AddCorrelation(std::string name, const std::vector<std::string> &input, function_t lambda,
+                      const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
+  void AddEventShape(const std::string &name, const std::vector<std::string> &input, function_t lambda, const TH1F &histo);
+  void SetResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
 
   void SetOutputFile(const std::string &output_name) { correlation_file_name_ = output_name; }
 
