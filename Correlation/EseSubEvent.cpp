@@ -16,26 +16,22 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "EseSubEvent.h"
-#include "CorrelationManager.h"
+#include "EseHandler.h"
+
+#include "ROOT/RMakeUnique.hxx"
 
 void Qn::EseSubEvent::AddCorrelation() {
   if (state_==State::collect) {
-    auto corrptr = manager_->AddCorrelationOnly(proto_.name, proto_.input, proto_.lambda);
-    result_ = std::make_shared<Qn::EventShapeResult>(corrptr, proto_.histo);
+    result_ = std::make_unique<Qn::EventShapeResult>(handler_->RequestCorrelation(proto_), proto_.histo);
   }
   if (state_==State::calib) {
-    auto corrptr = manager_->AddCorrelationOnly(proto_.name, proto_.input, proto_.lambda);
-    result_ = std::make_shared<Qn::EventShapeResult>(corrptr);
+    result_ = std::make_unique<Qn::EventShapeResult>(handler_->RequestCorrelation(proto_));
+    result_->SetInputData(std::move(calib_));
   }
 }
 
 void Qn::EseSubEvent::Configure() {
-  if (state_==State::collect) {
-    result_->Configure();
-  }
-  if (state_==State::calib) {
-    result_->SetInputData(calib_);
-  }
+  if (state_==State::collect) { result_->Configure(); }
 }
 
 void Qn::EseSubEvent::ConnectInput(TFile *input_treefile, TFile *calib) {
@@ -44,7 +40,7 @@ void Qn::EseSubEvent::ConnectInput(TFile *input_treefile, TFile *calib) {
     if (tree) {
       auto branchlist = tree->GetListOfBranches();
       if (branchlist->Contains(name_.data())) {
-        manager_->AddEventAxis({name_, 10, 0., 1.});
+        handler_->RequestEventAxis({name_, kNBins, 0., 1.});
         state_ = State::percent;
         return;
       }
@@ -55,11 +51,21 @@ void Qn::EseSubEvent::ConnectInput(TFile *input_treefile, TFile *calib) {
     if (dir) {
       if (dir->GetListOfKeys()->Contains(name_.data())) {
         calib_ =
-            std::make_shared<Qn::DataContainerEventShape>(*(Qn::DataContainerEventShape *) dir->Get(name_.data()));
+            std::make_unique<Qn::DataContainerEventShape>(*dynamic_cast<Qn::DataContainerEventShape *>(dir->Get(name_.data())));
         state_ = State::calib;
         return;
       }
     }
   }
   state_ = State::collect;
+}
+
+void Qn::EseSubEvent::ConnectOutput(TTree *tree, TFile *calib) {
+  if (tree) {
+    tree->Branch(name_.data(), &out_value_);
+  } else {
+    if (state_==State::calib) state_ = State::unini;
+  }
+  out_calib_ = calib;
+  if (state_==State::collect && !out_calib_) { state_ = State::unini; }
 }

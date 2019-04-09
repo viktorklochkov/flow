@@ -59,13 +59,13 @@ class EventShapeResult {
   void Configure();
   void FillCalibrationHistogram();
   double GetPercentile(const std::vector<unsigned long> &eventindices) {
-    auto prod = correlation_current_event_->GetResult().At(eventindices);
+    const auto &prod = correlation_current_event_->GetResult().At(eventindices);
     double percentile = NAN;
     if (prod.validity) percentile = event_shape_result_->At(eventindices).GetPercentile(prod.result);
     return percentile;
   }
 
-  void SetInputData(std::shared_ptr<Qn::DataContainerEventShape> eventshape) {
+  void SetInputData(std::unique_ptr<Qn::DataContainerEventShape> eventshape) {
     event_shape_result_ = std::move(eventshape);
     state_ = State::Calibrating;
   }

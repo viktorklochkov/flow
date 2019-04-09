@@ -1,6 +1,6 @@
 // Flow Vector Correction Framework
 //
-// Copyright (C) 2019  Lukas Kreis Ilya Selyuzhenkov
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
 // Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
 // For a full list of contributors please see docs/Credits
 //
@@ -15,13 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "EventAxes.h"
-#include "CorrelationManager.h"
+#ifdef __CINT__
 
-void Qn::EventAxes::RegisterEventAxis(const Qn::Axis &eventaxis) {
-  TTreeReaderValue<float> value(*(manager_->reader_), eventaxis.Name().data());
-  tree_values_.push_back(value);
-  values_.emplace_back(-999);
-  bin_.emplace_back(-1);
-  axes_.push_back(eventaxis);
-}
+#pragma link C++ class Qn::CorrelationManager-;
+
+#endif

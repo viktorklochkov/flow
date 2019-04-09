@@ -165,9 +165,7 @@ class SubSamples {
 
   TH1F SubSampleMeanHisto(const std::string &name) {
     auto means = samples_;
-    std::sort(means.begin(),
-              means.end(),
-              [](Sample a, Sample b) { return (a.Mean()) > (b.Mean()); });
+    std::sort(means.begin(), means.end(), [](Sample a, Sample b) { return (a.Mean()) > (b.Mean()); });
     TH1F histo(name.data(), name.data(), 50, means.begin()->Mean(), (means.end() - 1)->Mean());
     for (auto sample : samples_) {
       histo.Fill(sample.Mean());

@@ -24,10 +24,17 @@
 
 namespace Qn {
 
+/**
+ * @class Weight
+ * @brief Enumerator for setting if weights of a detector are used in the correlation.
+ */
 enum class Weight {
   REFERENCE,
   OBSERVABLE
 };
+
+auto constexpr kRef = Qn::Weight::REFERENCE;
+auto constexpr kObs = Qn::Weight::OBSERVABLE;
 
 /**
  * @class Correlation
@@ -44,7 +51,7 @@ class Correlation {
 
  public:
   using function_type = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
-  using function_p  = const function_type &;
+  using function_t  = const function_type &;
 
   Correlation(std::string name,
               std::vector<std::string> names,
@@ -53,7 +60,7 @@ class Correlation {
       name_(std::move(name)),
       names_(std::move(names)),
       function_(std::move(function)) {
-    for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(use_weights[i]==Qn::Weight::OBSERVABLE); }
+    for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(use_weights[i]==Qn::kObs); }
   }
 
   Correlation(std::string name, std::vector<std::string> names, function_type function) :

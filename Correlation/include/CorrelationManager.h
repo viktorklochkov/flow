@@ -33,13 +33,11 @@
 #include "EventAxes.h"
 
 #include "ROOT/RMakeUnique.hxx"
-#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 using QVectors = const std::vector<QVectorPtr> &;
 class CorrelationManager {
-  using function_type = Correlation::function_type;
-  using function_p = Correlation::function_p;
+  using function_t = Correlation::function_t;
   using size_type = std::size_t;
  public:
 
@@ -56,41 +54,38 @@ class CorrelationManager {
   explicit CorrelationManager(TTree *tree) :
       ese_handler_(this),
       event_axes_(this),
+      tree_(tree),
       reader_(new TTreeReader(tree)),
       qvectors_(new std::map<std::string, DataContainerQVector *>()) {
     num_events_ = reader_->GetEntries(true);
-
   }
 
-  void AddProjection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
-  void AddEventAxis(const Axis &eventaxis);
-  void AddCorrelation(std::string name, const std::vector<std::string> &input, function_p lambda,
-                      const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
-  void AddESE(const std::string &name, const std::vector<std::string> &input, function_p lambda, const TH1F &histo);
-  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
-  void Run();
-
-  void SetESEInputFile(const std::string &ese_name, const std::string &tree_file_name) {
-    ese_calib_in_ = std::make_unique<TFile>(ese_name.data());
-    ese_handler_.ConnectInput(tree_file_name, ese_calib_in_.get());
-  }
+  void Projection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
+  void EventAxis(const Axis &eventaxis);
+  void Correlation(std::string name, const std::vector<std::string> &input, function_t lambda,
+                   const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
+  void EventShape(const std::string &name, const std::vector<std::string> &input, function_t lambda, const TH1F &histo);
+  void Resampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
 
   void SetOutputFile(const std::string &output_name) { correlation_file_name_ = output_name; }
 
-  void SetESEOutputFile(const std::string &ese_name, const std::string &tree_file_name) {
-    ese_handler_.ConnectOutput(tree_file_name, ese_name, &ese_treefile_out_, &ese_calib_out_);
+  void SetESEInputFile(const std::string &ese_name, const std::string &tree_file_name) {
+    ese_handler_.SetInput(tree_file_name, ese_name);
   }
+  void SetESEOutputFile(const std::string &ese_name, const std::string &tree_file_name) {
+    ese_handler_.SetOutput(tree_file_name, ese_name);
+  }
+
+  void Run();
 
   DataContainerStats GetResult(const std::string &name) const { return stats_results_.at(name).GetResult(); }
 
  private:
 
-  friend class Qn::EseSubEvent;
   friend class Qn::EventAxes;
+  friend class Qn::EseHandler;
 
   void AddDataContainer(const std::string &name);
-
-  void AddQVectors(const std::vector<std::string> &qvectors);
 
   void Initialize();
 
@@ -102,13 +97,14 @@ class CorrelationManager {
 
   void UpdateEvent();
 
-  Qn::Correlation *AddCorrelationOnly(const std::string &name, const std::vector<std::string> &inputs,
-                                      CorrelationManager::function_p lambda);
+  Qn::Correlation *RegisterCorrelation(const std::string &name,
+                                       const std::vector<std::string> &inputs,
+                                       function_t lambda,
+                                       std::vector<Qn::Weight> use_weights);
+
+  void AddFriend(const std::string &treename, TFile *file) { tree_->AddFriend(treename.data(), file); }
 
  private:
-  ESEState ese_state_ = ESEState::ESEDisabled;
-  ResamplingStatus resampling_status_ = ResamplingStatus::ResamplingDisabled;
-
   size_type num_events_ = 0;
 
   std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
@@ -116,17 +112,15 @@ class CorrelationManager {
   Qn::EventAxes event_axes_;
 
   std::string correlation_file_name_;
-  std::unique_ptr<TFile> ese_calib_in_;
-  std::shared_ptr<TFile> ese_treefile_out_;
-  std::shared_ptr<TFile> ese_calib_out_;
 
+  TTree *tree_;
   std::shared_ptr<TTreeReader> reader_;
-  std::map<std::string, std::unique_ptr<Correlation>> correlations_;
+  std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
   std::map<std::string, Qn::StatsResult> stats_results_;
   std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
-  std::unique_ptr<std::map<std::string, DataContainerQVector *>> qvectors_;
-  std::map<std::string, DataContainerQVector> qvectors_proj_;
+  std::unique_ptr<std::map<std::string, Qn::DataContainerQVector *>> qvectors_;
+  std::map<std::string, Qn::DataContainerQVector> qvectors_proj_;
 
 };
 }

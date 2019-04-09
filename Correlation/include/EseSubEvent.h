@@ -28,18 +28,30 @@
 
 namespace Qn {
 
-class CorrelationManager;
+class EseHandler;
 
 struct SubEventPrototype {
+
+  SubEventPrototype(std::string iname, std::vector<std::string> iinput, Correlation::function_type ilambda, TH1F ihisto)
+      :
+      name(std::move(iname)),
+      input(std::move(iinput)),
+      lambda(std::move(ilambda)),
+      histo(std::move(ihisto)),
+      weights(input.size(), Qn::kRef) {}
+
   std::string name;
   std::vector<std::string> input;
   Correlation::function_type lambda;
   TH1F histo;
+  std::vector<Qn::Weight> weights;
 };
 
 class EseSubEvent {
 
  public:
+
+  static constexpr int kNBins = 10;
 
   enum class State : int {
     unini = 0,
@@ -48,28 +60,15 @@ class EseSubEvent {
     percent = 3
   };
 
-  EseSubEvent(CorrelationManager *man, const std::string &name, const std::vector<std::string> &input,
-              Correlation::function_p lambda, const TH1F &histo) :
-      manager_(man),
-      name_(name) {
-    proto_.name = name_;
-    proto_.input = input;
-    proto_.lambda = lambda;
-    proto_.histo = histo;
-  }
+  EseSubEvent(EseHandler *handler, const std::string &name, const std::vector<std::string> &input,
+              Correlation::function_t lambda, const TH1F &histo) :
+      name_(name),
+      handler_(handler),
+      proto_(name, input, lambda, histo) {}
 
   void ConnectInput(TFile *input_treefile, TFile *calib);
 
-  void ConnectOutput(TTree *tree, std::shared_ptr<TFile> *calib) {
-    if (tree) {
-      tree->Branch(name_.data(), &out_value_);
-    } else {
-      if (state_==State::calib) state_ = State::unini;
-    }
-    out_calib_ = calib;
-    if (state_==State::collect && !out_calib_) { state_ = State::unini; }
-  }
-
+  void ConnectOutput(TTree *tree, TFile *calib);
 
   void Configure();
 
@@ -87,10 +86,10 @@ class EseSubEvent {
   void Finalize() {
     if (state_==State::collect) {
       result_->FitSplines();
-      if (!(*out_calib_)->GetListOfKeys()->Contains("calibrations")) {
-        (*out_calib_)->mkdir("calibrations");
+      if (!out_calib_->GetListOfKeys()->Contains("calibrations")) {
+        out_calib_->mkdir("calibrations");
       }
-      (*out_calib_)->cd("calibrations");
+      out_calib_->cd("calibrations");
       result_->GetCalibration().Write(name_.data(), TObject::kSingleKey);
     }
   }
@@ -99,17 +98,13 @@ class EseSubEvent {
     std::string report;
     report += name_ + " ";
     switch (state_) {
-      case State::unini :
-        report += "is uninitialized!";
+      case State::unini :report += "is uninitialized!";
         break;
-      case State::calib :
-        report += "is calibrating percentiles.";
+      case State::calib :report += "is calibrating percentiles.";
         break;
-      case State::percent :
-        report += "is applying ESE to correlations.";
+      case State::percent :report += "is applying ESE to correlations.";
         break;
-      case State::collect :
-        report += "is collecting the distributions.";
+      case State::collect :report += "is collecting the distributions.";
         break;
     }
     return report;
@@ -118,14 +113,14 @@ class EseSubEvent {
   State GetState() const { return state_; }
 
  private:
-  SubEventPrototype proto_;
-  std::shared_ptr<TFile> *out_calib_ = nullptr;
-  float out_value_ = NAN;
-  Qn::CorrelationManager *manager_ = nullptr;
   std::string name_;
+  Qn::EseHandler *handler_ = nullptr;
+  SubEventPrototype proto_;
+  float out_value_ = NAN;
+  TFile *out_calib_ = nullptr;
   State state_ = State::unini;
-  std::shared_ptr<Qn::DataContainerEventShape> calib_ = nullptr;
-  std::shared_ptr<EventShapeResult> result_ = nullptr;
+  std::unique_ptr<Qn::DataContainerEventShape> calib_ = nullptr;
+  std::unique_ptr<EventShapeResult> result_ = nullptr;
 
 };
 

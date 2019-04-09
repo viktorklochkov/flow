@@ -33,7 +33,6 @@ namespace Qn {
 class StatsResult {
 
  public:
-  using CorrelationFunction = Correlation::function_type;
   using size_type = std::size_t;
 
   /**
@@ -64,9 +63,9 @@ class StatsResult {
 
  private:
   bool use_resampling_ = false; ///< resampling flag
-  Correlation *correlation_current_event = nullptr; ///< Pointer to the correlation result.
+  Correlation *correlation_current_event = nullptr; ///< Pointer to the correlation result of the current event.
   Qn::Sampler *resampler_ = nullptr; ///< Pointer to the central Resampler. CorrelationManager manages lifetime.
-  DataContainerStats result_; ///< averaged result of the correlation over all events
+  DataContainerStats result_; ///< Averaged result of the correlation over all events
 };
 
 struct NoResamplerException : public std::exception {

@@ -18,9 +18,10 @@
 #ifndef FLOW_ESEHANDLER_H
 #define FLOW_ESEHANDLER_H
 
-#include <TTreeReader.h>
+#include "TTreeReader.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TSystem.h"
 
 #include "EseSubEvent.h"
 
@@ -34,46 +35,33 @@ class EseHandler {
 
   explicit EseHandler(CorrelationManager *man) : manager_(man) {}
 
-  void ConnectInput(std::string percentiles_name, TFile *calibration) {
-    if (calibration) {
-      if (!calibration->IsZombie()) {
-        input_file_ = calibration;
-      }
-    }
-    input_treefile_name_ = percentiles_name;
-    input_treefile_ = std::make_shared<TFile>(input_treefile_name_.data(),"READ");
-  }
+  void SetInput(std::string percentiles_name, std::string calib_filename);
 
-  void ConnectOutput(std::string tree_filename,
-                     std::string calib_filename,
-                     std::shared_ptr<TFile> *percentile_file_,
-                     std::shared_ptr<TFile> *collection) {
-    output_file_ = collection;
-    output_treefile_ = percentile_file_;
+  void SetOutput(const std::string &tree_filename, const std::string &calib_filename) {
     output_file_name_ = calib_filename;
     output_treefile_name_ = tree_filename;
   }
 
   void AddESE(const std::string &name, const std::vector<std::string> &input,
-              Correlation::function_p lambda, const TH1F &histo);
+              Correlation::function_t lambda, const TH1F &histo);
 
   void Connect() {
     for (auto &event : subevents_) {
-      event.ConnectInput(input_treefile_.get(), input_file_);
+      event.ConnectInput(input_treefile_.get(), input_file_.get());
       if (event.GetState() > furthest_state_) {
         furthest_state_ = event.GetState();
       }
     }
     if (furthest_state_==EseSubEvent::State::collect) {
-      (*output_file_) = std::make_shared<TFile>(output_file_name_.data(), "NEW");
+      output_file_ = std::make_shared<TFile>(output_file_name_.data(), "NEW");
     }
     if (furthest_state_==EseSubEvent::State::calib) {
-      *output_treefile_ = std::make_shared<TFile>(output_treefile_name_.data(), "NEW");
-      (*output_treefile_)->cd();
+      output_treefile_ = std::make_shared<TFile>(output_treefile_name_.data(), "NEW");
+      output_treefile_->cd();
       output_tree_ = new TTree("ESE", "ESE");
     }
     for (auto &event : subevents_) {
-      event.ConnectOutput(output_tree_, output_file_);
+      event.ConnectOutput(output_tree_, output_file_.get());
     }
   }
 
@@ -90,12 +78,12 @@ class EseHandler {
   }
 
   void Process(const std::vector<unsigned long> &eventindices) {
-    EseSubEvent::State iscalib = EseSubEvent::State::unini;
+    bool iscalib = false;
     for (auto &event : subevents_) {
       event.Do(eventindices);
-      if (event.GetState()==EseSubEvent::State::calib) iscalib = event.GetState();
+      if (event.GetState()==EseSubEvent::State::calib) iscalib = true;
     }
-    if (iscalib==EseSubEvent::State::calib) output_tree_->Fill();
+    if (iscalib) output_tree_->Fill();
   }
 
   void Finalize() {
@@ -104,10 +92,12 @@ class EseHandler {
     }
     if (furthest_state_==EseSubEvent::State::calib) {
       if (output_treefile_ && output_tree_) {
-        (*output_treefile_)->cd();
+        output_treefile_->cd();
         output_tree_->Write();
       }
     }
+    if (output_file_) output_file_->Close();
+    if (output_treefile_) output_treefile_->Close();
   }
 
   std::string Report() {
@@ -115,13 +105,13 @@ class EseHandler {
     if (input_file_) {
       report += std::string("Calibration input file: ") + input_file_->GetName() + "\n";
     }
-    if ((*output_file_)) {
-      report += std::string("Calibration output file: ") + (*output_file_)->GetName() + "\n";
+    if (output_file_) {
+      report += std::string("Calibration output file: ") + output_file_->GetName() + "\n";
     }
     if (input_treefile_) {
       report += std::string("Percentiles input tree name: ") + input_treefile_->GetName() + "\n";
     }
-    if (output_tree_) {
+    if (output_treefile_) {
       report += std::string("Percentiles output tree name: ") + output_tree_->GetName() + "\n";
     }
     for (auto &event : subevents_) {
@@ -130,15 +120,18 @@ class EseHandler {
     return report;
   }
 
+  Qn::Correlation *RequestCorrelation(const SubEventPrototype &prototype);
+
+  void RequestEventAxis(const Qn::Axis &axis);
+
  private:
   EseSubEvent::State furthest_state_ = EseSubEvent::State::unini;
   CorrelationManager *manager_;
-  std::string input_treefile_name_;
-  std::shared_ptr<TFile> input_treefile_;
   TTree *output_tree_ = nullptr;
-  TFile *input_file_ = nullptr;
-  std::shared_ptr<TFile> *output_file_ = nullptr;
-  std::shared_ptr<TFile> *output_treefile_ = nullptr;
+  std::shared_ptr<TFile> input_file_ = nullptr;
+  std::shared_ptr<TFile> input_treefile_ = nullptr;
+  std::shared_ptr<TFile> output_file_ = nullptr;
+  std::shared_ptr<TFile> output_treefile_ = nullptr;
   std::string output_file_name_;
   std::string output_treefile_name_;
   std::vector<Qn::EseSubEvent> subevents_;

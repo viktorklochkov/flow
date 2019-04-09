@@ -35,26 +35,15 @@ void CorrelationManager::AddDataContainer(const std::string &name) {
 }
 
 /**
- * Adds a list of detectors to the correlation manager.
- * The actual values are retrieved when the tree is read from the file.
- * @param name list of qvectors
- */
-void CorrelationManager::AddQVectors(const std::vector<std::string> &qvectors) {
-  for (const auto &name : qvectors) {
-    AddDataContainer(name);
-  }
-}
-
-/**
  * Adds new Projection to the correlation manager.
  * Projects the DataContainer on the specified axes and creates a new Datacontainer with a new name.
  * @param input_name Name of the input datacontainer.
  * @param output_name  Name of the output projection
  * @param axis_names Names of axes to be projected upon.
  */
-void CorrelationManager::AddProjection(const std::string &name,
-                                       const std::string &input,
-                                       const std::vector<std::string> &axes) {
+void CorrelationManager::Projection(const std::string &name,
+                                    const std::string &input,
+                                    const std::vector<std::string> &axes) {
   DataContainerQVector projection;
   projections_.emplace(name, std::make_tuple(input, axes));
   qvectors_->emplace(name, nullptr);
@@ -67,13 +56,8 @@ void CorrelationManager::AddProjection(const std::string &name,
  * @param eventaxis Event variable defined as a Axis, which is used in the correlations.
  */
 
-void CorrelationManager::AddEventAxis(const Qn::Axis &eventaxis) {
-  event_axes_.AddEventVariable(eventaxis);
-//  TTreeReaderValue<float> value(*reader_, eventaxis.Name().data());
-//  tree_event_values_.push_back(value);
-//  event_values_.emplace_back(-999);
-//  eventbin_.emplace_back(-1);
-//  event_axes_.push_back(eventaxis);
+void CorrelationManager::EventAxis(const Qn::Axis &eventaxis) {
+  event_axes_.RegisterEventAxis(eventaxis);
 }
 
 /**
@@ -84,18 +68,12 @@ void CorrelationManager::AddEventAxis(const Qn::Axis &eventaxis) {
  * @param nsamples number of samples used in the subsampling
  * @param method method which is used for the subsampling
  */
-void CorrelationManager::AddCorrelation(std::string name,
-                                        const std::vector<std::string> &inputs,
-                                        CorrelationManager::function_p lambda,
-                                        const std::vector<Qn::Weight> &use_weights,
-                                        Qn::Sampler::Resample use_resampling) {
-  std::for_each(inputs.begin(), inputs.end(), [this](const std::string &item) { this->AddDataContainer(item); });
-  if (correlations_.find(name)==correlations_.end()) {
-    auto correlation = std::make_unique<Qn::Correlation>(name, inputs, lambda, use_weights);
-    correlations_.emplace(name, std::move(correlation));
-  }
-  StatsResult result(use_resampling, correlations_[name].get());
-  stats_results_.emplace(name, result);
+void CorrelationManager::Correlation(std::string name,
+                                     const std::vector<std::string> &input,
+                                     CorrelationManager::function_t lambda,
+                                     const std::vector<Qn::Weight> &use_weights,
+                                     Qn::Sampler::Resample resample) {
+  stats_results_.emplace(name, StatsResult{resample, RegisterCorrelation(name, input, lambda, use_weights)});
 }
 
 /**
@@ -105,41 +83,36 @@ void CorrelationManager::AddCorrelation(std::string name,
  * @param lambda Correlation function
  * @param histo binning used for the calibration
  */
-void CorrelationManager::AddESE(const std::string &name, const std::vector<std::string> &input,
-                                CorrelationManager::function_p lambda, const TH1F &histo) {
+void CorrelationManager::EventShape(const std::string &name, const std::vector<std::string> &input,
+                                    CorrelationManager::function_t lambda, const TH1F &histo) {
   ese_handler_.AddESE(name, input, lambda, histo);
-  ese_state_ = ESEState::ESEEnabled;
 }
 
-void CorrelationManager::ConfigureResampling(Sampler::Method method,
-                                             CorrelationManager::size_type nsamples,
-                                             unsigned long seed) {
+void CorrelationManager::Resampling(Sampler::Method method,
+                                    CorrelationManager::size_type nsamples,
+                                    unsigned long seed) {
   sampler_ = std::make_unique<Qn::Sampler>(num_events_, method, nsamples, seed);
-  resampling_status_ = ResamplingStatus::ResamplingEnabled;
 }
 
 /**
  * @brief Initializes the CorrelationManager. Called during Run().
  */
 void CorrelationManager::Initialize() {
-  if (ese_state_==ESEState::ESEEnabled) {
-    ese_handler_.Connect();
-  }
+  ese_handler_.Connect();
 // Read in the first event to determine the binning of the Q-vector inputs.
   reader_->SetEntry(1);
 // initialize values to be able to build the correlations.
   UpdateEvent();
   MakeProjections();
 // configure the resampling using the number of event of the
-  if (resampling_status_==ResamplingStatus::ResamplingEnabled) {
+  if (sampler_) {
     sampler_->CreateSamples();
     std::cout << sampler_->Report() << std::endl;
   }
-  if (ese_state_==ESEState::ESEEnabled) {
-    ese_handler_.Initialize();
-    std::cout << ese_handler_.Report() << std::endl;
-  }
+
+  ese_handler_.Initialize();
   ConfigureCorrelations();
+  std::cout << ese_handler_.Report() << std::endl;
 // reset to the first event before the processing step.
   if (event_axes_.GetAxes().empty()) { throw std::logic_error("no event axes added. aborting."); }
   reader_->Restart();
@@ -159,9 +132,6 @@ void CorrelationManager::Finalize() {
     }
     outputfile->Close();
   }
-  if (ese_calib_out_) ese_calib_out_->Close();
-  if (ese_calib_in_) ese_calib_in_->Close();
-  if (ese_treefile_out_) ese_treefile_out_->Close();
 }
 
 void CorrelationManager::Run() {
@@ -198,9 +168,9 @@ void CorrelationManager::MakeProjections() {
   };
   for (const auto &projection : projections_) {
     auto input = projection.first;
-    auto output = std::get<0>(projection.second);
-    auto axes = std::get<1>(projection.second);
-    qvectors_proj_[projection.first] = (*qvectors_)[std::get<0>(projection.second)]->Projection(axes, function);
+    const auto &output = std::get<0>(projection.second);
+    const auto &axes = std::get<1>(projection.second);
+    qvectors_proj_[projection.first] = (*qvectors_)[output]->Projection(axes, function);
     (*qvectors_)[projection.first] = &qvectors_proj_[input];
   }
 }
@@ -209,7 +179,7 @@ void CorrelationManager::ConfigureCorrelations() {
   for (auto &corr : correlations_) {
     corr.second->Configure(qvectors_.get(), event_axes_.GetAxes());
   }
-  if (ese_state_==ESEState::ESEEnabled) ese_handler_.Configure();
+  ese_handler_.Configure();
   for (auto &stats : stats_results_) {
     try {
       stats.second.ConfigureStats(sampler_.get());
@@ -219,12 +189,12 @@ void CorrelationManager::ConfigureCorrelations() {
   }
 }
 
-Qn::Correlation *CorrelationManager::AddCorrelationOnly(const std::string &name, const std::vector<std::string> &inputs,
-                                                        CorrelationManager::function_p lambda) {
+Qn::Correlation *CorrelationManager::RegisterCorrelation(const std::string &name,
+                                                         const std::vector<std::string> &inputs,
+                                                         CorrelationManager::function_t lambda,
+                                                         std::vector<Qn::Weight> use_weights) {
   std::for_each(inputs.begin(), inputs.end(), [this](const std::string &item) { this->AddDataContainer(item); });
   if (correlations_.find(name)==correlations_.end()) {
-    std::vector<Qn::Weight> use_weights(inputs.size());
-    for_each(use_weights.begin(), use_weights.end(), [](Qn::Weight &a) { a = Qn::Weight::REFERENCE; });
     auto correlation = std::make_unique<Qn::Correlation>(name, inputs, lambda, use_weights);
     correlations_.emplace(name, std::move(correlation));
   }

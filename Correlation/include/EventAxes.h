@@ -18,8 +18,9 @@
 #ifndef FLOW_EVENTVARIABLES_H
 #define FLOW_EVENTVARIABLES_H
 
-#include "Axis.h"
 #include "TTreeReaderValue.h"
+
+#include "Axis.h"
 
 namespace Qn {
 
@@ -28,9 +29,9 @@ class CorrelationManager;
 class EventAxes {
 
  public:
-  EventAxes(Qn::CorrelationManager *manager) : manager_(manager) {}
+  explicit EventAxes(Qn::CorrelationManager *manager) : manager_(manager) {}
 
-  void AddEventVariable(const Axis &eventaxis);
+  void RegisterEventAxis(const Axis &eventaxis);
 
   bool CheckEvent() {
     u_long ie = 0;

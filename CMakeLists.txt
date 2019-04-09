@@ -70,7 +70,6 @@ set(CORR_SOURCES
         Correlation/Sampler.cpp
         Correlation/EventShapeResult.cpp
         Correlation/Correlation.cpp
-        #        Correlation/ESE.cpp
         Correlation/EseHandler.cpp
         Correlation/EseSubEvent.cpp
         Correlation/EventAxes.cpp
@@ -89,6 +88,17 @@ set(BASE_SOURCES
         Base/SubSamples.cpp
         Base/EventShape.cpp
         Base/Stats.cpp
+        )
+
+set(CORR_HEADERS
+        StatsResult.h
+        CorrelationManager.h
+        Sampler.h
+        EventShapeResult.h
+        Correlation.h
+        EseHandler.h
+        EseSubEvent.h
+        EventAxes.h
         )
 
 set(BASE_HEADERS DataContainer.h
@@ -236,7 +246,16 @@ target_include_directories(Correction
         )
 target_link_libraries(Correction PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
-add_library(Correlation SHARED ${CORR_SOURCES})
+add_custom_command(OUTPUT G__Correlation.cxx
+        COMMAND ${ROOTCLING} -v -f G__Correlation.cxx
+        -rml libCorrelation${CMAKE_SHARED_LIBRARY_SUFFIX}
+        -rmf libCorrelation.rootmap
+        -s libBase
+        -I${CMAKE_SOURCE_DIR}/Correlation -I${CMAKE_SOURCE_DIR}/Correlation/include -I${CMAKE_SOURCE_DIR}/QnCorrections/include -I${CMAKE_SOURCE_DIR}/QnCorrections -I${CMAKE_SOURCE_DIR}/Base/include -I${CMAKE_SOURCE_DIR}/Base
+        ${CORR_HEADERS}
+        ${CMAKE_SOURCE_DIR}/Correlation/CorrelationLinkDef.h
+        )
+add_library(Correlation SHARED ${CORR_SOURCES} G__Correlation)
 add_library(Qn::Correlation ALIAS Correlation)
 target_compile_definitions(Correlation PUBLIC "-DUSE_ROOT")
 target_include_directories(Correlation
@@ -264,6 +283,8 @@ install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_
 install(FILES ${CMAKE_BINARY_DIR}/libBase.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_BINARY_DIR}/libCorrelation_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_BINARY_DIR}/libCorrelation.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 
 install(TARGETS Base Correction Correlation QnCorrections

@@ -52,19 +52,20 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
   std::cout << counter << std::endl;
   EXPECT_EQ(ne, reading->GetEntries());
   std::cout << "create manager" << std::endl;
-  reading->AddFriend("ESE", "percentiles.root");
+//  reading->AddFriend("ESE", "percentiles.root");
   Qn::CorrelationManager manager(reading);
   std::cout << "add variables" << std::endl;
 
-  manager.AddEventAxis({"Ev1", 2, 0, 2});
+  manager.EventAxis({"Ev1", 2, 0, 2});
   manager.SetOutputFile("correlation.root");
-  manager.SetESEInputFile("calib.root", "percentiles.root");
+  manager.SetESEInputFile("/Users/lukas/phd/analysis/flow/cmake-build-debug/test/calib.root",
+                          "/Users/lukas/phd/analysis/flow/cmake-build-debug/test/percentiles.root");
   manager.SetESEOutputFile("calib.root", "percentiles.root");
-  manager.AddESE("Det1ESE", {"Det1"}, [](QVectors q) { return q[0].x(1); }, {"h", "h", 2, 0., 3.});
-  manager.AddCorrelation("c1",
-                         {"Det1", "Det2"},
-                         [](QVectors q) { return q[0].y(1) + q[1].x(1); },
-                         {Weight::REFERENCE, Weight::REFERENCE});
+  manager.EventShape("Det1ESE", {"Det1"}, [](QVectors q) { return q[0].x(1); }, {"h", "h", 2, 0., 3.});
+  manager.Correlation("c1",
+                      {"Det1", "Det2"},
+                      [](QVectors q) { return q[0].y(1) + q[1].x(1); },
+                      {kObs, kObs});
 //  manager.AddCorrelation("avg",
 //                         {"Det1"},
 //                         [](QVectors q) { return q[0].mag(2)/sqrt(q[0].n()); },
@@ -74,17 +75,17 @@ TEST(CorrelationManagerTest, AddingCorrelation) {
 //                         {"Det1", "Det2"},
 //                         [](QVectors q) { return q[0].x(1) + q[1].x(1); },
 //                         {Weight::OBSERVABLE, Weight::REFERENCE});
-  manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP, 100);
+  manager.Resampling(Qn::Sampler::Method::BOOTSTRAP, 100);
   std::cout << "run" << std::endl;
   manager.Run();
   auto correlation = manager.GetResult("c1");
   for (unsigned long i = 0; i < 10; ++i) {
-    auto bin = correlation.At({0,9,i});
+    auto bin = correlation.At({0, 9, i});
     EXPECT_FLOAT_EQ(4.0, bin.Mean());
     EXPECT_EQ(100, bin.GetNSamples());
   }
   for (unsigned long i = 0; i < 10; ++i) {
-    auto bin = correlation.At({0,5,i});
+    auto bin = correlation.At({0, 5, i});
     EXPECT_FLOAT_EQ(2.0, bin.Mean());
     EXPECT_EQ(100, bin.GetNSamples());
   }
