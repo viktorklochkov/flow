@@ -198,7 +198,7 @@ void Qn::CorrectionManager::ProcessEvent() {
       event_var.second.SetValue(*var_manager_->FindVariable(event_var.first).begin());
     }
     for (auto &event_var : *event_variables_long_) {
-      event_var.second.SetValue(static_cast<long>(*var_manager_->FindVariable(event_var.first).begin()));
+      event_var.second.SetValue(static_cast<Long64_t>(*var_manager_->FindVariable(event_var.first).begin()));
     }
     for (auto &histo : event_histograms_) {
       histo->Fill();
