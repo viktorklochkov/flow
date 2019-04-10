@@ -83,6 +83,10 @@ class EseSubEvent {
     }
   }
 
+  void Clear() {
+    out_value_ = NAN;
+  }   
+
   void Finalize() {
     if (state_==State::collect) {
       result_->FitSplines();

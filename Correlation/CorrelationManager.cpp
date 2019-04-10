@@ -148,6 +148,9 @@ void CorrelationManager::Run() {
         stats.second.Fill(static_cast<size_t>(reader_->GetCurrentEntry()));
       }
     }
+    // Fill tree regardless of validity of event. Friend tree needs to have the same number of entries.
+    // TODO maybe it can be fixed by using an Index without saving useless data.
+    ese_handler_.FillTree();
   }
   Finalize();
 }

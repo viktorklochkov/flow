@@ -74,16 +74,14 @@ class EseHandler {
   void Configure() {
     for (auto &event : subevents_) {
       event.Configure();
+      if (event.GetState()==EseSubEvent::State::calib) iscalib_ = true;
     }
   }
 
   void Process(const std::vector<unsigned long> &eventindices) {
-    bool iscalib = false;
     for (auto &event : subevents_) {
       event.Do(eventindices);
-      if (event.GetState()==EseSubEvent::State::calib) iscalib = true;
     }
-    if (iscalib) output_tree_->Fill();
   }
 
   void Finalize() {
@@ -124,7 +122,17 @@ class EseHandler {
 
   void RequestEventAxis(const Qn::Axis &axis);
 
+  void FillTree() {
+    if (iscalib_) {
+      output_tree_->Fill();
+      for (auto & event : subevents_) {
+        event.Clear();
+      }
+    }
+  }
+
  private:
+  bool iscalib_ = false;
   EseSubEvent::State furthest_state_ = EseSubEvent::State::unini;
   CorrelationManager *manager_;
   TTree *output_tree_ = nullptr;
