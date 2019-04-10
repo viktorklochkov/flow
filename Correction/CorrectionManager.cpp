@@ -150,6 +150,7 @@ void Qn::CorrectionManager::Initialize(std::shared_ptr<TFile> &in_calibration_fi
     out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
   }
   event_variables_->SetToTree(*out_tree_);
+  event_variables_long_->SetToTree(*out_tree_);
   CalculateCorrectionAxis();
   CreateDetectors();
   for (auto &det : detectors_track) {
@@ -173,6 +174,7 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
     out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
   }
   event_variables_->SetToTree(*out_tree_);
+  event_variables_long_->SetToTree(*out_tree_);
   CalculateCorrectionAxis();
   CreateDetectors();
   for (auto &det : detectors_track) {
@@ -193,7 +195,10 @@ void Qn::CorrectionManager::ProcessEvent() {
   if (event_passed_cuts_) {
     event_cuts_->FillReport();
     for (auto &event_var : *event_variables_) {
-      event_var.second.SetValue(*(var_manager_->FindVariable(event_var.first).begin()));
+      event_var.second.SetValue(*var_manager_->FindVariable(event_var.first).begin());
+    }
+    for (auto &event_var : *event_variables_long_) {
+      event_var.second.SetValue(static_cast<long>(*var_manager_->FindVariable(event_var.first).begin()));
     }
     for (auto &histo : event_histograms_) {
       histo->Fill();
@@ -251,6 +256,7 @@ void Qn::CorrectionManager::Reset() {
     det.second->ClearData();
   }
   event_variables_->Reset();
+  event_variables_long_->Reset();
 }
 
 void Qn::CorrectionManager::Finalize() { qncorrections_manager_.FinalizeQnCorrectionsFramework(); }

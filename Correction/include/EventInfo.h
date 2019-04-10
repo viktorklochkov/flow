@@ -129,6 +129,7 @@ class EventInfo {
 };
 
 typedef EventInfo<float> EventInfoF; ///< Typedef for floating point parameters
+typedef EventInfo<long> EventInfoL; ///< Typedef for integer parameters
 
 }
 #endif //FLOW_QNEVENTINFO_H

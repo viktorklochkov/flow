@@ -50,7 +50,10 @@ class CorrectionManager {
   using MapDetectors = std::map<std::string, std::unique_ptr<DetectorBase>>;
 
   CorrectionManager()
-      : event_cuts_(new Cuts()), event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()) {
+      : event_cuts_(new Cuts()),
+        event_variables_(new Qn::EventInfoF()),
+        event_variables_long_(new Qn::EventInfoL()),
+        var_manager_(new VariableManager()) {
     var_manager_->CreateVariableOnes();
   }
   /**
@@ -74,6 +77,16 @@ class CorrectionManager {
    * @param name Name corresponds to a variable defined in the variable manager.
    */
   void SetEventVariable(const std::string &name) { event_variables_->AddVariable(name); }
+
+  /**
+   * Adds a event variable, which will be saved to the output tree.
+   * Remember to add them as a variable first.
+   * @param name Name corresponds to a variable defined in the variable manager.
+   */
+  void SetRunEventId(const std::string &run, const std::string &event) {
+    event_variables_long_->AddVariable(run);
+    event_variables_long_->AddVariable(event);
+  }
 
   /**
    * Adds a detector to the correction framework.
@@ -116,10 +129,10 @@ class CorrectionManager {
   void AddDetector(const std::string &name,
                    DetectorType type,
                    const std::string &phi_name,
-                   const std::string &weight_name  = "Ones",
+                   const std::string &weight_name = "Ones",
                    const std::vector<Qn::Axis> &axes = {}) {
-  AddDetector(name,type,phi_name,weight_name,axes,{1,2,3});
-}
+    AddDetector(name, type, phi_name, weight_name, axes, {1, 2, 3});
+  }
 
   /**
    * Adds a cut to a detector.
@@ -137,9 +150,9 @@ class CorrectionManager {
       ++i;
     }
     auto cut = MakeUniqueNDimCut(arr, lambda);
-    if (detectors_track.find(name) != detectors_track.end()) {
-    detectors_track.at(name)->AddCut(std::move(cut));
-    } else if (detectors_channel.find(name) != detectors_channel.end()) {
+    if (detectors_track.find(name)!=detectors_track.end()) {
+      detectors_track.at(name)->AddCut(std::move(cut));
+    } else if (detectors_channel.find(name)!=detectors_channel.end()) {
       detectors_channel.at(name)->AddCut(std::move(cut));
     } else {
       std::cout << "Detector" + name + "not found. Cut not Added." << std::endl;
@@ -212,7 +225,6 @@ class CorrectionManager {
 
   void Initialize(TFile *in_calibration_file_);
 
-
   void ProcessEvent();
 
   void ProcessQnVectors();
@@ -237,15 +249,15 @@ class CorrectionManager {
     }
   }
 
-  double* GetVariableContainer() {return var_manager_->GetVariableContainer();}
+  double *GetVariableContainer() { return var_manager_->GetVariableContainer(); }
 
-  TList* GetCalibrationList() {return qncorrections_manager_.GetOutputHistogramsList();}
+  TList *GetCalibrationList() { return qncorrections_manager_.GetOutputHistogramsList(); }
 
-  TList* GetCalibrationQAList() {return qncorrections_manager_.GetQAHistogramsList();}
+  TList *GetCalibrationQAList() { return qncorrections_manager_.GetQAHistogramsList(); }
 
-  void FillDetectorQAToList(TList*);
+  void FillDetectorQAToList(TList *);
 
-  void SetProcessName(std::string name) {qncorrections_manager_.SetCurrentProcessListName(name.data());}
+  void SetProcessName(std::string name) { qncorrections_manager_.SetCurrentProcessListName(name.data()); }
 
  private:
 
@@ -270,6 +282,7 @@ class CorrectionManager {
   EventClassVariablesSet *qncorrections_varset_ = nullptr;
   std::unique_ptr<Cuts> event_cuts_;
   std::unique_ptr<Qn::EventInfoF> event_variables_;
+  std::unique_ptr<Qn::EventInfoL> event_variables_long_;
   std::vector<Qn::Axis> qncorrections_axis_;
   CorrectionCalculator qncorrections_manager_;
   std::shared_ptr<VariableManager> var_manager_;
