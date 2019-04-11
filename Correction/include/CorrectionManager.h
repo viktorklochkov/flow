@@ -56,6 +56,7 @@ class CorrectionManager {
         var_manager_(new VariableManager()) {
     var_manager_->CreateVariableOnes();
   }
+
   /**
    * Add a variable to the variable manager
    * @param name Name of the variable
@@ -211,8 +212,7 @@ class CorrectionManager {
    * @param config function configuring the correction framework.
    * C-callable of signature void(QnCorrectionsDetectorConfigurationBase *config).
    */
-  void SetCorrectionSteps(const std::string &name,
-                          std::function<void(DetectorConfiguration *config)> config);
+  void SetCorrectionSteps(const std::string &name, std::function<void(DetectorConfiguration *config)> config);
 
   void SetTree(TTree *tree) { out_tree_ = tree; }
 
@@ -255,17 +255,18 @@ class CorrectionManager {
 
   TList *GetCalibrationQAList() { return qncorrections_manager_.GetQAHistogramsList(); }
 
-  void FillDetectorQAToList(TList *);
 
   void SetProcessName(std::string name) { qncorrections_manager_.SetCurrentProcessListName(name.data()); }
 
+  TList *GetQAList();
+
  private:
 
-  std::pair<std::array<Variable, 2>, TH1F> Create1DHisto(const std::string &name,
+  std::pair<std::array<Variable, 2>, TH1F*> Create1DHisto(const std::string &name,
                                                          std::vector<Qn::Axis> axes,
                                                          const std::string &weightname = "Ones");
 
-  std::pair<std::array<Variable, 3>, TH2F> Create2DHisto(const std::string &name,
+  std::pair<std::array<Variable, 3>, TH2F*> Create2DHisto(const std::string &name,
                                                          std::vector<Qn::Axis> axes,
                                                          const std::string &weightname = "Ones");
 
@@ -279,8 +280,10 @@ class CorrectionManager {
 
   void SaveTree(const std::shared_ptr<TFile> &file);
 
-  EventClassVariablesSet *qncorrections_varset_ = nullptr;
+  std::vector<std::unique_ptr<EventClassVariable>> qnc_event_variables_; ///!<! List holding the correction axes
+  std::unique_ptr<EventClassVariablesSet> qncorrections_varset_ = nullptr; ///!<! Set of correction axes passed to the CorrectionCalculator
   std::unique_ptr<Cuts> event_cuts_;
+  TList * qa_list_ = nullptr; ///!<! List holding the Detector QA histograms. Lifetime has to be managed by the user.
   std::unique_ptr<Qn::EventInfoF> event_variables_;
   std::unique_ptr<Qn::EventInfoL> event_variables_long_;
   std::vector<Qn::Axis> qncorrections_axis_;
@@ -289,7 +292,7 @@ class CorrectionManager {
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track;
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel;
   std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_;
-  TTree *out_tree_ = nullptr;
+  TTree *out_tree_ = nullptr;  ///!<! Tree of Qn Vectors and event variables. Lifetime has to be managed by the user.
   bool event_passed_cuts_ = false;
 };
 }

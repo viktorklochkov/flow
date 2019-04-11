@@ -11,7 +11,7 @@ set(TEST_SOURCES
         DataContainerUnitTest.cpp
         ProductUnitTest.cpp
         StatsUnitTest.cpp
-        )
+        QAHistogramUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})

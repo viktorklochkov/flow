@@ -42,33 +42,41 @@ struct QAHistoBase {
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo) : vars_(std::move(vec)), histo_(histo) {}
+  QAHisto(std::array<VAR, N> vec, HISTO histo) : vars_(std::move(vec)), histo_(std::move(histo)) {}
 
   template<typename array, std::size_t... I>
   void FillImpl(const array a, std::index_sequence<I...>) {
-    histo_.FillN(a[0].length(), (a[I].begin())...);
+    ptr(histo_)->FillN(a[0].length(), (a[I].begin())...);
   }
 
   void Fill() override {
     return FillImpl(vars_, std::make_index_sequence<N>{});
   };
 
-  void Draw(const char *option) override { histo_.Draw(option); }
+  void Draw(const char *option) override { ptr(histo_)->Draw(option); }
 
-  void Write(const char *name) override { histo_.Write(name); }
+  void Write(const char *name) override { ptr(histo_)->Write(name); }
 
-  const char* Name() override { return histo_.GetName(); }
+  const char* Name() override { return ptr(histo_)->GetName(); }
 
-  void AddToList(TList *list) override {list->Add(new HISTO(histo_));}
+  void AddToList(TList *list) override {list->Add(ptr(histo_));}
 
 
  private:
+  template<typename T>
+  T * ptr(T & obj) { return &obj; } //turn reference into pointer!
+
+  template<typename T>
+  T * ptr(T * obj) { return obj; } //obj is already pointer, return it!
   std::array<VAR, N> vars_;
   HISTO histo_;
 };
 
-using QAHisto1D = QAHisto<TH1F, 2, Variable>;
-using QAHisto2D = QAHisto<TH2F, 3, Variable>;
+using QAHisto1D = QAHisto<TH1F, 2, Qn::Variable>;
+using QAHisto2D = QAHisto<TH2F, 3, Qn::Variable>;
+
+using QAHisto1DPtr = QAHisto<TH1F*, 2, Qn::Variable>;
+using QAHisto2DPtr = QAHisto<TH2F*, 3, Qn::Variable>;
 
 }
 #endif //FLOW_QAHISTOGRAM_H

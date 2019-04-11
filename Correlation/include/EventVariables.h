@@ -43,7 +43,7 @@ class EventAxis : public EventAxisInterface {
     return axis_.FindBin(*value_);
   }
   const Qn::Axis &GetAxis() const { return axis_; }
-  bool IsValid() const { return !isnan(*value_); }
+  bool IsValid() override { return !isnan(*value_.Get()); }
  private:
   Qn::Axis axis_;
   TTreeReaderValue<T> value_;
@@ -62,22 +62,22 @@ class EventVariables {
 
   void RegisterEventAxis(Axis eventaxis, Type type);
 
-  bool CheckEvent() {
-    u_long ie = 0;
-    for (const auto &axis : event_axes_) {
-      long bin = -1;
-      if (axis->IsValid()) {
-        bin = ae.FindBin(values_[ie]);
-      }
-      if (bin!=-1) {
-        bin_[ie] = (unsigned long) bin;
-      } else {
-        return false;
-      }
-      ie++;
-    }
-    return true;
-  }
+//  bool CheckEvent() {
+//    u_long ie = 0;
+//    for (const auto &axis : event_axes_) {
+//      long bin = -1;
+//      if (axis->IsValid()) {
+//        bin = ae.FindBin(values_[ie]);
+//      }
+//      if (bin!=-1) {
+//        bin_[ie] = (unsigned long) bin;
+//      } else {
+//        return false;
+//      }
+//      ie++;
+//    }
+//    return true;
+//  }
 
   bool CheckEvent() {
     u_long ie = 0;
