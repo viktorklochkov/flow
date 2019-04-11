@@ -26,12 +26,58 @@ namespace Qn {
 
 class CorrelationManager;
 
-class EventAxes {
+class EventAxisInterface {
+ public:
+  virtual unsigned long GetBin() = 0;
+  virtual bool IsValid() = 0;
+  virtual ~EventAxisInterface() = default;
+};
+
+template<typename T>
+class EventAxis : public EventAxisInterface {
+ public:
+  EventAxis(Qn::Axis axis, TTreeReaderValue<T> value) :
+      axis_(axis),
+      value_(std::move(value)) {}
+  unsigned long GetBin() override {
+    return axis_.FindBin(*value_);
+  }
+  const Qn::Axis &GetAxis() const { return axis_; }
+  bool IsValid() const { return !isnan(*value_); }
+ private:
+  Qn::Axis axis_;
+  TTreeReaderValue<T> value_;
+};
+
+class EventVariables {
 
  public:
-  explicit EventAxes(Qn::CorrelationManager *manager) : manager_(manager) {}
 
-  void RegisterEventAxis(const Axis &eventaxis);
+  enum class Type {
+    Integer,
+    Float
+  };
+
+  explicit EventVariables(Qn::CorrelationManager *manager) : manager_(manager) {}
+
+  void RegisterEventAxis(Axis eventaxis, Type type);
+
+  bool CheckEvent() {
+    u_long ie = 0;
+    for (const auto &axis : event_axes_) {
+      long bin = -1;
+      if (axis->IsValid()) {
+        bin = ae.FindBin(values_[ie]);
+      }
+      if (bin!=-1) {
+        bin_[ie] = (unsigned long) bin;
+      } else {
+        return false;
+      }
+      ie++;
+    }
+    return true;
+  }
 
   bool CheckEvent() {
     u_long ie = 0;
@@ -52,19 +98,22 @@ class EventAxes {
 
   void UpdateEvent() {
     unsigned long i = 0;
-    for (auto &treeval : tree_values_) {
+    for (auto &treeval : tree_values_F) {
       values_[i] = *treeval.Get();
       i++;
     }
   }
 
-  const std::vector<Qn::Axis> &GetAxes() const {return axes_;}
+  const std::vector<Qn::Axis> &GetAxes() const { return axes_; }
 
-  const std::vector<unsigned long> GetBin() const {return bin_;}
+  const std::vector<unsigned long> GetBin() const { return bin_; }
 
  private:
   Qn::CorrelationManager *manager_;
-  std::vector<TTreeReaderValue<float>> tree_values_;
+  std::vector<std::unique_ptr<Qn::EventAxisInterface>> event_axes_;
+
+  std::vector<TTreeReaderValue<Float_t >> tree_values_F;
+  std::vector<TTreeReaderValue<Long64_t >> tree_values_L;
   std::vector<float> values_;
   std::vector<unsigned long> bin_;
   std::vector<Qn::Axis> axes_;

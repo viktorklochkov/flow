@@ -72,7 +72,7 @@ set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/EseHandler.cpp
         Correlation/EseSubEvent.cpp
-        Correlation/EventAxes.cpp
+        Correlation/EventVariables.cpp
         )
 
 set(DIFF_SOURCES

@@ -30,7 +30,7 @@
 #include "EventShape.h"
 #include "DataContainer.h"
 #include "EseHandler.h"
-#include "EventAxes.h"
+#include "EventVariables.h"
 
 #include "ROOT/RMakeUnique.hxx"
 
@@ -54,7 +54,10 @@ class CorrelationManager {
   void AddEventAxis(const Axis &eventaxis);
   void AddCorrelation(std::string name, const std::vector<std::string> &input, function_t lambda,
                       const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
-  void AddEventShape(const std::string &name, const std::vector<std::string> &input, function_t lambda, const TH1F &histo);
+  void AddEventShape(const std::string &name,
+                     const std::vector<std::string> &input,
+                     function_t lambda,
+                     const TH1F &histo);
   void SetResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
 
   void SetOutputFile(const std::string &output_name) { correlation_file_name_ = output_name; }
@@ -72,7 +75,7 @@ class CorrelationManager {
 
  private:
 
-  friend class Qn::EventAxes;
+  friend class Qn::EventVariables;
   friend class Qn::EseHandler;
 
   void AddDataContainer(const std::string &name);
@@ -94,12 +97,18 @@ class CorrelationManager {
 
   void AddFriend(const std::string &treename, TFile *file) { tree_->AddFriend(treename.data(), file); }
 
+  void SetRunEventId(const std::string &run, const std::string &event) {
+    //event_axes_.AddRunEventId();
+  }
+
+  std::shared_ptr<TTreeReader> &GetReader() { return reader_; }
+
  private:
   size_type num_events_ = 0;
 
   std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
   Qn::EseHandler ese_handler_;
-  Qn::EventAxes event_axes_;
+  Qn::EventVariables event_axes_;
 
   std::string correlation_file_name_;
 

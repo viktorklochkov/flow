@@ -57,7 +57,7 @@ void CorrelationManager::AddProjection(const std::string &name,
  */
 
 void CorrelationManager::AddEventAxis(const Qn::Axis &eventaxis) {
-  event_axes_.RegisterEventAxis(eventaxis);
+  event_axes_.RegisterEventAxis(eventaxis, EventVariables::Type::Float);
 }
 
 /**
