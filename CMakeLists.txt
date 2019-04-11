@@ -98,7 +98,7 @@ set(CORR_HEADERS
         Correlation.h
         EseHandler.h
         EseSubEvent.h
-        EventAxes.h
+        EventVariables.h
         )
 
 set(BASE_HEADERS DataContainer.h
