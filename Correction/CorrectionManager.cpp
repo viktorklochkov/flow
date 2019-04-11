@@ -280,7 +280,7 @@ void Qn::CorrectionManager::CalculateCorrectionAxis() {
     }
     std::unique_ptr<EventClassVariable> variable(new EventClassVariable(var_manager_->FindNum(axis.Name()), axis.Name().data(), nbins, axisbins));
     qnc_event_variables_.push_back(std::move(variable));
-    qncorrections_varset_->Add(qnc_event_variables_.end()->get());
+    qncorrections_varset_->Add(qnc_event_variables_.back().get());
   }
 }
 
