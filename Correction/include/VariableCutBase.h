@@ -147,15 +147,15 @@ class Cuts {
         auto nbins = cuts_.size() + 1;
         float low = 0.;
         float high = cuts_.size() + 1;
-        TH1F histo(name.data(), title.data(), nbins, low, high);
+        auto histo = new TH1F(name.data(), title.data(), nbins, low, high);
         int icut = 2;
-        histo.GetXaxis()->SetBinLabel(1, "all");
+        histo->GetXaxis()->SetBinLabel(1, "all");
         for (auto &cut : cuts_) {
-          histo.GetXaxis()->SetBinLabel(icut, cut->Name().data());
+          histo->GetXaxis()->SetBinLabel(icut, cut->Name().data());
           ++icut;
         }
         std::array<Variable, 2> arr = {{cut_i_, cut_weight_}};
-        report_ = std::make_unique<QAHisto1D>(arr, histo);
+        report_ = std::make_unique<QAHisto1DPtr>(arr, histo);
       } else {
         std::string name = detname + "Cut_Report";
         std::string title = std::string(";cuts;channels");
@@ -164,15 +164,15 @@ class Cuts {
         float low = 0.;
         float x_high = cuts_.size() + 1;
         float y_high = nchannels_;
-        TH2F histo(name.data(), title.data(), x_nbins, low, x_high, y_nbins, low, y_high);
-        histo.GetXaxis()->SetBinLabel(1, "all");
+        auto histo = new TH2F(name.data(), title.data(), x_nbins, low, x_high, y_nbins, low, y_high);
+        histo->GetXaxis()->SetBinLabel(1, "all");
         int icut = 2;
         for (auto &cut : cuts_) {
-          histo.GetXaxis()->SetBinLabel(icut, cut->Name().data());
+          histo->GetXaxis()->SetBinLabel(icut, cut->Name().data());
           ++icut;
         }
         std::array<Variable, 3> arr = {{cut_i_, cut_channel_, cut_weight_}};
-        report_ = std::make_unique<QAHisto2D>(arr, histo);
+        report_ = std::make_unique<QAHisto2DPtr>(arr, histo);
       }
     }
   }

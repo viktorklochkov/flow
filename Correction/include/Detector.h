@@ -58,9 +58,9 @@ class DetectorBase {
   virtual void FillData() = 0;
   virtual void ClearData() = 0;
   virtual void SaveReport() = 0;
-  virtual TList* GetReportList() = 0;
+  virtual TList *GetReportList() = 0;
   virtual void ReserveDataVectors(int number) = 0;
-  virtual std::bitset<8> GetHarmonics() const = 0;
+  virtual std::bitset<QVector::kMaxNHarmonics> GetHarmonics() const = 0;
 
 };
 
@@ -92,7 +92,7 @@ class Detector : public DetectorBase {
     }
   }
 
-  std::bitset<8> GetHarmonics() const override {
+  std::bitset<Qn::QVector::kMaxNHarmonics> GetHarmonics() const override { return harmonics_bits_; }
     return harmonics_bits_;
   }
 
