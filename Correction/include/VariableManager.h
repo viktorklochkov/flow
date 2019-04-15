@@ -63,21 +63,22 @@ class VariableManager {
  public:
 
   VariableManager() {
-    for (int i=0; i< maxsize; ++i) {
-      var_container[i] = NAN;
+    for (int i = 0; i < kMaxSize; ++i) {
+      var_container_[i] = NAN;
     }
   }
 
   void CreateVariable(std::string name, const int id, const int length) {
     Variable var(id, length, name);
-    var.var_container = var_container;
+    var.var_container = var_container_;
     name_var_map_.emplace(name, var);
     var_name_map_.emplace(var, name);
   }
+
   void CreateVariableOnes() {
-    Variable var(0, 1000, "Ones");
-    for (int i = 0; i < 1000; ++i) { var_ones[i] = 1.0; }
-    var.var_container = var_ones;
+    Variable var(0, kMaxSize, "Ones");
+    for (unsigned int i = 0; i < kMaxSize; ++i) { var_ones_[i] = 1.0; }
+    var.var_container = var_ones_;
     name_var_map_.emplace("Ones", var);
     var_name_map_.emplace(var, "Ones");
   }
@@ -98,17 +99,17 @@ class VariableManager {
   Variable FindVariable(const std::string &name) const { return name_var_map_.at(name); }
   std::string FindName(const Variable &var) const { return var_name_map_.at(var); }
   int FindNum(const std::string &name) const { return name_var_map_.at(name).id_; }
-  void SetVariables(double *vars) { var_container = vars; }
-  double *GetVariableContainer() { return var_container; }
-  void CreateVariableContainer(const int size) { var_container = new double[size]; }
+  void SetVariables(double *vars) { var_container_ = vars; }
+  double *GetVariableContainer() { return var_container_; }
+  void CreateVariableContainer(const int size) { var_container_ = new double[size]; }
   void FillToQnCorrections(double **var) {
-    *var = var_container;
+    *var = var_container_;
   }
 
  private:
-  static constexpr int maxsize = 11000;
-  double *var_container = new double[maxsize](); // non-owning pointer to variables
-  double *var_ones = new double[1000];
+  static constexpr int kMaxSize = 11000;
+  double *var_container_ = new double[kMaxSize]; // non-owning pointer to variables
+  double *var_ones_ = new double[kMaxSize];
   std::map<std::string, Variable> name_var_map_;
   std::map<Variable, std::string> var_name_map_;
 

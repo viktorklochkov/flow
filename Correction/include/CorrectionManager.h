@@ -159,6 +159,7 @@ class CorrectionManager {
       std::cout << "Detector" + name + "not found. Cut not Added." << std::endl;
     }
   }
+
   /**
    * Adds a cut based on event variables. Only events which pass the cuts are used for the corrections.
    * Template parameters are automatically deduced.
@@ -178,28 +179,31 @@ class CorrectionManager {
     }
     event_cuts_->AddCut(MakeUniqueNDimCut(arr, func));
   }
+
   /**
-   * Adds a one dimesional event histogram
+   * Adds a one dimensional event histogram
    * @param axes axis of the histogram. Name corresponds to the axis.
    * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto1D(std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+
   /**
-   * Adds a two dimesional event histogram
+   * Adds a two n event histogram
    * @param axes axes of the histogram. Name corresponds to the axes.
    * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto2D(std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
 
   /**
-  * Adds a one dimesional histogram to a detector.
+  * Adds a one dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
   */
   void AddHisto1D(const std::string &name, std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+
   /**
-  * Adds a two dimesional histogram to a detector.
+  * Adds a two dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
