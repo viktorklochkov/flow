@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "CorrectionDetector.h"
+#include "CorrectionCalculator.h"
 #include "EventClassVariablesSet.h"
 #include "DetectorConfigurationChannels.h"
 #include "DetectorConfigurationTracks.h"
@@ -47,9 +48,9 @@ class DetectorBase {
   virtual std::unique_ptr<DataContainerQVector> &GetQnDataContainer() = 0;
 
   virtual CorrectionDetector *GenerateDetector(const std::string &detname, int globalid, int binid,
-                                                  EventClassVariablesSet *set) = 0;
+                                               EventClassVariablesSet *set) = 0;
   virtual DetectorConfiguration *CreateDetectorConfiguration(const std::string &name,
-                                                                              EventClassVariablesSet *set) = 0;
+                                                             EventClassVariablesSet *set) = 0;
   virtual void SetConfig(std::function<void(DetectorConfiguration *config)> conf) = 0;
   virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
   virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
@@ -61,10 +62,13 @@ class DetectorBase {
   virtual TList *GetReportList() = 0;
   virtual void ReserveDataVectors(int number) = 0;
   virtual std::bitset<QVector::kMaxNHarmonics> GetHarmonics() const = 0;
+  virtual Qn::QVector::Normalization GetNormalization() const = 0;
+  virtual void SetUpCorrectionVectorPtrs(const Qn::CorrectionCalculator &calc, std::string name, std::string step) = 0;
+  virtual void GetCorrectedQVectors() = 0;
 
 };
 
-template <std::size_t N>
+template<std::size_t N>
 class Detector : public DetectorBase {
  public:
   Detector(const DetectorType type,
@@ -100,9 +104,9 @@ class Detector : public DetectorBase {
   }
 
   CorrectionDetector *GenerateDetector(const std::string &detname,
-                                          int globalid,
-                                          int binid,
-                                          EventClassVariablesSet *set) override {
+                                       int globalid,
+                                       int binid,
+                                       EventClassVariablesSet *set) override {
     if (!configuration_) {
       throw (std::runtime_error("No Qn correction configuration found for " + detname));
     }
@@ -116,12 +120,13 @@ class Detector : public DetectorBase {
     auto detector = new CorrectionDetector(name.data(), globalid);
     auto configuration = CreateDetectorConfiguration(name, set);
     configuration_(configuration);
+    normalization_ = configuration->GetQVectorNormalizationMethod();
     detector->AddDetectorConfiguration(configuration);
     return detector;
   }
 
   DetectorConfiguration *CreateDetectorConfiguration(const std::string &name,
-                                                                      EventClassVariablesSet *set) override {
+                                                     EventClassVariablesSet *set) override {
     DetectorConfiguration *configuration = nullptr;
     if (type_==DetectorType::CHANNEL) {
       configuration =
@@ -193,7 +198,7 @@ class Detector : public DetectorBase {
     }
   }
 
-  TList* GetReportList() override {
+  TList *GetReportList() override {
     auto list = new TList();
     int_cuts_->AddToList(list);
     cuts_->AddToList(list);
@@ -218,7 +223,33 @@ class Detector : public DetectorBase {
     }
   }
 
+  Qn::QVector::Normalization GetNormalization() const override { return normalization_; }
+
+  void SetUpCorrectionVectorPtrs(const Qn::CorrectionCalculator &calc, std::string name, std::string step) override {
+    correction_ptr_.AddAxes(qvector_->GetAxes());
+    int ibin = 0;
+    for (auto &bin : *correction_ptr_) {
+      std::string binname;
+      if (correction_ptr_.IsIntegrated()) {
+        binname = name;
+      } else {
+        binname = (name + std::to_string(ibin));
+      }
+      ++ibin;
+      bin = calc.GetDetectorQnVector(name.data(), step.c_str(), step.c_str());
+    }
+  }
+
+  void GetCorrectedQVectors() {
+    int ibin = 0;
+    for (auto &bin : *qvector_) {
+      bin = QVector(normalization_, correction_ptr_.At(ibin), harmonics_);
+      ++ibin;
+    }
+  }
+
  private:
+  Qn::QVector::Normalization normalization_;
   int nchannels_ = 0;
   int nharmonics_ = N;
   std::bitset<8> harmonics_bits_;
@@ -233,6 +264,7 @@ class Detector : public DetectorBase {
   std::vector<std::unique_ptr<QAHistoBase>> histograms_;
   std::unique_ptr<DataContainerDataVector> datavector_;
   std::unique_ptr<DataContainerQVector> qvector_;
+  DataContainer<Qn::CorrectionQnVector *> correction_ptr_;
   std::function<void(DetectorConfiguration *config)> configuration_;
 };
 }

@@ -125,13 +125,26 @@ class Axis {
    * @return upper edge of bin of interest
    */
   inline float GetUpperBinEdge(const unsigned long bin) const { return bin_edges_.at(bin + 1); }
+  /**
+   * Gets lower bin edge
+   * @param bin Index of bin of interest
+   * @return lower edge of bin of interest
+   */
+  inline float GetFirstBinEdge() const { return bin_edges_.front(); }
+  /**
+   * Gets upper bin edge
+   * @param bin Index of bin of interest
+   * @return upper edge of bin of interest
+   */
+  inline float GetLastBinEdge() const { return bin_edges_.back(); }
+
 
  private:
   std::string name_;
   std::vector<float> bin_edges_;
 
   /// \cond CLASSIMP
- ClassDef(Axis, 2);
+ ClassDef(Axis, 3);
   /// \endcond
 };
 

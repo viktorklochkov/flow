@@ -189,6 +189,38 @@ const TList *CorrectionCalculator::GetDetectorQnVectorList(const char *subdetect
 /// \param expectedstep the name of the expected last correction applied
 /// \param altstep the name of the alternative correction step if the expected one is not found
 /// \return pointer to the found Qn vector
+const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVectorPtr(
+    const char *subdetector,
+    const char *expectedstep,
+    const char *altstep) const {
+
+  const CorrectionQnVector *theQnVector = NULL;
+
+  TList *pQvecList = dynamic_cast<TList *> (fQnVectorList->FindObject(subdetector));
+  if (pQvecList!=NULL) {
+    /* the detector is present */
+    if (TString(expectedstep).EqualTo("latest"))
+      theQnVector = (CorrectionQnVector *) pQvecList->First();
+    else
+      theQnVector = (CorrectionQnVector *) pQvecList->FindObject(expectedstep);
+
+    if (theQnVector==NULL || !(theQnVector->IsGoodQuality()) || !(theQnVector->GetN()!=0)) {
+      /* the Qn vector for the expected step was not there or did not have the proper quality */
+      if (TString(altstep).EqualTo("latest"))
+        theQnVector = (CorrectionQnVector *) pQvecList->First();
+      else
+        theQnVector = (CorrectionQnVector *) pQvecList->FindObject(altstep);
+    }
+  }
+  return theQnVector;
+}
+
+/// Get out of the detector configuration Qn vector list
+/// the Qn vector which complies the expected or alternative correction step
+/// \param subdetector the name of the detector configuration of interest
+/// \param expectedstep the name of the expected last correction applied
+/// \param altstep the name of the alternative correction step if the expected one is not found
+/// \return pointer to the found Qn vector
 const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVector(
     const char *subdetector,
     const char *expectedstep,
