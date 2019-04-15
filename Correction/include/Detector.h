@@ -228,7 +228,7 @@ class Detector : public DetectorBase {
   void SetUpCorrectionVectorPtrs(const Qn::CorrectionCalculator &calc, std::string name, std::string step) override {
     correction_ptr_.AddAxes(qvector_->GetAxes());
     int ibin = 0;
-    for (auto &bin : *correction_ptr_) {
+    for (auto &bin : correction_ptr_) {
       std::string binname;
       if (correction_ptr_.IsIntegrated()) {
         binname = name;
@@ -240,10 +240,10 @@ class Detector : public DetectorBase {
     }
   }
 
-  void GetCorrectedQVectors() {
+  void GetCorrectedQVectors() override {
     int ibin = 0;
     for (auto &bin : *qvector_) {
-      bin = QVector(normalization_, correction_ptr_.At(ibin), harmonics_);
+      bin = QVector(normalization_, correction_ptr_.At(ibin), harmonics_bits_);
       ++ibin;
     }
   }
@@ -264,7 +264,7 @@ class Detector : public DetectorBase {
   std::vector<std::unique_ptr<QAHistoBase>> histograms_;
   std::unique_ptr<DataContainerDataVector> datavector_;
   std::unique_ptr<DataContainerQVector> qvector_;
-  DataContainer<Qn::CorrectionQnVector *> correction_ptr_;
+  DataContainer<const Qn::CorrectionQnVector *> correction_ptr_;
   std::function<void(DetectorConfiguration *config)> configuration_;
 };
 }

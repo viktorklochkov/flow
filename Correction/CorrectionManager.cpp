@@ -166,7 +166,7 @@ void Qn::CorrectionManager::Reset() {
 
 void Qn::CorrectionManager::Finalize() { qnc_calculator_.FinalizeQnCorrectionsFramework(); }
 
-TList *Qn::CorrectionManager::GetEventandDetectorQAList() {
+TList *Qn::CorrectionManager::GetEventAndDetectorQAList() {
   qa_list_ = new TList();
   qa_list_->SetOwner(kTRUE);
   qa_list_->SetName("QA");

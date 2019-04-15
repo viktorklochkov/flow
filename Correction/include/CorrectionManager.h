@@ -279,7 +279,7 @@ class CorrectionManager {
    * @brief Get the list containing the event and detector QA histograms.
    * @return A pointer of the list to which the event and detector QA histograms will be saved.
    */
-  TList *GetEventandDetectorQAList();
+  TList *GetEventAndDetectorQAList();
 
   /**
    * @brief Sets the name of the current correction period (e.g. run number).
