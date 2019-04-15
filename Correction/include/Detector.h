@@ -93,8 +93,6 @@ class Detector : public DetectorBase {
   }
 
   std::bitset<Qn::QVector::kMaxNHarmonics> GetHarmonics() const override { return harmonics_bits_; }
-    return harmonics_bits_;
-  }
 
   void ClearData() override {
     datavector_->ClearData();
