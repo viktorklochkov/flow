@@ -45,7 +45,7 @@
 #pragma link C++ class Qn::DataContainer<Qn::Stats>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector>+;
 #pragma link C++ class Qn::DataContainer<float>+;
-#pragma link C++ class Qn::DataContainer<Qn::CorrectionQnVector>+;
+#pragma link C++ class Qn::DataContainer<Qn::CorrectionQnVector const*>+;
 #pragma link C++ class Qn::DataContainer<TH1F>+;
 #pragma link C++ class Qn::DataContainerHelper+;
 
