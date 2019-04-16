@@ -203,14 +203,6 @@ const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVectorPtr(
       theQnVector = (CorrectionQnVector *) pQvecList->First();
     else
       theQnVector = (CorrectionQnVector *) pQvecList->FindObject(expectedstep);
-
-    if (theQnVector==NULL || !(theQnVector->IsGoodQuality()) || !(theQnVector->GetN()!=0)) {
-      /* the Qn vector for the expected step was not there or did not have the proper quality */
-      if (TString(altstep).EqualTo("latest"))
-        theQnVector = (CorrectionQnVector *) pQvecList->First();
-      else
-        theQnVector = (CorrectionQnVector *) pQvecList->FindObject(altstep);
-    }
   }
   return theQnVector;
 }

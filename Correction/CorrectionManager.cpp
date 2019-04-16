@@ -33,9 +33,10 @@ void Qn::CorrectionManager::SetCorrectionSteps(const std::string &name,
 void Qn::CorrectionManager::AddHisto1D(const std::string &name,
                                        const Qn::Axis &axis,
                                        const std::string &weightname) {
-  try { detectors_track_.at(name)->AddHistogram(Create1DHisto(name, axis, weightname)); }
+  auto histo = Create1DHisto(name, axis, weightname);
+  try { detectors_track_.at(name)->AddHistogram(std::move(histo));}
   catch (std::out_of_range &) {
-    try { detectors_channel_.at(name)->AddHistogram(Create1DHisto(name, axis, weightname)); }
+    try { detectors_channel_.at(name)->AddHistogram(std::move(histo)); }
     catch (std::out_of_range &) {
       throw std::out_of_range(
           name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
@@ -46,9 +47,10 @@ void Qn::CorrectionManager::AddHisto1D(const std::string &name,
 void Qn::CorrectionManager::AddHisto2D(const std::string &name,
                                        const std::vector<Qn::Axis> &axes,
                                        const std::string &weightname) {
-  try { detectors_track_.at(name)->AddHistogram(Create2DHisto(name, axes, weightname)); }
+  auto histo = Create2DHisto(name, axes, weightname);
+  try { detectors_track_.at(name)->AddHistogram(std::move(histo));}
   catch (std::out_of_range &) {
-    try { detectors_channel_.at(name)->AddHistogram(Create2DHisto(name, axes, weightname)); }
+    try { detectors_channel_.at(name)->AddHistogram(std::move(histo)); }
     catch (std::out_of_range &) {
       throw std::out_of_range(
           name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
@@ -224,7 +226,6 @@ void Qn::CorrectionManager::CreateDetectors() {
     }
     nbinsrunning += detector->GetDataContainer()->size();
   }
-  ConnectCorrectionQVectors("latest");
 }
 
 /**
@@ -237,8 +238,8 @@ void Qn::CorrectionManager::CreateDetectors() {
 std::unique_ptr<Qn::QAHisto1DPtr> Qn::CorrectionManager::Create1DHisto(const std::string &name,
                                                                        const Qn::Axis &axis,
                                                                        const std::string &weightname) {
-  auto hist_name = (name + "_" + axis.Name() + "_" + weightname).data();
-  auto axisname = (std::string(";") + axis.Name()).data();
+  auto hist_name = name + "_" + axis.Name() + "_" + weightname;
+  auto axisname = std::string(";") + axis.Name();
   auto size = static_cast<const int>(axis.size());
   try { var_manager_->FindVariable(axis.Name()); }
   catch (std::out_of_range &) {
@@ -249,7 +250,7 @@ std::unique_ptr<Qn::QAHisto1DPtr> Qn::CorrectionManager::Create1DHisto(const std
   float upper_edge = axis.GetLastBinEdge();
   float lower_edge = axis.GetFirstBinEdge();
   std::array<Variable, 2> arr = {{var_manager_->FindVariable(axis.Name()), var_manager_->FindVariable(weightname)}};
-  return std::make_unique<QAHisto1DPtr>(arr, new TH1F(hist_name, axisname, size, lower_edge, upper_edge));
+  return std::make_unique<QAHisto1DPtr>(arr, new TH1F(hist_name.data(), axisname.data(), size, lower_edge, upper_edge));
 }
 
 /**
@@ -262,8 +263,8 @@ std::unique_ptr<Qn::QAHisto1DPtr> Qn::CorrectionManager::Create1DHisto(const std
 std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std::string &name,
                                                                        const std::vector<Qn::Axis> &axes,
                                                                        const std::string &weightname) {
-  auto hist_name = (name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weightname).data();
-  auto axisname = (std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name()).data();
+  auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weightname;
+  auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
   auto size_x = static_cast<const int>(axes[0].size());
   auto size_y = static_cast<const int>(axes[1].size());
   for (const auto &axis : axes) {
@@ -281,7 +282,7 @@ std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std
   std::array<Variable, 3>
       arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(axes[1].Name()),
               var_manager_->FindVariable(weightname)}};
-  auto histo = new TH2F(hist_name, axisname, size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
+  auto histo = new TH2F(hist_name.data(), axisname.data(), size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
   return std::make_unique<QAHisto2DPtr>(arr, histo);
 }
 

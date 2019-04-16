@@ -285,7 +285,10 @@ class CorrectionManager {
    * @brief Sets the name of the current correction period (e.g. run number).
    * @param name Name of the current correction period
    */
-  void SetProcessName(std::string name) { qnc_calculator_.SetCurrentProcessListName(name.data()); }
+  void SetProcessName(std::string name) {
+    qnc_calculator_.SetCurrentProcessListName(name.data());
+    ConnectCorrectionQVectors("latest");
+  }
 
  private:
 
