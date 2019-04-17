@@ -29,14 +29,21 @@
 #include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
-
+/**
+ * Base class of the Cut.
+ */
 struct VariableCutBase {
   virtual ~VariableCutBase() = default;
   virtual bool Check(int i) = 0;
   virtual int GetVariableLength() const = 0;
   virtual std::string Name() const = 0;
 };
-
+/**
+ * Template class of a cut applied in the correction step.
+ * Number of dimensions is determined by the signature of the cut function
+ * and by the size of the variables array passed to the constructor.
+ * @tparam T Type of variable
+ */
 template<typename... T>
 class VariableCutNDim : public VariableCutBase {
  public:
@@ -49,19 +56,38 @@ class VariableCutNDim : public VariableCutBase {
     }
   }
 
+  /**
+   * Check if the cut is passed for variables at variable id + i
+   * @param i offset from the variable id.
+   * @return true if the cut is passed.
+   */
   bool Check(int i) override {
     return CheckImpl(i, std::make_index_sequence<sizeof...(T)>{});
   }
 
+  /**
+   * Get the length of the variable at position 0.
+   * @return length of the variables.
+   */
   int GetVariableLength() const override { return variables_[0].length(); }
 
  private:
 
+  /**
+   * Implements the evaluation of the cut.
+   * @tparam I index sequence
+   * @param i offset from the variable id.
+   * @return true if the cut is passed.
+   */
   template<std::size_t... I>
   bool CheckImpl(int i, std::index_sequence<I...>) {
     return lambda_(*(variables_[I].begin() + i)...);
   }
 
+  /**
+   * Returns the name of all variables used in the cut.
+   * @return name of all variables.
+   */
   inline std::string Name() const override {
     std::string name;
     for (auto var : variables_) {
@@ -69,9 +95,11 @@ class VariableCutNDim : public VariableCutBase {
     }
     return name;
   }
-  std::array<Variable, sizeof...(T)> variables_;
-  std::function<bool(T...)> lambda_;
+
+  std::array<Variable, sizeof...(T)> variables_; /// array of the variables used in the cut.
+  std::function<bool(T...)> lambda_; /// function used to evaluate the cut.
 };
+
 
 namespace Details {
 template<std::size_t>
@@ -82,7 +110,14 @@ std::unique_ptr<VariableCutNDim<Type<Is>...>> CreateNDimCutImpl(std::index_seque
   return pp;
 }
 }
-
+/**
+ * Function which create a unique_ptr of a cut of n variables.
+ * @tparam N length of the variable array.
+ * @tparam FUNC type of the cut function
+ * @param arr array of variables
+ * @param func cut function
+ * @return Returns a unique pointer to the cut.
+ */
 template<std::size_t N, typename FUNC>
 std::unique_ptr<VariableCutBase> MakeUniqueNDimCut(Variable const (&arr)[N], FUNC &&func) {
   return Details::CreateNDimCutImpl(std::make_index_sequence<N>{}, arr, std::forward<FUNC>(func));

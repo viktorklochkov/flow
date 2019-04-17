@@ -20,10 +20,13 @@
 
 #include <string>
 #include <map>
+
+#include "ROOT/RMakeUnique.hxx"
+#include "ROOT/RIntegerSequence.hxx"
+
 #include <utility>
 #include "Detector.h"
 #include "VariableManager.h"
-#include "EventInfo.h"
 #include "VariableCutBase.h"
 #include "CorrectionProfile3DCorrelations.h"
 #include "CorrectionProfileCorrelationComponents.h"
@@ -38,10 +41,6 @@
 #include "Alignment.h"
 #include "CorrectionCalculator.h"
 #include "DataContainer.h"
-#include "EventInfo.h"
-
-#include "ROOT/RMakeUnique.hxx"
-#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 class CorrectionManager {
@@ -51,8 +50,6 @@ class CorrectionManager {
 
   CorrectionManager()
       : event_cuts_(new Cuts()),
-        ev_vars_float_(new Qn::EventInfoF()),
-        ev_vars_long_(new Qn::EventInfoL()),
         var_manager_(new VariableManager()) {
     var_manager_->CreateVariableOnes();
   }
@@ -77,7 +74,9 @@ class CorrectionManager {
    * Adds a event variable, which will be saved to the output tree.
    * @param name Name corresponds to a variable defined in the variable manager.
    */
-  void AddEventVariable(const std::string &name) { ev_vars_float_->AddVariable(name); }
+  void AddEventVariable(const std::string &name) {
+    var_manager_->RegisterOutputF(name);
+  }
 
   /**
    * Adds a event variable, which will be saved to the output tree.
@@ -85,8 +84,8 @@ class CorrectionManager {
    * @param name Name corresponds to a variable defined in the variable manager.
    */
   void AddRunEventId(const std::string &run, const std::string &event) {
-    ev_vars_long_->AddVariable(run);
-    ev_vars_long_->AddVariable(event);
+    var_manager_->RegisterOutputL(run);
+    var_manager_->RegisterOutputL(event);
   }
 
   /**
@@ -112,17 +111,19 @@ class CorrectionManager {
     for (const auto &axis : axes) {
       vars.push_back(var_manager_->FindVariable(axis.Name()));
     }
-    std::unique_ptr<Detector<N>> det(new Detector<N>(type, axes, phi, weight, vars, harmo));
+    std::unique_ptr<Detector<N>> det(new Detector<N>(name, type, axes, phi, weight, vars, harmo));
     auto pair = std::make_pair<std::string, std::unique_ptr<DetectorBase>>(std::move(name), std::move(det));
     if (type==DetectorType::CHANNEL) detectors_channel_.emplace(std::move(pair));
     if (type==DetectorType::TRACK) detectors_track_.emplace(std::move(pair));
   }
 
   /**
-   * Adds a cut to a detector.
+   * @brief Adds a cut to a detector.
+   * Template parameters are automatically deduced.
+   * @tparam N number of variables used in the cut
    * @tparam FUNCTION type of function
    * @param name name of the detector
-   * @param var_name name of the cut variables
+   * @param names array of names of the cut variables
    * @param lambda function used to evaluate the cut condition
    */
   template<std::size_t N, typename FUNCTION>
@@ -144,9 +145,10 @@ class CorrectionManager {
   }
 
   /**
-   * Adds a cut based on event variables. Only events which pass the cuts are used for the corrections.
+   * @brief Adds a cut based on event variables.
+   * Only events which pass the cuts are used for the corrections.
    * Template parameters are automatically deduced.
-   * @tparam N dimensionality of the cut
+   * @tparam N number of variables used in the cut.
    * @tparam FUNCTION type of function
    * @param name_arr Array of variable names used for the cuts.
    * @param func C-callable describing the cut of signature bool(double &...).
@@ -164,21 +166,21 @@ class CorrectionManager {
   }
 
   /**
-   * Adds a one dimensional event histogram
+   * @brief Adds a one dimensional event histogram
    * @param axes axis of the histogram. Name corresponds to the axis.
    * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto1D(const Qn::Axis &axes, const std::string &weightname = "Ones");
 
   /**
-   * Adds a two n event histogram
+   * @brief Adds a two n event histogram
    * @param axes axes of the histogram. Name corresponds to the axes.
    * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto2D(const std::vector<Qn::Axis> &axes, const std::string &weightname = "Ones");
 
   /**
-  * Adds a one dimensional histogram to a detector.
+  * @brief Adds a one dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
@@ -194,7 +196,7 @@ class CorrectionManager {
   void AddHisto2D(const std::string &name, const std::vector<Qn::Axis> &axes, const std::string &weightname = "Ones");
 
   /**
-   * Adds correction steps to a detector.
+   * @brief Adds correction steps to a detector.
    * @param name Name of the detector.
    * @param config function configuring the correction framework.
    * C-callable of signature void(DetectorConfiguration *config) config.
@@ -202,7 +204,8 @@ class CorrectionManager {
   void SetCorrectionSteps(const std::string &name, std::function<void(DetectorConfiguration *config)> config);
 
   /**
-   * Set output tree. Lifetime of the tree is managed by the user.
+   * @brief Set output tree.
+   * Lifetime of the tree is managed by the user.
    * @param tree non-owning pointer to the tree.
    */
   void SetTree(TTree *tree) { out_tree_ = tree; }
@@ -304,22 +307,19 @@ class CorrectionManager {
 
   void ConnectCorrectionQVectors(const std::string &step) {
     for (auto &pair : detectors_track_) {
-      pair.second->SetUpCorrectionVectorPtrs(qnc_calculator_, pair.first, step);
+      pair.second->SetUpCorrectionVectorPtrs(qnc_calculator_, step);
     }
     for (auto &pair : detectors_channel_) {
-      pair.second->SetUpCorrectionVectorPtrs(qnc_calculator_, pair.first, step);
+      pair.second->SetUpCorrectionVectorPtrs(qnc_calculator_, step);
     }
   }
 
   void CalculateCorrectionAxis();
 
   std::vector<std::unique_ptr<EventClassVariable>> qnc_evvars_; ///!<! List holding the correction axes
-  std::unique_ptr<EventClassVariablesSet>
-      qnc_varset_ = nullptr; ///!<! Set of correction axes passed to the CorrectionCalculator
+  std::unique_ptr<EventClassVariablesSet> qnc_varset_ = nullptr; ///!<! CorrectionCalculator correction axes
   std::unique_ptr<Cuts> event_cuts_; /// Pointer to the event cuts
   TList *qa_list_ = nullptr; ///!<! List holding the Detector QA histograms. Lifetime has to be managed by the user.
-  std::unique_ptr<Qn::EventInfoF> ev_vars_float_; /// all floating point variables saved to the output tree
-  std::unique_ptr<Qn::EventInfoL> ev_vars_long_; /// all integer variables saved to the output tree
   std::vector<Qn::Axis> correction_axes_; /// vector of event axes used in the correctionstep
   CorrectionCalculator qnc_calculator_; /// calculator of the corrections
   std::shared_ptr<VariableManager> var_manager_; /// manager of the variables

@@ -57,7 +57,7 @@ void CorrelationManager::AddProjection(const std::string &name,
  */
 
 void CorrelationManager::AddEventAxis(const Qn::Axis &eventaxis) {
-  event_axes_.RegisterEventAxis(eventaxis, EventVariables::Type::Float);
+  event_axes_.RegisterEventAxis(eventaxis, Qn::EventVariables::Type::Float);
 }
 
 /**
@@ -114,7 +114,9 @@ void CorrelationManager::Initialize() {
   ConfigureCorrelations();
   std::cout << ese_handler_.Report() << std::endl;
 // reset to the first event before the processing step.
-  if (event_axes_.GetAxes().empty()) { throw std::logic_error("no event axes added. aborting."); }
+  if (event_axes_.GetAxes().empty()) {
+    throw std::logic_error("no event axes added. aborting.");
+  }
   reader_->Restart();
 }
 
@@ -147,6 +149,8 @@ void CorrelationManager::Run() {
       for (auto &stats : stats_results_) {
         stats.second.Fill(static_cast<size_t>(reader_->GetCurrentEntry()));
       }
+    } else {
+      std::cout << "event not passed" << std::endl;
     }
     // Fill tree regardless of validity of event. Friend tree needs to have the same number of entries.
     // TODO maybe it can be fixed by using an Index without saving useless data.
@@ -159,7 +163,6 @@ void CorrelationManager::UpdateEvent() {
   for (auto &value : tree_values_) {
     (*qvectors_)[value.first] = value.second.Get();
   }
-  event_axes_.UpdateEvent();
   MakeProjections();
 }
 

@@ -74,16 +74,15 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
     for (auto &pair : detectors_channel_) {
       out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
     }
-    ev_vars_float_->SetToTree(*out_tree_);
-    ev_vars_long_->SetToTree(*out_tree_);
   }
+  var_manager_->SetOutputToTree(out_tree_);
   CalculateCorrectionAxis();
   CreateDetectors();
   for (auto &det : detectors_track_) {
-    det.second->Initialize(det.first);
+    det.second->InitializeCutReports();
   }
   for (auto &det : detectors_channel_) {
-    det.second->Initialize(det.first);
+    det.second->InitializeCutReports();
   }
   event_cuts_->CreateCutReport("Event", 1);
   qnc_calculator_.SetCalibrationHistogramsList(in_calibration_file_);
@@ -96,15 +95,10 @@ void Qn::CorrectionManager::ProcessEvent() {
   if (event_cuts_->CheckCuts(0)) event_passed_cuts_ = true;
   if (event_passed_cuts_) {
     event_cuts_->FillReport();
-    for (auto &event_var : *ev_vars_float_) {
-      event_var.second.SetValue(*var_manager_->FindVariable(event_var.first).begin());
-    }
-    for (auto &event_var : *ev_vars_long_) {
-      event_var.second.SetValue(static_cast<Long64_t>(*var_manager_->FindVariable(event_var.first).begin()));
-    }
     for (auto &histo : event_histograms_) {
       histo->Fill();
     }
+    var_manager_->UpdateOutVariables();
   }
 }
 
@@ -162,8 +156,6 @@ void Qn::CorrectionManager::Reset() {
   for (auto &det : detectors_track_) {
     det.second->ClearData();
   }
-  ev_vars_float_->Reset();
-  ev_vars_long_->Reset();
 }
 
 void Qn::CorrectionManager::Finalize() { qnc_calculator_.FinalizeQnCorrectionsFramework(); }
@@ -212,7 +204,7 @@ void Qn::CorrectionManager::CreateDetectors() {
     auto &detector = pair.second;
     for (unsigned int ibin = 0; ibin < detector->GetDataContainer()->size(); ++ibin) {
       auto globalid = nbinsrunning + ibin;
-      auto frameworkdetector = detector->GenerateDetector(pair.first, globalid, ibin, qnc_varset_.get());
+      auto frameworkdetector = detector->GenerateDetector(globalid, ibin, qnc_varset_.get());
       qnc_calculator_.AddDetector(frameworkdetector);
     }
     nbinsrunning += detector->GetDataContainer()->size();
@@ -221,7 +213,7 @@ void Qn::CorrectionManager::CreateDetectors() {
     auto &detector = pair.second;
     for (unsigned int ibin = 0; ibin < detector->GetDataContainer()->size(); ++ibin) {
       auto globalid = nbinsrunning + ibin;
-      auto frameworkdetector = detector->GenerateDetector(pair.first, globalid, ibin, qnc_varset_.get());
+      auto frameworkdetector = detector->GenerateDetector(globalid, ibin, qnc_varset_.get());
       qnc_calculator_.AddDetector(frameworkdetector);
     }
     nbinsrunning += detector->GetDataContainer()->size();

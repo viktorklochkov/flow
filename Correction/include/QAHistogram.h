@@ -28,27 +28,43 @@
 #include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
-
+/**
+ * Base class of a QA histogram
+ */
 struct QAHistoBase {
   virtual ~QAHistoBase() = default;
   virtual void Fill() = 0;
   virtual void Draw(const char *option) = 0;
   virtual void Write(const char *name) = 0;
-  virtual const char* Name() = 0;
-  virtual void AddToList(TList*) = 0;
+  virtual const char *Name() = 0;
+  virtual void AddToList(TList *) = 0;
 
 };
-
+/**
+ * Wrapper for a ROOT histogram, which allows it to be filled by the correction manager.
+ * @tparam HISTO type of histogram.
+ * @tparam N number of dimensions
+ * @tparam VAR Type of the variable
+ */
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
   QAHisto(std::array<VAR, N> vec, HISTO histo) : vars_(std::move(vec)), histo_(std::move(histo)) {}
 
+  /**
+   * Implementation of the fill function
+   * @tparam array type of array
+   * @tparam I index sequence
+   * @param a Array of variables used for filling the histogram
+   */
   template<typename array, std::size_t... I>
   void FillImpl(const array a, std::index_sequence<I...>) {
     ptr(histo_)->FillN(a[0].length(), (a[I].begin())...);
   }
 
+  /**
+   * Fill function.
+   */
   void Fill() override {
     return FillImpl(vars_, std::make_index_sequence<N>{});
   };
@@ -57,26 +73,27 @@ class QAHisto : public QAHistoBase {
 
   void Write(const char *name) override { ptr(histo_)->Write(name); }
 
-  const char* Name() override { return ptr(histo_)->GetName(); }
+  const char *Name() override { return ptr(histo_)->GetName(); }
 
-  void AddToList(TList *list) override {list->Add(ptr(histo_));}
-
+  /**
+   * Add the histogram to the list.
+   * @param list pointer to the list. Lifetime of the histogram hast to be managed by the list.
+   */
+  void AddToList(TList *list) override { list->Add(ptr(histo_)); }
 
  private:
   template<typename T>
-  T * ptr(T & obj) { return &obj; } //turn reference into pointer!
-
+  T *ptr(T &obj) { return &obj; } ///Turns a reference into pointer.
   template<typename T>
-  T * ptr(T * obj) { return obj; } //obj is already pointer, return it!
-  std::array<VAR, N> vars_;
-  HISTO histo_;
+  T *ptr(T *obj) { return obj; } /// The Object is already pointer. Returns it.
+  std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
+  HISTO histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
 };
 
-using QAHisto1D = QAHisto<TH1F, 2, Qn::Variable>;
-using QAHisto2D = QAHisto<TH2F, 3, Qn::Variable>;
-
-using QAHisto1DPtr = QAHisto<TH1F*, 2, Qn::Variable>;
-using QAHisto2DPtr = QAHisto<TH2F*, 3, Qn::Variable>;
+/// specializations used in the framework
+using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::Variable>;
+using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::Variable>;
 
 }
+
 #endif //FLOW_QAHISTOGRAM_H

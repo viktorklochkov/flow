@@ -19,27 +19,21 @@
 #include "CorrelationManager.h"
 #include "ROOT/RMakeUnique.hxx"
 
-//void Qn::EventVariables::RegisterEventAxis(const Qn::Axis &eventaxis) {
-//  TTreeReaderValue<float> value(*(manager_->reader_), eventaxis.Name().data());
-//  tree_values_F.push_back(value);
-//  values_.emplace_back(-999);
-//  bin_.emplace_back(-1);
-//  axes_.push_back(eventaxis);
-//}
-
 void Qn::EventVariables::RegisterEventAxis(Qn::Axis eventaxis, Type type) {
   if (type==Type::Integer) {
     event_axes_.push_back(
         std::make_unique<Qn::EventAxis<Long64_t>>(
-            eventaxis, TTreeReaderValue<Long64_t>(*(manager_->GetReader()), eventaxis.Name().data())
+            eventaxis, TTreeReaderValue<Long64_t>(*manager_->GetReader(), eventaxis.Name().data())
         )
     );
   }
   if (type==Type::Float) {
     event_axes_.push_back(
         std::make_unique<Qn::EventAxis<Float_t>>(
-            eventaxis, TTreeReaderValue<Float_t>(*(manager_->GetReader()), eventaxis.Name().data())
+            eventaxis, TTreeReaderValue<Float_t>(*manager_->GetReader(), eventaxis.Name().data())
         )
     );
   }
+  bin_.emplace_back(-1);
+
 }
