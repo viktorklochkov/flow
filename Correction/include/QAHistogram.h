@@ -34,9 +34,6 @@ namespace Qn {
 struct QAHistoBase {
   virtual ~QAHistoBase() = default;
   virtual void Fill() = 0;
-  virtual void Draw(const char *option) = 0;
-  virtual void Write(const char *name) = 0;
-  virtual const char *Name() = 0;
   virtual void AddToList(TList *) = 0;
 
 };

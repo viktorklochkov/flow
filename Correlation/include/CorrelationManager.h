@@ -30,7 +30,7 @@
 #include "EventShape.h"
 #include "DataContainer.h"
 #include "EseHandler.h"
-#include "EventVariables.h"
+#include "EventAxes.h"
 
 #include "ROOT/RMakeUnique.hxx"
 
@@ -75,7 +75,7 @@ class CorrelationManager {
 
  private:
 
-  friend class Qn::EventVariables;
+  friend class Qn::EventAxes;
   friend class Qn::EseHandler;
 
   void AddDataContainer(const std::string &name);
@@ -108,7 +108,7 @@ class CorrelationManager {
 
   std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
   Qn::EseHandler ese_handler_;
-  Qn::EventVariables event_axes_;
+  Qn::EventAxes event_axes_;
 
   std::string correlation_file_name_;
 

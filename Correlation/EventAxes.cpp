@@ -15,25 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "EventVariables.h"
+#include "EventAxes.h"
 #include "CorrelationManager.h"
 #include "ROOT/RMakeUnique.hxx"
 
-void Qn::EventVariables::RegisterEventAxis(Qn::Axis eventaxis, Type type) {
+void Qn::EventAxes::RegisterEventAxis(Qn::Axis axis, Type type) {
+  auto name = axis.Name().data();
   if (type==Type::Integer) {
     event_axes_.push_back(
-        std::make_unique<Qn::EventAxis<Long64_t>>(
-            eventaxis, TTreeReaderValue<Long64_t>(*manager_->GetReader(), eventaxis.Name().data())
-        )
-    );
+        std::make_unique<Qn::EventAxis<Long64_t>>(axis, TTreeReaderValue<Long64_t>(*manager_->GetReader(), name)));
   }
   if (type==Type::Float) {
     event_axes_.push_back(
-        std::make_unique<Qn::EventAxis<Float_t>>(
-            eventaxis, TTreeReaderValue<Float_t>(*manager_->GetReader(), eventaxis.Name().data())
-        )
-    );
+        std::make_unique<Qn::EventAxis<Float_t>>(axis, TTreeReaderValue<Float_t>(*manager_->GetReader(), name)));
   }
   bin_.emplace_back(-1);
-
 }

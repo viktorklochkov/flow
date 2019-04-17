@@ -72,7 +72,7 @@ set(CORR_SOURCES
         Correlation/Correlation.cpp
         Correlation/EseHandler.cpp
         Correlation/EseSubEvent.cpp
-        Correlation/EventVariables.cpp
+        Correlation/EventAxes.cpp
         )
 
 set(DIFF_SOURCES
@@ -98,7 +98,7 @@ set(CORR_HEADERS
         Correlation.h
         EseHandler.h
         EseSubEvent.h
-        EventVariables.h
+        EventAxes.h
         )
 
 set(BASE_HEADERS DataContainer.h
