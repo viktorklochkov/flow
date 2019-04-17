@@ -69,12 +69,6 @@ class QAHisto : public QAHistoBase {
     return FillImpl(vars_, std::make_index_sequence<N>{});
   };
 
-  void Draw(const char *option) override { ptr(histo_)->Draw(option); }
-
-  void Write(const char *name) override { ptr(histo_)->Write(name); }
-
-  const char *Name() override { return ptr(histo_)->GetName(); }
-
   /**
    * Add the histogram to the list.
    * @param list pointer to the list. Lifetime of the histogram hast to be managed by the list.

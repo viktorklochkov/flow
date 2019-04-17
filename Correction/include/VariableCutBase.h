@@ -123,15 +123,28 @@ std::unique_ptr<VariableCutBase> MakeUniqueNDimCut(Variable const (&arr)[N], FUN
   return Details::CreateNDimCutImpl(std::make_index_sequence<N>{}, arr, std::forward<FUNC>(func));
 }
 
+/**
+ * Manages cuts class and allows checking if the current variables passes the cut
+ */
 class Cuts {
  public:
   ~Cuts() { delete[] var_values_; }
 
+  /**
+   * @brief Adds a cut to the manager.
+   * @param cut pointer to the cut.
+   */
   void AddCut(std::unique_ptr<VariableCutBase> cut) {
     cuts_.push_back(std::move(cut));
   }
 
 
+  /**
+   * Checks if the current variables pass the cuts
+   * Creates entries in the cut report
+   * @param i offset of the variable in case it has a length longer than 1
+   * @return Returns true if the cut was passed.
+   */
   inline bool CheckCuts(int i) {
     int icut = 1;
     if (cuts_.empty()) return true;
@@ -148,6 +161,9 @@ class Cuts {
     return passed;
   }
 
+  /**
+   * @brief Fills the cut report.
+   */
   void FillReport() {
     if (report_) report_->Fill();
     auto offset = nchannels_*(cuts_.size() + 1);
@@ -158,6 +174,11 @@ class Cuts {
     }
   }
 
+  /**
+   * @brief Initializes the cut report histogram
+   * @param detname name of the histogram.
+   * @param nchannels number of channels.
+   */
   void CreateCutReport(std::string detname, std::size_t nchannels = 1) {
     if (!cuts_.empty()) {
       nchannels_ = nchannels;
@@ -212,23 +233,23 @@ class Cuts {
     }
   }
 
-  void Write(const std::string &name) {
-    if (report_) report_->Write((name + std::string(report_->Name())).data());
-    report_.release();
-  }
-
+  /**
+   * @brief Adds the cut report to the list.
+   * Lifetime of the list and the histogram has to be managed by the user.
+   * @param list list containing output histograms.
+   */
   void AddToList(TList *list) {
     if (report_) report_->AddToList(list);
   }
 
  private:
-  std::size_t nchannels_ = 0;
-  double *var_values_ = nullptr;
-  Variable cut_i_;
-  Variable cut_weight_;
-  Variable cut_channel_;
-  std::vector<std::unique_ptr<VariableCutBase>> cuts_;
-  std::unique_ptr<QAHistoBase> report_ = nullptr;
+  std::size_t nchannels_ = 0; /// number of channels
+  double *var_values_ = nullptr; /// pointer to the values which are filled to the histogram.
+  Variable cut_i_; /// Variable of saving cut number
+  Variable cut_weight_; /// Variable saving a weight used for filling the cut histogram
+  Variable cut_channel_; /// Variable saving the channel number
+  std::vector<std::unique_ptr<VariableCutBase>> cuts_; /// vector of cuts which are applied
+  std::unique_ptr<QAHistoBase> report_ = nullptr; /// histogram of the cut report.
 
 };
 
