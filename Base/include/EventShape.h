@@ -27,16 +27,30 @@
 #include "Product.h"
 
 namespace Qn {
+/**
+ * @class Holds event shape information. Can be saved to a file.
+ */
 class EventShape : public TObject {
  public:
 
+  /**
+   * holds the information of the state
+   */
   enum class State {
     Uninitialized,
     ReadyForCollecting,
     ReadyForCalculation
   };
 
+  /**
+   * default constructor
+   */
   EventShape() = default;
+  /**
+   * constructor
+   * @param name name of the sub event
+   * @param histo histogram with the correct binning
+   */
   EventShape(std::string name, TH1F histo) : name_(name) {
     auto nbins = histo.GetNbinsX();
     auto lower = histo.GetXaxis()->GetBinLowEdge(1);
@@ -45,12 +59,13 @@ class EventShape : public TObject {
     integral_ = new TH1F((name_ + "integral").data(), ";ese;counts", nbins, lower, upper);
   }
 
-  virtual ~EventShape() {
-//    delete spline_;
-//    delete histo_;
-//    delete integral_;
-  }
+  virtual ~EventShape() {}
 
+  /**
+   * Sets the name and binning
+   * @param histo histogram with binning information
+   * @param name name of the subevent
+   */
   void SetHisto(TH1F *histo, std::string name) {
     auto nbins = histo->GetNbinsX();
     auto lower = histo->GetXaxis()->GetBinLowEdge(1);
@@ -59,18 +74,39 @@ class EventShape : public TObject {
     integral_ = new TH1F((std::string("integral") +name).data(), ";ese;counts", nbins, lower, upper);
   }
 
+  /**
+   * Gets the name
+   * @return the name of the subevent.
+   */
   std::string Name() const { return name_; }
 
+  /**
+   * Gets the percentile of the given q vector magnitude
+   * @param q magnitude of the q vector.
+   * @return percentile of the current event.
+   */
   inline float GetPercentile(float q) { return static_cast<float>(spline_->Eval(q)); }
 
-//  inline float GetPercentile(double q) { return static_cast<float>(spline_->Eval(q)); }
-
+  /**
+   * Calculate the integrated histogram of the distribution.
+   */
   void IntegrateHist();
 
+  /**
+   * Fit the histogram with a spline to calculate the percentiles.
+   */
   void FitWithSpline();
 
+  /**
+   * Fill the current subevent information to the histogram.
+   * @param product
+   */
   void Fill(const Product &product) { if (product.validity) histo_->Fill(product.result); }
 
+  /**
+   * Get the histogram.
+   * @return returns the distribution of all events.
+   */
   TH1F *GetHist() const { return histo_; }
 
   friend Qn::EventShape operator+(const Qn::EventShape &a, const Qn::EventShape &b);

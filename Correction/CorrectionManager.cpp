@@ -175,6 +175,7 @@ TList *Qn::CorrectionManager::GetEventAndDetectorQAList() {
     qa_list_->Add(detlist);
   }
   auto evlist = new TList();
+  evlist->SetName("Event Histograms");
   event_cuts_->AddToList(evlist);
   for (auto &histo : event_histograms_) {
     histo->AddToList(evlist);

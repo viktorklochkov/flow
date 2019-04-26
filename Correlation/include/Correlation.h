@@ -19,7 +19,6 @@
 #define FLOW_CORRELATIONBASE_H
 
 #include <utility>
-
 #include "DataContainer.h"
 
 namespace Qn {
@@ -44,11 +43,7 @@ auto constexpr kObs = Qn::Weight::OBSERVABLE;
 class Correlation {
  protected:
   using size_type = std::size_t;
-  // all inputs of the correlation in a vector
   using inputs_type = std::vector<DataContainerQVector *const *>;
-  // The Pointers to the input qvectors are updated once by the CorrelationManager.
-  // They always point to a valid entry in the TTree.
-
  public:
   using function_type = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
   using function_t  = const function_type &;
@@ -70,12 +65,37 @@ class Correlation {
     for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(false); }
   }
 
+  /**
+   * Returns the Input Q vector names.
+   * @return Input names
+   */
   const std::vector<std::string> &GetInputNames() const { return names_; }
+
+  /**
+   * Returns the result of the correlation per event.
+   * @return Result of one event.
+   */
   const Qn::DataContainerProduct &GetResult() const { return current_event_result_; };
+
   bool UsingWeights() const { return std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; }); }
 
+  /**
+   * Fills the current event to the correlation
+   * @param eventindices indices determining the bin indices of the event axes.
+   */
   void Fill(const std::vector<unsigned long> &eventindices);
+
+  /**
+   * Configures the correlation with the currently read information.
+   * @param qvectors map of qvector inputs
+   * @param eventaxes vector of event axes
+   */
   void Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::Axis> &eventaxes);
+
+  /**
+   * Returns the name of the correlation.
+   * @return Name of the correlation
+   */
   std::string GetName() const { return name_; }
 
  private:
@@ -88,6 +108,12 @@ class Correlation {
   std::vector<std::vector<std::vector<size_type>>> index_; ///< map of multi-dimensional indices of all inputs
   std::vector<size_type> c_index_; ///<  multi-dimensional indices of a bin of the resulting correlation
   Qn::DataContainerProduct current_event_result_; ///< result of the correlation of the current event
+
+  /**
+   * Iterative function which fills the correlation
+   * @param initial_offset linearized initial offset for the resulting bin container
+   * @param n iteration at n+1=N(inputs) the iteration ends.
+   */
   void FillCorrelation(size_type initial_offset, unsigned int n = 0);
 
   /**

@@ -190,11 +190,11 @@ class Cuts {
       cut_weight_.var_container = var_values_;
       cut_i_.var_container = var_values_;
       cut_channel_.var_container = var_values_;
-      for (std::size_t i = 0; i < nchannels; ++i) {
-        for (std::size_t j = 0; j < (cuts_.size() + 1); ++j) {
-          var_values_[i + nchannels*j] = j;
-          var_values_[offset + i + nchannels*j] = i;
-          var_values_[2*offset + i + nchannels*j] = 0;
+      for (std::size_t ichannel = 0; ichannel < nchannels; ++ichannel) {
+        for (std::size_t icut = 0; icut < (cuts_.size() + 1); ++icut) {
+          var_values_[ichannel + nchannels*icut] = icut; ///< Fill the cut number 0... N
+          var_values_[offset + ichannel + nchannels*icut] = ichannel; ///< Fill the channel id
+          var_values_[2*offset + ichannel + nchannels*icut] = 0;
         }
       }
       if (nchannels==1) {
@@ -243,7 +243,7 @@ class Cuts {
   }
 
  private:
-  std::size_t nchannels_ = 0; /// number of channels
+  std::size_t nchannels_ = 1; /// number of channels
   double *var_values_ = nullptr; /// pointer to the values which are filled to the histogram.
   Variable cut_i_; /// Variable of saving cut number
   Variable cut_weight_; /// Variable saving a weight used for filling the cut histogram

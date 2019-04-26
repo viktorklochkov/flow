@@ -59,9 +59,6 @@ struct ProjectionDrawable : public TNamed {
   }
   T graph = nullptr;
 };
-
-//template<>
-//void SetBits(Qn::Stats bin) { std::cout << "setting " << std::endl; }
 }
 
 /**

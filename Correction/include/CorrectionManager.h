@@ -318,16 +318,16 @@ class CorrectionManager {
 
   std::vector<std::unique_ptr<EventClassVariable>> qnc_evvars_; ///!<! List holding the correction axes
   std::unique_ptr<EventClassVariablesSet> qnc_varset_ = nullptr; ///!<! CorrectionCalculator correction axes
-  std::unique_ptr<Cuts> event_cuts_; /// Pointer to the event cuts
+  std::unique_ptr<Cuts> event_cuts_; ///< Pointer to the event cuts
   TList *qa_list_ = nullptr; ///!<! List holding the Detector QA histograms. Lifetime has to be managed by the user.
-  std::vector<Qn::Axis> correction_axes_; /// vector of event axes used in the correctionstep
-  CorrectionCalculator qnc_calculator_; /// calculator of the corrections
-  std::shared_ptr<VariableManager> var_manager_; /// manager of the variables
-  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track_; /// map of tracking detectors
-  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel_; /// map of channel detectors
-  std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_; /// event QA histograms
+  std::vector<Qn::Axis> correction_axes_; ///< vector of event axes used in the correctionstep
+  CorrectionCalculator qnc_calculator_; ///< calculator of the corrections
+  std::shared_ptr<VariableManager> var_manager_; ///< manager of the variables
+  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track_; ///< map of tracking detectors
+  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel_; ///< map of channel detectors
+  std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_; ///< event QA histograms
   TTree *out_tree_ = nullptr;  ///!<! Tree of Qn Vectors and event variables. Lifetime has to be managed by the user.
-  bool event_passed_cuts_ = false; /// variable holding status if an event passed the cuts.
+  bool event_passed_cuts_ = false; ///< variable holding status if an event passed the cuts.
 };
 }
 
