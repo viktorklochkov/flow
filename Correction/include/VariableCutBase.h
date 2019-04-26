@@ -100,12 +100,13 @@ class VariableCutNDim : public VariableCutBase {
   std::function<bool(T...)> lambda_; /// function used to evaluate the cut.
 };
 
-
 namespace Details {
 template<std::size_t>
 using Type = double &;
 template<std::size_t N, typename FUNC, std::size_t... Is>
-std::unique_ptr<VariableCutNDim<Type<Is>...>> CreateNDimCutImpl(std::index_sequence<Is...>, Variable const (&arr)[N], FUNC &&func) {
+std::unique_ptr<VariableCutNDim<Type<Is>...>> CreateNDimCutImpl(std::index_sequence<Is...>,
+                                                                Variable const (&arr)[N],
+                                                                FUNC &&func) {
   auto pp = std::make_unique<VariableCutNDim<Type<Is>...>>(arr, std::forward<FUNC>(func));
   return pp;
 }
@@ -138,7 +139,6 @@ class Cuts {
     cuts_.push_back(std::move(cut));
   }
 
-
   /**
    * Checks if the current variables pass the cuts
    * Creates entries in the cut report
@@ -165,11 +165,14 @@ class Cuts {
    * @brief Fills the cut report.
    */
   void FillReport() {
-    if (report_) report_->Fill();
-    auto offset = nchannels_*(cuts_.size() + 1);
-    for (std::size_t i = 0; i < nchannels_; ++i) {
-      for (std::size_t j = 0; j < (cuts_.size() + 1); ++j) {
-        var_values_[2*offset + i + nchannels_*j] = 0;
+    if (report_) {
+      report_->Fill();
+      // reset binvalues container before filling next event.
+      auto offset = nchannels_*(cuts_.size() + 1);
+      for (std::size_t i = 0; i < nchannels_; ++i) {
+        for (std::size_t j = 0; j < (cuts_.size() + 1); ++j) {
+          var_values_[2*offset + i + nchannels_*j] = 0;
+        }
       }
     }
   }
@@ -190,11 +193,11 @@ class Cuts {
       cut_weight_.var_container = var_values_;
       cut_i_.var_container = var_values_;
       cut_channel_.var_container = var_values_;
-      for (std::size_t ichannel = 0; ichannel < nchannels; ++ichannel) {
-        for (std::size_t icut = 0; icut < (cuts_.size() + 1); ++icut) {
-          var_values_[ichannel + nchannels*icut] = icut; ///< Fill the cut number 0... N
-          var_values_[offset + ichannel + nchannels*icut] = ichannel; ///< Fill the channel id
-          var_values_[2*offset + ichannel + nchannels*icut] = 0;
+      for (std::size_t i = 0; i < nchannels; ++i) {
+        for (std::size_t j = 0; j < (cuts_.size() + 1); ++j) {
+          var_values_[i + nchannels*j] = j;
+          var_values_[offset + i + nchannels*j] = i;
+          var_values_[2*offset + i + nchannels*j] = 0;
         }
       }
       if (nchannels==1) {
@@ -243,7 +246,7 @@ class Cuts {
   }
 
  private:
-  std::size_t nchannels_ = 1; /// number of channels
+  std::size_t nchannels_ = 0; /// number of channels is zero in case of no report
   double *var_values_ = nullptr; /// pointer to the values which are filled to the histogram.
   Variable cut_i_; /// Variable of saving cut number
   Variable cut_weight_; /// Variable saving a weight used for filling the cut histogram
