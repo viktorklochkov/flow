@@ -138,7 +138,7 @@ class Stats {
  private:
   SubSamples subsamples_;
   Profile profile_;
-  unsigned int bits_ = 0;
+  unsigned int bits_ = 0 | Qn::Stats::CORRELATEDERRORS;
   Status status_ = Status::REFERENCE;
 
   /// \cond CLASSIMP

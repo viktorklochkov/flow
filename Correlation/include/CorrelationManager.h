@@ -71,6 +71,8 @@ class CorrelationManager {
 
   void Run();
 
+  void EnableDebug() {debug_mode_ = true;}
+
   DataContainerStats GetResult(const std::string &name) const { return stats_results_.at(name).GetResult(); }
 
  private:
@@ -103,15 +105,33 @@ class CorrelationManager {
 
   std::shared_ptr<TTreeReader> &GetReader() { return reader_; }
 
- private:
-  size_type num_events_ = 0;
+  void ProgressBar() {
+    progress_ = (float) current_event_ / num_events_;
+    current_event_++;
+    while (progress_ < 1.0) {
+      unsigned int barWidth = 70;
+      std::cout << "[";
+      unsigned int pos = barWidth * progress_;
+      for (unsigned int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "|";
+        else if (i == pos) std::cout << "|";
+        else std::cout << " ";
+      }
+      std::cout << "] " << int(progress_ * 100.0) << " %\r";
+      std::cout.flush();
+    }
+    std::cout << std::endl;
+  }
 
+ private:
+  size_type current_event_ = 0;
+  float progress_ = 0.;
+  bool debug_mode_ = false;
+  size_type num_events_ = 0;
   std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
   Qn::EseHandler ese_handler_;
   Qn::EventAxes event_axes_;
-
   std::string correlation_file_name_;
-
   TTree *tree_;
   std::shared_ptr<TTreeReader> reader_;
   std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
