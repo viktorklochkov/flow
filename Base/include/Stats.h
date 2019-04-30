@@ -54,6 +54,8 @@ class Stats {
       : subsamples_(stats.subsamples_), profile_(stats.profile_), bits_(stats.bits_), status_(stats.status_) {}
 
   double Mean() const { if (status_!=Status::POINTAVERAGE) return profile_.Mean(); else return profile_.MeanPA(); }
+  double Entries() const {return profile_.Entries();}
+  double SumOfWeights() const  {return profile_.SumOfWeights();}
   double BootstrapMean() const { return subsamples_.Mean(); }
   inline double Error() const {
     if (status_!=Status::POINTAVERAGE) {

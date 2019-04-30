@@ -95,15 +95,15 @@ void Qn::CorrectionManager::ProcessEvent() {
   if (event_cuts_->CheckCuts(0)) event_passed_cuts_ = true;
   if (event_passed_cuts_) {
     event_cuts_->FillReport();
-    for (auto &histo : event_histograms_) {
-      histo->Fill();
-    }
     var_manager_->UpdateOutVariables();
   }
 }
 
 void Qn::CorrectionManager::ProcessQnVectors() {
   if (event_passed_cuts_) {
+    for (auto &histo : event_histograms_) {
+      histo->Fill();
+    }
     int nbinsrunning = 0;
     for (auto &pair : detectors_track_) {
       auto &detector = pair.second->GetDataContainer();

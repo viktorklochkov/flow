@@ -56,6 +56,14 @@ class Profile {
     } else { return sumwy_; }
   }
 
+  inline int Entries() const {
+    return entries_;
+  }
+
+  inline double SumOfWeights() const {
+    return sumw_;
+  }
+
   inline double Error() const {
     double mean = sumwy_/sumw_;
     double variance = fabs(sumwy2_/sumw_ - mean*mean);
