@@ -193,7 +193,7 @@ const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVectorPtr(
     const char *subdetector,
     const char *expectedstep,
     const char *altstep) const {
-
+  (void) altstep;
   const CorrectionQnVector *theQnVector = NULL;
 
   TList *pQvecList = dynamic_cast<TList *> (fQnVectorList->FindObject(subdetector));
