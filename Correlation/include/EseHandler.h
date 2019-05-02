@@ -63,6 +63,7 @@ class EseHandler {
     for (auto &event : subevents_) {
       event.ConnectOutput(output_tree_, output_file_.get());
     }
+    SetupEventMatching();
   }
 
   void Initialize() {
@@ -78,10 +79,14 @@ class EseHandler {
     }
   }
 
-  void Process(const std::vector<unsigned long> &eventindices) {
+  bool Process(const std::vector<unsigned long> &eventindices) {
     for (auto &event : subevents_) {
       event.Do(eventindices);
     }
+    if (!subevents_.empty()) {
+      return CheckMatching();
+    }
+    return true;
   }
 
   void Finalize() {
@@ -125,9 +130,31 @@ class EseHandler {
   void FillTree() {
     if (iscalib_) {
       output_tree_->Fill();
-      for (auto & event : subevents_) {
+      run_id_ = 0;
+      event_id_ = 0;
+      for (auto &event : subevents_) {
         event.Clear();
       }
+    }
+  }
+
+  void SetRunEventId(const std::string &run, const std::string &event);
+
+  void SetupEventMatching();
+
+  bool CheckMatching() {
+    if (run_id_friend_ && event_id_friend_) {
+      auto friend_run = *run_id_friend_->Get();
+      auto friend_event = *event_id_friend_->Get();
+      return run_id_==friend_run && event_id_==friend_event;
+    }
+    return true;
+  }
+
+  void UpdateIDs() {
+    if (run_id_input_ && event_id_input_) {
+      run_id_ = *run_id_input_->Get();
+      event_id_ = *event_id_input_->Get();
     }
   }
 
@@ -143,7 +170,12 @@ class EseHandler {
   std::string output_file_name_;
   std::string output_treefile_name_;
   std::vector<Qn::EseSubEvent> subevents_;
-
+  std::unique_ptr<TTreeReaderValue<Long64_t>> run_id_input_ = nullptr;
+  std::unique_ptr<TTreeReaderValue<Long64_t>> event_id_input_ = nullptr;
+  Long64_t run_id_;
+  Long64_t event_id_;
+  std::unique_ptr<TTreeReaderValue<Long64_t>> run_id_friend_ = nullptr;
+  std::unique_ptr<TTreeReaderValue<Long64_t>> event_id_friend_ = nullptr;
 };
 }
 

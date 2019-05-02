@@ -71,9 +71,13 @@ class CorrelationManager {
 
   void Run();
 
-  void EnableDebug() {debug_mode_ = true;}
+  void EnableDebug() { debug_mode_ = true; }
 
   DataContainerStats GetResult(const std::string &name) const { return stats_results_.at(name).GetResult(); }
+
+  void SetRunEventId(const std::string &run, const std::string &event) {
+    ese_handler_.SetRunEventId(run, event);
+  }
 
  private:
 
@@ -99,47 +103,47 @@ class CorrelationManager {
 
   void AddFriend(const std::string &treename, TFile *file) { tree_->AddFriend(treename.data(), file); }
 
-  void SetRunEventId(const std::string &run, const std::string &event) {
-    //event_axes_.AddRunEventId();
-  }
-
   std::shared_ptr<TTreeReader> &GetReader() { return reader_; }
 
   void ProgressBar() {
-    progress_ = (float) current_event_ / num_events_;
+    progress_ = (float) current_event_/num_events_;
     current_event_++;
-    while (progress_ < 1.0) {
-      unsigned int barWidth = 70;
+    unsigned int barWidth = 70;
+    if (progress_ < 1.0) {
       std::cout << "[";
-      unsigned int pos = barWidth * progress_;
+      unsigned int pos = barWidth*progress_;
       for (unsigned int i = 0; i < barWidth; ++i) {
         if (i < pos) std::cout << "|";
-        else if (i == pos) std::cout << "|";
+        else if (i==pos) std::cout << "|";
         else std::cout << " ";
       }
-      std::cout << "] " << int(progress_ * 100.0) << " %\r";
+      std::cout << "] " << int(progress_*100.0) << " %\r";
       std::cout.flush();
     }
-    std::cout << std::endl;
+    if (current_event_==num_events_) {
+      std::cout << "[";
+      for (unsigned int i = 0; i < barWidth; ++i) { std::cout << "|"; }
+      std::cout << "] " << 100 << " %" << std::endl;
   }
+}
 
- private:
-  size_type current_event_ = 0;
-  float progress_ = 0.;
-  bool debug_mode_ = false;
-  size_type num_events_ = 0;
-  std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
-  Qn::EseHandler ese_handler_;
-  Qn::EventAxes event_axes_;
-  std::string correlation_file_name_;
-  TTree *tree_;
-  std::shared_ptr<TTreeReader> reader_;
-  std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
-  std::map<std::string, Qn::StatsResult> stats_results_;
-  std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
-  std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
-  std::unique_ptr<std::map<std::string, Qn::DataContainerQVector *>> qvectors_;
-  std::map<std::string, Qn::DataContainerQVector> qvectors_proj_;
+private:
+size_type current_event_ = 0;
+float progress_ = 0.;
+bool debug_mode_ = false;
+size_type num_events_ = 0;
+std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
+Qn::EseHandler ese_handler_;
+Qn::EventAxes event_axes_;
+std::string correlation_file_name_;
+TTree *tree_;
+std::shared_ptr<TTreeReader> reader_;
+std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
+std::map<std::string, Qn::StatsResult> stats_results_;
+std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
+std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
+std::unique_ptr<std::map<std::string, Qn::DataContainerQVector *>> qvectors_;
+std::map<std::string, Qn::DataContainerQVector> qvectors_proj_;
 
 };
 }

@@ -17,6 +17,7 @@
 
 #include "EseHandler.h"
 #include "CorrelationManager.h"
+#include "ROOT/RMakeUnique.hxx"
 
 void Qn::EseHandler::AddESE(const std::string &name, const std::vector<std::string> &input,
                             Correlation::function_t lambda, const TH1F &histo) {
@@ -46,3 +47,27 @@ Qn::Correlation *Qn::EseHandler::RequestCorrelation(const Qn::SubEventPrototype 
 }
 
 void Qn::EseHandler::RequestEventAxis(const Qn::Axis &axis) { manager_->AddEventAxis(axis); }
+
+void Qn::EseHandler::SetRunEventId(const std::string &run, const std::string &event) {
+  run_id_input_ = std::make_unique<TTreeReaderValue<Long64_t>>(*manager_->GetReader(), run.data());
+  event_id_input_ = std::make_unique<TTreeReaderValue<Long64_t>>(*manager_->GetReader(), event.data());
+}
+
+void Qn::EseHandler::SetupEventMatching() {
+  if (run_id_input_ && event_id_input_) {
+    if (furthest_state_==EseSubEvent::State::calib) {
+      if (output_tree_) {
+        std::string base_name("friend_");
+        output_tree_->Branch((base_name + run_id_input_->GetBranchName()).data(), &run_id_);
+        output_tree_->Branch((base_name + event_id_input_->GetBranchName()).data(), &event_id_);
+      }
+    }
+    if (furthest_state_==EseSubEvent::State::percent) {
+      std::string base_name("friend_");
+      auto run_name = base_name + run_id_input_->GetBranchName();
+      auto event_name = base_name + event_id_input_->GetBranchName();
+      run_id_friend_ = std::make_unique<TTreeReaderValue<Long64_t>>(*manager_->GetReader(), run_name.data());
+      event_id_friend_ = std::make_unique<TTreeReaderValue<Long64_t>>(*manager_->GetReader(), event_name.data());
+    }
+  }
+}

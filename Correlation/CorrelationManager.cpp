@@ -142,12 +142,13 @@ void CorrelationManager::Run() {
     UpdateEvent();
     if (event_axes_.CheckEvent()) {
       auto bin = event_axes_.GetBin();
-      ese_handler_.Process(bin);
-      for (auto &pair : correlations_) {
-        pair.second->Fill(bin);
-      }
-      for (auto &stats : stats_results_) {
-        stats.second.Fill(static_cast<size_t>(reader_->GetCurrentEntry()));
+      if (ese_handler_.Process(bin)) {
+        for (auto &pair : correlations_) {
+          pair.second->Fill(bin);
+        }
+        for (auto &stats : stats_results_) {
+          stats.second.Fill(static_cast<size_t>(reader_->GetCurrentEntry()));
+        }
       }
     }
     // Fill tree regardless of validity of event. Friend tree needs to have the same number of entries.
@@ -163,6 +164,7 @@ void CorrelationManager::UpdateEvent() {
     (*qvectors_)[value.first] = value.second.Get();
   }
   MakeProjections();
+  ese_handler_.UpdateIDs();
 }
 
 void CorrelationManager::MakeProjections() {
