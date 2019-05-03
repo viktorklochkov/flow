@@ -27,6 +27,13 @@
 
 namespace Qn {
 
+/**
+ * @brief Profile keeps sums
+ *  sum w A B;
+ *  sum w (A B)^2;
+ *  sum w;
+ *  sum w^2
+ */
 class Profile {
  public:
 
