@@ -43,20 +43,36 @@ Stats MergeBins(const Stats &lhs, const Stats &rhs) {
 
 Stats Merge(const Stats &lhs, const Stats &rhs) {
   Stats result;
-  if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-      || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-      (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
-    result.profile_ = Profile::MergeNormal(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MergeBinsNormal(lhs.subsamples_, rhs.subsamples_);
+  if (lhs.TestBit(Qn::Stats::MERGESUBSAMPLES)) {
+    result.profile_ = lhs.profile_;
+    if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
+        || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
+        (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
+        (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
+      result.subsamples_ = SubSamples::MergeConcat(lhs.subsamples_, rhs.subsamples_);
+    }
+    if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
+      result.subsamples_ = SubSamples::MergeConcat(lhs.subsamples_, rhs.subsamples_);
+    }
+    result.status_ = lhs.status_;
+    result.bits_ = lhs.bits_;
+    return result;
+  } else {
+    if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
+        || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
+        (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
+        (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
+      result.profile_ = Profile::MergeNormal(lhs.profile_, rhs.profile_);
+      result.subsamples_ = SubSamples::MergeBinsNormal(lhs.subsamples_, rhs.subsamples_);
+    }
+    if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
+      result.profile_ = Profile::MergePointAverage(lhs.profile_, rhs.profile_);
+      result.subsamples_ = SubSamples::MergeBinsPointAverage(lhs.subsamples_, rhs.subsamples_);
+    }
+    result.status_ = lhs.status_;
+    result.bits_ = lhs.bits_;
+    return result;
   }
-  if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::MergePointAverage(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MergeBinsPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
-  result.status_ = lhs.status_;
-  result.bits_ = lhs.bits_;
-  return result;
 }
 
 Stats operator+(const Stats &lhs, const Stats &rhs) {

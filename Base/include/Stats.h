@@ -34,7 +34,7 @@ class Stats {
 
   enum Settings {
     CORRELATEDERRORS = BIT(16),
-    PRODAVGWEIGHTS = BIT(17),
+    MERGESUBSAMPLES = BIT(17),
     ASYMMERRORS = BIT(18)
   };
 
