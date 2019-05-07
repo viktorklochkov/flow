@@ -85,7 +85,8 @@ void Qn::Correlation::Fill(const std::vector<unsigned long> &eventindices) {
   FillCorrelation(ieventvar, 0);
 }
 
-void Qn::Correlation::Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::Axis> &event_axes) {
+void Qn::Correlation::Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors,
+                                const std::vector<Qn::Axis> &event_axes) {
   for (const auto &cname : names_) {
     inputs_.push_back(&qvectors->at(cname));
   }
@@ -112,15 +113,36 @@ void Qn::Correlation::Configure(std::map<std::string, Qn::DataContainerQVector *
     if (!input->IsIntegrated()) {
       auto axes = input->GetAxes();
       for (auto &axis : axes) {
-        axis.SetName(std::to_string(i_input) + "_" + names_.at(i_input) + "_" + axis.Name());
-        try { current_event_result_.AddAxis(axis); }
-        catch (std::logic_error &e) {
-          std::string
-              errormsg = ("correlation ") + name_ + "trying to add axis " + axis.Name() + ",  but it already exists.";
-          throw std::logic_error(errormsg);
+        unsigned int j_input = 0;
+        bool found_other = false;
+        bool shared_name = false;
+        for (const auto &otherptr : inputs_) {
+          auto other = *otherptr;
+          if (i_input!=j_input) {
+            if (!other->IsIntegrated()) {
+              auto j_axes = other->GetAxes();
+              for (auto &j_axis :j_axes) {
+                if (j_axis.Name()==axis.Name()) {
+                  found_other = true;
+                  shared_name = names_.at(i_input)==names_.at(j_input);
+                }
+              }
+            }
+          }
+          ++j_input;
         }
+        if (found_other) {
+          if (shared_name) {
+            axis.SetName(std::to_string(i_input) + "_" + names_.at(i_input) + "_" + axis.Name());
+          } else {
+            axis.SetName(names_.at(i_input) + "_" + axis.Name());
+          }
+          current_event_result_.AddAxis(axis);
+        } else {
+          current_event_result_.AddAxis(axis);
+        }
+        ++i_input;
       }
-      ++i_input;
     }
   }
   c_index_.resize(dimension);

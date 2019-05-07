@@ -44,9 +44,6 @@
  * QnCorrectionsframework
  */
 namespace Qn {
-//
-//template<typename T>
-//T Merge(const T&a, const T&b) {return Merge(a,b);}
 
 /**
  * @brief      Template container class for Q-vectors and correlations
@@ -584,7 +581,7 @@ class DataContainer : public TObject {
 
   /**
    * Apply cut to an axis of the datacontainer.
-   * All bins which donot pass the cut are set to 0.
+   * All bins which do not pass the cut are set to 0.
    */
   template<typename Function>
   DataContainer<T> Filter(Function &&lambda) const {
@@ -592,9 +589,7 @@ class DataContainer : public TObject {
     std::vector<size_type> indices(dimension_);
     for (unsigned int ibin = 0; ibin < data_.size(); ++ibin) {
       GetIndex(indices, ibin);
-      if (! lambda(axes_, indices)) {
-        filtered.data_[ibin] = T();
-      }
+      if (!lambda(axes_, indices)) filtered.data_[ibin] = T();
     }
     return filtered;
   }
@@ -874,6 +869,7 @@ template<typename T>
 DataContainer<T> Sqrt(const DataContainer<T> &a) {
   return a.Map([](const T &x) { return Qn::Sqrt(x); });
 }
+
 /**
  * Transformation of a DataContainer providing the operation:
  * \f[

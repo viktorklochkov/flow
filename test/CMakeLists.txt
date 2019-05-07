@@ -7,6 +7,7 @@ include_directories(${gtest_SOURCE_DIR}/include)
 set(TEST_SOURCES
         BootstrapSamplerUnitTest.cpp
         SampleUnitTest.cpp
+        CorrelationUnitTest.cpp
         CorrelationManagerUnitTest.cpp
         DataContainerUnitTest.cpp
         ProductUnitTest.cpp

@@ -69,7 +69,6 @@ TEST(CorrelationManagerTest, FullCorrelationWithESE) {
   auto end = std::chrono::steady_clock::now();
   std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << " minutes"
             << std::endl;
-
 }
 
 TEST(CorrelationManagerTest, AddingCorrelation) {
