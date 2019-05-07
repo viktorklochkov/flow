@@ -26,6 +26,21 @@ TEST(DataContainerTest, AddAxes) {
   EXPECT_EQ(100, container.size());
 }
 
+TEST(DataContainerTest, Filter) {
+  Qn::DataContainer<float> container;
+  container.AddAxes({{"a1",10,0,10},{"a2",10,0,10}});
+  for (auto &bin : container) {
+    bin = 1;
+  }
+  auto lambda = [](const std::vector<Qn::Axis> &axes, const std::vector<std::size_t> binindex) -> bool {
+    return axes[0].GetLowerBinEdge(binindex[0]) >= 4.9999 && axes[1].GetLowerBinEdge(binindex[1]) < 2.;
+  };
+  auto filtered = container.Filter(lambda);
+  for (unsigned int ibin = 0; ibin < container.size(); ++ibin) {
+    if (ibin < 5) EXPECT_EQ(filtered.At(ibin),0);
+    if (ibin > 5) EXPECT_EQ(filtered.At(ibin),1);
+  }
+}
 
 TEST(DataContainerTest, Projection) {
   Qn::DataContainer<float> container;

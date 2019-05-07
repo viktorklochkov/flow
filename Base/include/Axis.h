@@ -69,9 +69,9 @@ class Axis {
   iterator begin() { return bin_edges_.begin(); } ///< iterator for external use
   iterator end() { return bin_edges_.end(); } ///< iterator for external use
   /**
- * Set Name of axis.
- * @param name name of axis
- */
+   * Set Name of axis.
+   * @param name name of axis
+   */
   inline void SetName(const std::string name) { name_ = name; }
   /**
    * Returns Name of axis.

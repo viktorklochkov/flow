@@ -582,6 +582,23 @@ class DataContainer : public TObject {
     return Rebin(rebinaxis, lambda);
   }
 
+  /**
+   * Apply cut to an axis of the datacontainer.
+   * All bins which donot pass the cut are set to 0.
+   */
+  template<typename Function>
+  DataContainer<T> Filter(Function &&lambda) const {
+    DataContainer<T> filtered(*this);
+    std::vector<size_type> indices(dimension_);
+    for (unsigned int ibin = 0; ibin < data_.size(); ++ibin) {
+      GetIndex(indices, ibin);
+      if (! lambda(axes_, indices)) {
+        filtered.data_[ibin] = T();
+      }
+    }
+    return filtered;
+  }
+
 /**
  * Apply function to two datacontainers.
  * The axes need to have the same order.
