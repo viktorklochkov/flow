@@ -16,6 +16,4 @@ string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})
 target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correlation QnCorrections Correction)
-
-add_executable(maintest maintest.cpp)
-target_link_libraries(maintest ${ROOT_LIBRARIES} Base Correlation QnCorrections Correction)
+add_test(NAME all_tests COMMAND tests)

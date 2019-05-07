@@ -160,26 +160,6 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
-    # Googletest
-    configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-            RESULT_VARIABLE result
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-    if (result)
-        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-    endif ()
-    execute_process(COMMAND ${CMAKE_COMMAND} --build .
-            RESULT_VARIABLE result
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
-    if (result)
-        message(FATAL_ERROR "Build step for googletest failed: ${result}")
-    endif ()
-    # Prevent overriding the parent project's compiler/linker settings on Windows
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
-ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
-
 # ROOT
 find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
 include(${ROOT_USE_FILE})
@@ -220,7 +200,6 @@ add_custom_command(OUTPUT G__Base.cxx
 add_library(Base SHARED ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
-#target_compile_features(Base PUBLIC cxx_std_11)
 target_include_directories(Base
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
@@ -269,6 +248,23 @@ target_include_directories(Correlation
 target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
 IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
+    # Googletest
+    configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
+    if (result)
+        message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif ()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+            RESULT_VARIABLE result
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download)
+    if (result)
+        message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif ()
+    # Prevent overriding the parent project's compiler/linker settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
     add_subdirectory(test)
 ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
