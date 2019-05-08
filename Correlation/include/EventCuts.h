@@ -42,7 +42,7 @@ struct EventCutBase {
 template<typename VAR, typename... T>
 class EventCut : public EventCutBase {
  public:
-  EventCut<T...>(VAR (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
+  EventCut(VAR (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
       : lambda_(lambda) {
     int i = 0;
     for (auto &a : arr) {

@@ -47,7 +47,7 @@ struct VariableCutBase {
 template<typename... T>
 class VariableCutNDim : public VariableCutBase {
  public:
-  VariableCutNDim<T...>(Variable const (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
+  VariableCutNDim(Variable const (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
       : lambda_(lambda) {
     int i = 0;
     for (const auto &a : arr) {
