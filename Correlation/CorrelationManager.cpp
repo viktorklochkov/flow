@@ -140,7 +140,7 @@ void CorrelationManager::Run() {
   Initialize();
   while (reader_->Next()) {
     UpdateEvent();
-    if (event_axes_.CheckEvent()) {
+    if (event_axes_.CheckEvent() && event_cuts_.CheckCuts()) {
       auto bin = event_axes_.GetBin();
       if (ese_handler_.Process(bin)) {
         for (auto &pair : correlations_) {
@@ -206,6 +206,28 @@ Qn::Correlation *CorrelationManager::RegisterCorrelation(const std::string &name
     correlations_.emplace(name, std::move(correlation));
   }
   return correlations_.at(name).get();
+}
+
+void CorrelationManager::ProgressBar() {
+  progress_ = (float) current_event_/num_events_;
+  current_event_++;
+  unsigned int barWidth = 70;
+  if (progress_ < 1.0) {
+    std::cout << "[";
+    unsigned int pos = barWidth*progress_;
+    for (unsigned int i = 0; i < barWidth; ++i) {
+      if (i < pos) std::cout << "|";
+      else if (i==pos) std::cout << "|";
+      else std::cout << " ";
+    }
+    std::cout << "] " << int(progress_*100.0) << " %\r";
+    std::cout.flush();
+  }
+  if (current_event_==num_events_) {
+    std::cout << "[";
+    for (unsigned int i = 0; i < barWidth; ++i) { std::cout << "|"; }
+    std::cout << "] " << 100 << " %" << std::endl;
+  }
 }
 
 }

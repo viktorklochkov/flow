@@ -99,6 +99,7 @@ set(CORR_HEADERS
         EseHandler.h
         EseSubEvent.h
         EventAxes.h
+        EventCuts.h
         )
 
 set(BASE_HEADERS DataContainer.h

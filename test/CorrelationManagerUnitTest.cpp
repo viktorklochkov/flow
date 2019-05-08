@@ -71,90 +71,29 @@ TEST(CorrelationManagerTest, FullCorrelationWithESE) {
             << std::endl;
 }
 
-TEST(CorrelationManagerTest, AddingCorrelation) {
-//  using namespace Qn;
-//  auto data1 = new Qn::DataContainer<Qn::QVector>();
-//  data1->AddAxis({"test",10,0,10});
-  // for (auto &bin : *data1) {
-  //   Qn::QVec qvec(1.0, 1.0);
-  //   bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
-  // }
-  // TFile testtree("testtree.root", "RECREATE");
-  // TTree tree("tree", "tree");
-  // auto event = new Qn::EventInfoF();
-  // event->AddVariable("Ev1");
-  // event->SetToTree(tree);
+TEST(CorrelationManagerTest, FullCorrelation) {
+  auto begin = std::chrono::steady_clock::now();
+  using QVectors = Qn::QVectors;
+  auto constexpr kRef = Qn::kRef;
 
-  // tree.Branch("Det1", &data1);
-  // tree.Branch("Det2", &data1);
+  auto input_file = TFile::Open("25testtree.root");
+  auto tree = dynamic_cast<TTree *>(input_file->Get("tree"));
 
-  // auto ne = 10000;
-  // int counter = 0;
-  // for (int i = 0; i < ne/2; ++i) {
-  //   ++counter;
-  //   event->SetVariable("Ev1", 0.5);
-  //   for (auto &bin : *data1) {
-  //     Qn::QVec qvec(1.0, 1.0);
-  //     bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
-  //   }
-  //   tree.Fill();
-  // }
-  // for (int i = ne/2; i < ne; ++i) {
-  //   ++counter;
-  //   event->SetVariable("Ev1", 0.5);
-  //   for (auto &bin : *data1) {
-  //     Qn::QVec qvec(2.0, 2.0);
-  //     bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
-  //   }
-  //   tree.Fill();
-  // }
-  // tree.Write();
-  // testtree.Close();
-  // auto readtreefile = TFile::Open("testtree.root", "READ");
-  // auto reading = (TTree *) readtreefile->Get("tree");
-  // std::cout << counter << std::endl;
-  // EXPECT_EQ(ne, reading->GetEntries());
-  // std::cout << "create manager" << std::endl;
-////  reading->AddFriend("ESE", "percentiles.root");
-  // Qn::CorrelationManager manager(reading);
-  // std::cout << "add variables" << std::endl;
+  std::string out_correlations{"correlations.root"};
 
-  // manager.AddEventAxis({"Ev1", 2, 0, 2});
-  // manager.SetOutputFile("correlation.root");
-  // manager.SetESEInputFile("/Users/lukas/phd/analysis/flow/cmake-build-debug/test/calib.root",
-  //                         "/Users/lukas/phd/analysis/flow/cmake-build-debug/test/percentiles.root");
-  // manager.SetESEOutputFile("calib.root", "percentiles.root");
-  // manager.AddEventShape("Det1ESE", {"Det1"}, [](QVectors q) { return q[0].x(1); }, {"h", "h", 2, 0., 3.});
-  // manager.AddCorrelation("c1",
-  //                        {"Det1", "Det2"},
-  //                        [](QVectors q) { return q[0].y(1) + q[1].x(1); },
-  //                        {kObs, kObs});
-////  manager.AddCorrelation("avg",
-////                         {"Det1"},
-////                         [](QVectors q) { return q[0].mag(2)/sqrt(q[0].n()); },
-////                         {Weight::OBSERVABLE},
-////                         Sampler::Resample::OFF);
-////  manager.AddCorrelation("c2",
-////                         {"Det1", "Det2"},
-////                         [](QVectors q) { return q[0].x(1) + q[1].x(1); },
-////                         {Weight::OBSERVABLE, Weight::REFERENCE});
-  // manager.SetResampling(Qn::Sampler::Method::BOOTSTRAP, 100);
-  // std::cout << "run" << std::endl;
-  // manager.Run();
-  // auto correlation = manager.GetResult("c1");
-  // for (unsigned long i = 0; i < 10; ++i) {
-  //   auto bin = correlation.At({0, 9, i});
-  //   EXPECT_FLOAT_EQ(4.0, bin.Mean());
-  //   EXPECT_EQ(100, bin.GetNSamples());
-  // }
-  // for (unsigned long i = 0; i < 10; ++i) {
-  //   auto bin = correlation.At({0, 5, i});
-  //   EXPECT_FLOAT_EQ(2.0, bin.Mean());
-  //   EXPECT_EQ(100, bin.GetNSamples());
-  // }
-//  auto average = manager.GetResult("avg");
-//  for (auto &bin : average) {
-//    EXPECT_FLOAT_EQ((sqrt(8) + sqrt(2))/2, bin.Mean());
-//    EXPECT_EQ(0, bin.GetNSamples());
-//  }
+  Qn::CorrelationManager man(tree);
+  man.SetOutputFile(out_correlations);
+  man.EnableDebug();
+  auto scalar = [](QVectors q) { return q[0].x(2)*q[1].x(2) + q[0].y(2)*q[1].y(2); };
+
+  man.AddEventAxis({"CentralityV0M", 70, 0., 70.});
+  man.AddEventCut({"Trigger", "CentralityV0M"},[](float a, float c){return  a < 1. && c > 15 && c < 25;});
+
+  man.AddCorrelation("V0CV0A", {"V0A", "V0C"}, scalar, {kRef, kRef});
+
+  man.SetResampling(Qn::Sampler::Method::BOOTSTRAP, 10);
+  man.Run();
+  auto end = std::chrono::steady_clock::now();
+  std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << " minutes"
+            << std::endl;
 }

@@ -31,6 +31,7 @@
 #include "DataContainer.h"
 #include "EseHandler.h"
 #include "EventAxes.h"
+#include "EventCuts.h"
 
 #include "ROOT/RMakeUnique.hxx"
 
@@ -79,6 +80,28 @@ class CorrelationManager {
     ese_handler_.SetRunEventId(run, event);
   }
 
+  /**
+   * @brief Adds a cut based on event variables.
+   * Only events which pass the cuts are used for the corrections.
+   * Template parameters are automatically deduced.
+   * @tparam N number of variables used in the cut.
+   * @tparam FUNCTION type of function
+   * @param name_arr Array of variable names used for the cuts.
+   * @param func C-callable describing the cut of signature bool(double &...).
+   *             The number of double& corresponds to the number of variables
+   */
+  template<std::size_t N, typename FUNCTION>
+  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func) {
+    std::unique_ptr<TTreeReaderValue<float>> arr[N];
+    int i = 0;
+    for (auto &name : name_arr) {
+      arr[i] = std::make_unique<TTreeReaderValue<float>>(*reader_, name);
+      ++i;
+    }
+    event_cuts_.AddCut(MakeUniqueEventCut(arr, func));
+  }
+
+
  private:
 
   friend class Qn::EventAxes;
@@ -105,45 +128,26 @@ class CorrelationManager {
 
   std::shared_ptr<TTreeReader> &GetReader() { return reader_; }
 
-  void ProgressBar() {
-    progress_ = (float) current_event_/num_events_;
-    current_event_++;
-    unsigned int barWidth = 70;
-    if (progress_ < 1.0) {
-      std::cout << "[";
-      unsigned int pos = barWidth*progress_;
-      for (unsigned int i = 0; i < barWidth; ++i) {
-        if (i < pos) std::cout << "|";
-        else if (i==pos) std::cout << "|";
-        else std::cout << " ";
-      }
-      std::cout << "] " << int(progress_*100.0) << " %\r";
-      std::cout.flush();
-    }
-    if (current_event_==num_events_) {
-      std::cout << "[";
-      for (unsigned int i = 0; i < barWidth; ++i) { std::cout << "|"; }
-      std::cout << "] " << 100 << " %" << std::endl;
-  }
-}
+  void ProgressBar();
 
-private:
-size_type current_event_ = 0;
-float progress_ = 0.;
-bool debug_mode_ = false;
-size_type num_events_ = 0;
-std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
-Qn::EseHandler ese_handler_;
-Qn::EventAxes event_axes_;
-std::string correlation_file_name_;
-TTree *tree_;
-std::shared_ptr<TTreeReader> reader_;
-std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
-std::map<std::string, Qn::StatsResult> stats_results_;
-std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
-std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
-std::unique_ptr<std::map<std::string, Qn::DataContainerQVector *>> qvectors_;
-std::map<std::string, Qn::DataContainerQVector> qvectors_proj_;
+ private:
+  size_type current_event_ = 0;
+  float progress_ = 0.;
+  bool debug_mode_ = false;
+  size_type num_events_ = 0;
+  std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
+  Qn::EseHandler ese_handler_;
+  Qn::EventAxes event_axes_;
+  Qn::EventCuts event_cuts_;
+  std::string correlation_file_name_;
+  TTree *tree_;
+  std::shared_ptr<TTreeReader> reader_;
+  std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
+  std::map<std::string, Qn::StatsResult> stats_results_;
+  std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
+  std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
+  std::unique_ptr<std::map<std::string, Qn::DataContainerQVector *>> qvectors_;
+  std::map<std::string, Qn::DataContainerQVector> qvectors_proj_;
 
 };
 }
