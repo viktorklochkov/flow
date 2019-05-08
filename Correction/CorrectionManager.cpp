@@ -62,6 +62,10 @@ void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::Axis> &axes, c
   event_histograms_.push_back(Create2DHisto("Ev", axes, weightname, axis));
 }
 
+void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::Axis> &axes, const std::string &weightname) {
+  event_histograms_.push_back(Create2DHisto("Ev", axes, weightname));
+}
+
 void Qn::CorrectionManager::AddEventHisto1D(const Qn::Axis &axes, const std::string &weightname) {
   event_histograms_.push_back(Create1DHisto("Ev", axes, weightname));
 }
@@ -315,4 +319,5 @@ std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std
   auto haxisvar = var_manager_->FindVariable(histaxis.Name());
   return std::make_unique<QAHisto2DPtr>(arr, histo,std::move(haxis),haxisvar);
 }
+
 
