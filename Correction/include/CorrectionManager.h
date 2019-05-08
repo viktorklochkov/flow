@@ -179,6 +179,8 @@ class CorrectionManager {
    */
   void AddEventHisto2D(const std::vector<Qn::Axis> &axes, const std::string &weightname = "Ones");
 
+  void AddEventHisto2D(const std::vector<Qn::Axis> &axes, const Qn::Axis &axis, const std::string &weightname = "Ones");
+
   /**
   * @brief Adds a one dimensional histogram to a detector.
   * @param Name name of the detector
@@ -298,10 +300,14 @@ class CorrectionManager {
   static constexpr int kMaxCorrectionArrayLength = 1000;
 
   std::unique_ptr<Qn::QAHisto1DPtr> Create1DHisto(const std::string &name, const Qn::Axis &axis,
-                                                  const std::string &weightname = "Ones");
+                                                  const std::string &weightname);
 
   std::unique_ptr<Qn::QAHisto2DPtr> Create2DHisto(const std::string &name, const std::vector<Qn::Axis> &axes,
-                                                  const std::string &weightname = "Ones");
+                                                  const std::string &weightname);
+
+  std::unique_ptr<Qn::QAHisto2DPtr> Create2DHisto(const std::string &name, const std::vector<Qn::Axis> &axes,
+                                                  const std::string &weightname,
+                                                  const Qn::Axis &histaxis);
 
   void CreateDetectors();
 

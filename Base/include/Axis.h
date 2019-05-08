@@ -60,6 +60,8 @@ class Axis {
     }
   }
 
+  Axis(const Qn::Axis &axis) : name_(axis.name_), bin_edges_(axis.bin_edges_) {}
+
   bool operator==(const Axis &axis) const { return name_==axis.name_; }
 
   typedef typename std::vector<float>::const_iterator citerator;
@@ -100,6 +102,7 @@ class Axis {
     return bin;
   };
 
+  inline std::string GetBinName(unsigned int i) const {return name_+std::to_string(GetLowerBinEdge(i));}
   /**
  * Finds bin iterator for a given value
  * if value is smaller than lowest bin returns end().

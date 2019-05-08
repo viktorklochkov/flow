@@ -31,7 +31,7 @@ TEST(CorrelationManagerTest, FullCorrelationWithESE) {
     man.SetESEOutputFile(out_calib, out_ese);
     auto v1mag = [](QVectors q) { return q[0].DeNormal().mag(1)/std::sqrt(q[0].sumweights()); };
     man.AddEventShape("ZDCAq1", {"ZDCA"}, v1mag, {"h", "", 50, 0, 200});
-    man.SetRunEventId("RunNumber","EventNumber");
+    man.SetRunEventId("RunNumber", "EventNumber");
   }
   auto v2zdc_yxx = [](QVectors q) { return q[0].y(2)*q[1].x(1)*q[2].x(1); };
   auto v2zdc_yyy = [](QVectors q) { return q[0].y(2)*q[1].y(1)*q[2].y(1); };
@@ -87,7 +87,7 @@ TEST(CorrelationManagerTest, FullCorrelation) {
   auto scalar = [](QVectors q) { return q[0].x(2)*q[1].x(2) + q[0].y(2)*q[1].y(2); };
 
   man.AddEventAxis({"CentralityV0M", 70, 0., 70.});
-  man.AddEventCut({"Trigger", "CentralityV0M"},[](float a, float c){return  a < 1. && c > 15 && c < 25;});
+  man.AddEventCut({"Trigger", "CentralityV0M"}, [](float a, float c) { return a < 1. && c > 15 && c < 25; });
 
   man.AddCorrelation("V0CV0A", {"V0A", "V0C"}, scalar, {kRef, kRef});
 

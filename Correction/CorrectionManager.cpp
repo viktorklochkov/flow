@@ -58,8 +58,8 @@ void Qn::CorrectionManager::AddHisto2D(const std::string &name,
   }
 }
 
-void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::Axis> &axes, const std::string &weightname) {
-  event_histograms_.push_back(Create2DHisto("Ev", axes, weightname));
+void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::Axis> &axes, const Qn::Axis &axis, const std::string &weightname) {
+  event_histograms_.push_back(Create2DHisto("Ev", axes, weightname, axis));
 }
 
 void Qn::CorrectionManager::AddEventHisto1D(const Qn::Axis &axes, const std::string &weightname) {
@@ -277,5 +277,42 @@ std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std
               var_manager_->FindVariable(weightname)}};
   auto histo = new TH2F(hist_name.data(), axisname.data(), size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
   return std::make_unique<QAHisto2DPtr>(arr, histo);
+}
+
+
+/**
+ * Helper function to create the QA histograms
+ * @param name name of the histogram
+ * @param axes axes used for the histogram
+ * @param weightname name of the weight
+ * @return unique pointer to the histogram
+ */
+std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std::string &name,
+                                                                       const std::vector<Qn::Axis> &axes,
+                                                                       const std::string &weightname,
+                                                                       const Qn::Axis &histaxis) {
+  auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weightname;
+  auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
+  auto size_x = static_cast<const int>(axes[0].size());
+  auto size_y = static_cast<const int>(axes[1].size());
+  for (const auto &axis : axes) {
+    try { var_manager_->FindVariable(axis.Name()); }
+    catch (std::out_of_range &) {
+      std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
+                << " not found. Creating new channel variable." << std::endl;
+      var_manager_->CreateChannelVariable(axis.Name(), axis.size());
+    }
+  }
+  auto upper_edge_x = axes[0].GetLastBinEdge();
+  auto lower_edge_x = axes[0].GetFirstBinEdge();
+  auto upper_edge_y = axes[1].GetLastBinEdge();
+  auto lower_edge_y = axes[1].GetFirstBinEdge();
+  std::array<Variable, 3>
+      arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(axes[1].Name()),
+              var_manager_->FindVariable(weightname)}};
+  auto histo = new TH2F(hist_name.data(), axisname.data(), size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
+  auto haxis = std::make_unique<Qn::Axis>(histaxis);
+  auto haxisvar = var_manager_->FindVariable(histaxis.Name());
+  return std::make_unique<QAHisto2DPtr>(arr, histo,std::move(haxis),haxisvar);
 }
 

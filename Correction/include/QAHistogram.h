@@ -20,12 +20,16 @@
 
 #include <utility>
 #include <vector>
-#include <TH1.h>
-#include <TH2.h>
+
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3F.h"
 #include "TList.h"
-#include "VariableManager.h"
 #include "ROOT/RMakeUnique.hxx"
 #include "ROOT/RIntegerSequence.hxx"
+
+#include "Axis.h"
+#include "VariableManager.h"
 
 namespace Qn {
 /**
@@ -46,7 +50,28 @@ struct QAHistoBase {
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo) : vars_(std::move(vec)), histo_(std::move(histo)) {}
+  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::Axis> axis, Qn::Variable axisvar) :
+      vars_(std::move(vec)),
+      axis_(std::move(axis)),
+      axisvar_(axisvar) {
+    if (axis_) {
+      for (unsigned int i = 0; i < axis_->size(); ++i) {
+        auto histname = histo->GetName();
+        auto binname = std::string(histname) + axis_->GetBinName(i);
+        auto binhisto = (HISTO) ptr(histo)->Clone(binname.data());
+        histo_.push_back(binhisto);
+      }
+      name_ = ptr(histo)->GetName();
+      delete histo;
+    } else {
+      histo_.push_back(histo);
+    }
+  }
+
+  QAHisto(std::array<VAR, N> vec, HISTO histo) :
+      vars_(std::move(vec)) {
+    histo_.push_back(histo);
+  }
 
   /**
    * Implementation of the fill function
@@ -56,7 +81,14 @@ class QAHisto : public QAHistoBase {
    */
   template<typename array, std::size_t... I>
   void FillImpl(const array a, std::index_sequence<I...>) {
-    ptr(histo_)->FillN(a[0].length(), (a[I].begin())...);
+    auto bin = 0;
+    if (axis_) {
+      bin = axis_->FindBin(*axisvar_.begin());
+      if (bin > -1) ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
+    }
+    else {
+      ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
+    }
   }
 
   /**
@@ -70,15 +102,33 @@ class QAHisto : public QAHistoBase {
    * Add the histogram to the list.
    * @param list pointer to the list. Lifetime of the histogram hast to be managed by the list.
    */
-  void AddToList(TList *list) override { list->Add(ptr(histo_)); }
+  void AddToList(TList *list) override {
+    if (axis_) {
+      auto dir = new TList();
+      dir->SetName(name_.data());
+      for (auto &histo : histo_) {
+        dir->Add(ptr(histo));
+      }
+      list->Add(dir);
+    }
+    else {
+      for (auto &histo : histo_) {
+        list->Add(ptr(histo));
+      }
+    }
+  }
 
  private:
   template<typename T>
   T *ptr(T &obj) { return &obj; } ///Turns a reference into pointer.
   template<typename T>
   T *ptr(T *obj) { return obj; } /// The Object is already pointer. Returns it.
+
   std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
-  HISTO histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
+  std::vector<HISTO> histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
+  std::unique_ptr<Qn::Axis> axis_ = nullptr; // Creates a histogram for each bin of the axis
+  VAR axisvar_;
+  std::string name_;
 };
 
 /// specializations used in the framework
