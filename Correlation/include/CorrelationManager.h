@@ -82,12 +82,12 @@ class CorrelationManager {
 
   /**
    * @brief Adds a cut based on event variables.
-   * Only events which pass the cuts are used for the corrections.
+   * Only events which pass the cuts are used for the correlations.
    * Template parameters are automatically deduced.
    * @tparam N number of variables used in the cut.
    * @tparam FUNCTION type of function
    * @param name_arr Array of variable names used for the cuts.
-   * @param func C-callable describing the cut of signature bool(double &...).
+   * @param func C-callable describing the cut of signature bool(float &...).
    *             The number of double& corresponds to the number of variables
    */
   template<std::size_t N, typename FUNCTION>
