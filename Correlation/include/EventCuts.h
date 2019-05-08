@@ -20,6 +20,8 @@
 
 #include <string>
 #include "TTreeReaderValue.h"
+#include "ROOT/RMakeUnique.hxx"
+#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 
