@@ -22,7 +22,7 @@ TEST(QAHistogramUnitTest, ptrtest) {
 
   Qn::QAHisto2DPtr hist2dptr({manager.FindVariable("a"),manager.FindVariable("a"), manager.FindVariable("Ones")}, new TH2F("t2d", "", 10, 0, 10,10,0,10));
 
-  auto listaxis = std::make_unique<Qn::Axis>("b",2,0,3);
+  auto listaxis = std::make_unique<Qn::Axis>("b",std::vector<float>{0.6666900, 1.2340,4.,33.,345023.23453453000,345345.00000343});
   Qn::QAHisto2DPtr hist2dptrlist({manager.FindVariable("a"),manager.FindVariable("a"), manager.FindVariable("Ones")},
       new TH2F("t2dd", "", 10, 0, 10,10,0,10),std::move(listaxis),manager.FindVariable("b"));
 

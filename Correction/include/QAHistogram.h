@@ -57,7 +57,7 @@ class QAHisto : public QAHistoBase {
     if (axis_) {
       for (unsigned int i = 0; i < axis_->size(); ++i) {
         auto histname = histo->GetName();
-        auto binname = std::string(histname) + axis_->GetBinName(i);
+        auto binname = std::string(histname) + "-" + TrimString(axis_->GetBinName(i));
         auto binhisto = (HISTO) ptr(histo)->Clone(binname.data());
         histo_.push_back(binhisto);
       }
@@ -85,8 +85,7 @@ class QAHisto : public QAHistoBase {
     if (axis_) {
       bin = axis_->FindBin(*axisvar_.begin());
       if (bin > -1) ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
-    }
-    else {
+    } else {
       ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
     }
   }
@@ -110,8 +109,7 @@ class QAHisto : public QAHistoBase {
         dir->Add(ptr(histo));
       }
       list->Add(dir);
-    }
-    else {
+    } else {
       for (auto &histo : histo_) {
         list->Add(ptr(histo));
       }
@@ -119,6 +117,14 @@ class QAHisto : public QAHistoBase {
   }
 
  private:
+
+  std::string TrimString(std::string str) {
+    for (std::string::size_type s = str.length() - 1; s > 0; --s) {
+      if (str[s]=='0') str.erase(s, 1);
+      else break;
+    }
+    return str;
+  }
   template<typename T>
   T *ptr(T &obj) { return &obj; } ///Turns a reference into pointer.
   template<typename T>
