@@ -31,6 +31,7 @@ namespace Qn {
 struct EventCutBase {
   virtual ~EventCutBase() = default;
   virtual bool Check() = 0;
+  virtual std::string Name() = 0;
 };
 
 /**
@@ -60,6 +61,17 @@ class EventCut : public EventCutBase {
     return CheckImpl(std::make_index_sequence<sizeof...(T)>{});
   }
 
+  std::string Name() override {
+    std::string name;
+    for  (unsigned int i = 0; i <  variables_.size(); ++i) {
+      name+=variables_.at(i)->GetBranchName();
+      if (i < variables_.size() && variables_.size() != 1) {
+        name+="&&";
+      }
+    }
+    return name;
+  }
+
  private:
 
   /**
@@ -77,13 +89,14 @@ class EventCut : public EventCutBase {
   std::function<bool(T...)> lambda_; /// function used to evaluate the cut.
 };
 
+
 namespace Details {
 template<std::size_t>
 using Type = float &;
 template<typename VAR, std::size_t N, typename FUNC, std::size_t... Is>
 std::unique_ptr<EventCut<VAR, Type<Is>...>> MakeUniqueEventCutImpl(std::index_sequence<Is...>,
-                                                              VAR (&arr)[N],
-                                                              FUNC &&func) {
+                                                                   VAR (&arr)[N],
+                                                                   FUNC &&func) {
   return std::make_unique<EventCut<VAR, Type<Is>...>>(arr, std::forward<FUNC>(func));
 }
 }
@@ -110,14 +123,32 @@ class EventCuts {
 
   bool CheckCuts() {
     bool passed = true;
+    cut_report_->Fill(0);
+    unsigned int ibin = 1;
     for (auto &cut : cuts_) {
       passed = cut->Check() && passed;
+      if (passed) cut_report_->Fill(ibin);
+      ++ibin;
     }
     return passed;
   }
 
+  void CreateReport() {
+    cut_report_ = new TH1D("CutReport", "cut report;cuts;number of events", cuts_.size() + 1, 0, cuts_.size() + 1);
+    auto axis = cut_report_->GetXaxis();
+    axis->SetBinLabel(1, "All Events");
+    for (unsigned int i = 0; i < cuts_.size(); ++i) {
+      axis->SetBinLabel(i+2, cuts_.at(i)->Name().data());
+    }
+  }
+
+  TH1D* GetReport() {
+    return cut_report_;
+  }
+
  private:
-    std::vector<std::unique_ptr<EventCutBase>> cuts_;
+  std::vector<std::unique_ptr<EventCutBase>> cuts_;
+  TH1D *cut_report_;
 };
 
 }

@@ -5,6 +5,7 @@
 
 #include "QAHistogram.h"
 #include "VariableManager.h"
+#include <random>
 
 TEST(QAHistogramUnitTest, ptrtest) {
 
@@ -41,6 +42,14 @@ TEST(QAHistogramUnitTest, ptrtest) {
   histptr.Fill();
   hist2dptr.Fill();
   hist2dptrlist.Fill();
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<std::mt19937::result_type> dist2(1,10); // distribution in range [1, 6]
+  for (int i =0; i< 1000000; ++i) {
+    vars[0] = dist2(rng);
+    vars[1] = dist2(rng);
+    hist2dptrlist.Fill();
+  }
   list->Write("qalist", TObject::kSingleKey);
   file->Close();
 }
