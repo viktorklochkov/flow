@@ -129,7 +129,7 @@ void DataContainerHelper::StatsBrowse(DataContainer<Stats> *data, TBrowser *b) {
 
 void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBrowser *b) {
   if (!data->list_) data->list_ = new TList();
-  int i = 0;
+  unsigned long i = 0;
   auto hlist = new TList();
   hlist->SetName("histos");
   auto slist = new TList();
@@ -138,17 +138,17 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
   ilist->SetName("integrals");
   for (auto &bin : *data) {
     auto name = data->GetBinDescription(i);
-    bin.histo_->SetName((std::string("H_") + (name)).data());
-    bin.histo_->SetTitle((std::string("H_") + (name)).data());
-    bin.histo_->GetXaxis()->SetTitle("|Q|^{2}");
-    hlist->Add(bin.histo_);
-    bin.spline_->SetName((std::string("S_") + (name)).data());
-    bin.spline_->SetTitle((std::string("S_") + (name)).data());
-    slist->Add(bin.spline_);
-    bin.integral_->SetName((std::string("I_") + (name)).data());
-    bin.integral_->SetTitle((std::string("I_") + (name)).data());
-    bin.integral_->GetXaxis()->SetTitle("|Q|^{2}");
-    ilist->Add(bin.integral_);
+    auto histo  = dynamic_cast<TH1F*>(bin.histo_->Clone((std::string("H_") + (name)).data()));
+    histo->SetTitle((std::string("H_") + (name)).data());
+    histo->GetXaxis()->SetTitle("|Q|^{2}");
+    hlist->Add(histo);
+    auto spline  = dynamic_cast<TSpline3*>(bin.spline_->Clone((std::string("S_") + (name)).data()));
+    spline->SetTitle((std::string("S_") + (name)).data());
+    slist->Add(spline);
+    auto integral  = dynamic_cast<TH1F*>(bin.integral_->Clone((std::string("I_") + (name)).data()));
+    integral->SetTitle((std::string("I_") + (name)).data());
+    integral->GetXaxis()->SetTitle("|Q|^{2}");
+    ilist->Add(integral);
     ++i;
   }
   data->list_->Add(hlist);

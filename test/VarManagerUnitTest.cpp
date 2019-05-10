@@ -27,45 +27,45 @@ TEST(VarManagerUnitTest, test) {
 
 
 //
-//TEST(VarManagerUnitTest, dettest) {
-//  using namespace Qn;
-//  VariableManager a;
-//  double *vars = new double[100];
-//  a.SetVariables(vars);
-//  a.CreateVariable("weight", 0, 4);
-//  a.CreateVariable("phi", 5, 4);
-//  a.CreateVariable("eta", 9, 4);
-//  a.CreateVariable("ev", 13, 1);
-//  for (int i = 0; i < 5; i++) {
-//    vars[i] = i;
-//  }
-//  vars[5] = 0;
-//  vars[6] = 0.5*TMath::Pi();
-//  vars[7] = 1*TMath::Pi();
-//  vars[8] = 1.5*TMath::Pi();
-//  vars[9] = -1.0;
-//  vars[10] = -0.5;
-//  vars[11] = 0.5;
-//  vars[12] = 1.0;
-//  vars[13] = 5;
-//  auto weight = a.FindVariable("weight");
-//  auto phi = a.FindVariable("phi");
-//  auto eta = a.FindVariable("eta");
-//  auto ev = a.FindVariable("ev");
-//  Detector det(DetectorType::Channel, {}, phi, weight, {});
-////  det.AddCut(eta, [](double eta) { return eta < 0; });
-//  det.Initialize("Test", a);
-//  det.FillData();
-//  vars[13] = 6;
-//  det.ClearData();
-//  det.FillData();
-//  TFile *file = new TFile("vartest.root", "RECREATE");
-//  file->cd();
-//  TDirectory *test = file->mkdir("test", "test");
-//  test->cd();
-//  det.SaveReport();
-//  file->Close();
-//}
+TEST(VarManagerUnitTest, dettest) {
+  using namespace Qn;
+  VariableManager a;
+  double *vars = new double[100];
+  a.SetVariables(vars);
+  a.CreateVariable("weight", 0, 4);
+  a.CreateVariable("phi", 5, 4);
+  a.CreateVariable("eta", 9, 4);
+  a.CreateVariable("ev", 13, 1);
+  for (int i = 0; i < 5; i++) {
+    vars[i] = i;
+  }
+  vars[5] = 0;
+  vars[6] = 0.5*TMath::Pi();
+  vars[7] = 1*TMath::Pi();
+  vars[8] = 1.5*TMath::Pi();
+  vars[9] = -1.0;
+  vars[10] = -0.5;
+  vars[11] = 0.5;
+  vars[12] = 1.0;
+  vars[13] = 5;
+  auto weight = a.FindVariable("weight");
+  auto phi = a.FindVariable("phi");
+  auto eta = a.FindVariable("eta");
+  auto ev = a.FindVariable("ev");
+  Detector det(DetectorType::Channel, {}, phi, weight, {});
+//  det.AddCut(eta, [](double eta) { return eta < 0; });
+  det.Initialize("Test", a);
+  det.FillData();
+  vars[13] = 6;
+  det.ClearData();
+  det.FillData();
+  TFile *file = new TFile("vartest.root", "RECREATE");
+  file->cd();
+  TDirectory *test = file->mkdir("test", "test");
+  test->cd();
+  det.SaveReport();
+  file->Close();
+}
 
 //TEST(VarManagerUnitTest, cuttest) {
 //  using namespace Qn;

@@ -54,6 +54,8 @@ class Stats {
       : subsamples_(stats.subsamples_), profile_(stats.profile_), bits_(stats.bits_), status_(stats.status_) {}
 
   double Mean() const { if (status_!=Status::POINTAVERAGE) return profile_.Mean(); else return profile_.MeanPA(); }
+  double Entries() const {return profile_.Entries();}
+  double SumOfWeights() const  {return profile_.SumOfWeights();}
   double BootstrapMean() const { return subsamples_.Mean(); }
   inline double Error() const {
     if (status_!=Status::POINTAVERAGE) {
@@ -96,13 +98,20 @@ class Stats {
   friend Stats operator/(const Stats &, const Stats &);
   friend Stats Sqrt(const Stats &);
 
-  void Fill(const Product &product, const std::vector<size_type> &samples) {
-    subsamples_.Fill(product, samples);
+  inline void Fill(const Product &product, const std::vector<size_type> &samples) {
+    if (product.validity) {
+      subsamples_.Fill(product, samples);
+      profile_.Fill(product);
+    }
+  }
+
+  inline void Fill(const Product &product) {
     profile_.Fill(product);
   }
 
-  void Fill(const Product &product) {
-    profile_.Fill(product);
+  inline void Fill(const double result, const double weight, const std::vector<size_type> &samples) {
+    subsamples_.Fill(result, samples, weight);
+    profile_.Fill(result, weight);
   }
 
   void SetNumberOfSubSamples(size_type nsamples) {
@@ -131,7 +140,7 @@ class Stats {
  private:
   SubSamples subsamples_;
   Profile profile_;
-  unsigned int bits_ = 0;
+  unsigned int bits_ = 0 | Qn::Stats::CORRELATEDERRORS;
   Status status_ = Status::REFERENCE;
 
   /// \cond CLASSIMP

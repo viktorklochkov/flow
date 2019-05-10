@@ -25,130 +25,129 @@
 #include "TTreeReader.h"
 #include "TFile.h"
 
-#include "Correlation.h"
+#include "StatsResult.h"
 #include "Sampler.h"
-#include "Correlator.h"
 #include "EventShape.h"
 #include "DataContainer.h"
+#include "EseHandler.h"
+#include "EventAxes.h"
+#include "EventCuts.h"
+
+#include "ROOT/RMakeUnique.hxx"
 
 namespace Qn {
-
+using QVectors = const std::vector<QVectorPtr> &;
 class CorrelationManager {
-  using FUNCTION = std::function<double(std::vector<Qn::QVector> &)>;
+  using function_t = Qn::Correlation::function_t;
   using size_type = std::size_t;
+
  public:
-  explicit CorrelationManager(std::shared_ptr<TTreeReader> reader) : reader_(std::move(reader)) { num_events_ = reader_->GetEntries(true);}
-  CorrelationManager(std::shared_ptr<TTreeReader> reader, size_type num_events)
-      : reader_(std::move(reader)), num_events_(num_events) {}
+  explicit CorrelationManager(TTree *tree) :
+      ese_handler_(this),
+      event_axes_(this),
+      tree_(tree),
+      reader_(new TTreeReader(tree)),
+      qvectors_(new std::map<std::string, DataContainerQVector *>()) {
+    num_events_ = reader_->GetEntries(true);
+  }
+
+  void AddProjection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
+  void AddEventAxis(const Axis &eventaxis);
+  void AddCorrelation(std::string name, const std::vector<std::string> &input, function_t lambda,
+                      const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
+  void AddEventShape(const std::string &name,
+                     const std::vector<std::string> &input,
+                     function_t lambda,
+                     const TH1F &histo);
+  void SetResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0));
+
+  void SetOutputFile(const std::string &output_name) { correlation_file_name_ = output_name; }
+
+  void SetESEInputFile(const std::string &ese_name, const std::string &tree_file_name) {
+    ese_handler_.SetInput(tree_file_name, ese_name);
+  }
+  void SetESEOutputFile(const std::string &ese_name, const std::string &tree_file_name) {
+    ese_handler_.SetOutput(tree_file_name, ese_name);
+  }
+
+  void Run();
+
+  void EnableDebug() { debug_mode_ = true; }
+
+  DataContainerStats GetResult(const std::string &name) const { return stats_results_.at(name).GetResult(); }
+
+  void SetRunEventId(const std::string &run, const std::string &event) {
+    ese_handler_.SetRunEventId(run, event);
+  }
+
+  /**
+   * @brief Adds a cut based on event variables.
+   * Only events which pass the cuts are used for the correlations.
+   * Template parameters are automatically deduced.
+   * @tparam N number of variables used in the cut.
+   * @tparam FUNCTION type of function
+   * @param name_arr Array of variable names used for the cuts.
+   * @param func C-callable describing the cut of signature bool(float &...).
+   *             The number of double& corresponds to the number of variables
+   */
+  template<std::size_t N, typename FUNCTION>
+  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func) {
+    std::unique_ptr<TTreeReaderValue<float>> arr[N];
+    int i = 0;
+    for (auto &name : name_arr) {
+      arr[i] = std::make_unique<TTreeReaderValue<float>>(*reader_, name);
+      ++i;
+    }
+    event_cuts_.AddCut(MakeUniqueEventCut(arr, func));
+  }
+
+
+ private:
+
+  friend class Qn::EventAxes;
+  friend class Qn::EseHandler;
 
   void AddDataContainer(const std::string &name);
 
-  void AddQVectors(const std::string &namelist);
-
-  void AddProjection(const std::string &input_name, const std::string &output_name, const std::string &axis_names);
-
-  void AddEventVariable(const Qn::Axis &eventaxis);
-
-  void AddCorrelation(std::string name, const std::string &input_names, FUNCTION &&lambda, Qn::Sampler::Resample resample = Qn::Sampler::Resample::ON);
-
-  void SetRefQinCorrelation(const std::string &name, const std::vector<Qn::Weight> &use_weights) {
-    correlations_.at(name).SetReferenceQVectors(use_weights);
-  }
-
-  void ConfigureResampling(Sampler::Method method, size_type nsamples, unsigned long seed = time(0)) { sampler_.Configure(method, nsamples, seed); }
-
-  void AddESE(const std::string &name, FUNCTION &&lambda, float qmax);
-
   void Initialize();
-
-  void Process();
 
   void Finalize();
 
-  /**
-   * Set Name of correlation output file.
-   * @param output_name
-   */
-  void SetOutputFile(const std::string &output_name) { correlation_file_name_ = output_name; }
-  /**
-   * Set name of ese calibration file.
-   * @param ese_name
-   */
-  void SetESECalibrationFile(const std::string &ese_name) { ese_file_name_ = ese_name; }
-
-  DataContainerStats GetResult(const std::string &name) const { return correlations_.at(name).GetResult(); }
-
- private:
   void MakeProjections();
 
-  void SaveToFile(std::string name);
-
-  void BuildCorrelations();
-
-  void FillESE(std::map<std::string, Qn::Correlator> &corr);
-
-  void FillCorrelations(std::map<std::string, Qn::Correlator> &corr);
+  void ConfigureCorrelations();
 
   void UpdateEvent();
 
-  bool CheckEvent();
+  Qn::Correlation *RegisterCorrelation(const std::string &name,
+                                       const std::vector<std::string> &inputs,
+                                       function_t lambda,
+                                       std::vector<Qn::Weight> use_weights);
 
-  bool CheckESEEvent();
+  void AddFriend(const std::string &treename, TFile *file) { tree_->AddFriend(treename.data(), file); }
 
-  void BuildESECorrelation();
+  std::shared_ptr<TTreeReader> &GetReader() { return reader_; }
 
-  void FitEventShape();
-
-  void SaveEventShape(const std::string &filename);
-
-  bool IsESE() const;
+  void ProgressBar();
 
  private:
-  Qn::Sampler sampler_;
+  size_type current_event_ = 0;
+  float progress_ = 0.;
+  bool debug_mode_ = false;
+  size_type num_events_ = 0;
+  std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
+  Qn::EseHandler ese_handler_;
+  Qn::EventAxes event_axes_;
+  Qn::EventCuts event_cuts_;
   std::string correlation_file_name_;
-  std::string ese_file_name_;
-  std::unique_ptr<TFile> ese_file_;
+  TTree *tree_;
   std::shared_ptr<TTreeReader> reader_;
-  std::map<std::string, Qn::Correlator> correlations_;
-  std::map<std::string, Qn::Correlator> ese_correlations_;
+  std::map<std::string, std::unique_ptr<Qn::Correlation>> correlations_;
+  std::map<std::string, Qn::StatsResult> stats_results_;
   std::map<std::string, std::tuple<std::string, std::vector<std::string>>> projections_;
   std::map<std::string, TTreeReaderValue<Qn::DataContainerQVector>> tree_values_;
-  std::map<std::string, TTreeReaderValue<float>> tree_event_values_;
-  std::map<std::string, Qn::DataContainerQVector> qvectors_;
-  std::vector<float> event_values_;
-  std::vector<unsigned long> eventbin_;
-  std::vector<Qn::Axis> event_axes_;
-  std::vector<Qn::Axis> eventshape_axes_;
-  std::unique_ptr<Qn::DataContainerEventShape> event_shape_ = nullptr;
-  bool fill_ese_ = false;
-  bool use_ese_ = false;
-  size_type num_events_ = 0;
-
-  /**
- * Tokenize input string
- * @tparam ContainerT
- * @param str
- * @param tokens
- * @param delimiters
- * @param trimEmpty
- */
-  template<class ContainerT>
-  void tokenize(const std::string &str, ContainerT &tokens,
-                const std::string &delimiters = " ", bool trimEmpty = false) {
-    std::string::size_type pos, lastPos = 0, length = str.length();
-    using value_type = typename ContainerT::value_type;
-    using size_type  = typename ContainerT::size_type;
-    while (lastPos < length + 1) {
-      pos = str.find_first_of(delimiters, lastPos);
-      if (pos==std::string::npos) {
-        pos = length;
-      }
-      if (pos!=lastPos || !trimEmpty)
-        tokens.push_back(value_type(str.data() + lastPos,
-                                    (size_type) pos - lastPos));
-      lastPos = pos + 1;
-    }
-  }
+  std::unique_ptr<std::map<std::string, Qn::DataContainerQVector *>> qvectors_;
+  std::map<std::string, Qn::DataContainerQVector> qvectors_proj_;
 
 };
 }

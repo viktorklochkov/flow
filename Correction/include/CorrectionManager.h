@@ -20,10 +20,13 @@
 
 #include <string>
 #include <map>
+
+#include "ROOT/RMakeUnique.hxx"
+#include "ROOT/RIntegerSequence.hxx"
+
 #include <utility>
 #include "Detector.h"
 #include "VariableManager.h"
-#include "EventInfo.h"
 #include "VariableCutBase.h"
 #include "CorrectionProfile3DCorrelations.h"
 #include "CorrectionProfileCorrelationComponents.h"
@@ -38,10 +41,6 @@
 #include "Alignment.h"
 #include "CorrectionCalculator.h"
 #include "DataContainer.h"
-#include "EventInfo.h"
-
-#include "ROOT/RMakeUnique.hxx"
-#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 class CorrectionManager {
@@ -50,9 +49,11 @@ class CorrectionManager {
   using MapDetectors = std::map<std::string, std::unique_ptr<DetectorBase>>;
 
   CorrectionManager()
-      : event_cuts_(new Cuts()), event_variables_(new Qn::EventInfoF()), var_manager_(new VariableManager()) {
+      : event_cuts_(new Cuts()),
+        var_manager_(new VariableManager()) {
     var_manager_->CreateVariableOnes();
   }
+
   /**
    * Add a variable to the variable manager
    * @param name Name of the variable
@@ -67,13 +68,25 @@ class CorrectionManager {
    * Adds a axis used for correction.
    * @param axis Axis used for correction. The name of the axis corresponds to the name of a variable.
    */
-  void AddCorrectionAxis(const Qn::Axis &axis) { qncorrections_axis_.push_back(axis); }
+  void AddCorrectionAxis(const Qn::Axis &axis) { correction_axes_.push_back(axis); }
 
   /**
    * Adds a event variable, which will be saved to the output tree.
    * @param name Name corresponds to a variable defined in the variable manager.
    */
-  void SetEventVariable(const std::string &name) { event_variables_->AddVariable(name); }
+  void AddEventVariable(const std::string &name) {
+    var_manager_->RegisterOutputF(name);
+  }
+
+  /**
+   * Adds a event variable, which will be saved to the output tree.
+   * Remember to add them as a variable first.
+   * @param name Name corresponds to a variable defined in the variable manager.
+   */
+  void AddRunEventId(const std::string &run, const std::string &event) {
+    var_manager_->RegisterOutputL(run);
+    var_manager_->RegisterOutputL(event);
+  }
 
   /**
    * Adds a detector to the correction framework.
@@ -98,35 +111,20 @@ class CorrectionManager {
     for (const auto &axis : axes) {
       vars.push_back(var_manager_->FindVariable(axis.Name()));
     }
-    std::unique_ptr<Detector<N>> det(new Detector<N>(type, axes, phi, weight, vars, harmo));
+    std::unique_ptr<Detector<N>> det(new Detector<N>(name, type, axes, phi, weight, vars, harmo));
     auto pair = std::make_pair<std::string, std::unique_ptr<DetectorBase>>(std::move(name), std::move(det));
-    if (type==DetectorType::CHANNEL) detectors_channel.emplace(std::move(pair));
-    if (type==DetectorType::TRACK) detectors_track.emplace(std::move(pair));
+    if (type==DetectorType::CHANNEL) detectors_channel_.emplace(std::move(pair));
+    if (type==DetectorType::TRACK) detectors_track_.emplace(std::move(pair));
   }
 
-/**
- * Adds a detector to the correction framework.
- * Enables first second and third harmonic by default.
- * @param name Name of the detector
- * @param type Type of the detector: Channel or Track
- * @param phi_name Name of the variable which saves the angular information e.g. phi angle of a channel or particle
- * @param weight_name Name of the variable which saves a weight. "Ones" is used for a weight of 1.
- * @param axes Axes used for differential corrections. Names correspond to the name of variables.
- */
-  void AddDetector(const std::string &name,
-                   DetectorType type,
-                   const std::string &phi_name,
-                   const std::string &weight_name  = "Ones",
-                   const std::vector<Qn::Axis> &axes = {}) {
-  AddDetector(name,type,phi_name,weight_name,axes,{1,2,3});
-}
-
   /**
-   * Adds a cut to a detector.
-   * @tparam FUNCTION
-   * @param name
-   * @param var_name
-   * @param lambda
+   * @brief Adds a cut to a detector.
+   * Template parameters are automatically deduced.
+   * @tparam N number of variables used in the cut
+   * @tparam FUNCTION type of function
+   * @param name name of the detector
+   * @param names array of names of the cut variables
+   * @param lambda function used to evaluate the cut condition
    */
   template<std::size_t N, typename FUNCTION>
   void AddCut(const std::string &name, const char *const (&names)[N], FUNCTION lambda) {
@@ -137,18 +135,20 @@ class CorrectionManager {
       ++i;
     }
     auto cut = MakeUniqueNDimCut(arr, lambda);
-    if (detectors_track.find(name) != detectors_track.end()) {
-    detectors_track.at(name)->AddCut(std::move(cut));
-    } else if (detectors_channel.find(name) != detectors_channel.end()) {
-      detectors_channel.at(name)->AddCut(std::move(cut));
+    if (detectors_track_.find(name)!=detectors_track_.end()) {
+      detectors_track_.at(name)->AddCut(std::move(cut));
+    } else if (detectors_channel_.find(name)!=detectors_channel_.end()) {
+      detectors_channel_.at(name)->AddCut(std::move(cut));
     } else {
       std::cout << "Detector" + name + "not found. Cut not Added." << std::endl;
     }
   }
+
   /**
-   * Adds a cut based on event variables. Only events which pass the cuts are used for the corrections.
+   * @brief Adds a cut based on event variables.
+   * Only events which pass the cuts are used for the corrections.
    * Template parameters are automatically deduced.
-   * @tparam N dimensionality of the cut
+   * @tparam N number of variables used in the cut.
    * @tparam FUNCTION type of function
    * @param name_arr Array of variable names used for the cuts.
    * @param func C-callable describing the cut of signature bool(double &...).
@@ -164,120 +164,176 @@ class CorrectionManager {
     }
     event_cuts_->AddCut(MakeUniqueNDimCut(arr, func));
   }
+
   /**
-   * Adds a one dimesional event histogram
+   * @brief Adds a one dimensional event histogram
    * @param axes axis of the histogram. Name corresponds to the axis.
    * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
    */
-  void AddEventHisto1D(std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+  void AddEventHisto1D(const Qn::Axis &axes, const std::string &weightname = "Ones");
+
   /**
-   * Adds a two dimesional event histogram
+   * @brief Adds a two n event histogram
    * @param axes axes of the histogram. Name corresponds to the axes.
    * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
    */
-  void AddEventHisto2D(std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+  void AddEventHisto2D(const std::vector<Qn::Axis> &axes, const std::string &weightname = "Ones");
+
+  void AddEventHisto2D(const std::vector<Qn::Axis> &axes, const Qn::Axis &axis, const std::string &weightname = "Ones");
 
   /**
-  * Adds a one dimesional histogram to a detector.
+  * @brief Adds a one dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
   */
-  void AddHisto1D(const std::string &name, std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+  void AddHisto1D(const std::string &name, const Qn::Axis &axis, const std::string &weightname = "Ones");
+
   /**
-  * Adds a two dimesional histogram to a detector.
+  * Adds a two dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
   */
-  void AddHisto2D(const std::string &name, std::vector<Qn::Axis> axes, const std::string &weightname = "Ones");
+  void AddHisto2D(const std::string &name, const std::vector<Qn::Axis> &axes, const std::string &weightname = "Ones");
 
   /**
-   * Adds Correctionsteps to one detector.
+   * @brief Adds correction steps to a detector.
    * @param name Name of the detector.
    * @param config function configuring the correction framework.
-   * C-callable of signature void(QnCorrectionsDetectorConfigurationBase *config).
+   * C-callable of signature void(DetectorConfiguration *config) config.
    */
-  void SetCorrectionSteps(const std::string &name,
-                          std::function<void(DetectorConfiguration *config)> config);
+  void SetCorrectionSteps(const std::string &name, std::function<void(DetectorConfiguration *config)> config);
 
+  /**
+   * @brief Set output tree.
+   * Lifetime of the tree is managed by the user.
+   * @param tree non-owning pointer to the tree.
+   */
   void SetTree(TTree *tree) { out_tree_ = tree; }
 
-  void SaveOutput(std::shared_ptr<TFile> qa_histograms_file, std::shared_ptr<TFile> tree_file) {
-    SaveHistograms(qa_histograms_file);
-    SaveTree(tree_file);
-  }
-
-  void Initialize(std::shared_ptr<TFile> &in_calibration_file_);
-
+  /**
+   * @brief Initializes the correction framework
+   * @param in_calibration_file_ non-owning pointer to the calibration file.
+   * Lifetime of the file has to be managed by the user.
+   */
   void Initialize(TFile *in_calibration_file_);
 
-
+  /**
+   * @brief Process the event variables
+   */
   void ProcessEvent();
 
+  /**
+   * @brief Process the Qn vector corrections
+   */
   void ProcessQnVectors();
 
+  /**
+   * @brief Finalizes the correction framework. To be called after all events are processed.
+   */
   void Finalize();
 
+  /**
+   * @brief Resets the correction framework. To be called before a new event is processed.
+   */
   void Reset();
 
+  /**
+   * @brief Fill all channel detectors. To be called the channel variables have been filled to the variable container.
+   */
   void FillChannelDetectors() {
     if (event_passed_cuts_) {
-      for (auto &dp : detectors_channel) {
+      for (auto &dp : detectors_channel_) {
         dp.second->FillData();
       }
     }
   }
 
+  /**
+   * @brief Fill all tracking detectors. To be called after the track variables of one particle track have been filled
+   * to the detector.
+   */
   void FillTrackingDetectors() {
     if (event_passed_cuts_) {
-      for (auto &dp : detectors_track) {
+      for (auto &dp : detectors_track_) {
         dp.second->FillData();
       }
     }
   }
 
-  double* GetVariableContainer() {return var_manager_->GetVariableContainer();}
+  /**
+   * @brief Get the variable container to be able to fill the variables to the framework.
+   * @return pointer to the variable container
+   */
+  double *GetVariableContainer() { return var_manager_->GetVariableContainer(); }
 
-  TList* GetCalibrationList() {return qncorrections_manager_.GetOutputHistogramsList();}
+  /**
+   * @brief Get the list containing the calibration histograms.
+   * @return A pointer of the list to which the calibration histograms will be saved.
+   */
+  TList *GetCalibrationList() { return qnc_calculator_.GetOutputHistogramsList(); }
 
-  TList* GetCalibrationQAList() {return qncorrections_manager_.GetQAHistogramsList();}
+  /**
+   * @brief Get the list containing the calibration QA histograms.
+   * @return A pointer of the list to which the calibration QA histograms will be saved.
+   */
+  TList *GetCalibrationQAList() { return qnc_calculator_.GetQAHistogramsList(); }
 
-  void FillDetectorQAToList(TList*);
+  /**
+   * @brief Get the list containing the event and detector QA histograms.
+   * @return A pointer of the list to which the event and detector QA histograms will be saved.
+   */
+  TList *GetEventAndDetectorQAList();
 
-  void SetProcessName(std::string name) {qncorrections_manager_.SetCurrentProcessListName(name.data());}
+  /**
+   * @brief Sets the name of the current correction period (e.g. run number).
+   * @param name Name of the current correction period
+   */
+  void SetProcessName(std::string name) {
+    qnc_calculator_.SetCurrentProcessListName(name.data());
+    ConnectCorrectionQVectors("latest");
+  }
 
  private:
 
-  std::pair<std::array<Variable, 2>, TH1F> Create1DHisto(const std::string &name,
-                                                         std::vector<Qn::Axis> axes,
-                                                         const std::string &weightname = "Ones");
+  static constexpr int kMaxCorrectionArrayLength = 1000;
 
-  std::pair<std::array<Variable, 3>, TH2F> Create2DHisto(const std::string &name,
-                                                         std::vector<Qn::Axis> axes,
-                                                         const std::string &weightname = "Ones");
+  std::unique_ptr<Qn::QAHisto1DPtr> Create1DHisto(const std::string &name, const Qn::Axis &axis,
+                                                  const std::string &weightname);
+
+  std::unique_ptr<Qn::QAHisto2DPtr> Create2DHisto(const std::string &name, const std::vector<Qn::Axis> &axes,
+                                                  const std::string &weightname);
+
+  std::unique_ptr<Qn::QAHisto2DPtr> Create2DHisto(const std::string &name, const std::vector<Qn::Axis> &axes,
+                                                  const std::string &weightname,
+                                                  const Qn::Axis &histaxis);
 
   void CreateDetectors();
 
-  void GetQnFromFramework(const std::string &step);
+  void ConnectCorrectionQVectors(const std::string &step) {
+    for (auto &pair : detectors_track_) {
+      pair.second->SetUpCorrectionVectorPtrs(qnc_calculator_, step);
+    }
+    for (auto &pair : detectors_channel_) {
+      pair.second->SetUpCorrectionVectorPtrs(qnc_calculator_, step);
+    }
+  }
 
   void CalculateCorrectionAxis();
 
-  void SaveHistograms(std::shared_ptr<TFile> file);
-
-  void SaveTree(const std::shared_ptr<TFile> &file);
-
-  EventClassVariablesSet *qncorrections_varset_ = nullptr;
-  std::unique_ptr<Cuts> event_cuts_;
-  std::unique_ptr<Qn::EventInfoF> event_variables_;
-  std::vector<Qn::Axis> qncorrections_axis_;
-  CorrectionCalculator qncorrections_manager_;
-  std::shared_ptr<VariableManager> var_manager_;
-  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track;
-  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel;
-  std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_;
-  TTree *out_tree_ = nullptr;
-  bool event_passed_cuts_ = false;
+  std::vector<std::unique_ptr<EventClassVariable>> qnc_evvars_; ///!<! List holding the correction axes
+  std::unique_ptr<EventClassVariablesSet> qnc_varset_ = nullptr; ///!<! CorrectionCalculator correction axes
+  std::unique_ptr<Cuts> event_cuts_; ///< Pointer to the event cuts
+  TList *qa_list_ = nullptr; ///!<! List holding the Detector QA histograms. Lifetime has to be managed by the user.
+  std::vector<Qn::Axis> correction_axes_; ///< vector of event axes used in the correctionstep
+  CorrectionCalculator qnc_calculator_; ///< calculator of the corrections
+  std::shared_ptr<VariableManager> var_manager_; ///< manager of the variables
+  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track_; ///< map of tracking detectors
+  std::map<std::string, std::unique_ptr<DetectorBase>> detectors_channel_; ///< map of channel detectors
+  std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_; ///< event QA histograms
+  TTree *out_tree_ = nullptr;  ///!<! Tree of Qn Vectors and event variables. Lifetime has to be managed by the user.
+  bool event_passed_cuts_ = false; ///< variable holding status if an event passed the cuts.
 };
 }
 

@@ -33,11 +33,6 @@ struct QVec {
   QVec(float x, float y) : x(x), y(y) {}
   float x{0.};
   float y{0.};
-  friend QVec operator+(QVec a, QVec b);
-  friend QVec operator-(QVec a, QVec b);
-  friend QVec operator/(QVec a, float s);
-  friend QVec operator*(QVec a, float s);
-  friend float norm(QVec a);
 };
 
 inline QVec operator+(QVec a, QVec b) { return {a.x + b.x, a.y + b.y}; }
@@ -47,17 +42,9 @@ inline QVec operator*(QVec a, float s) { return {a.x*s, a.y*s}; }
 inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
 
 class QVector {
-
  public:
-
+  static constexpr int kMaxNHarmonics = 8;
   using Normalization = CorrectionQnVector::Normalization;
-
-//  enum class Normalization : short {
-//    NOCALIB,
-//    QOVERSQRTM,
-//    QOVERM,
-//    QOVERNORMQ
-//  };
 
   QVector() = default;
   virtual ~QVector() = default;
@@ -67,9 +54,7 @@ class QVector {
       n_(n),
       sum_weights_(sum),
       q_(q) {
-    for (unsigned int i = 0; i < q.size(); ++i){
-      bits_.set(i);
-    }
+    for (unsigned int i = 0; i < q.size(); ++i) { bits_.set(i); }
   }
 
   void CopyHarmonics(const QVector &qvec) {
@@ -77,24 +62,20 @@ class QVector {
     this->q_.resize(qvec.q_.size());
   }
 
-  double Mean() const {return 0;}
-
-  QVector(Normalization norm, const CorrectionQnVector *vector, std::bitset<8> bits);
+  QVector(Normalization norm, const CorrectionQnVector *vector, std::bitset<kMaxNHarmonics> bits);
 
   inline float x(const unsigned int i) const {
     if (bits_.test(i)) {
-      return q_[std::bitset<8>(bits_ & std::bitset<8>((1 << (i + 1)) - 1)).count() - 1].x;
-    }
-    else {
+      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1 << (i + 1)) - 1)).count() - 1].x;
+    } else {
       throw std::out_of_range("harmonic not in range.");
     }
   }
 
   inline float y(const unsigned int i) const {
     if (bits_.test(i)) {
-      return q_[std::bitset<8>(bits_ & std::bitset<8>((1 << (i + 1)) - 1)).count() - 1].y;
-    }
-    else {
+      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1 << (i + 1)) - 1)).count() - 1].y;
+    } else {
       throw std::out_of_range("harmonic not in range.");
     }
   }
@@ -109,13 +90,47 @@ class QVector {
   QVector DeNormal() const;
 
   Normalization norm_ = Normalization::NONE; ///< normalization method
-  int n_ = 0;                                   ///< number of data vectors contributing to the q vector
-  float sum_weights_ = 0.0;                     ///< sum of weights
-  std::bitset<8> bits_{};                       ///< Bitset for keeping track of the harmonics
-  std::vector<QVec> q_;                         ///< array of qvectors for the different harmonics
+  int n_ = 0;                                ///< number of data vectors contributing to the q vector
+  float sum_weights_ = 0.0;                  ///< sum of weights
+  std::bitset<kMaxNHarmonics> bits_{};       ///< Bitset for keeping track of the harmonics
+  std::vector<QVec> q_;                      ///< array of qvectors for the different harmonics
+
   /// \cond CLASSIMP
- ClassDef(QVector, 7);
+ ClassDef(QVector, 8);
   /// \endcond
+};
+
+namespace detail {
+template<class T>
+T &FUN(T &t) noexcept { return t; }
+template<class T>
+void FUN(T &&) = delete;
+}
+
+/**
+ * @class QVector ptr
+ * @brief Wrapper for QVector used in the correlation step.
+ */
+class QVectorPtr {
+  using Normalization = QVector::Normalization;
+ public:
+  QVectorPtr() = default;
+  // construct/copy/destroy
+  QVectorPtr(const QVector &ref) noexcept : qvector_(&ref) {}
+  QVectorPtr(const QVectorPtr &) noexcept = default;
+  // assignment
+  QVectorPtr &operator=(const QVectorPtr &x) noexcept = default;
+
+  inline float x(const unsigned int i) const { return qvector_->x(i); }
+  inline float y(const unsigned int i) const { return qvector_->y(i); }
+  inline float mag(const unsigned int i) const { return qvector_->mag(i); }
+  inline float sumweights() const { return qvector_->sumweights(); }
+  inline float n() const { return qvector_->n(); }
+  inline Normalization GetNorm() const { return qvector_->GetNorm(); }
+  inline QVector Normal(Normalization norm) const { return qvector_->Normal(norm); }
+  inline QVector DeNormal() const { return qvector_->DeNormal(); }
+ private:
+  const QVector *qvector_ = nullptr;
 };
 
 }

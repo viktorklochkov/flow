@@ -26,16 +26,37 @@ TEST(DataContainerTest, AddAxes) {
   EXPECT_EQ(100, container.size());
 }
 
+TEST(DataContainerTest, Filter) {
+  Qn::DataContainer<float> container;
+  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
+  for (auto &bin : container) {
+    bin = 1;
+  }
+  const auto lambda = [](const std::vector<Qn::Axis> &axes, const std::vector<std::size_t> binindex) {
+    return axes[0].GetLowerBinEdge(binindex[0]) >= 4.9999 && axes[1].GetLowerBinEdge(binindex[1]) < 2.;
+  };
+  auto filtered = container.Filter(lambda);
+  auto proj = container.Filter(lambda).Projection();
+  EXPECT_EQ(proj.At(0), 10);
+  for (unsigned int ibin = 0; ibin < container.size(); ++ibin) {
+    if (ibin==50 || ibin==51 || ibin==60 || ibin==61 || ibin==70 || ibin==71
+        || ibin==80 || ibin==81 || ibin==90 || ibin==91) {
+      EXPECT_EQ(filtered.At(ibin), 1);
+    } else {
+      EXPECT_EQ(filtered.At(ibin), 0);
+    }
+  }
+}
 
 TEST(DataContainerTest, Projection) {
   Qn::DataContainer<float> container;
   container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
   for (auto &bin : container) {
-  bin = 1;
+    bin = 1;
   }
-  auto projection = container.Projection({"a1","a2"},[](float a, float b) { return a + b; });
+  auto projection = container.Projection({"a1", "a2"}, [](float a, float b) { return a + b; });
   for (const auto &bin : projection) {
-  EXPECT_EQ(10, bin);
+    EXPECT_EQ(10, bin);
   }
 }
 
@@ -44,24 +65,24 @@ TEST(DataContainerTest, ProjectionStats) {
   container.AddAxes({{"a1", 30, 0, 10}});
   for (auto &bin : container) {
     bin.SetNumberOfSubSamples(10);
-    bin.Fill({{2.},1,true},{});
+    bin.Fill({1, true, 2.}, {});
   }
   auto projection = container.Projection();
   for (const auto &bin : projection) {
-    EXPECT_EQ(bin.GetNSamples(),10);
+    EXPECT_EQ(bin.GetNSamples(), 10);
   }
 }
 
 TEST(DataContainerTest, ProjectionStats2d) {
   Qn::DataContainerStats container;
-  container.AddAxes({{"a1", 30, 0, 10},{"a2", 30, 0, 10}});
+  container.AddAxes({{"a1", 30, 0, 10}, {"a2", 30, 0, 10}});
   for (auto &bin : container) {
     bin.SetNumberOfSubSamples(10);
-    bin.Fill({{2.},1,true},{});
+    bin.Fill({1, true, 2.});
   }
   auto projection = container.Projection({"a2"});
   for (const auto &bin : projection) {
-    EXPECT_EQ(bin.GetNSamples(),10);
+    EXPECT_EQ(bin.GetNSamples(), 10);
   }
 }
 
@@ -81,10 +102,10 @@ TEST(DataContainerTest, SqrtStats) {
   Qn::DataContainerStats container;
   container.AddAxes({{"a1", 30, 0, 10}});
   for (auto &bin : container) {
-    bin.Fill({{2.}, 2., true}, {});
+    bin.Fill({2., true, 2.}, {});
   }
   auto srt = Sqrt(container);
-  EXPECT_FLOAT_EQ(sqrt(2),srt.At(0).Mean());
+  EXPECT_FLOAT_EQ(sqrt(2), srt.At(0).Mean());
 }
 
 TEST(DataContainerTest, Division) {
@@ -98,7 +119,7 @@ TEST(DataContainerTest, Division) {
   for (auto &bin : b) {
     bin = 2;
   }
-  auto projection = container / b;
+  auto projection = container/b;
   for (const auto &bin : projection) {
     EXPECT_EQ(2, bin);
   }
@@ -202,15 +223,15 @@ TEST(DataContainerTest, Bits) {
   Qn::DataContainer<Qn::Stats> dcstat;
   dcstat.SetSetting(Qn::Stats::Settings::CORRELATEDERRORS);
   std::default_random_engine generator;
-  std::normal_distribution<double> gauss(0,1);
+  std::normal_distribution<double> gauss(0, 1);
   int nsamples = 100;
   int nevents = 1000;
-  std::for_each(dcstat.begin(),dcstat.end(),[nsamples](Qn::Stats &a){a.SetNumberOfSubSamples(nsamples);});
-  Qn::Sampler sampler(nsamples,Qn::Sampler::Method::BOOTSTRAP);
+  std::for_each(dcstat.begin(), dcstat.end(), [nsamples](Qn::Stats &a) { a.SetNumberOfSubSamples(nsamples); });
+  Qn::Sampler sampler(nsamples, Qn::Sampler::Method::BOOTSTRAP);
   sampler.SetNumberOfEvents(nevents);
   sampler.CreateBootstrapSamples();
   for (int i = 0; i < nevents; ++i) {
-    dcstat.At(0).Fill({{1.},gauss(generator),true}, sampler.GetFillVector(i));
+    dcstat.At(0).Fill({gauss(generator), true, 1.}, sampler.GetFillVector(i));
   }
   dcstat.TestBit(Qn::Stats::Settings::CORRELATEDERRORS);
   EXPECT_TRUE(dcstat.At(0).TestBit(Qn::Stats::Settings::CORRELATEDERRORS));
@@ -221,10 +242,29 @@ TEST(DataContainerTest, Bits) {
   EXPECT_FALSE(dcstat.At(0).TestBit(testbit));
   dcstat.ResetSetting(testbit);
   EXPECT_TRUE(dcstat.TestBit(testbit));
-  dcstat.SetBit(testbit,false);
+  dcstat.SetBit(testbit, false);
   EXPECT_FALSE(dcstat.TestBit(testbit));
   EXPECT_FALSE(dcstat.At(0).TestBit(testbit));
   EXPECT_FALSE(dcstat.At(0).TestBit(Qn::Stats::Settings::CORRELATEDERRORS));
+
+}
+
+TEST(DataContainerTest, GetNameTest) {
+  auto file = new TFile("getnametest.root", "RECREATE");
+  TDirectory *dir = file->mkdir("dir");
+  dir->cd();
+  auto a = new Qn::DataContainerEventShape();
+  a->Write("test", TObject::kSingleKey);
+  file->Close();
+  delete a;
+  delete file;
+  auto file2 = TFile::Open("getnametest.root");
+  auto dir2 = (TDirectory *) file2->Get("dir");
+  dir2->ls();
+  for (const auto &obj : *dir2->GetListOfKeys()) {
+    std::cout << obj->GetName() << std::endl;
+    std::cout << dir2->Get(obj->GetName())->GetName() << std::endl;
+  }
 
 }
 

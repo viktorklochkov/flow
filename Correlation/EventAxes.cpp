@@ -1,6 +1,6 @@
 // Flow Vector Correction Framework
 //
-// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Copyright (C) 2019  Lukas Kreis Ilya Selyuzhenkov
 // Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
 // For a full list of contributors please see docs/Credits
 //
@@ -15,33 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef FLOW_PRODUCT_H
-#define FLOW_PRODUCT_H
+#include "EventAxes.h"
+#include "CorrelationManager.h"
+#include "ROOT/RMakeUnique.hxx"
 
-#include <cmath>
-#include <vector>
-#include <numeric>
-
-#include "Rtypes.h"
-
-namespace Qn {
-
-struct Product {
-  Product() = default;
-
-  Product(double result, bool valid, double inweight) :
-      result(result),
-      validity(valid),
-      weight(inweight) {}
-
-  virtual ~Product() = default;
-
-  double result = 0.;       ///!<! value of the product
-  bool validity = false;    ///!<! flag to show if product is valid
-  double weight = 1.;       ///!<! weight
-
-};
-
+void Qn::EventAxes::RegisterEventAxis(Qn::Axis axis, Type type) {
+  auto name = axis.Name().data();
+  if (type==Type::Integer) {
+    event_axes_.push_back(
+        std::make_unique<Qn::EventAxis<Long64_t>>(axis, TTreeReaderValue<Long64_t>(*manager_->GetReader(), name)));
+  }
+  if (type==Type::Float) {
+    event_axes_.push_back(
+        std::make_unique<Qn::EventAxis<Float_t>>(axis, TTreeReaderValue<Float_t>(*manager_->GetReader(), name)));
+  }
+  bin_.emplace_back(-1);
 }
-
-#endif

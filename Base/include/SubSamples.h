@@ -36,9 +36,15 @@ struct Sample {
   double sumw = 0;
   int entries = 0;
 
-  void Fill(const Product &prod) {
-    sumwy += prod.result*prod.GetWeight();
-    sumw += prod.GetWeight();
+  inline void Fill(const Product &prod) {
+    sumwy += prod.result*prod.weight;
+    sumw += prod.weight;
+    ++entries;
+  }
+
+  inline void Fill(const double result, const double weight) {
+    sumwy += result*weight;
+    sumw += weight;
     ++entries;
   }
 
@@ -113,9 +119,15 @@ class SubSamples {
   const_iterator begin() const { return samples_.cbegin(); } ///< iterator for external use
   const_iterator end() const { return samples_.cend(); } ///< iterator for external use
 
-  void Fill(const Product &product, const std::vector<size_type> &samples) {
+  inline void Fill(const Product &product, const std::vector<size_type> &samples) {
     for (auto &sample : samples) {
-      samples_.at(sample).Fill(product);
+      samples_[sample].Fill(product);
+    }
+  }
+
+  inline void Fill(const double result, const std::vector<size_type> &samples, const double weight) {
+    for (auto &sample : samples) {
+      samples_[sample].Fill(result, weight);
     }
   }
 
@@ -153,9 +165,7 @@ class SubSamples {
 
   TH1F SubSampleMeanHisto(const std::string &name) {
     auto means = samples_;
-    std::sort(means.begin(),
-              means.end(),
-              [](Sample a, Sample b) { return (a.Mean()) > (b.Mean()); });
+    std::sort(means.begin(), means.end(), [](Sample a, Sample b) { return (a.Mean()) > (b.Mean()); });
     TH1F histo(name.data(), name.data(), 50, means.begin()->Mean(), (means.end() - 1)->Mean());
     for (auto sample : samples_) {
       histo.Fill(sample.Mean());

@@ -15,33 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef FLOW_PRODUCT_H
-#define FLOW_PRODUCT_H
+#ifdef __CINT__
 
-#include <cmath>
-#include <vector>
-#include <numeric>
-
-#include "Rtypes.h"
-
-namespace Qn {
-
-struct Product {
-  Product() = default;
-
-  Product(double result, bool valid, double inweight) :
-      result(result),
-      validity(valid),
-      weight(inweight) {}
-
-  virtual ~Product() = default;
-
-  double result = 0.;       ///!<! value of the product
-  bool validity = false;    ///!<! flag to show if product is valid
-  double weight = 1.;       ///!<! weight
-
-};
-
-}
+#pragma link C++ class Qn::CorrelationManager-;
 
 #endif

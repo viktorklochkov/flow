@@ -20,55 +20,121 @@
 
 #include <utility>
 #include <vector>
-#include <TH1.h>
-#include <TH2.h>
+
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3F.h"
 #include "TList.h"
-#include "VariableManager.h"
 #include "ROOT/RMakeUnique.hxx"
 #include "ROOT/RIntegerSequence.hxx"
 
-namespace Qn {
+#include "Axis.h"
+#include "VariableManager.h"
 
+namespace Qn {
+/**
+ * Base class of a QA histogram
+ */
 struct QAHistoBase {
   virtual ~QAHistoBase() = default;
   virtual void Fill() = 0;
-  virtual void Draw(const char *option) = 0;
-  virtual void Write(const char *name) = 0;
-  virtual const char* Name() = 0;
-  virtual void AddToList(TList*) = 0;
+  virtual void AddToList(TList *) = 0;
 
 };
-
+/**
+ * Wrapper for a ROOT histogram, which allows it to be filled by the correction manager.
+ * @tparam HISTO type of histogram.
+ * @tparam N number of dimensions
+ * @tparam VAR Type of the variable
+ */
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo) : vars_(std::move(vec)), histo_(histo) {}
-
-  template<typename array, std::size_t... I>
-  void FillImpl(const array a, std::index_sequence<I...>) {
-    histo_.FillN(a[0].length(), (a[I].begin())...);
+  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::Axis> axis, Qn::Variable axisvar) :
+      vars_(std::move(vec)),
+      axis_(std::move(axis)),
+      axisvar_(axisvar) {
+    if (axis_) {
+      for (unsigned int i = 0; i < axis_->size(); ++i) {
+        auto histname = histo->GetName();
+        auto binname = std::string(histname) + axis_->GetBinName(i);
+        auto binhisto = (HISTO) ptr(histo)->Clone(binname.data());
+        histo_.push_back(binhisto);
+      }
+      name_ = ptr(histo)->GetName();
+      delete histo;
+    } else {
+      histo_.push_back(histo);
+    }
   }
 
+  QAHisto(std::array<VAR, N> vec, HISTO histo) :
+      vars_(std::move(vec)) {
+    histo_.push_back(histo);
+  }
+
+  /**
+   * Implementation of the fill function
+   * @tparam array type of array
+   * @tparam I index sequence
+   * @param a Array of variables used for filling the histogram
+   */
+  template<typename array, std::size_t... I>
+  void FillImpl(const array a, std::index_sequence<I...>) {
+    auto bin = 0;
+    if (axis_) {
+      bin = axis_->FindBin(*axisvar_.begin());
+      if (bin > -1) ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
+    }
+    else {
+      ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
+    }
+  }
+
+  /**
+   * Fill function.
+   */
   void Fill() override {
     return FillImpl(vars_, std::make_index_sequence<N>{});
   };
 
-  void Draw(const char *option) override { histo_.Draw(option); }
-
-  void Write(const char *name) override { histo_.Write(name); }
-
-  const char* Name() override { return histo_.GetName(); }
-
-  void AddToList(TList *list) override {list->Add(new HISTO(histo_));}
-
+  /**
+   * Add the histogram to the list.
+   * @param list pointer to the list. Lifetime of the histogram hast to be managed by the list.
+   */
+  void AddToList(TList *list) override {
+    if (axis_) {
+      auto dir = new TList();
+      dir->SetName(name_.data());
+      for (auto &histo : histo_) {
+        dir->Add(ptr(histo));
+      }
+      list->Add(dir);
+    }
+    else {
+      for (auto &histo : histo_) {
+        list->Add(ptr(histo));
+      }
+    }
+  }
 
  private:
-  std::array<VAR, N> vars_;
-  HISTO histo_;
+  template<typename T>
+  T *ptr(T &obj) { return &obj; } ///Turns a reference into pointer.
+  template<typename T>
+  T *ptr(T *obj) { return obj; } /// The Object is already pointer. Returns it.
+
+  std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
+  std::vector<HISTO> histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
+  std::unique_ptr<Qn::Axis> axis_ = nullptr; // Creates a histogram for each bin of the axis
+  VAR axisvar_;
+  std::string name_;
 };
 
-using QAHisto1D = QAHisto<TH1F, 2, Variable>;
-using QAHisto2D = QAHisto<TH2F, 3, Variable>;
+/// specializations used in the framework
+using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::Variable>;
+using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::Variable>;
 
 }
+
 #endif //FLOW_QAHISTOGRAM_H

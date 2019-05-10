@@ -4,79 +4,96 @@
 
 
 #include <gtest/gtest.h>
-#include "Correlation.h"
+#include "StatsResult.h"
 #include "CorrelationManager.h"
-#include "EventInfo.h"
 
-TEST(CorrelationManagerTest, AddingCorrelation) {
-  auto data1 = new Qn::DataContainer<Qn::QVector>();
-  for (auto &bin : *data1) {
-    Qn::QVec qvec(1.0, 1.0);
-    bin = Qn::QVector(Qn::QVector::Normalization::NONE, 1, 2, {{qvec, qvec, qvec, qvec}});
-  }
-  TTree tree;
-  auto event = new Qn::EventInfoF();
-  event->AddVariable("Ev1");
-  event->SetToTree(tree);
+TEST(CorrelationManagerTest, FullCorrelationWithESE) {
+  auto begin = std::chrono::steady_clock::now();
+  using QVectors = Qn::QVectors;
+  auto constexpr kRef = Qn::kRef;
+  auto constexpr kObs = Qn::kObs;
+  auto constexpr ese = true;
 
-  tree.Branch("Det1", &data1);
-  tree.Branch("Det2", &data1);
+  auto input_file = TFile::Open("25testtree.root");
+  auto tree = dynamic_cast<TTree *>(input_file->Get("tree"));
 
-  auto ne = 100000;
+  std::string out_correlations{"correlations.root"};
+  std::string in_calib{"calib.root"};
+  std::string out_calib{"calib.root"};
+  std::string in_ese{"esetree.root"};
+  std::string out_ese{"esetree.root"};
 
-  for (int i = 0; i < ne; ++i) {
-    event->SetVariable("Ev1", 0.5);
-    tree.Fill();
+  Qn::CorrelationManager man(tree);
+  man.SetOutputFile(out_correlations);
+  man.EnableDebug();
+  if (ese) {
+    man.SetESEInputFile(in_calib, in_ese);
+    man.SetESEOutputFile(out_calib, out_ese);
+    auto v1mag = [](QVectors q) { return q[0].DeNormal().mag(1)/std::sqrt(q[0].sumweights()); };
+    man.AddEventShape("ZDCAq1", {"ZDCA"}, v1mag, {"h", "", 50, 0, 200});
+    man.SetRunEventId("RunNumber", "EventNumber");
   }
-  for (int i = 0; i < ne; ++i) {
-    event->SetVariable("Ev1", 1.5);
-    tree.Fill();
-  }
-  for (int i = 0; i < ne; ++i) {
-    event->SetVariable("Ev1", 2.5);
-    tree.Fill();
-  }
+  auto v2zdc_yxx = [](QVectors q) { return q[0].y(2)*q[1].x(1)*q[2].x(1); };
+  auto v2zdc_yyy = [](QVectors q) { return q[0].y(2)*q[1].y(1)*q[2].y(1); };
+  auto v2zdc_xxy = [](QVectors q) { return q[0].x(2)*q[1].x(1)*q[2].y(1); };
+  auto v2zdc_xyx = [](QVectors q) { return q[0].x(2)*q[1].y(1)*q[2].x(1); };
+  auto v2zdc_xxx = [](QVectors q) { return q[0].x(2)*q[1].x(1)*q[2].x(1); };
+  auto v2zdc_xyy = [](QVectors q) { return q[0].x(2)*q[1].y(1)*q[2].y(1); };
+  auto v2zdc_yxy = [](QVectors q) { return q[0].y(2)*q[1].x(1)*q[2].y(1); };
+  auto v2zdc_yyx = [](QVectors q) { return q[0].y(2)*q[1].y(1)*q[2].x(1); };
+  auto scalar = [](QVectors q) { return q[0].x(2)*q[1].x(2) + q[0].y(2)*q[1].y(2); };
 
-  EXPECT_EQ(3*ne, tree.GetEntries());
-  std::cout << "create manager" << std::endl;
-  std::shared_ptr<TTreeReader> reader(new TTreeReader(&tree));
-  Qn::CorrelationManager manager(reader);
-  std::cout << "add variables" << std::endl;
+  man.AddEventAxis({"CentralityV0M", 70, 0., 70.});
 
-  manager.AddEventVariable({"Ev1", 3, 0, 3});
-  manager.AddQVectors("Det1, Det2");
-  manager.SetESECalibrationFile("testese.root");
-  manager.AddESE("Det1",[](const std::vector<Qn::QVector> &a){return  a[0].x(1);},10);
-  std::cout << "add correlation" << std::endl;
-  TTreeReaderValue<float> eventvalue(*reader, "Ev1");
-  manager.AddCorrelation("c1","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
-  manager.SetRefQinCorrelation("c1",{Qn::Weight::REFERENCE, Qn::Weight::REFERENCE});
-  manager.AddCorrelation("avg","Det1",[](std::vector<Qn::QVector> &q) { return q[0].mag(2)/sqrt(q[0].n());}, Qn::Sampler::Resample::OFF);
-  manager.SetRefQinCorrelation("avg",{Qn::Weight::OBSERVABLE});
-  manager.AddCorrelation("c2","Det1, Det2",[](std::vector<Qn::QVector> &q) { return q[0].x(1) + q[1].x(1);});
-  manager.ConfigureResampling(Qn::Sampler::Method::BOOTSTRAP,10);
-  int events = 0;
-  reader->SetEntry(0);
-  std::cout << "init" << std::endl;
+  man.AddCorrelation("TPCPTV0A", {"TPCPT", "V0A"}, scalar, {kObs, kRef});
+  man.AddCorrelation("TPCPTV0C", {"TPCPT", "V0C"}, scalar, {kObs, kRef});
+  man.AddCorrelation("TPCV0A", {"TPC", "V0A"}, scalar, {kRef, kRef});
+  man.AddCorrelation("TPCV0C", {"TPC", "V0C"}, scalar, {kRef, kRef});
+  man.AddCorrelation("V0CV0A", {"V0A", "V0C"}, scalar, {kRef, kRef});
+  man.AddCorrelation("ZDCAC_XX", {"ZDCA", "ZDCC"}, [](QVectors q) { return -q[0].x(1)*q[1].x(1); }, {kRef, kRef});
+  man.AddCorrelation("ZDCAC_YY", {"ZDCA", "ZDCC"}, [](QVectors q) { return q[0].y(1)*q[1].y(1); }, {kRef, kRef});
+  man.AddCorrelation("ZDCAC_YX", {"ZDCA", "ZDCC"}, [](QVectors q) { return q[0].y(1)*q[1].x(1); }, {kRef, kRef});
+  man.AddCorrelation("ZDCAC_XY", {"ZDCA", "ZDCC"}, [](QVectors q) { return q[0].x(1)*q[1].y(1); }, {kRef, kRef});
 
-  manager.Initialize();
-  reader->Restart();
-  std::cout << "run" << std::endl;
-  while (reader->Next()) {
-    manager.Process();
-    events++;
-  }
-  EXPECT_EQ(3*ne, events);
-  manager.Finalize();
-  auto correlation = manager.GetResult("c1");
-  auto correlation2 = manager.GetResult("c2");
-  for (auto &bin : correlation) {
-    EXPECT_FLOAT_EQ(2.0, bin.Mean());
-    EXPECT_EQ(10,bin.GetNSamples());
-  }
-  auto average = manager.GetResult("avg");
-  for (auto &bin : average) {
-    EXPECT_FLOAT_EQ(sqrt(2.0), bin.Mean());
-    EXPECT_EQ(0,bin.GetNSamples());
-  }
+  man.AddCorrelation("ZDCAC_YXX", {"TPC", "ZDCA", "ZDCC"}, v2zdc_yxx, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_YYY", {"TPC", "ZDCA", "ZDCC"}, v2zdc_yyy, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_XYX", {"TPC", "ZDCA", "ZDCC"}, v2zdc_xyx, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_XXY", {"TPC", "ZDCA", "ZDCC"}, v2zdc_xxy, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_XXX", {"TPC", "ZDCA", "ZDCC"}, v2zdc_xxx, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_XYY", {"TPC", "ZDCA", "ZDCC"}, v2zdc_xyy, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_YXY", {"TPC", "ZDCA", "ZDCC"}, v2zdc_yxy, {kObs, kRef, kRef});
+  man.AddCorrelation("ZDCAC_YYX", {"TPC", "ZDCA", "ZDCC"}, v2zdc_yyx, {kObs, kRef, kRef});
+
+  man.SetResampling(Qn::Sampler::Method::BOOTSTRAP, 10);
+  man.Run();
+  auto end = std::chrono::steady_clock::now();
+  std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << " minutes"
+            << std::endl;
+}
+
+TEST(CorrelationManagerTest, FullCorrelation) {
+  auto begin = std::chrono::steady_clock::now();
+  using QVectors = Qn::QVectors;
+  auto constexpr kRef = Qn::kRef;
+
+  auto input_file = TFile::Open("25testtree.root");
+  auto tree = dynamic_cast<TTree *>(input_file->Get("tree"));
+
+  std::string out_correlations{"correlations.root"};
+
+  Qn::CorrelationManager man(tree);
+  man.SetOutputFile(out_correlations);
+  man.EnableDebug();
+  auto scalar = [](QVectors q) { return q[0].x(2)*q[1].x(2) + q[0].y(2)*q[1].y(2); };
+
+  man.AddEventAxis({"CentralityV0M", 70, 0., 70.});
+  man.AddEventCut({"Trigger", "CentralityV0M"}, [](float a, float c) { return a < 1. && c > 15 && c < 25; });
+
+  man.AddCorrelation("V0CV0A", {"V0A", "V0C"}, scalar, {kRef, kRef});
+
+  man.SetResampling(Qn::Sampler::Method::BOOTSTRAP, 10);
+  man.Run();
+  auto end = std::chrono::steady_clock::now();
+  std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << " minutes"
+            << std::endl;
 }

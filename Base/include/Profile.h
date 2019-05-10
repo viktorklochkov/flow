@@ -41,11 +41,19 @@ class Profile {
 
   virtual ~Profile() = default;
 
-  void Fill(const Product &prod) {
-    sumwy_ += prod.GetWeight()*prod.result;
-    sumwy2_ += prod.GetWeight()*prod.result*prod.result;
-    sumw_ += prod.GetWeight();
-    sumw2_ += prod.GetWeight()*prod.GetWeight();
+  inline void Fill(const Product &prod) {
+    sumwy_ += prod.weight*prod.result;
+    sumwy2_ += prod.weight*prod.result*prod.result;
+    sumw_ += prod.weight;
+    sumw2_ += prod.weight*prod.weight;
+    ++entries_;
+  }
+
+  inline void Fill(const double result, const double weight) {
+    sumwy_ += weight*result;
+    sumwy2_ += weight*result*result;
+    sumw_ += weight;
+    sumw2_ += weight*weight;
     ++entries_;
   }
 
@@ -53,6 +61,14 @@ class Profile {
     if (sumw_ > 0.) {
       return sumwy_/sumw_;
     } else { return sumwy_; }
+  }
+
+  inline int Entries() const {
+    return entries_;
+  }
+
+  inline double SumOfWeights() const {
+    return sumw_;
   }
 
   inline double Error() const {

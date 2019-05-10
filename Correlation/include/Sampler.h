@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <ctime>
+#include <string>
 
 namespace Qn {
 class Sampler {
@@ -38,23 +39,26 @@ class Sampler {
 
   Sampler() = default;
 
-  explicit Sampler(size_type nevents, size_type nsamples) :
+  Sampler(size_type nevents, size_type nsamples) :
       n_events_(nevents),
       n_samples_(nsamples) {
     samples_.resize(nevents);
     if (nevents < nsamples) n_samples_ = 1;
   }
-  explicit Sampler(size_type nsamples, Method met) :
+
+  Sampler(size_type nsamples, Method met) :
       method_(met),
       n_events_(0),
       n_samples_(nsamples) {
     samples_.resize(0);
   }
 
-  void Configure(Method method, size_type nsamples, unsigned long seed = time(0)) {
-    method_ = method;
-    n_samples_ = nsamples;
-    seed_ = seed;
+  Sampler(size_type n_events, Method method, size_type nsamples, unsigned long seed = time(0)) :
+      seed_(seed),
+      method_(method),
+      n_events_(n_events),
+      n_samples_(nsamples),
+      samples_(n_events) {
   }
 
   void SetNumberOfEvents(size_type num) {
@@ -85,6 +89,18 @@ class Sampler {
   inline std::vector<std::vector<size_type>> GetSamples() const { return samples_; }
   void SetSamples(const std::vector<std::vector<size_type>> &samples) {
     samples_ = samples;
+  }
+
+  std::string Report() {
+    std::string method;
+    if (method_==Method::BOOTSTRAP) method="bootstrap";
+    if (method_==Method::SUBSAMPLING) method="subsampling";
+    return  std::string("----------------------\n") +
+            std::string("Resampling parameters:\n") +
+                        "number of events  " + std::to_string(n_events_)+"\n"
+                        "number of samples " + std::to_string(n_samples_)+"\n"
+                        "method            " + method+"\n"+
+            std::string("----------------------\n");
   }
 
  private:

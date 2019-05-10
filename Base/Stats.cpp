@@ -43,7 +43,6 @@ Stats MergeBins(const Stats &lhs, const Stats &rhs) {
 
 Stats Merge(const Stats &lhs, const Stats &rhs) {
   Stats result;
-
   if (lhs.TestBit(Qn::Stats::MERGESUBSAMPLES)) {
     result.profile_ = lhs.profile_;
     if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)

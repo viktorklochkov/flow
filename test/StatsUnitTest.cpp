@@ -15,7 +15,7 @@
 
 TEST(StatsTest, Trivial) {
 Qn::Stats stats;
-Qn::Product prod({1.,2.},0,true);
+Qn::Product prod(0,true,2.);
 stats.SetNumberOfSubSamples(1);
 stats.Fill(prod,{0});
 EXPECT_EQ(0, stats.Mean());
@@ -27,15 +27,15 @@ TEST(StatsTest, Printing) {
   stats.SetBits((BIT(16)|BIT(17)));
   stats.ResetBits(BIT(16));
   stats.SetNumberOfSubSamples(3);
-  stats.Fill({{1.},1,true},{0,1,2});
+  stats.Fill({1,true,1.},{0,1,2});
   stats.Print();
 }
 
 TEST(StatsTest, Addition) {
   Qn::Stats stats_A;
   Qn::Stats stats_B;
-  stats_A.Fill({{1.},1,true},{});
-  stats_B.Fill({{2.},2,true},{});
+  stats_A.Fill({1,true,1.},{});
+  stats_B.Fill({2,true,2.},{});
   auto stats_C = stats_A + stats_B;
   EXPECT_FLOAT_EQ(5./3, stats_C.Mean());
   EXPECT_FLOAT_EQ(0.35136418, stats_C.Error());
@@ -44,8 +44,8 @@ TEST(StatsTest, Addition) {
 TEST(StatsTest, MultiplicationPA) {
   Qn::Stats stats_A;
   Qn::Stats stats_B;
-  stats_A.Fill({{1.},1,true},{});
-  stats_B.Fill({{2.},2,true},{});
+  stats_A.Fill({1,true,1.},{});
+  stats_B.Fill({2,true,2.},{});
   stats_A.SetStatus(Qn::Stats::Status::OBSERVABLE);
   stats_B.SetStatus(Qn::Stats::Status::OBSERVABLE);
   auto stats_C = stats_A * stats_B;
@@ -58,8 +58,8 @@ TEST(StatsTest, Division) {
   Qn::Stats stats_B;
   stats_A.SetStatus(Qn::Stats::Status::OBSERVABLE);
   stats_B.SetStatus(Qn::Stats::Status::REFERENCE);
-  stats_A.Fill({{6.},1,true},{});
-  stats_B.Fill({{10.},2,true},{});
+  stats_A.Fill({1,true,6.},{});
+  stats_B.Fill({2,true,10.},{});
   auto stats_C = stats_A / stats_B;
   EXPECT_FLOAT_EQ(1./2 , stats_C.Mean());
   EXPECT_FLOAT_EQ(0, stats_C.Error());
@@ -76,7 +76,7 @@ TEST(StatsTest, Sqrt) {
   sampler.SetNumberOfEvents(nevents);
   sampler.CreateBootstrapSamples();
   for (int i = 0; i < nevents; ++i) {
-    stats.Fill({{1.},gauss(generator),true}, sampler.GetFillVector(i));
+    stats.Fill({gauss(generator),true,1.}, sampler.GetFillVector(i));
   }
 //  stats.SetStatus(Qn::Stats::Status::POINTAVERAGE);
   stats = Qn::Sqrt(stats);
@@ -107,8 +107,8 @@ TEST(StatsTest, Sqrt) {
 TEST(StatsTest, DivisionPA) {
   Qn::Stats stats_A;
   Qn::Stats stats_B;
-  stats_A.Fill({{1.},1,true},{});
-  stats_B.Fill({{2.},2,true},{});
+  stats_A.Fill({1,true,1.},{});
+  stats_B.Fill({2,true,2.},{});
   stats_A.SetStatus(Qn::Stats::Status::OBSERVABLE);
   stats_B.SetStatus(Qn::Stats::Status::OBSERVABLE);
   auto stats_C = stats_A / stats_B;
@@ -148,7 +148,7 @@ TEST(StatsTest, Gaussian) {
   auto gausshisto = new TH1F("gauss","gauss",50,-10,10);
   for (int i = 0; i < nevents; ++i) {
     auto a = gauss(generator);
-    stats.Fill({{1.},a,true}, sampler.GetFillVector(i));
+    stats.Fill({a,true,1.}, sampler.GetFillVector(i));
     gausshisto->Fill(a);
   }
   auto histo = stats.SampleMeanHisto("SampleMean");
@@ -202,8 +202,8 @@ TEST(StatsTest, BSMoutofN) {
       for (int i = 0; i < nevents; ++i) {
         double a = gauss_0(generator);
         double b = gauss_1(generator);
-        stats_A.Fill({{1.}, a, true}, sampler.GetFillVector(i));
-        stats_B.Fill({{1.}, b, true}, sampler.GetFillVector(i));
+        stats_A.Fill({a, true,1.}, sampler.GetFillVector(i));
+        stats_B.Fill({b, true,1.}, sampler.GetFillVector(i));
         histo1->Fill(0., a);
         histo2->Fill(0., b);
       }
@@ -246,8 +246,8 @@ TEST(StatsTest, GaussianRatio) {
   for (int i = 0; i < nevents; ++i) {
     double a = gauss_0(generator);
     double b = gauss_1(generator);
-    stats_A.Fill({{1.},a,true}, sampler.GetFillVector(i));
-    stats_B.Fill({{1.},b,true}, sampler.GetFillVector(i));
+    stats_A.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_B.Fill({b,true,1.}, sampler.GetFillVector(i));
     histo1->Fill(0.,a);
     histo2->Fill(0.,b);
   }
@@ -304,10 +304,10 @@ TEST(StatsTest, GaussianAddition) {
   for (int i = 0; i < nevents; ++i) {
     auto a = gauss_a(generator);
     auto b = gauss_b(generator);
-    stats_a.Fill({{1.},a,true}, sampler.GetFillVector(i));
-    stats_b.Fill({{1.},b,true}, sampler.GetFillVector(i));
-    stats_d.Fill({{1.},a,true}, sampler.GetFillVector(i));
-    stats_d.Fill({{1.},b,true}, sampler.GetFillVector(i));
+    stats_a.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_b.Fill({b,true,1.}, sampler.GetFillVector(i));
+    stats_d.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_d.Fill({b,true,1.}, sampler.GetFillVector(i));
   }
   stats_a.SetStatus(Qn::Stats::Status::OBSERVABLE);
   stats_b.SetStatus(Qn::Stats::Status::OBSERVABLE);
@@ -339,10 +339,10 @@ TEST(StatsTest, GaussianAdditionWeighted) {
   for (int i = 0; i < nevents; ++i) {
     auto a = gauss_a(generator);
     auto b = gauss_b(generator);
-    stats_a.Fill({{1.},a,true}, sampler.GetFillVector(i));
-    stats_b.Fill({{2.},b,true}, sampler.GetFillVector(i));
-    stats_d.Fill({{1.},a,true}, sampler.GetFillVector(i));
-    stats_d.Fill({{2.},b,true}, sampler.GetFillVector(i));
+    stats_a.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_b.Fill({b,true,1.}, sampler.GetFillVector(i));
+    stats_d.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_d.Fill({b,true,1.}, sampler.GetFillVector(i));
   }
   stats_a.SetStatus(Qn::Stats::Status::OBSERVABLE);
   stats_b.SetStatus(Qn::Stats::Status::REFERENCE);
@@ -378,11 +378,11 @@ TEST(StatsTest, GaussianAdditionWeightedRatio) {
     auto a = gauss_a(generator);
     auto b = gauss_b(generator);
     auto den = gauss_den(generator);
-    stats_a.Fill({{},a,true}, sampler.GetFillVector(i));
-    stats_b.Fill({{2.},b,true}, sampler.GetFillVector(i));
-    stats_d.Fill({{},a,true}, sampler.GetFillVector(i));
-    stats_d.Fill({{2.},b,true}, sampler.GetFillVector(i));
-    stats_den.Fill({{},den,true}, sampler.GetFillVector(i));
+    stats_a.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_b.Fill({b,true,2.}, sampler.GetFillVector(i));
+    stats_d.Fill({a,true,1.}, sampler.GetFillVector(i));
+    stats_d.Fill({b,true,2.}, sampler.GetFillVector(i));
+    stats_den.Fill({den,true,1.}, sampler.GetFillVector(i));
   }
   stats_a.SetStatus(Qn::Stats::Status::OBSERVABLE);
   stats_b.SetStatus(Qn::Stats::Status::OBSERVABLE);
