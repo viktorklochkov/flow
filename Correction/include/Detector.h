@@ -79,8 +79,8 @@ class Detector : public DetectorBase {
   Detector(std::string name, const DetectorType type, std::vector<Qn::Axis> axes, const Variable phi,
            const Variable weight, const std::vector<Variable> &vars, int const(&harmo)[N]) :
       nchannels_(phi.length()),
-      harmonics_(new int[N]),
       name_(name),
+      harmonics_(new int[N]),
       type_(type),
       phi_(phi),
       weight_(weight),

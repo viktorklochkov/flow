@@ -112,9 +112,12 @@ class CorrectionManager {
       vars.push_back(var_manager_->FindVariable(axis.Name()));
     }
     std::unique_ptr<Detector<N>> det(new Detector<N>(name, type, axes, phi, weight, vars, harmo));
-    auto pair = std::make_pair<std::string, std::unique_ptr<DetectorBase>>(std::move(name), std::move(det));
-    if (type==DetectorType::CHANNEL) detectors_channel_.emplace(std::move(pair));
-    if (type==DetectorType::TRACK) detectors_track_.emplace(std::move(pair));
+    if (type==DetectorType::CHANNEL) {
+      detectors_channel_.emplace(name, std::move(det));
+    }
+    if (type==DetectorType::TRACK) {
+      detectors_track_.emplace(name, std::move(det));
+    }
   }
 
   /**
