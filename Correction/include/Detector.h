@@ -290,12 +290,12 @@ class Detector : public DetectorBase {
   Qn::QVector::Normalization normalization_ = Qn::QVector::Normalization::NONE; /// Normalization of the Q vectors
   int nchannels_ = 0; /// number of channels in case of channel detector
   int nharmonics_ = N; /// number of harmonics
-  std::string name_; /// name of  the detector
+  const std::string name_; /// name of  the detector
   std::bitset<Qn::QVector::kMaxNHarmonics> harmonics_bits_; /// bitset of all activated harmonics
   std::unique_ptr<int[]> harmonics_; /// int array of all activated harmonics
-  DetectorType type_; /// type of the detector: channel or tracking detector
-  Variable phi_; /// variable holding the azimuthal angle
-  Variable weight_; /// variable holding the weight which is used for the calculation of the Q vector.
+  const DetectorType type_; /// type of the detector: channel or tracking detector
+  const Variable phi_; /// variable holding the azimuthal angle
+  const Variable weight_; /// variable holding the weight which is used for the calculation of the Q vector.
   std::vector<Variable> vars_; /// variables used for the binning of the Q vector.
   std::vector<float> coordinates_;  ///  vector holding the temporary coordinates of one track or channel.
   std::unique_ptr<Cuts> cuts_; /// per channel selection  cuts
