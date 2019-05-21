@@ -79,7 +79,7 @@ struct Sample {
 
   void Sqrt() {
     sumw = sqrt(sumw);
-    sumwy = sqrt(sumwy);
+    sumwy = std::signbit(sumwy) ? -1*sqrt(fabs(sumwy)) : sqrt(fabs(sumwy));
   }
 
   void Print() {
