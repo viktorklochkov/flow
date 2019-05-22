@@ -49,7 +49,7 @@ class DetectorBase {
  public:
   virtual ~DetectorBase() = default;
 
-  virtual std::unique_ptr<DataContainerTClonesArray> &GetDataContainer() = 0;
+  virtual std::unique_ptr<DataContainerQnDataVector> &GetDataContainer() = 0;
   virtual std::unique_ptr<DataContainerQVector> &GetQnDataContainer() = 0;
 
   virtual CorrectionDetector *GenerateDetector(int globalid, int binid, EventClassVariablesSet *set) = 0;
@@ -60,7 +60,6 @@ class DetectorBase {
   virtual void InitializeCutReports() = 0;
   virtual void FillReport() = 0;
   virtual void FillData() = 0;
-  virtual void FillDataTracking() = 0;
   virtual void ClearData() = 0;
   virtual TList *GetReportList() = 0;
   virtual void SetUpCorrectionVectorPtrs(const Qn::CorrectionCalculator &calc, std::string step) = 0;
@@ -88,7 +87,7 @@ class Detector : public DetectorBase {
       vars_(vars),
       cuts_(new Qn::Cuts),
       int_cuts_(new Qn::Cuts),
-      datavector_(new Qn::DataContainerTClonesArray()),
+      datavector_(new Qn::DataContainerQnDataVector()),
       qvector_(new Qn::DataContainerQVector()) {
     coordinates_.resize(vars.size());
     datavector_->AddAxes(axes);
@@ -104,7 +103,9 @@ class Detector : public DetectorBase {
    * @brief Clears data before filling new event.
    */
   void ClearData() override {
-    itrack_ = 0;
+    for (auto &data : *datavector_) {
+      data.nentries = 0;
+    }
     for (auto &qvec : *qvector_) {
       qvec.ResetQVector();
     }
@@ -156,7 +157,7 @@ class Detector : public DetectorBase {
    * @brief Get the datacontainer associated to the detector.
    * @return A reference to the Datacontainer.
    */
-  std::unique_ptr<DataContainerTClonesArray> &GetDataContainer() override { return datavector_; }
+  std::unique_ptr<DataContainerQnDataVector> &GetDataContainer() override { return datavector_; }
   /**
    * @brief Get the Qn vector data container associated to the detector.
    * @return A reference to the Datacontainer.
@@ -183,39 +184,6 @@ class Detector : public DetectorBase {
     }
   }
 
-  void FillDataTracking() override {
-    long i = 0;
-    if (!int_cuts_->CheckCuts(0)) return;
-    for (auto &histo : histograms_) {
-      histo->Fill();
-    }
-    for (const auto &phi : phi_) {
-      if (!cuts_->CheckCuts(i)) {
-        ++i;
-        continue;
-      }
-      if (vars_.empty()) {
-        datavector_->CallOnElement([&](TClonesArray *bin) {
-          auto dv = dynamic_cast<CorrectionDataVector *>(bin->ConstructedAt(itrack_));
-          dv->SetParameters(i, phi, *(weight_.begin() + i));
-          ++itrack_;
-        });
-      } else {
-        long icoord = 0;
-        for (const auto &var : vars_) {
-          coordinates_.at(icoord) = *(var.begin() + i);
-          ++icoord;
-        }
-        datavector_->CallOnElement(coordinates_, [&](TClonesArray *bin) {
-          auto dv = dynamic_cast<CorrectionDataVector *>(bin->ConstructedAt(itrack_));
-          dv->SetParameters(i, phi, *(weight_.begin() + i));
-          ++itrack_;
-        });
-      }
-      ++i;
-    }
-  }
-
   /**
    * @brief Fills the data into the data vectors, histograms and cut reports after the cuts have been checked.
    */
@@ -231,9 +199,10 @@ class Detector : public DetectorBase {
         continue;
       }
       if (vars_.empty()) {
-        datavector_->CallOnElement([&](TClonesArray *bin) {
-          auto dv = dynamic_cast<CorrectionDataVector *>(bin->ConstructedAt(i));
+        datavector_->CallOnElement([&](DataVectorHolder &bin) {
+          auto dv = dynamic_cast<CorrectionDataVector *>(bin.array->ConstructedAt(bin.nentries));
           dv->SetParameters(i, phi, *(weight_.begin() + i));
+          ++bin.nentries;
         });
       } else {
         long icoord = 0;
@@ -241,9 +210,10 @@ class Detector : public DetectorBase {
           coordinates_.at(icoord) = *(var.begin() + i);
           ++icoord;
         }
-        datavector_->CallOnElement(coordinates_, [&](TClonesArray *bin) {
-          auto dv = dynamic_cast<CorrectionDataVectorChannelized *>(bin->ConstructedAt(i));
+        datavector_->CallOnElement(coordinates_, [&](DataVectorHolder &bin) {
+          auto dv = dynamic_cast<CorrectionDataVector *>(bin.array->ConstructedAt(bin.nentries));
           dv->SetParameters(i, phi, *(weight_.begin() + i));
+          ++bin.nentries;
         });
       }
       ++i;
@@ -325,7 +295,6 @@ class Detector : public DetectorBase {
   }
 
  private:
-  unsigned int itrack_ = 0;
   Qn::QVector::Normalization normalization_ = Qn::QVector::Normalization::NONE; /// Normalization of the Q vectors
   int nchannels_ = 0; /// number of channels in case of channel detector
   int nharmonics_ = N; /// number of harmonics
@@ -340,7 +309,7 @@ class Detector : public DetectorBase {
   std::unique_ptr<Cuts> cuts_; /// per channel selection  cuts
   std::unique_ptr<Cuts> int_cuts_; /// integrated selection cuts
   std::vector<std::unique_ptr<QAHistoBase>> histograms_; /// QA histograms of the detector
-  std::unique_ptr<DataContainerTClonesArray> datavector_; /// Container holding the data vectors of the current event.
+  std::unique_ptr<DataContainerQnDataVector> datavector_; /// Container holding the data vectors of the current event.
   std::unique_ptr<DataContainerQVector> qvector_; /// Container holding the Q vectors of the current event.
   std::vector<const Qn::CorrectionQnVector *> correction_ptrs_; /// pointers to the latest corrected Q vectors
   std::function<void(DetectorConfiguration *config)> configuration_; /// correction configuration function

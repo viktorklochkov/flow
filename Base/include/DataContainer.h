@@ -807,7 +807,7 @@ using DataContainerStats = DataContainer<Qn::Stats>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerEventShape = DataContainer<Qn::EventShape>;
-using DataContainerTClonesArray = DataContainer<TClonesArray *>;
+using DataContainerQnDataVector = DataContainer<Qn::DataVectorHolder>;
 
 //--------------------------------------------//
 // Template specializations for visualisation //

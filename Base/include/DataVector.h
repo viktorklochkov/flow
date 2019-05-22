@@ -20,6 +20,7 @@
 
 #include <math.h>
 #include "Rtypes.h"
+#include "TClonesArray.h"
 
 namespace Qn {
 /**
@@ -47,6 +48,17 @@ struct DataVector {
 
   /// \cond CLASSIMP
  ClassDef(DataVector, 2);
+  /// \endcond
+};
+
+class DataVectorHolder {
+ public:
+  DataVectorHolder() = default;
+  virtual ~DataVectorHolder() = default;
+  unsigned int nentries = 0;
+  TClonesArray *array = nullptr; //!<! non persistent
+  /// \cond CLASSIMP
+ ClassDef(DataVectorHolder, 1);
   /// \endcond
 };
 

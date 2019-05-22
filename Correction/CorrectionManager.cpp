@@ -104,7 +104,7 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
       auto detectorid = nbinsrunning + ibin;
       ++ibin;
       auto datavector = qnc_calculator_.FindDetector(detectorid)->GetInputDataBank(0);
-      bin = datavector;
+      bin.array = datavector;
     }
     pair.second->FillReport();
     nbinsrunning += detector->size();
@@ -116,7 +116,7 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
       auto detectorid = nbinsrunning + ibin;
       ++ibin;
       auto datavector = qnc_calculator_.FindDetector(detectorid)->GetInputDataBank(0);
-      bin = datavector;
+      bin.array = datavector;
     }
     pair.second->FillReport();
     nbinsrunning += detector->size();
