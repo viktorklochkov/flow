@@ -92,12 +92,12 @@ class EventCut : public EventCutBase {
 
 namespace Details {
 template<std::size_t>
-using Type = float &;
+using TypeEventCut = float &;
 template<typename VAR, std::size_t N, typename FUNC, std::size_t... Is>
-std::unique_ptr<EventCut<VAR, Type<Is>...>> MakeUniqueEventCutImpl(std::index_sequence<Is...>,
+std::unique_ptr<EventCut<VAR, TypeEventCut<Is>...>> MakeUniqueEventCutImpl(std::index_sequence<Is...>,
                                                                    VAR (&arr)[N],
                                                                    FUNC &&func) {
-  return std::make_unique<EventCut<VAR, Type<Is>...>>(arr, std::forward<FUNC>(func));
+  return std::make_unique<EventCut<VAR, TypeEventCut<Is>...>>(arr, std::forward<FUNC>(func));
 }
 }
 
