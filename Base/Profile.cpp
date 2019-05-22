@@ -113,6 +113,7 @@ Profile Profile::SqrtNormal(const Profile &prof) {
 
 Profile Profile::SqrtPointAverage(const Profile &prof) {
   Profile result;
+  result.mean_ = std::signbit(prof.mean_) ? -1*sqrt(fabs(prof.mean_)) : sqrt(fabs(prof.mean_));
   result.mean_ = sqrt(prof.mean_);
   result.var_ =  sqrt(prof.var_);
   return result;
