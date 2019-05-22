@@ -37,7 +37,7 @@ class CorrectionDataVector : public TObject {
 
   /// Sets the data vector azimuthal angle
   /// \param phi the azimuthal angle
-  virtual void SetPhi(Float_t phi) { fPhi = phi; }
+  void SetPhi(Float_t phi) { fPhi = phi; }
   /// Sets the channel id associated with the data vector
   /// \param id channel id
   void SetId(Int_t id) { fId = id; }
@@ -48,36 +48,41 @@ class CorrectionDataVector : public TObject {
   /// Sets the raw weight
   /// \param weight raw weight from the detector channel
   void SetWeight(Float_t weight) { fWeight = weight; }
+  /// Sets the equalized weight
+  /// \param weight equalized weight after channel equalization
+  void SetEqualizedWeight(Float_t weight) { fEqualizedWeight = weight; }
   /// Gets the azimuthal angle for the data vector
   /// \return phi
-  virtual Float_t Phi() { return fPhi; }
+  Float_t Phi() { return fPhi; }
   /// Gets the weight for the data vector
   /// \return defaults to 1.0
-  virtual Float_t Weight() { return fWeight; }
+  Float_t Weight() { return fWeight; }
   /// Gets the equalized weight for the data vector
   /// \return defaults to weights
-  virtual Float_t EqualizedWeight() { return fWeight; }
+  Float_t EqualizedWeight() { return fEqualizedWeight; }
 
   /// Set the parameters
   /// \param id
   /// \param phi
   /// \param weight
-  virtual void SetParameters(const Int_t id, const Float_t phi, const Float_t weight) {
+  void SetParameters(const Int_t id, const Float_t phi, const Float_t weight) {
     fPhi = phi;
     fId = id;
     fWeight = weight;
+    fEqualizedWeight = weight;
   }
 
  protected:
-  Float_t fPhi;                                   //!<! the azimuthal angle of the data vector
+  Float_t fPhi;                 //!<! the azimuthal angle of the data vector
   Int_t fId;                    //!<! the id associated with the data vector
-  Float_t fWeight;                //!<! raw weight assigned to the data vector
+  Float_t fWeight;              //!<! raw weight assigned to the data vector
+  Float_t fEqualizedWeight;     //!<! eq weight assigned to the data vector
 
   static const Float_t
       fMinimumSignificantValue;  ///< the minimum value that will be considered as meaningful for processing
 
 /// \cond CLASSIMP
- ClassDef(CorrectionDataVector, 3);
+ ClassDef(CorrectionDataVector, 4);
 /// \endcond
 };
 }

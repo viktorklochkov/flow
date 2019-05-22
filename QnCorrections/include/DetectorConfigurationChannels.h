@@ -16,9 +16,9 @@
 ///
 
 #include "CorrectionsSetOnInputData.h"
-#include "CorrectionDataVectorChannelized.h"
 #include "DetectorConfiguration.h"
 #include "CorrectionLog.h"
+#include "CorrectionDataVector.h"
 
 namespace Qn {
 class CorrectionProfileComponents;
@@ -190,7 +190,7 @@ inline Bool_t DetectorConfigurationChannels::AddDataVector(
   if (IsSelected(variableContainer, channelId)) {
     /// add the data vector to the bank
     new(fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
-        CorrectionDataVectorChannelized(channelId, phi, weight);
+        CorrectionDataVector(channelId, phi, weight);
     return kTRUE;
   }
   return kFALSE;
@@ -204,8 +204,7 @@ inline void DetectorConfigurationChannels::BuildRawQnVector() {
   fTempQnVector.Reset();
 
   for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-    CorrectionDataVectorChannelized
-        *dataVector = static_cast<CorrectionDataVectorChannelized *>(fDataVectorBank->At(ixData));
+    auto dataVector = dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
     fTempQnVector.Add(dataVector->Phi(), dataVector->Weight());
   }
   fTempQnVector.CheckQuality();
@@ -222,8 +221,7 @@ inline void DetectorConfigurationChannels::BuildQnVector() {
   fTempQ2nVector.Reset();
 
   for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-    CorrectionDataVectorChannelized
-        *dataVector = static_cast<CorrectionDataVectorChannelized *>(fDataVectorBank->At(ixData));
+    auto dataVector = dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
     fTempQnVector.Add(dataVector->Phi(), dataVector->EqualizedWeight());
     fTempQ2nVector.Add(dataVector->Phi(), dataVector->EqualizedWeight());
   }

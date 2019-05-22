@@ -151,7 +151,7 @@ inline void DetectorConfigurationTracks::BuildQnVector() {
   fTempQ2nVector.Reset();
 
   for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-    CorrectionDataVector *dataVector = static_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
+    auto dataVector = dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
     fTempQnVector.Add(dataVector->Phi(), dataVector->Weight());
     fTempQ2nVector.Add(dataVector->Phi(), dataVector->Weight());
   }

@@ -45,6 +45,7 @@ CorrectionDataVector::CorrectionDataVector() : TObject() {
   fPhi = 0.0;
   fId = -1;
   fWeight = 1.0;
+  fEqualizedWeight = 1.0;
 }
 
 /// Normal constructor
@@ -55,6 +56,7 @@ CorrectionDataVector::CorrectionDataVector(Int_t id, Float_t phi, Float_t weight
   fPhi = phi;
   fId = id;
   fWeight = weight;
+  fEqualizedWeight = weight;
 }
 
 /// Default destructor

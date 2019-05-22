@@ -445,8 +445,8 @@ void DetectorConfigurationChannels::AddCorrectionOnInputData(CorrectionOnInputDa
 void DetectorConfigurationChannels::FillQAHistograms(const double *variableContainer) {
   if (fQAMultiplicityBefore3D!=NULL && fQAMultiplicityAfter3D!=NULL) {
     for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-      CorrectionDataVectorChannelized *dataVector =
-          static_cast<CorrectionDataVectorChannelized *>(fDataVectorBank->At(ixData));
+      auto dataVector =
+          dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
       fQAMultiplicityBefore3D->Fill(variableContainer[fQACentralityVarId],
                                     fChannelMap[dataVector->GetId()],
                                     dataVector->Weight());

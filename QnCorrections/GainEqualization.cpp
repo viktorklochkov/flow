@@ -219,8 +219,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
     case QCORRSTEP_calibration:
       /* collect the data needed to further produce equalization parameters */
       for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-        CorrectionDataVectorChannelized *dataVector =
-            static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+        auto dataVector =
+            static_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
         fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
       }
       return kFALSE;
@@ -228,8 +228,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
     case QCORRSTEP_applyCollect:
       /* collect the data needed to further produce equalization parameters */
       for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-        CorrectionDataVectorChannelized *dataVector =
-            static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+        auto dataVector =
+            static_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
         fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
       }
       /* and proceed to ... */
@@ -238,8 +238,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
       /* collect QA data if asked */
       if (fQAMultiplicityBefore!=NULL) {
         for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-          CorrectionDataVectorChannelized *dataVector =
-              static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+          auto dataVector =
+              dynamic_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
           fQAMultiplicityBefore->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
         }
       }
@@ -247,15 +247,15 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
       switch (fEqualizationMethod) {
         case Method::NONE:
           for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            CorrectionDataVectorChannelized *dataVector =
-                static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            auto dataVector =
+                dynamic_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
             dataVector->SetEqualizedWeight(dataVector->EqualizedWeight());
           }
           break;
         case Method::AVERAGE:
           for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            CorrectionDataVectorChannelized *dataVector =
-                static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            auto dataVector =
+                dynamic_cast<CorrectionDataVector*>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
             Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average = fInputHistograms->GetBinContent(bin);
@@ -280,8 +280,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
           break;
         case Method::WIDTH:
           for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            CorrectionDataVectorChannelized *dataVector =
-                static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+            auto dataVector =
+                dynamic_cast<CorrectionDataVector*>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
             Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average =
@@ -312,8 +312,8 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
       /* collect QA data if asked */
       if (fQAMultiplicityAfter!=NULL) {
         for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-          CorrectionDataVectorChannelized *dataVector =
-              static_cast<CorrectionDataVectorChannelized *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
+          auto *dataVector =
+              dynamic_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
           fQAMultiplicityAfter->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
         }
       }

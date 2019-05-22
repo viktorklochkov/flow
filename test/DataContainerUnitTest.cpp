@@ -21,7 +21,7 @@ TEST(DataContainerTest, Copy) {
 }
 
 TEST(DataContainerTest, TClones) {
-  Qn::DataContainerTClonesArray a;
+  Qn::DataContainerQnDataVector a;
 }
 
 TEST(DataContainerTest, AddAxes) {

@@ -48,7 +48,6 @@ set(QNCORR_SOURCES
         QnCorrections/CorrectionProfileChannelizedIngress.cpp
         QnCorrections/CorrectionDataVector.cpp
         QnCorrections/CorrectionProfileComponents.cpp
-        QnCorrections/CorrectionDataVectorChannelized.cpp
         QnCorrections/CorrectionProfileCorrelationComponents.cpp
         QnCorrections/CorrectionDetector.cpp
         QnCorrections/CorrectionProfileCorrelationComponentsHarmonics.cpp
@@ -140,7 +139,6 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
         CorrectionProfileChannelizedIngress.h
         CorrectionDataVector.h
         CorrectionProfileComponents.h
-        CorrectionDataVectorChannelized.h
         CorrectionProfileCorrelationComponents.h
         CorrectionDetector.h
         CorrectionProfileCorrelationComponentsHarmonics.h
