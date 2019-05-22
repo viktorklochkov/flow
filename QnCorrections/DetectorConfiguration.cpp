@@ -79,7 +79,7 @@ DetectorConfiguration::DetectorConfiguration(const char *name,
   fDetector = NULL;
   fCorrectionsManager = NULL;
   fCuts = NULL;
-  fDataVectorBank = NULL;
+  fDataVectorBank = nullptr;
   fQnNormalizationMethod = CorrectionQnVector::Normalization::NONE;
   fEventClassVariables = eventClassesVariables;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
@@ -90,9 +90,6 @@ DetectorConfiguration::DetectorConfiguration(const char *name,
 /// Default destructor
 /// Releases the memory which was taken or passed
 DetectorConfiguration::~DetectorConfiguration() {
-  if (fDataVectorBank!=NULL) {
-    delete fDataVectorBank;
-  }
   if (fCuts!=NULL) {
     delete fCuts;
   }

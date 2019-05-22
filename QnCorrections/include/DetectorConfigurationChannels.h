@@ -189,8 +189,7 @@ inline Bool_t DetectorConfigurationChannels::AddDataVector(
     const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
   if (IsSelected(variableContainer, channelId)) {
     /// add the data vector to the bank
-    new(fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
-        CorrectionDataVector(channelId, phi, weight);
+    fDataVectorBank->emplace_back(channelId, phi, weight);
     return kTRUE;
   }
   return kFALSE;
@@ -202,10 +201,8 @@ inline Bool_t DetectorConfigurationChannels::AddDataVector(
 /// the one to be used for subsequent Q vector corrections.
 inline void DetectorConfigurationChannels::BuildRawQnVector() {
   fTempQnVector.Reset();
-
-  for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-    auto dataVector = dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
-    fTempQnVector.Add(dataVector->Phi(), dataVector->Weight());
+  for (const auto & dataVector : *fDataVectorBank) {
+    fTempQnVector.Add(dataVector.Phi(), dataVector.Weight());
   }
   fTempQnVector.CheckQuality();
   fTempQnVector.Normalize(fQnNormalizationMethod);
@@ -219,11 +216,9 @@ inline void DetectorConfigurationChannels::BuildRawQnVector() {
 inline void DetectorConfigurationChannels::BuildQnVector() {
   fTempQnVector.Reset();
   fTempQ2nVector.Reset();
-
-  for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-    auto dataVector = dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
-    fTempQnVector.Add(dataVector->Phi(), dataVector->EqualizedWeight());
-    fTempQ2nVector.Add(dataVector->Phi(), dataVector->EqualizedWeight());
+  for (const auto & dataVector : *fDataVectorBank) {
+    fTempQnVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
+    fTempQ2nVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
   }
   fTempQnVector.CheckQuality();
   fTempQ2nVector.CheckQuality();
@@ -321,7 +316,8 @@ inline void DetectorConfigurationChannels::ClearConfiguration() {
   fCorrectedQnVector.Reset();
   fCorrectedQ2nVector.Reset();
   /* and now clear the the input data bank */
-  fDataVectorBank->Clear();
+  fDataVectorBank->clear();
 }
+
 }
 #endif // QNCORRECTIONS_DETECTORCONFCHANNEL_H

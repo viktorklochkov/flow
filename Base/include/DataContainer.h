@@ -198,6 +198,10 @@ class DataContainer : public TObject {
  */
   T const &At(size_type index) const noexcept { return data_.at(index); }
 
+  template <typename TT>
+  constexpr long FindBin(const std::vector<TT> &coords) const {
+    return GetLinearIndex<TT>(coords);
+  }
 /**
  * Calls function on element specified by indices.
  * @tparam Function type of function to be called on the object
@@ -205,7 +209,7 @@ class DataContainer : public TObject {
  * @param lambda function to be called on the element. Takes element of type T as an argument.
  */
   template<typename Function>
-  void CallOnElement(const typename std::vector<size_type> &indices, Function &&lambda) {
+  void CallOnElement(const std::vector<size_type> &indices, Function &&lambda) {
     lambda(data_[GetLinearIndex(indices)]);
   }
 

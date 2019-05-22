@@ -272,6 +272,17 @@ TEST(DataContainerTest, GetNameTest) {
 
 }
 
+TEST(DataContainerTest, LinearIndexing) {
+  Qn::DataContainer<float> a;
+  a.AddAxis({"A",2,0,2});
+  a.AddAxis({"B",2,0,2});
+  a.At(0) = 99.;
+  a.At(3) = 10.;
+  auto bina = a[std::vector<double>({0.,0.})];
+  EXPECT_FLOAT_EQ(bina,99.);
+  EXPECT_FLOAT_EQ(a[std::vector<double>({1.5,1.5})],10.);
+}
+
 //
 //TEST(DataContainerTest, Hadd) {
 //  auto container_a = new Qn::DataContainerEventShape();

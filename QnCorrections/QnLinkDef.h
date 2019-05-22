@@ -26,7 +26,6 @@
 #pragma link C++ class Qn::CutsSet+;
 #pragma link C++ class Qn::CutValue+;
 #pragma link C++ class Qn::CutWithin+;
-#pragma link C++ class Qn::CorrectionDataVector+;
 #pragma link C++ class Qn::CorrectionDetector+;
 #pragma link C++ class Qn::DetectorConfiguration+;
 #pragma link C++ class Qn::DetectorConfigurationChannels+;

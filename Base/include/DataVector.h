@@ -21,6 +21,7 @@
 #include <math.h>
 #include "Rtypes.h"
 #include "TClonesArray.h"
+#include "CorrectionDataVector.h"
 
 namespace Qn {
 /**
@@ -55,10 +56,9 @@ class DataVectorHolder {
  public:
   DataVectorHolder() = default;
   virtual ~DataVectorHolder() = default;
-  unsigned int nentries = 0;
-  TClonesArray *array = nullptr; //!<! non persistent
+  std::vector<Qn::CorrectionDataVector> *array = nullptr; //!<! non persistent
   /// \cond CLASSIMP
- ClassDef(DataVectorHolder, 1);
+ ClassDef(DataVectorHolder, 2);
   /// \endcond
 };
 

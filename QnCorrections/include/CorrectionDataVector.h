@@ -20,7 +20,7 @@
 /// to initialize its members
 ///
 
-#include <TObject.h>
+#include <Rtypes.h>
 namespace Qn {
 /// \class QnCorrectionsDataVector
 /// \brief Class that models and encapsulates a data vector
@@ -29,61 +29,49 @@ namespace Qn {
 /// \author Ilya Selyuzhenkov <ilya.selyuzhenkov@gmail.com>, GSI
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 01, 2016
-class CorrectionDataVector : public TObject {
+
+class CorrectionDataVector {
  public:
-  CorrectionDataVector();
-  CorrectionDataVector(Int_t id, Float_t phi, Float_t weight);
-  virtual ~CorrectionDataVector();
+  CorrectionDataVector() = default;
+  CorrectionDataVector(Int_t id, Float_t phi, Float_t weight) :
+      fId(id),
+      fPhi(phi),
+      fWeight(weight),
+      fEqualizedWeight(weight) {}
+  ~CorrectionDataVector() = default;
 
   /// Sets the data vector azimuthal angle
   /// \param phi the azimuthal angle
-  void SetPhi(Float_t phi) { fPhi = phi; }
+  inline void SetPhi(const Float_t phi) { fPhi = phi; }
   /// Sets the channel id associated with the data vector
   /// \param id channel id
-  void SetId(Int_t id) { fId = id; }
-
-  /// Gets the channel id associated with the data vector
-  /// \return the channel id
-  Int_t GetId() { return fId; }
+  inline void SetId(const Int_t id) { fId = id; }
   /// Sets the raw weight
   /// \param weight raw weight from the detector channel
-  void SetWeight(Float_t weight) { fWeight = weight; }
+  inline void SetWeight(const Float_t weight) { fWeight = weight; }
   /// Sets the equalized weight
   /// \param weight equalized weight after channel equalization
-  void SetEqualizedWeight(Float_t weight) { fEqualizedWeight = weight; }
+  inline void SetEqualizedWeight(const Float_t weight) { fEqualizedWeight = weight; }
+  /// Gets the channel id associated with the data vector
+  /// \return the channel id
+  constexpr Int_t GetId() const { return fId; }
   /// Gets the azimuthal angle for the data vector
   /// \return phi
-  Float_t Phi() { return fPhi; }
+  constexpr Float_t Phi() const { return fPhi; }
   /// Gets the weight for the data vector
   /// \return defaults to 1.0
-  Float_t Weight() { return fWeight; }
+  constexpr Float_t Weight() const { return fWeight; }
   /// Gets the equalized weight for the data vector
   /// \return defaults to weights
-  Float_t EqualizedWeight() { return fEqualizedWeight; }
-
-  /// Set the parameters
-  /// \param id
-  /// \param phi
-  /// \param weight
-  void SetParameters(const Int_t id, const Float_t phi, const Float_t weight) {
-    fPhi = phi;
-    fId = id;
-    fWeight = weight;
-    fEqualizedWeight = weight;
-  }
+  constexpr Float_t EqualizedWeight() const { return fEqualizedWeight; }
 
  protected:
-  Float_t fPhi;                 //!<! the azimuthal angle of the data vector
   Int_t fId;                    //!<! the id associated with the data vector
+  Float_t fPhi;                 //!<! the azimuthal angle of the data vector
   Float_t fWeight;              //!<! raw weight assigned to the data vector
   Float_t fEqualizedWeight;     //!<! eq weight assigned to the data vector
 
-  static const Float_t
-      fMinimumSignificantValue;  ///< the minimum value that will be considered as meaningful for processing
-
-/// \cond CLASSIMP
- ClassDef(CorrectionDataVector, 4);
-/// \endcond
+  static constexpr Float_t fMinimumSignificantValue = 1.e-6;  ///< the minimum value that will be considered
 };
 }
 #endif /* QNCORRECTIONS_DATAVECTORS_H */

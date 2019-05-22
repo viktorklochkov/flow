@@ -187,7 +187,8 @@ void DetectorConfigurationChannels::AttachCorrectionsManager(CorrectionCalculato
 void DetectorConfigurationChannels::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
-  fDataVectorBank = new TClonesArray("Qn::CorrectionDataVectorChannelized", INITIALDATAVECTORBANKSIZE);
+  fDataVectorBank = std::make_unique<std::vector<Qn::CorrectionDataVector>>();
+  fDataVectorBank->reserve(Qn::DetectorConfiguration::INITIALSIZE);
 
   for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
     fInputDataCorrections.At(ixCorrection)->CreateSupportDataStructures();
@@ -444,15 +445,13 @@ void DetectorConfigurationChannels::AddCorrectionOnInputData(CorrectionOnInputDa
 /// \param variableContainer pointer to the variable content bank
 void DetectorConfigurationChannels::FillQAHistograms(const double *variableContainer) {
   if (fQAMultiplicityBefore3D!=NULL && fQAMultiplicityAfter3D!=NULL) {
-    for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-      auto dataVector =
-          dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
+    for (const auto &dataVector : *fDataVectorBank) {
       fQAMultiplicityBefore3D->Fill(variableContainer[fQACentralityVarId],
-                                    fChannelMap[dataVector->GetId()],
-                                    dataVector->Weight());
+                                    fChannelMap[dataVector.GetId()],
+                                    dataVector.Weight());
       fQAMultiplicityAfter3D->Fill(variableContainer[fQACentralityVarId],
-                                   fChannelMap[dataVector->GetId()],
-                                   dataVector->EqualizedWeight());
+                                   fChannelMap[dataVector.GetId()],
+                                   dataVector.EqualizedWeight());
     }
   }
   if (fQAQnAverageHistogram!=NULL) {

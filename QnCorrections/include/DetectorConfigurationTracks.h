@@ -115,8 +115,7 @@ inline Bool_t DetectorConfigurationTracks::AddDataVector(
     const double *variableContainer, Double_t phi, Double_t weight, Int_t id) {
   if (IsSelected(variableContainer)) {
     /// add the data vector to the bank
-    new(fDataVectorBank->ConstructedAt(fDataVectorBank->GetEntriesFast()))
-        CorrectionDataVector(id, phi, weight);
+    fDataVectorBank->emplace_back(id, phi, weight);
     return kTRUE;
   }
   return kFALSE;
@@ -138,7 +137,7 @@ inline void DetectorConfigurationTracks::ClearConfiguration() {
   fCorrectedQnVector.Reset();
   fCorrectedQ2nVector.Reset();
   /* and now clear the the input data bank */
-  fDataVectorBank->Clear();
+  fDataVectorBank->clear();
 }
 
 /// Builds Qn vectors before Q vector corrections but
@@ -149,11 +148,9 @@ inline void DetectorConfigurationTracks::ClearConfiguration() {
 inline void DetectorConfigurationTracks::BuildQnVector() {
   fTempQnVector.Reset();
   fTempQ2nVector.Reset();
-
-  for (Int_t ixData = 0; ixData < fDataVectorBank->GetEntriesFast(); ixData++) {
-    auto dataVector = dynamic_cast<CorrectionDataVector *>(fDataVectorBank->At(ixData));
-    fTempQnVector.Add(dataVector->Phi(), dataVector->Weight());
-    fTempQ2nVector.Add(dataVector->Phi(), dataVector->Weight());
+  for (const auto & dataVector : *fDataVectorBank) {
+    fTempQnVector.Add(dataVector.Phi(), dataVector.Weight());
+    fTempQ2nVector.Add(dataVector.Phi(), dataVector.Weight());
   }
   /* check the quality of the Qn vector */
   fTempQnVector.CheckQuality();

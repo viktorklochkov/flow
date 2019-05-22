@@ -34,33 +34,7 @@
 
 #include "CorrectionDataVector.h"
 /// \cond CLASSIMP
-ClassImp(Qn::CorrectionDataVector);
 /// \endcond
 namespace Qn {
 
-const Float_t CorrectionDataVector::fMinimumSignificantValue = 1.e-6;
-
-/// Default constructor
-CorrectionDataVector::CorrectionDataVector() : TObject() {
-  fPhi = 0.0;
-  fId = -1;
-  fWeight = 1.0;
-  fEqualizedWeight = 1.0;
-}
-
-/// Normal constructor
-/// \param id the id associated with the data vector
-/// \param phi the azimuthal angle
-/// \param weight the data vector weight
-CorrectionDataVector::CorrectionDataVector(Int_t id, Float_t phi, Float_t weight) : TObject() {
-  fPhi = phi;
-  fId = id;
-  fWeight = weight;
-  fEqualizedWeight = weight;
-}
-
-/// Default destructor
-CorrectionDataVector::~CorrectionDataVector() {
-
-}
 }

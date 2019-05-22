@@ -26,6 +26,7 @@
 #include "EventClassVariablesSet.h"
 #include "CorrectionQnVector.h"
 #include "CorrectionQnVectorBuild.h"
+#include "CorrectionDataVector.h"
 
 namespace Qn {
 
@@ -101,7 +102,7 @@ class DetectorConfiguration : public TNamed {
   /// Get the input data bank.
   /// Makes it available for input corrections steps.
   /// \return pointer to the input data bank
-  TClonesArray *GetInputDataBank() { return fDataVectorBank; }
+  std::vector<Qn::CorrectionDataVector> *GetInputDataBank() { return fDataVectorBank.get(); }
   /// Get the event class variables set
   /// Makes it available for corrections steps
   /// \return pointer to the event class variables set
@@ -279,8 +280,8 @@ class DetectorConfiguration : public TNamed {
   CorrectionCalculator *fCorrectionsManager; /// the framework manager pointer
   CutsSet *fCuts;         //->
 /// The default initial size of data vectors banks
-#define INITIALDATAVECTORBANKSIZE 4
-  TClonesArray *fDataVectorBank;        //!<! input data for the current process / event
+  static constexpr unsigned int INITIALSIZE = 4;
+  std::unique_ptr<std::vector<Qn::CorrectionDataVector>> fDataVectorBank = nullptr; //!<! input data for the current process / event
   CorrectionQnVector fPlainQnVector;     ///< Qn vector from the post processed input data
   CorrectionQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
   CorrectionQnVector fCorrectedQnVector; ///< Qn vector after subsequent correction steps

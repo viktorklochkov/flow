@@ -103,9 +103,6 @@ class Detector : public DetectorBase {
    * @brief Clears data before filling new event.
    */
   void ClearData() override {
-    for (auto &data : *datavector_) {
-      data.nentries = 0;
-    }
     for (auto &qvec : *qvector_) {
       qvec.ResetQVector();
     }
@@ -199,22 +196,16 @@ class Detector : public DetectorBase {
         continue;
       }
       if (vars_.empty()) {
-        datavector_->CallOnElement([&](DataVectorHolder &bin) {
-          auto dv = dynamic_cast<CorrectionDataVector *>(bin.array->ConstructedAt(bin.nentries));
-          dv->SetParameters(i, phi, *(weight_.begin() + i));
-          ++bin.nentries;
-        });
+        datavector_->At(0).array->emplace_back(i, phi, *(weight_.begin() + i));
       } else {
         long icoord = 0;
         for (const auto &var : vars_) {
           coordinates_.at(icoord) = *(var.begin() + i);
           ++icoord;
         }
-        datavector_->CallOnElement(coordinates_, [&](DataVectorHolder &bin) {
-          auto dv = dynamic_cast<CorrectionDataVector *>(bin.array->ConstructedAt(bin.nentries));
-          dv->SetParameters(i, phi, *(weight_.begin() + i));
-          ++bin.nentries;
-        });
+        const auto ibin = datavector_->FindBin(coordinates_);
+        if (ibin > -1)
+          datavector_->At(ibin).array->emplace_back(i, phi, *(weight_.begin() + i));
       }
       ++i;
     }
@@ -297,7 +288,7 @@ class Detector : public DetectorBase {
  private:
   Qn::QVector::Normalization normalization_ = Qn::QVector::Normalization::NONE; /// Normalization of the Q vectors
   int nchannels_ = 0; /// number of channels in case of channel detector
-  int nharmonics_ = N; /// number of harmonics
+  const int nharmonics_ = N; /// number of harmonics
   const std::string name_; /// name of  the detector
   std::bitset<Qn::QVector::kMaxNHarmonics> harmonics_bits_; /// bitset of all activated harmonics
   std::unique_ptr<int[]> harmonics_; /// int array of all activated harmonics

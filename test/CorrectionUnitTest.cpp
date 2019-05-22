@@ -13,7 +13,8 @@ TEST(CorrectionUnitTest, Correction) {
     kPhiB = kPhiA+4,
     kMultA = kPhiB+4,
     kMultB = kMultA+4,
-
+    kPhiT,
+    kPt
   };
   Qn::CorrectionManager man;
   auto calibfile = new TFile("corr.root");
@@ -23,6 +24,8 @@ TEST(CorrectionUnitTest, Correction) {
   man.SetTree(tree);
   man.AddVariable("PhiA",kPhiA,4);
   man.AddVariable("PhiB",kPhiB,4);
+  man.AddVariable("PhiT",kPhiT,1);
+  man.AddVariable("Pt",kPt,1);
   man.AddVariable("MultA",kMultA,4);
   man.AddVariable("MultB",kMultB,4);
   man.AddVariable("Cent",kCent,1);
@@ -34,10 +37,16 @@ TEST(CorrectionUnitTest, Correction) {
     auto group = new int[4]{0, 0, 0, 0};
     config->SetChannelsScheme(channels, group);
   };
+  auto correctiontrk = [](Qn::DetectorConfiguration *config) {
+    config->SetNormalization(Qn::QVector::Normalization::M);
+    config->AddCorrectionOnQnVector(new Qn::Recentering());
+  };
   man.AddDetector("AA",DetectorType::CHANNEL,"PhiA","MultA",{},{1});
   man.SetCorrectionSteps("AA",correction);
   man.AddDetector("BB",DetectorType::CHANNEL,"PhiB","MultB",{},{1});
   man.SetCorrectionSteps("BB",correction);
+  man.AddDetector("CC",DetectorType::TRACK,"PhiT","Ones",{{"Pt",20,0.,100.}},{1});
+  man.SetCorrectionSteps("CC",correctiontrk);
   man.AddEventVariable("Cent");
   man.AddCorrectionAxis({"Cent",100,0,100});
 
@@ -48,9 +57,10 @@ TEST(CorrectionUnitTest, Correction) {
 
   man.SetProcessName("test");
 
-  const unsigned int nevents = 1000000;
+  const unsigned int nevents = 10000;
   std::default_random_engine gen;
   std::uniform_real_distribution<double> uniform(0,100);
+  std::uniform_int_distribution<unsigned int> trk(0,1000);
   std::uniform_real_distribution<double> piform(0,2*TMath::Pi());
   std::normal_distribution<double> gauss(0,20);
   constexpr std::array<double, 4> vectorX = {{1.75, -1.75, 1.75, -1.75}};
@@ -62,27 +72,19 @@ TEST(CorrectionUnitTest, Correction) {
     for (unsigned int ich = 0; ich < 4; ++ich) {
       values[kPhiA+ich] = std::atan2(vectorY[ich],vectorX[ich]);
       values[kPhiB+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-      values[kMultA+ich] = gauss(gen);
-      values[kMultB+ich] = gauss(gen);
+      values[kMultA+ich] = std::abs(gauss(gen));
+      values[kMultB+ich] = std::abs(gauss(gen));
     }
     man.ProcessEvent();
     man.FillChannelDetectors();
+    unsigned int ntracks = trk(gen);
+    for (unsigned int itrack = 0; itrack < ntracks; ++itrack) {
+      values[kPhiT] = piform(gen);
+      values[kPt] = uniform(gen);
+      man.FillTrackingDetectors();
+    }
     man.ProcessQnVectors();
   }
-
-  man.Reset();
-  values[kCent] = 13.1;
-  for (unsigned int ich = 0; ich < 4; ++ich) {
-    values[kPhiA+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-    values[kPhiB+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-    values[kMultA+ich] = 1;
-    values[kMultB+ich] = 1;
-  }
-  values[kMultA] = 100000000;
-  man.ProcessEvent();
-  man.FillChannelDetectors();
-  man.ProcessQnVectors();
-
   man.Finalize();
   calibfile->Close();
   delete calibfile;

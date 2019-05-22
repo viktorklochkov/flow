@@ -74,7 +74,7 @@ class CorrectionDetector : public TNamed {
   /// Makes it available for input corrections steps.
   /// \param index index of the configuration
   /// \return pointer to the input data bank
-  TClonesArray *GetInputDataBank(Int_t index) {
+  std::vector<Qn::CorrectionDataVector> *GetInputDataBank(Int_t index) {
     return fConfigurations.At(index)->GetInputDataBank();
   }
 

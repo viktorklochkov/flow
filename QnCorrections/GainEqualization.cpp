@@ -218,103 +218,89 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
     case QCORRSTEP_calibration:
       /* collect the data needed to further produce equalization parameters */
-      for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-        auto dataVector =
-            static_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+      for (const auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+        fCalibrationHistograms->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
       }
       return kFALSE;
       break;
     case QCORRSTEP_applyCollect:
       /* collect the data needed to further produce equalization parameters */
-      for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-        auto dataVector =
-            static_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-        fCalibrationHistograms->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+      for (const auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+        fCalibrationHistograms->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
       }
       /* and proceed to ... */
       /* FALLTHRU */
     case QCORRSTEP_apply: /* apply the equalization */
       /* collect QA data if asked */
       if (fQAMultiplicityBefore!=NULL) {
-        for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-          auto dataVector =
-              dynamic_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-          fQAMultiplicityBefore->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+        for (const auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+          fQAMultiplicityBefore->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }
       /* store the equalized weights in the data vector bank according to equalization method */
       switch (fEqualizationMethod) {
         case Method::NONE:
-          for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            auto dataVector =
-                dynamic_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-            dataVector->SetEqualizedWeight(dataVector->EqualizedWeight());
+          for (auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+            dataVector.SetEqualizedWeight(dataVector.EqualizedWeight());
           }
           break;
         case Method::AVERAGE:
-          for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            auto dataVector =
-                dynamic_cast<CorrectionDataVector*>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
+          for (auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector.GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average = fInputHistograms->GetBinContent(bin);
               /* let's handle the potential group weights usage */
               Float_t groupweight = 1.0;
               if (fUseChannelGroupsWeights) {
                 groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
-                                                                                             dataVector->GetId()));
+                                                                                             dataVector.GetId()));
               } else {
                 if (fHardCodedWeights!=NULL) {
-                  groupweight = fHardCodedWeights[dataVector->GetId()];
+                  groupweight = fHardCodedWeights[dataVector.GetId()];
                 }
               }
               if (fMinimumSignificantValue < average)
-                dataVector->SetEqualizedWeight((dataVector->EqualizedWeight()/average)*groupweight);
+                dataVector.SetEqualizedWeight((dataVector.EqualizedWeight()/average)*groupweight);
               else
-                dataVector->SetEqualizedWeight(0.0);
+                dataVector.SetEqualizedWeight(0.0);
             } else {
-              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector->GetId(), 1.0);
+              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
             }
           }
           break;
         case Method::WIDTH:
-          for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-            auto dataVector =
-                dynamic_cast<CorrectionDataVector*>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector->GetId());
+          for (auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector.GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average =
-                  fInputHistograms->GetBinContent(fInputHistograms->GetBin(variableContainer, dataVector->GetId()));
+                  fInputHistograms->GetBinContent(fInputHistograms->GetBin(variableContainer, dataVector.GetId()));
               Float_t width =
-                  fInputHistograms->GetBinError(fInputHistograms->GetBin(variableContainer, dataVector->GetId()));
+                  fInputHistograms->GetBinError(fInputHistograms->GetBin(variableContainer, dataVector.GetId()));
               /* let's handle the potential group weights usage */
               Float_t groupweight = 1.0;
               if (fUseChannelGroupsWeights) {
                 groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
-                                                                                             dataVector->GetId()));
+                                                                                             dataVector.GetId()));
               } else {
                 if (fHardCodedWeights!=NULL) {
-                  groupweight = fHardCodedWeights[dataVector->GetId()];
+                  groupweight = fHardCodedWeights[dataVector.GetId()];
                 }
               }
               if (fMinimumSignificantValue < average)
-                dataVector->SetEqualizedWeight(
-                    (fShift + fScale*(dataVector->EqualizedWeight() - average)/width)*groupweight);
+                dataVector.SetEqualizedWeight(
+                    (fShift + fScale*(dataVector.EqualizedWeight() - average)/width)*groupweight);
               else
-                dataVector->SetEqualizedWeight(0.0);
+                dataVector.SetEqualizedWeight(0.0);
             } else {
-              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector->GetId(), 1.0);
+              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
             }
           }
           break;
       }
       /* collect QA data if asked */
       if (fQAMultiplicityAfter!=NULL) {
-        for (Int_t ixData = 0; ixData < fDetectorConfiguration->GetInputDataBank()->GetEntriesFast(); ixData++) {
-          auto *dataVector =
-              dynamic_cast<CorrectionDataVector *>(fDetectorConfiguration->GetInputDataBank()->At(ixData));
-          fQAMultiplicityAfter->Fill(variableContainer, dataVector->GetId(), dataVector->EqualizedWeight());
+        for (const auto & dataVector : *fDetectorConfiguration->GetInputDataBank()) {
+          fQAMultiplicityAfter->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }
       break;
