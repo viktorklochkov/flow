@@ -102,12 +102,12 @@ class VariableCutNDim : public VariableCutBase {
 
 namespace Details {
 template<std::size_t>
-using Type = double &;
+using TypeCut = double &;
 template<std::size_t N, typename FUNC, std::size_t... Is>
-std::unique_ptr<VariableCutNDim<Type<Is>...>> CreateNDimCutImpl(std::index_sequence<Is...>,
+std::unique_ptr<VariableCutNDim<TypeCut<Is>...>> CreateNDimCutImpl(std::index_sequence<Is...>,
                                                                 Variable const (&arr)[N],
                                                                 FUNC &&func) {
-  auto pp = std::make_unique<VariableCutNDim<Type<Is>...>>(arr, std::forward<FUNC>(func));
+  auto pp = std::make_unique<VariableCutNDim<TypeCut<Is>...>>(arr, std::forward<FUNC>(func));
   return pp;
 }
 }
