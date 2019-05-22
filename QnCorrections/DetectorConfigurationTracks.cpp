@@ -35,6 +35,8 @@
 #include "CorrectionProfileComponents.h"
 #include "DetectorConfigurationTracks.h"
 #include "CorrectionLog.h"
+#include "ROOT/RMakeUnique.hxx"
+
 /// \cond CLASSIMP
 ClassImp(Qn::DetectorConfigurationTracks);
 /// \endcond

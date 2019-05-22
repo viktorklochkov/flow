@@ -35,6 +35,7 @@
 #include "CorrectionProfileComponents.h"
 #include "DetectorConfigurationChannels.h"
 #include "CorrectionLog.h"
+#include "ROOT/RMakeUnique.hxx"
 
 /// \cond CLASSIMP
 ClassImp(Qn::DetectorConfigurationChannels);
