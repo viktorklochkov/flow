@@ -152,4 +152,24 @@ QVector QVector::DeNormal() const {
   return c;
 }
 
+void QVector::SetQVector(const CorrectionQnVector *vector) {
+  if (vector) {
+    if (vector->IsGoodQuality()) {
+      SetCorrectionStep(vector->GetName());
+      n_ = vector->GetN();
+      sum_weights_ = vector->GetSumOfWeights();
+      unsigned int i = 0;
+      for (unsigned int iharmonic = 0; iharmonic < bits_.size(); ++iharmonic) {
+        if (!bits_[iharmonic]) continue;
+        else {
+          if (!std::isinf(vector->Qx(iharmonic)) && !std::isinf(vector->Qy(iharmonic)) &&
+              !std::isnan(vector->Qx(iharmonic)) && !std::isnan(vector->Qy(iharmonic)))
+            q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
+          ++i;
+        }
+      }
+    }
+  }
+}
+
 }

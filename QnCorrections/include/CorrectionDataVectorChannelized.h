@@ -45,6 +45,17 @@ class CorrectionDataVectorChannelized : public CorrectionDataVector {
   /// \return the equalized weight
   virtual Float_t EqualizedWeight() { return fEqualizedWeight; }
 
+  /// Set the parameters
+  /// \param id
+  /// \param phi
+  /// \param weight
+  virtual void SetParameters(const Int_t id, const Float_t phi, const Float_t weight) {
+    fPhi = phi;
+    fId = id;
+    fWeight = weight;
+    fEqualizedWeight = weight;
+  }
+
  private:
   Float_t fEqualizedWeight;       //!<! equalized weight after channel equalization
 

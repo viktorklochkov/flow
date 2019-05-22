@@ -279,7 +279,7 @@ class DetectorConfiguration : public TNamed {
   CorrectionCalculator *fCorrectionsManager; /// the framework manager pointer
   CutsSet *fCuts;         //->
 /// The default initial size of data vectors banks
-#define INITIALDATAVECTORBANKSIZE 25000
+#define INITIALDATAVECTORBANKSIZE 4
   TClonesArray *fDataVectorBank;        //!<! input data for the current process / event
   CorrectionQnVector fPlainQnVector;     ///< Qn vector from the post processed input data
   CorrectionQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data

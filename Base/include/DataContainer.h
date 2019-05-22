@@ -165,19 +165,24 @@ class DataContainer : public TObject {
     return diagonal;
   }
 
-/**
- * Get element in the specified bin
- * @param bins Vector of bin indices of the desired element
- * @return     Element
- */
-  T const &At(const typename std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+  template <class TT>
+  T const &operator[](const std::vector<TT> &coords) const noexcept {
+    return data_.at(GetLinearIndex(coords));
+  }
 
 /**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  T &At(const typename std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
+  T const &At(const std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+
+/**
+ * Get element in the specified bin
+ * @param bins Vector of bin indices of the desired element
+ * @return     Element
+ */
+  T &At(const std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
@@ -222,8 +227,9 @@ class DataContainer : public TObject {
  * @param lambda function to be called on the element. Takes element of type T as an argument.
  */
   template<typename Function>
-  void CallOnElement(const std::vector<float> &coordinates, Function &&lambda) {
-    lambda(data_[GetLinearIndex(GetIndex(coordinates))]);
+  void CallOnElement(const std::vector<float> &coordinates, Function &&lambda) noexcept {
+    const auto index = GetLinearIndex(coordinates);
+    if (index > -1) lambda(data_[index]);
   }
 
 /**
@@ -233,8 +239,8 @@ class DataContainer : public TObject {
  * @param lambda function to be called on the element. Takes element of type T as an argument.
  */
   template<typename Function>
-  inline void CallOnElement(const long index, Function &&lambda) {
-    lambda(data_[index]);
+  inline void CallOnElement(const long index, Function &&lambda) noexcept {
+    if (index > -1 && index < static_cast<long>(data_.size())) lambda(data_[index]);
   }
 
 /**
@@ -267,7 +273,7 @@ class DataContainer : public TObject {
  * @param indices Outparameter for the indices
  * @param offset Index of linearized vector
  */
-  void GetIndex(std::vector<size_type> &indices, const unsigned long offset) const {
+  void GetIndex(std::vector<size_type> &indices, const unsigned long offset) const noexcept {
     unsigned long temp = offset;
     if (offset < data_.size()) {
       indices.resize(dimension_);
@@ -284,7 +290,7 @@ class DataContainer : public TObject {
  * @param offset Index of linearized vector
  * @return vector of indices
  */
-  std::vector<size_type> GetIndex(const unsigned long offset) const {
+  std::vector<size_type> GetIndex(const unsigned long offset) const noexcept {
     std::vector<size_type> indices;
     unsigned long temp = offset;
     if (offset < data_.size()) {
@@ -328,7 +334,7 @@ class DataContainer : public TObject {
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Projection(const std::vector<std::string> axis_names,
+  DataContainer<T> Projection(const std::vector<std::string> &axis_names,
                               Function &&lambda) const {
     DataContainer<T> projection;
     unsigned long linearindex = 0;
@@ -398,7 +404,7 @@ class DataContainer : public TObject {
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> ProjectionExclude(const std::vector<std::string> axis_names,
+  DataContainer<T> ProjectionExclude(const std::vector<std::string> &axis_names,
                                      Function &&lambda, std::vector<int> exindices) const {
     DataContainer<T> projection;
     size_type linearindex = 0;
@@ -647,6 +653,7 @@ class DataContainer : public TObject {
     auto size = data_.size();
     data_.assign(size, T());
   }
+
 /**
  * Clear data at the specified postion.
  * @param position position at which to clear the data.
@@ -699,7 +706,7 @@ class DataContainer : public TObject {
  * @param index vector of indices in multiple dimensions
  * @return      index in one dimension
  */
-  size_type GetLinearIndex(const std::vector<size_type> &index) const {
+  size_type GetLinearIndex(const std::vector<size_type> &index) const noexcept {
     size_type offset = (index[dimension_ - 1]);
     for (unsigned int i = 0; i < dimension_ - 1; ++i) {
       offset += stride_[i + 1]*(index[i]);
@@ -707,25 +714,22 @@ class DataContainer : public TObject {
     return offset;
   }
 
-/**
+  /**
  * Calculates linear index from coordinates
  * returns -1 if outside of range.
  * @param coordinates floating point coordinates
  * @return linear index
  */
-  long GetLinearIndex(const std::vector<float> &coordinates) const {
-    typename std::vector<size_type> indices;
-    unsigned long axisindex = 0;
-    for (const auto &axis : axes_) {
-      auto bin = axis.FindBin(coordinates[axisindex]);
-      if (bin >= (unsigned int) axis.size() || bin < 0) {
-        return -1;
-      } else {
-        indices.push_back(static_cast<unsigned long &&>(bin));
-        axisindex++;
-      }
+ template <typename TT>
+  long GetLinearIndex(const std::vector<TT> &coordinates) const noexcept {
+    long offset = (axes_[dimension_ - 1].FindBin(coordinates[dimension_ - 1]));
+    if (offset==-1) return -1;
+    for (unsigned long i = 0; i < dimension_ - 1; ++i) {
+      const auto iindex = axes_[i].FindBin(coordinates[i]);
+      if (iindex==-1) return -1;
+      offset += stride_[i + 1]*(iindex);
     }
-    return GetLinearIndex(indices);
+    return offset;
   }
 
 /**
@@ -803,6 +807,7 @@ using DataContainerStats = DataContainer<Qn::Stats>;
 using DataContainerQVector = DataContainer<Qn::QVector>;
 using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
 using DataContainerEventShape = DataContainer<Qn::EventShape>;
+using DataContainerTClonesArray = DataContainer<TClonesArray *>;
 
 //--------------------------------------------//
 // Template specializations for visualisation //

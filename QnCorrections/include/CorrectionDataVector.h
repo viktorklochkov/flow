@@ -58,6 +58,16 @@ class CorrectionDataVector : public TObject {
   /// \return defaults to weights
   virtual Float_t EqualizedWeight() { return fWeight; }
 
+  /// Set the parameters
+  /// \param id
+  /// \param phi
+  /// \param weight
+  virtual void SetParameters(const Int_t id, const Float_t phi, const Float_t weight) {
+    fPhi = phi;
+    fId = id;
+    fWeight = weight;
+  }
+
  protected:
   Float_t fPhi;                                   //!<! the azimuthal angle of the data vector
   Int_t fId;                    //!<! the id associated with the data vector

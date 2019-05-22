@@ -20,6 +20,10 @@ TEST(DataContainerTest, Copy) {
   EXPECT_EQ(copy.size(), container.size());
 }
 
+TEST(DataContainerTest, TClones) {
+  Qn::DataContainerTClonesArray a;
+}
+
 TEST(DataContainerTest, AddAxes) {
   Qn::DataContainer<Qn::QVector> container;
   container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});

@@ -260,7 +260,7 @@ class CorrectionManager {
   void FillTrackingDetectors() {
     if (event_passed_cuts_) {
       for (auto &dp : detectors_track_) {
-        dp.second->FillData();
+        dp.second->FillDataTracking();
       }
     }
   }

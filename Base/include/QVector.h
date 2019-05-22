@@ -43,6 +43,15 @@ inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
 
 class QVector {
  public:
+
+  enum CorrectionStep {
+    UNCORRECTED,
+    RECENTERED,
+    TWIST,
+    RESCALED,
+    ALIGNED
+  };
+
   static constexpr int kMaxNHarmonics = 8;
   using Normalization = CorrectionQnVector::Normalization;
 
@@ -61,6 +70,30 @@ class QVector {
     this->bits_ = qvec.bits_;
     this->q_.resize(qvec.q_.size());
   }
+
+  void ResetQVector() {
+    n_ = 0;
+    sum_weights_ = 0.;
+  }
+
+  void SetQVector(const CorrectionQnVector *vector);
+
+  void SetHarmonics(std::bitset<kMaxNHarmonics> bits) {
+    bits_ = bits;
+    q_.resize(static_cast<size_t>(bits.count()));
+  }
+
+  void SetNormalization(Normalization norm) {norm_ = norm;}
+
+  void SetCorrectionStep(const std::string &name) {
+    if (name == "plain") correction_step_ = CorrectionStep::UNCORRECTED;
+    else if (name == "rec") correction_step_ = CorrectionStep::RECENTERED;
+    else if (name == "twist") correction_step_ = CorrectionStep::TWIST;
+    else if (name == "rescale") correction_step_ = CorrectionStep::RESCALED;
+    else if (name == "align") correction_step_ = CorrectionStep::ALIGNED;
+  }
+
+  unsigned int GetCorrectionStep() const {return correction_step_;}
 
   QVector(Normalization norm, const CorrectionQnVector *vector, std::bitset<kMaxNHarmonics> bits);
 
@@ -94,18 +127,12 @@ class QVector {
   float sum_weights_ = 0.0;                  ///< sum of weights
   std::bitset<kMaxNHarmonics> bits_{};       ///< Bitset for keeping track of the harmonics
   std::vector<QVec> q_;                      ///< array of qvectors for the different harmonics
+  unsigned int correction_step_ = 0;         ///<  correction step defined by enumerator
 
   /// \cond CLASSIMP
- ClassDef(QVector, 8);
+ ClassDef(QVector, 9);
   /// \endcond
 };
-
-namespace detail {
-template<class T>
-T &FUN(T &t) noexcept { return t; }
-template<class T>
-void FUN(T &&) = delete;
-}
 
 /**
  * @class QVector ptr
@@ -126,6 +153,7 @@ class QVectorPtr {
   inline float mag(const unsigned int i) const { return qvector_->mag(i); }
   inline float sumweights() const { return qvector_->sumweights(); }
   inline float n() const { return qvector_->n(); }
+  inline unsigned int GetCorrectionStep() const {return qvector_->GetCorrectionStep();}
   inline Normalization GetNorm() const { return qvector_->GetNorm(); }
   inline QVector Normal(Normalization norm) const { return qvector_->Normal(norm); }
   inline QVector DeNormal() const { return qvector_->DeNormal(); }

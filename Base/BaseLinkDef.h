@@ -44,6 +44,7 @@
 #pragma link C++ class Qn::DataContainer<Qn::Product>+;
 #pragma link C++ class Qn::DataContainer<Qn::Stats>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector>+;
+#pragma link C++ class Qn::DataContainer<TClonesArray *>+;
 #pragma link C++ class Qn::DataContainer<float>+;
 #pragma link C++ class Qn::DataContainer<TH1F>+;
 #pragma link C++ class Qn::DataContainerHelper+;

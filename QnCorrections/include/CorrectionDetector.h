@@ -70,6 +70,14 @@ class CorrectionDetector : public TNamed {
     return fDataVectorAcceptedConfigurations.At(index)->GetName();
   }
 
+  /// Get the Pointer to input data bank.
+  /// Makes it available for input corrections steps.
+  /// \param index index of the configuration
+  /// \return pointer to the input data bank
+  TClonesArray *GetInputDataBank(Int_t index) {
+    return fConfigurations.At(index)->GetInputDataBank();
+  }
+
   void AttachCorrectionsManager(CorrectionCalculator *manager);
   void AddDetectorConfiguration(DetectorConfiguration *detectorConfiguration);
   DetectorConfiguration *FindDetectorConfiguration(const char *name);
@@ -112,9 +120,9 @@ class CorrectionDetector : public TNamed {
 /// \param channelId the channel Id that originates the data vector
 /// \return the number of detector configurations that accepted and stored the data vector
 inline Int_t CorrectionDetector::AddDataVector(const double *variableContainer,
-                                                  Double_t phi,
-                                                  Double_t weight,
-                                                  Int_t channelId) {
+                                               Double_t phi,
+                                               Double_t weight,
+                                               Int_t channelId) {
   fDataVectorAcceptedConfigurations.Clear();
   for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
     Bool_t ret = fConfigurations.At(ixConfiguration)->AddDataVector(variableContainer, phi, weight, channelId);

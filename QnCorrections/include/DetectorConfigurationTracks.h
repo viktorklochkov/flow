@@ -138,7 +138,7 @@ inline void DetectorConfigurationTracks::ClearConfiguration() {
   fCorrectedQnVector.Reset();
   fCorrectedQ2nVector.Reset();
   /* and now clear the the input data bank */
-  fDataVectorBank->Clear("C");
+  fDataVectorBank->Clear();
 }
 
 /// Builds Qn vectors before Q vector corrections but

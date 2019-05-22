@@ -323,7 +323,7 @@ inline void DetectorConfigurationChannels::ClearConfiguration() {
   fCorrectedQnVector.Reset();
   fCorrectedQ2nVector.Reset();
   /* and now clear the the input data bank */
-  fDataVectorBank->Clear("C");
+  fDataVectorBank->Clear();
 }
 }
 #endif // QNCORRECTIONS_DETECTORCONFCHANNEL_H

@@ -81,8 +81,8 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
     for (auto &pair : detectors_channel_) {
       out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
     }
+    var_manager_->SetOutputToTree(out_tree_);
   }
-  var_manager_->SetOutputToTree(out_tree_);
   CalculateCorrectionAxis();
   CreateDetectors();
   for (auto &det : detectors_track_) {
@@ -96,6 +96,31 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
   qnc_calculator_.SetShouldFillQAHistograms();
   qnc_calculator_.SetShouldFillOutputHistograms();
   qnc_calculator_.InitializeQnCorrectionsFramework();
+  unsigned nbinsrunning = 0;
+  for (auto &pair : detectors_track_) {
+    auto &detector = pair.second->GetDataContainer();
+    int ibin = 0;
+    for (auto &bin : *detector) {
+      auto detectorid = nbinsrunning + ibin;
+      ++ibin;
+      auto datavector = qnc_calculator_.FindDetector(detectorid)->GetInputDataBank(0);
+      bin = datavector;
+    }
+    pair.second->FillReport();
+    nbinsrunning += detector->size();
+  }
+  for (auto &pair : detectors_channel_) {
+    auto &detector = pair.second->GetDataContainer();
+    int ibin = 0;
+    for (auto &bin : *detector) {
+      auto detectorid = nbinsrunning + ibin;
+      ++ibin;
+      auto datavector = qnc_calculator_.FindDetector(detectorid)->GetInputDataBank(0);
+      bin = datavector;
+    }
+    pair.second->FillReport();
+    nbinsrunning += detector->size();
+  }
 }
 
 void Qn::CorrectionManager::ProcessEvent() {
@@ -111,44 +136,15 @@ void Qn::CorrectionManager::ProcessQnVectors() {
     for (auto &histo : event_histograms_) {
       histo->Fill();
     }
-    int nbinsrunning = 0;
-    for (auto &pair : detectors_track_) {
-      auto &detector = pair.second->GetDataContainer();
-      int ibin = 0;
-      for (const auto &bin : *detector) {
-        auto detectorid = nbinsrunning + ibin;
-        ++ibin;
-        int idata = 0;
-        for (const auto &data : bin) {
-          qnc_calculator_.AddDataVector(detectorid, data.phi, data.weight, idata);
-          ++idata;
-        }
-      }
-      pair.second->FillReport();
-      nbinsrunning += detector->size();
-    }
-    for (auto &pair : detectors_channel_) {
-      auto &detector = pair.second->GetDataContainer();
-      int ibin = 0;
-      for (const auto &bin : *detector) {
-        auto detectorid = nbinsrunning + ibin;
-        ++ibin;
-        int idata = 0;
-        for (const auto &data : bin) {
-          qnc_calculator_.AddDataVector(detectorid, data.phi, data.weight, idata);
-          ++idata;
-        }
-      }
-      pair.second->FillReport();
-      nbinsrunning += detector->size();
-    }
     var_manager_->FillToQnCorrections(qnc_calculator_.GetDataPointer());
     qnc_calculator_.ProcessEvent();
     for (auto &pair : detectors_track_) {
       pair.second->GetCorrectedQVectors();
+      pair.second->FillReport();
     }
     for (auto &pair : detectors_channel_) {
       pair.second->GetCorrectedQVectors();
+      pair.second->FillReport();
     }
     if (out_tree_) out_tree_->Fill();
   }
