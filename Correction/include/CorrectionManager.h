@@ -35,8 +35,7 @@
 #include "DetectorConfigurationTracks.h"
 #include "Recentering.h"
 #include "TwistAndRescale.h"
-#include "CutSetBit.h"
-#include "CutWithin.h"
+
 #include "GainEqualization.h"
 #include "Alignment.h"
 #include "CorrectionCalculator.h"

@@ -47,12 +47,10 @@ DetectorConfiguration::DetectorConfiguration() : TNamed(),
                                                  fCorrectedQnVector(), fCorrectedQ2nVector(),
                                                  fTempQnVector(), fTempQ2nVector(),
                                                  fQnVectorCorrections() {
-  fDetector = NULL;
-  fCorrectionsManager = NULL;
-  fCuts = NULL;
-  fDataVectorBank = NULL;
+  fDetector = nullptr;
+  fCorrectionsManager = nullptr;
   fQnNormalizationMethod = CorrectionQnVector::Normalization::NONE;
-  fEventClassVariables = NULL;
+  fEventClassVariables = nullptr;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
   fCorrectedQ2nVector.SetHarmonicMultiplier(2);
   fTempQ2nVector.SetHarmonicMultiplier(2);
@@ -76,10 +74,8 @@ DetectorConfiguration::DetectorConfiguration(const char *name,
     fTempQ2nVector("temp2n", nNoOfHarmonics, harmonicMap),
     fQnVectorCorrections() {
 
-  fDetector = NULL;
-  fCorrectionsManager = NULL;
-  fCuts = NULL;
-  fDataVectorBank = nullptr;
+  fDetector = nullptr;
+  fCorrectionsManager = nullptr;
   fQnNormalizationMethod = CorrectionQnVector::Normalization::NONE;
   fEventClassVariables = eventClassesVariables;
   fPlainQ2nVector.SetHarmonicMultiplier(2);
@@ -90,9 +86,7 @@ DetectorConfiguration::DetectorConfiguration(const char *name,
 /// Default destructor
 /// Releases the memory which was taken or passed
 DetectorConfiguration::~DetectorConfiguration() {
-  if (fCuts!=NULL) {
-    delete fCuts;
-  }
+
 }
 
 /// Incorporates the passed correction to the set of Q vector corrections

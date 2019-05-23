@@ -77,7 +77,8 @@ class DetectorConfigurationTracks :
   /// \param variableContainer pointer to the variable content bank
   /// \return kTRUE if the current content applies to the configuration
   virtual Bool_t IsSelected(const double *variableContainer) {
-    return ((fCuts!=NULL) ? fCuts->IsSelected(variableContainer) : kTRUE);
+    (void) variableContainer;
+    return kTRUE;
   }
   /// wrong call for this class invoke base class behavior
   virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) {
@@ -113,12 +114,9 @@ class DetectorConfigurationTracks :
 /// \return kTRUE if the data vector was accepted and stored
 inline Bool_t DetectorConfigurationTracks::AddDataVector(
     const double *variableContainer, Double_t phi, Double_t weight, Int_t id) {
-  if (IsSelected(variableContainer)) {
-    /// add the data vector to the bank
-    fDataVectorBank->emplace_back(id, phi, weight);
-    return kTRUE;
-  }
-  return kFALSE;
+  (void) variableContainer;
+    fDataVectorBank.emplace_back(id, phi, weight);
+    return true;
 }
 
 /// Clean the configuration to accept a new event
@@ -137,7 +135,7 @@ inline void DetectorConfigurationTracks::ClearConfiguration() {
   fCorrectedQnVector.Reset();
   fCorrectedQ2nVector.Reset();
   /* and now clear the the input data bank */
-  fDataVectorBank->clear();
+  fDataVectorBank.clear();
 }
 
 /// Builds Qn vectors before Q vector corrections but
@@ -148,7 +146,7 @@ inline void DetectorConfigurationTracks::ClearConfiguration() {
 inline void DetectorConfigurationTracks::BuildQnVector() {
   fTempQnVector.Reset();
   fTempQ2nVector.Reset();
-  for (const auto & dataVector : *fDataVectorBank) {
+  for (const auto & dataVector : fDataVectorBank) {
     fTempQnVector.Add(dataVector.Phi(), dataVector.Weight());
     fTempQ2nVector.Add(dataVector.Phi(), dataVector.Weight());
   }

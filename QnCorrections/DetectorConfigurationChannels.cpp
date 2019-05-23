@@ -50,18 +50,18 @@ DetectorConfigurationChannels::DetectorConfigurationChannels() :
     DetectorConfiguration(), fRawQnVector(), fInputDataCorrections() {
 
   fNoOfChannels = 0;
-  fUsedChannel = NULL;
-  fChannelMap = NULL;
-  fChannelGroup = NULL;
-  fHardCodedGroupWeights = NULL;
+  fUsedChannel = nullptr;
+  fChannelMap = nullptr;
+  fChannelGroup = nullptr;
+  fHardCodedGroupWeights = nullptr;
   /* QA section */
   fQACentralityVarId = -1;
   fQAnBinsMultiplicity = 100;
   fQAMultiplicityMin = 0.0;
   fQAMultiplicityMax = 1000.0;
-  fQAMultiplicityBefore3D = NULL;
-  fQAMultiplicityAfter3D = NULL;
-  fQAQnAverageHistogram = NULL;
+  fQAMultiplicityBefore3D = nullptr;
+  fQAMultiplicityAfter3D = nullptr;
+  fQAQnAverageHistogram = nullptr;
 }
 
 /// Normal constructor
@@ -80,38 +80,37 @@ DetectorConfigurationChannels::DetectorConfigurationChannels(const char *name,
     fRawQnVector(szRawQnVectorName, nNoOfHarmonics, harmonicMap),
     fInputDataCorrections() {
   fNoOfChannels = nNoOfChannels;
-  fUsedChannel = NULL;
-  fChannelMap = NULL;
-  fChannelGroup = NULL;
-  fHardCodedGroupWeights = NULL;
+  fUsedChannel = nullptr;
+  fChannelMap = nullptr;
+  fChannelGroup = nullptr;
+  fHardCodedGroupWeights = nullptr;
   /* QA section */
   fQACentralityVarId = -1;
   fQAnBinsMultiplicity = 100;
   fQAMultiplicityMin = 0.0;
   fQAMultiplicityMax = 1000.0;
-  fQAMultiplicityBefore3D = NULL;
-  fQAMultiplicityAfter3D = NULL;
-  fQAQnAverageHistogram = NULL;
+  fQAMultiplicityBefore3D = nullptr;
+  fQAMultiplicityAfter3D = nullptr;
+  fQAQnAverageHistogram = nullptr;
 }
 
 /// Default destructor
 /// Releases the memory taken
 DetectorConfigurationChannels::~DetectorConfigurationChannels() {
-
-  if (fUsedChannel!=NULL) delete[] fUsedChannel;
-  if (fChannelMap!=NULL) delete[] fChannelMap;
-  if (fChannelGroup!=NULL) delete[] fChannelGroup;
-  if (fHardCodedGroupWeights!=NULL) delete[] fHardCodedGroupWeights;
-  if (fQAQnAverageHistogram!=NULL) delete fQAQnAverageHistogram;
+  delete[] fUsedChannel;
+  delete[] fChannelMap;
+  delete[] fChannelGroup;
+  delete[] fHardCodedGroupWeights;
+  delete fQAQnAverageHistogram;
 }
 
 /// Incorporates the channels scheme to the detector configuration
 /// \param bUsedChannel array of booleans one per each channel
-///        If NULL all channels in fNoOfChannels are allocated to the detector configuration
+///        If nullptr all channels in fNoOfChannels are allocated to the detector configuration
 /// \param nChannelGroup array of group number for each channel
-///        If NULL all channels in fNoOfChannels are assigned to a unique group
+///        If nullptr all channels in fNoOfChannels are assigned to a unique group
 /// \param hardCodedGroupWeights array with hard coded weight for each group
-///        If NULL no hard coded weight is assigned (i.e. weight = 1)
+///        If nullptr no hard coded weight is assigned (i.e. weight = 1)
 void DetectorConfigurationChannels::SetChannelsScheme(
     Bool_t *bUsedChannel,
     Int_t *nChannelGroup,
@@ -125,14 +124,14 @@ void DetectorConfigurationChannels::SetChannelsScheme(
   Int_t nMaxGroup = 0x0000;
   Int_t intChannelNo = 0;
   for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
-    if (bUsedChannel!=NULL)
+    if (bUsedChannel!=nullptr)
       fUsedChannel[ixChannel] = bUsedChannel[ixChannel];
     else
       fUsedChannel[ixChannel] = kTRUE;
     if (fUsedChannel[ixChannel]) {
       fChannelMap[ixChannel] = intChannelNo;
       intChannelNo++;
-      if (nChannelGroup!=NULL) {
+      if (nChannelGroup!=nullptr) {
         fChannelGroup[ixChannel] = nChannelGroup[ixChannel];
         /* update min max group number */
         if (nChannelGroup[ixChannel] < nMinGroup)
@@ -146,7 +145,7 @@ void DetectorConfigurationChannels::SetChannelsScheme(
       }
     }
   }
-  Bool_t bUseGroups = (hardCodedGroupWeights!=NULL) && (nChannelGroup!=NULL) && (nMinGroup!=nMaxGroup);
+  Bool_t bUseGroups = (hardCodedGroupWeights!=nullptr) && (nChannelGroup!=nullptr) && (nMinGroup!=nMaxGroup);
 
   /* store the hard coded group weights assigned to each channel if applicable */
   if (bUseGroups) {
@@ -170,7 +169,7 @@ void DetectorConfigurationChannels::SetChannelsScheme(
 void DetectorConfigurationChannels::AttachCorrectionsManager(CorrectionCalculator *manager) {
   fCorrectionsManager = manager;
 
-  if (manager!=NULL) {
+  if (manager!=nullptr) {
     for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
       fInputDataCorrections.At(ixCorrection)->AttachedToFrameworkManager();
     }
@@ -188,8 +187,7 @@ void DetectorConfigurationChannels::AttachCorrectionsManager(CorrectionCalculato
 void DetectorConfigurationChannels::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
-  fDataVectorBank = std::make_unique<std::vector<Qn::CorrectionDataVector>>();
-  fDataVectorBank->reserve(Qn::DetectorConfiguration::INITIALSIZE);
+  fDataVectorBank.reserve(Qn::DetectorConfiguration::INITIALSIZE);
 
   for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
     fInputDataCorrections.At(ixCorrection)->CreateSupportDataStructures();
@@ -209,7 +207,7 @@ void DetectorConfigurationChannels::CreateSupportDataStructures() {
 /// \return kTRUE if everything went OK
 Bool_t DetectorConfigurationChannels::CreateSupportHistograms(TList *list) {
 
-  TList *detectorConfigurationList = new TList();
+  auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
   Bool_t retValue = kTRUE;
@@ -242,7 +240,7 @@ Bool_t DetectorConfigurationChannels::CreateSupportHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t DetectorConfigurationChannels::CreateQAHistograms(TList *list) {
-  TList *detectorConfigurationList = new TList();
+  auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
 
@@ -339,7 +337,7 @@ Bool_t DetectorConfigurationChannels::CreateQAHistograms(TList *list) {
 
   /* get information about the configured harmonics to pass it for histogram creation */
   Int_t nNoOfHarmonics = this->GetNoOfHarmonics();
-  Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
+  auto harmonicsMap = new Int_t[nNoOfHarmonics];
   this->GetHarmonicMap(harmonicsMap);
   fQAQnAverageHistogram->CreateComponentsProfileHistograms(detectorConfigurationList, nNoOfHarmonics, harmonicsMap);
   delete[] harmonicsMap;
@@ -401,7 +399,7 @@ Bool_t DetectorConfigurationChannels::CreateNveQAHistograms(TList *list) {
 /// \return kTRUE if everything went OK
 Bool_t DetectorConfigurationChannels::AttachCorrectionInputs(TList *list) {
   TList *detectorConfigurationList = (TList *) list->FindObject(this->GetName());
-  if (detectorConfigurationList!=NULL) {
+  if (detectorConfigurationList!=nullptr) {
     Bool_t retValue = kTRUE;
     for (Int_t ixCorrection = 0; ixCorrection < fInputDataCorrections.GetEntries(); ixCorrection++) {
       retValue = retValue && (fInputDataCorrections.At(ixCorrection)->AttachInput(detectorConfigurationList));
@@ -445,8 +443,8 @@ void DetectorConfigurationChannels::AddCorrectionOnInputData(CorrectionOnInputDa
 /// and the plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
 void DetectorConfigurationChannels::FillQAHistograms(const double *variableContainer) {
-  if (fQAMultiplicityBefore3D!=NULL && fQAMultiplicityAfter3D!=NULL) {
-    for (const auto &dataVector : *fDataVectorBank) {
+  if (fQAMultiplicityBefore3D!=nullptr && fQAMultiplicityAfter3D!=nullptr) {
+    for (const auto &dataVector : fDataVectorBank) {
       fQAMultiplicityBefore3D->Fill(variableContainer[fQACentralityVarId],
                                     fChannelMap[dataVector.GetId()],
                                     dataVector.Weight());
@@ -455,7 +453,7 @@ void DetectorConfigurationChannels::FillQAHistograms(const double *variableConta
                                    dataVector.EqualizedWeight());
     }
   }
-  if (fQAQnAverageHistogram!=NULL) {
+  if (fQAQnAverageHistogram!=nullptr) {
     Int_t harmonic = fPlainQnVector.GetFirstHarmonic();
     while (harmonic!=-1) {
       fQAQnAverageHistogram->FillX(harmonic, variableContainer, fPlainQnVector.Qx(harmonic));

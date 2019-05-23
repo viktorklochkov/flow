@@ -20,7 +20,6 @@
 #include <TObjArray.h>
 #include <TClonesArray.h>
 #include <TH3.h>
-#include "CutsSet.h"
 #include "CorrectionsSetOnInputData.h"
 #include "CorrectionsSetOnQvector.h"
 #include "EventClassVariablesSet.h"
@@ -74,9 +73,6 @@ class DetectorConfiguration : public TNamed {
                         Int_t *harmonicMap = NULL);
   virtual ~DetectorConfiguration();
 
-  /// Sets the set of cuts for the detector configuration
-  /// \param cuts the set of cuts
-  void SetCuts(CutsSet *cuts) { fCuts = cuts; }
   /// Sets the normalization method for Q vectors
   /// \param method the Qn vector normalizatio method
   void SetNormalization(CorrectionQnVector::Normalization method) {
@@ -102,7 +98,7 @@ class DetectorConfiguration : public TNamed {
   /// Get the input data bank.
   /// Makes it available for input corrections steps.
   /// \return pointer to the input data bank
-  std::vector<Qn::CorrectionDataVector> *GetInputDataBank() { return fDataVectorBank.get(); }
+  std::vector<Qn::CorrectionDataVector> &GetInputDataBank() { return fDataVectorBank; }
   /// Get the event class variables set
   /// Makes it available for corrections steps
   /// \return pointer to the event class variables set
@@ -278,10 +274,9 @@ class DetectorConfiguration : public TNamed {
   static const char *szPlainQnVectorName; ///< the name of the Qn plain, not corrected Qn vectors
   /// set of cuts that define the detector configuration
   CorrectionCalculator *fCorrectionsManager; /// the framework manager pointer
-  CutsSet *fCuts;         //->
 /// The default initial size of data vectors banks
   static constexpr unsigned int INITIALSIZE = 4;
-  std::unique_ptr<std::vector<Qn::CorrectionDataVector>> fDataVectorBank = nullptr; //!<! input data for the current process / event
+  std::vector<Qn::CorrectionDataVector> fDataVectorBank; //!<! input data for the current process / event
   CorrectionQnVector fPlainQnVector;     ///< Qn vector from the post processed input data
   CorrectionQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
   CorrectionQnVector fCorrectedQnVector; ///< Qn vector after subsequent correction steps

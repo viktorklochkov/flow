@@ -83,9 +83,9 @@ class CorrectionCalculator : public TObject {
 
   void AddDetector(CorrectionDetector *detector);
 
-  CorrectionDetector *FindDetector(const char *name) const;
+  CorrectionDetector *FindDetector(const std::string &name) const;
   CorrectionDetector *FindDetector(Int_t id) const;
-  DetectorConfiguration *FindDetectorConfiguration(const char *name) const;
+  DetectorConfiguration *FindDetectorConfiguration(const std::string &name) const;
 
   /// Gets a pointer to the data variables bank
   /// \return the pointer to the data container
@@ -124,11 +124,11 @@ class CorrectionCalculator : public TObject {
   TList *GetQnVectorList() const { return fQnVectorList; }
   const TList *GetDetectorQnVectorList(const char *subdetector) const;
   const CorrectionQnVector *GetDetectorQnVector(const char *subdetector,
-                                                   const char *expectedstep = "latest",
-                                                   const char *altstep = "latest") const;
-  const CorrectionQnVector *GetDetectorQnVectorPtr(const char *subdetector,
                                                 const char *expectedstep = "latest",
                                                 const char *altstep = "latest") const;
+  const CorrectionQnVector *GetDetectorQnVectorPtr(const char *subdetector,
+                                                   const char *expectedstep = "latest",
+                                                   const char *altstep = "latest") const;
   /// Gets the name of the calibration histograms container
   /// \return the calibration histograms container name
   const char *GetCalibrationHistogramsContainerName() const { return szCalibrationHistogramsKeyName; }
@@ -141,8 +141,6 @@ class CorrectionCalculator : public TObject {
 
   void PrintFrameworkConfiguration() const;
   void InitializeQnCorrectionsFramework();
-  Int_t AddDataVector(Int_t detectorId, Double_t phi, Double_t weight = 1.0, Int_t channelId = -1);
-  const char *GetAcceptedDataDetectorConfigurationName(Int_t detectorId, Int_t index) const;
   void ProcessEvent();
   void ClearEvent();
   void FinalizeQnCorrectionsFramework();
@@ -157,10 +155,9 @@ class CorrectionCalculator : public TObject {
       *szCalibrationQAHistogramsKeyName; ///< the name of the key under which calibration QA histograms lists are stored
   static const char *
       szCalibrationNveQAHistogramsKeyName; ///< the name of the key under which non validated calibration entries QA histograms lists are stored
-  static const char *szDummyProcessListName;         ///< accepted temporary name before getting the definitive one
-  static const char
-      *szAllProcessesListName;         ///< the name of the list that collects data from all concurrent processes
-  TList fDetectorsSet;                  ///< the list of detectors
+  static const char *szDummyProcessListName; ///< accepted temporary name before getting the definitive one
+  static const char *szAllProcessesListName; ///< the name of the list that collects data from all concurrent processes
+  std::vector<std::unique_ptr<CorrectionDetector>> fDetectorsSet; ///< the list of detectors
   CorrectionDetector **fDetectorsIdMap; //!<! map between external detector Id and internal detector
   double *fDataContainer;              //!<! the data variables bank
   TList *fCalibrationHistogramsList;    ///< the list of the input calibration histograms
@@ -190,26 +187,6 @@ class CorrectionCalculator : public TObject {
 /// \endcond
 };
 
-/// New data vector for the framework
-/// The request is transmitted to the passed detector together with
-/// the current content of the variable bank.
-/// \param detectorId id of the involved detector
-/// \param phi azimuthal angle
-/// \param weight the weight of the data vector
-/// \param channelId the channel Id that originates the data vector
-/// \return the number of detector configurations that accepted and stored the data vector
-inline Int_t CorrectionCalculator::AddDataVector(Int_t detectorId, Double_t phi, Double_t weight, Int_t channelId) {
-  return fDetectorsIdMap[detectorId]->AddDataVector(fDataContainer, phi, weight, channelId);
-}
-
-/// Gets the name of the detector configuration at index that accepted last data vector
-/// \param detectorId id of the involved detector
-/// \param index the position in the list of accepted data vector configuration
-/// \return the configuration name
-inline const char *CorrectionCalculator::GetAcceptedDataDetectorConfigurationName(Int_t detectorId, Int_t index) const {
-  return fDetectorsIdMap[detectorId]->GetAcceptedDataDetectorConfigurationName(index);
-}
-
 /// Process the current event
 ///
 /// The request is transmitted to the different detectors first for applying the different
@@ -218,11 +195,11 @@ inline const char *CorrectionCalculator::GetAcceptedDataDetectorConfigurationNam
 /// Must be called only when the whole data vectors for the event
 /// have been incorporated to the framework.
 inline void CorrectionCalculator::ProcessEvent() {
-  for (Int_t ixDetector = 0; ixDetector < fDetectorsSet.GetEntries(); ixDetector++) {
-    ((CorrectionDetector *) fDetectorsSet.At(ixDetector))->ProcessCorrections(fDataContainer);
+  for (auto &detector : fDetectorsSet) {
+    detector->ProcessCorrections(fDataContainer);
   }
-  for (Int_t ixDetector = 0; ixDetector < fDetectorsSet.GetEntries(); ixDetector++) {
-    ((CorrectionDetector *) fDetectorsSet.At(ixDetector))->ProcessDataCollection(fDataContainer);
+  for (auto &detector : fDetectorsSet) {
+    detector->ProcessDataCollection(fDataContainer);
   }
 }
 
@@ -232,9 +209,10 @@ inline void CorrectionCalculator::ProcessEvent() {
 ///
 /// Must be called only at the end of each event to start processing the next one
 inline void CorrectionCalculator::ClearEvent() {
-  for (Int_t ixDetector = 0; ixDetector < fDetectorsSet.GetEntries(); ixDetector++) {
-    ((CorrectionDetector *) fDetectorsSet.At(ixDetector))->ClearDetector();
+  for (auto &detector : fDetectorsSet) {
+    detector->ClearDetector();
   }
 }
+
 }
 #endif // QNCORRECTIONS_MANAGER_H

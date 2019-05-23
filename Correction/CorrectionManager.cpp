@@ -98,28 +98,24 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
   qnc_calculator_.InitializeQnCorrectionsFramework();
   unsigned nbinsrunning = 0;
   for (auto &pair : detectors_track_) {
-    auto &detector = pair.second->GetDataContainer();
     int ibin = 0;
-    for (auto &bin : *detector) {
+    for (auto &bin : *pair.second->GetDataContainer()) {
       auto detectorid = nbinsrunning + ibin;
       ++ibin;
-      auto datavector = qnc_calculator_.FindDetector(detectorid)->GetInputDataBank(0);
-      bin.array = datavector;
+      bin.array = &qnc_calculator_.FindDetector(detectorid)->GetInputDataBank();
     }
     pair.second->FillReport();
-    nbinsrunning += detector->size();
+    nbinsrunning += pair.second->GetDataContainer()->size();
   }
   for (auto &pair : detectors_channel_) {
-    auto &detector = pair.second->GetDataContainer();
     int ibin = 0;
-    for (auto &bin : *detector) {
+    for (auto &bin : *pair.second->GetDataContainer()) {
       auto detectorid = nbinsrunning + ibin;
       ++ibin;
-      auto datavector = qnc_calculator_.FindDetector(detectorid)->GetInputDataBank(0);
-      bin.array = datavector;
+      bin.array = &qnc_calculator_.FindDetector(detectorid)->GetInputDataBank();
     }
     pair.second->FillReport();
-    nbinsrunning += detector->size();
+    nbinsrunning += pair.second->GetDataContainer()->size();
   }
 }
 

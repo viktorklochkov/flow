@@ -30,21 +30,13 @@ set(QNCORR_SOURCES
         QnCorrections/CorrectionHistogramChannelized.cpp
         QnCorrections/CorrectionsSetOnQvector.cpp
         QnCorrections/CorrectionHistogramChannelizedSparse.cpp
-        QnCorrections/CutAbove.cpp
         QnCorrections/CorrectionHistogramSparse.cpp
-        QnCorrections/CutBelow.cpp
         QnCorrections/GainEqualization.cpp
-        QnCorrections/CutOutside.cpp
         QnCorrections/CorrectionLog.cpp
-        QnCorrections/CutSetBit.cpp
         QnCorrections/CorrectionCalculator.cpp
-        QnCorrections/CutValue.cpp
         QnCorrections/CorrectionProfile.cpp
-        QnCorrections/CutWithin.cpp
         QnCorrections/CorrectionProfile3DCorrelations.cpp
-        QnCorrections/CutsBase.cpp
         QnCorrections/CorrectionProfileChannelized.cpp
-        QnCorrections/CutsSet.cpp
         QnCorrections/CorrectionProfileChannelizedIngress.cpp
         QnCorrections/CorrectionDataVector.cpp
         QnCorrections/CorrectionProfileComponents.cpp
@@ -57,7 +49,6 @@ set(QNCORR_SOURCES
         QnCorrections/Alignment.cpp
         QnCorrections/DetectorConfigurationTracks.cpp
         QnCorrections/CorrectionQnVectorBuild.cpp
-        QnCorrections/CorrectionDetectorConfigurationsSet.cpp
         QnCorrections/Recentering.cpp
         QnCorrections/EventClassVariable.cpp
         QnCorrections/TwistAndRescale.cpp
@@ -123,19 +114,11 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
         CorrectionHistogramChannelized.h
         CorrectionsSetOnQvector.h
         CorrectionHistogramChannelizedSparse.h
-        CutAbove.h
         CorrectionHistogramSparse.h
-        CutBelow.h
-        CutOutside.h
-        CutSetBit.h
         CorrectionCalculator.h
-        CutValue.h
         CorrectionProfile.h
-        CutWithin.h
         CorrectionProfile3DCorrelations.h
-        CutsBase.h
         CorrectionProfileChannelized.h
-        CutsSet.h
         CorrectionProfileChannelizedIngress.h
         CorrectionDataVector.h
         CorrectionProfileComponents.h
@@ -145,7 +128,6 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
         DetectorConfigurationChannels.h
         DetectorConfigurationTracks.h
         CorrectionQnVectorBuild.h
-        DetectorConfigurationsSet.h
         EventClassVariable.h
         DetectorConfiguration.h
         GainEqualization.h

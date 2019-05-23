@@ -47,7 +47,7 @@ const char *DetectorConfigurationTracks::szQAQnAverageHistogramName = "Plain Qn 
 /// Default constructor
 DetectorConfigurationTracks::DetectorConfigurationTracks() : DetectorConfiguration() {
 
-  fQAQnAverageHistogram = NULL;
+  fQAQnAverageHistogram = nullptr;
 }
 
 /// Normal constructor
@@ -62,14 +62,14 @@ DetectorConfigurationTracks::DetectorConfigurationTracks(const char *name,
                                                                                    Int_t *harmonicMap) :
     DetectorConfiguration(name, eventClassesVariables, nNoOfHarmonics, harmonicMap) {
 
-  fQAQnAverageHistogram = NULL;
+  fQAQnAverageHistogram = nullptr;
 }
 
 /// Default destructor
 /// Memory taken is released by the parent class destructor
 DetectorConfigurationTracks::~DetectorConfigurationTracks() {
 
-  if (fQAQnAverageHistogram!=NULL)
+  if (fQAQnAverageHistogram!=nullptr)
     delete fQAQnAverageHistogram;
 }
 
@@ -80,7 +80,7 @@ DetectorConfigurationTracks::~DetectorConfigurationTracks() {
 void DetectorConfigurationTracks::AttachCorrectionsManager(CorrectionCalculator *manager) {
   fCorrectionsManager = manager;
 
-  if (manager!=NULL) {
+  if (manager!=nullptr) {
     for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
       fQnVectorCorrections.At(ixCorrection)->AttachedToFrameworkManager();
     }
@@ -94,8 +94,7 @@ void DetectorConfigurationTracks::AttachCorrectionsManager(CorrectionCalculator 
 void DetectorConfigurationTracks::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
-  fDataVectorBank = std::make_unique<std::vector<Qn::CorrectionDataVector>>();
-  fDataVectorBank->reserve(Qn::DetectorConfiguration::INITIALSIZE);
+  fDataVectorBank.reserve(Qn::DetectorConfiguration::INITIALSIZE);
   for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
     fQnVectorCorrections.At(ixCorrection)->CreateSupportDataStructures();
   }
@@ -111,7 +110,7 @@ void DetectorConfigurationTracks::CreateSupportDataStructures() {
 /// \return kTRUE if everything went OK
 Bool_t DetectorConfigurationTracks::CreateSupportHistograms(TList *list) {
   Bool_t retValue = kTRUE;
-  TList *detectorConfigurationList = new TList();
+  auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
   for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
@@ -148,7 +147,7 @@ Bool_t DetectorConfigurationTracks::CreateQAHistograms(TList *list) {
 
   /* get information about the configured harmonics to pass it for histogram creation */
   Int_t nNoOfHarmonics = this->GetNoOfHarmonics();
-  Int_t *harmonicsMap = new Int_t[nNoOfHarmonics];
+  auto harmonicsMap = new Int_t[nNoOfHarmonics];
   this->GetHarmonicMap(harmonicsMap);
   fQAQnAverageHistogram->CreateComponentsProfileHistograms(detectorConfigurationList, nNoOfHarmonics, harmonicsMap);
   delete[] harmonicsMap;
@@ -198,7 +197,7 @@ Bool_t DetectorConfigurationTracks::CreateNveQAHistograms(TList *list) {
 /// \return kTRUE if everything went OK
 Bool_t DetectorConfigurationTracks::AttachCorrectionInputs(TList *list) {
   TList *detectorConfigurationList = (TList *) list->FindObject(this->GetName());
-  if (detectorConfigurationList!=NULL) {
+  if (detectorConfigurationList!=nullptr) {
     Bool_t retValue = kTRUE;
     for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
       retValue = retValue && (fQnVectorCorrections.At(ixCorrection)->AttachInput(detectorConfigurationList));
@@ -226,7 +225,7 @@ void DetectorConfigurationTracks::AfterInputsAttachActions() {
 /// \param variableContainer pointer to the variable content bank
 void DetectorConfigurationTracks::FillQAHistograms(const double *variableContainer) {
 
-  if (fQAQnAverageHistogram!=NULL) {
+  if (fQAQnAverageHistogram!=nullptr) {
     Int_t harmonic = fPlainQnVector.GetFirstHarmonic();
     while (harmonic!=-1) {
       fQAQnAverageHistogram->FillX(harmonic, variableContainer, fPlainQnVector.Qx(harmonic));

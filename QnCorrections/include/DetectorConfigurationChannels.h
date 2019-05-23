@@ -121,7 +121,8 @@ class DetectorConfigurationChannels :
   /// \param nChannel the interested external channel number
   /// \return kTRUE if the current content applies to the configuration
   virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) {
-    return ((fUsedChannel[nChannel]) ? ((fCuts!=NULL) ? fCuts->IsSelected(variableContainer) : kTRUE) : kFALSE);
+    (void) variableContainer;
+    return fUsedChannel[nChannel];
   }
   /// wrong call for this class invoke base class behavior
   virtual Bool_t IsSelected(const double *variableContainer) {
@@ -189,7 +190,7 @@ inline Bool_t DetectorConfigurationChannels::AddDataVector(
     const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) {
   if (IsSelected(variableContainer, channelId)) {
     /// add the data vector to the bank
-    fDataVectorBank->emplace_back(channelId, phi, weight);
+    fDataVectorBank.emplace_back(channelId, phi, weight);
     return kTRUE;
   }
   return kFALSE;
@@ -201,7 +202,7 @@ inline Bool_t DetectorConfigurationChannels::AddDataVector(
 /// the one to be used for subsequent Q vector corrections.
 inline void DetectorConfigurationChannels::BuildRawQnVector() {
   fTempQnVector.Reset();
-  for (const auto & dataVector : *fDataVectorBank) {
+  for (const auto & dataVector : fDataVectorBank) {
     fTempQnVector.Add(dataVector.Phi(), dataVector.Weight());
   }
   fTempQnVector.CheckQuality();
@@ -216,7 +217,7 @@ inline void DetectorConfigurationChannels::BuildRawQnVector() {
 inline void DetectorConfigurationChannels::BuildQnVector() {
   fTempQnVector.Reset();
   fTempQ2nVector.Reset();
-  for (const auto & dataVector : *fDataVectorBank) {
+  for (const auto & dataVector : fDataVectorBank) {
     fTempQnVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
     fTempQ2nVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
   }
@@ -316,7 +317,7 @@ inline void DetectorConfigurationChannels::ClearConfiguration() {
   fCorrectedQnVector.Reset();
   fCorrectedQ2nVector.Reset();
   /* and now clear the the input data bank */
-  fDataVectorBank->clear();
+  fDataVectorBank.clear();
 }
 
 }

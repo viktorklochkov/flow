@@ -16,7 +16,6 @@
 ///
 
 #include "DetectorConfiguration.h"
-#include "DetectorConfigurationsSet.h"
 namespace Qn {
 class DetectorConfigurationsSet;
 class DetectorConfiguration;
@@ -63,38 +62,28 @@ class CorrectionDetector : public TNamed {
   Bool_t ProcessDataCollection(const double *variableContainer);
   void IncludeQnVectors(TList *list);
 
-  /// Gets the name of the detector configuration at index that accepted last data vector
-  /// \param index the position in the list of accepted data vector configuration
-  /// \return the configuration name
-  const char *GetAcceptedDataDetectorConfigurationName(Int_t index) const {
-    return fDataVectorAcceptedConfigurations.At(index)->GetName();
-  }
-
   /// Get the Pointer to input data bank.
   /// Makes it available for input corrections steps.
   /// \param index index of the configuration
   /// \return pointer to the input data bank
-  std::vector<Qn::CorrectionDataVector> *GetInputDataBank(Int_t index) {
-    return fConfigurations.At(index)->GetInputDataBank();
+  std::vector<Qn::CorrectionDataVector> &GetInputDataBank() {
+    return fConfiguration->GetInputDataBank();
   }
 
   void AttachCorrectionsManager(CorrectionCalculator *manager);
   void AddDetectorConfiguration(DetectorConfiguration *detectorConfiguration);
-  DetectorConfiguration *FindDetectorConfiguration(const char *name);
+  DetectorConfiguration *GetDetectorConfiguration();
   void FillDetectorConfigurationNameList(TList *list) const;
   void FillOverallInputCorrectionStepList(TList *list) const;
   void FillOverallQnVectorCorrectionStepList(TList *list) const;
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
 
-  Int_t AddDataVector(const double *variableContainer, Double_t phi, Double_t weight = 1.0, Int_t channelId = -1);
 
   virtual void ClearDetector();
 
  private:
   Int_t fDetectorId;            ///< detector Id
-  DetectorConfigurationsSet fConfigurations;  ///< the set of configurations defined for this detector
-  DetectorConfigurationsSet
-      fDataVectorAcceptedConfigurations; ///< the set of configurations that accepted a data vector
+  std::unique_ptr<DetectorConfiguration> fConfiguration;
   CorrectionCalculator *fCorrectionsManager; ///< the framework correction manager
 
  private:
@@ -106,45 +95,16 @@ class CorrectionDetector : public TNamed {
   CorrectionDetector &operator=(const CorrectionDetector &);
 
 /// \cond CLASSIMP
- ClassDef(CorrectionDetector, 2);
+ ClassDef(CorrectionDetector, 3);
 /// \endcond
 };
-
-/// New data vector for the detector
-/// The request is transmitted to the attached detector configurations.
-/// The current content of the variable bank is passed in order to check
-/// for optional cuts tha define the detector configurations.
-/// \param variableContainer pointer to the variable content bank
-/// \param phi azimuthal angle
-/// \param weight the weight of the data vector
-/// \param channelId the channel Id that originates the data vector
-/// \return the number of detector configurations that accepted and stored the data vector
-inline Int_t CorrectionDetector::AddDataVector(const double *variableContainer,
-                                               Double_t phi,
-                                               Double_t weight,
-                                               Int_t channelId) {
-  fDataVectorAcceptedConfigurations.Clear();
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    Bool_t ret = fConfigurations.At(ixConfiguration)->AddDataVector(variableContainer, phi, weight, channelId);
-    if (ret) {
-      fDataVectorAcceptedConfigurations.Add(fConfigurations.At(ixConfiguration));
-    }
-  }
-  return fDataVectorAcceptedConfigurations.GetEntries();
-}
 
 /// Ask for processing corrections for the involved detector
 ///
 /// The request is transmitted to the attached detector configurations
 /// \return kTRUE if everything went OK
 inline Bool_t CorrectionDetector::ProcessCorrections(const double *variableContainer) {
-  Bool_t retValue = kTRUE;
-
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    Bool_t ret = fConfigurations.At(ixConfiguration)->ProcessCorrections(variableContainer);
-    retValue = retValue && ret;
-  }
-  return retValue;
+  return fConfiguration->ProcessCorrections(variableContainer);
 }
 
 /// Ask for processing corrections data collection for the involved detector
@@ -152,23 +112,14 @@ inline Bool_t CorrectionDetector::ProcessCorrections(const double *variableConta
 /// The request is transmitted to the attached detector configurations
 /// \return kTRUE if everything went OK
 inline Bool_t CorrectionDetector::ProcessDataCollection(const double *variableContainer) {
-  Bool_t retValue = kTRUE;
-
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    Bool_t ret = fConfigurations.At(ixConfiguration)->ProcessDataCollection(variableContainer);
-    retValue = retValue && ret;
-  }
-  return retValue;
+  return fConfiguration->ProcessDataCollection(variableContainer);
 }
 
 /// Clean the detector to accept a new event
 ///
 /// Transfers the order to the detector configurations
 inline void CorrectionDetector::ClearDetector() {
-  /* transfer the order to the Q vector corrections */
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->ClearConfiguration();
-  }
+  fConfiguration->ClearConfiguration();
 }
 }
 #endif // QNCORRECTIONS_DETECTOR_H

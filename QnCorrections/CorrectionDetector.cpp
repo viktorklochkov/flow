@@ -39,15 +39,12 @@ ClassImp(Qn::CorrectionDetector);
 /// \endcond
 namespace Qn {
 
-
 /// Default constructor
 CorrectionDetector::CorrectionDetector() : TNamed(),
-                                                 fConfigurations(),
-                                                 fDataVectorAcceptedConfigurations() {
+                                           fConfiguration() {
 
   fDetectorId = -1;
-  fDataVectorAcceptedConfigurations.SetOwner(kFALSE);
-  fCorrectionsManager = NULL;
+  fCorrectionsManager = nullptr;
 }
 
 /// Normal constructor
@@ -55,28 +52,21 @@ CorrectionDetector::CorrectionDetector() : TNamed(),
 /// \param id detector Id
 CorrectionDetector::CorrectionDetector(const char *name, Int_t id) :
     TNamed(name, name),
-    fConfigurations(),
-    fDataVectorAcceptedConfigurations() {
+    fConfiguration(nullptr) {
 
   fDetectorId = id;
-  fDataVectorAcceptedConfigurations.SetOwner(kFALSE);
-  fCorrectionsManager = NULL;
+  fCorrectionsManager = nullptr;
 }
 
 /// Default destructor
 /// The detector class does not own anything
-CorrectionDetector::~CorrectionDetector() {
-
-}
+CorrectionDetector::~CorrectionDetector() = default;
 
 /// Asks for support data structures creation
 ///
 /// The request is transmitted to the attached detector configurations
 void CorrectionDetector::CreateSupportDataStructures() {
-
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->CreateSupportDataStructures();
-  }
+  fConfiguration->CreateSupportDataStructures();
 }
 
 /// Asks for support histograms creation
@@ -85,11 +75,7 @@ void CorrectionDetector::CreateSupportDataStructures() {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t CorrectionDetector::CreateSupportHistograms(TList *list) {
-  Bool_t retValue = kTRUE;
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    retValue = retValue && (fConfigurations.At(ixConfiguration)->CreateSupportHistograms(list));
-  }
-  return retValue;
+  return fConfiguration->CreateSupportHistograms(list);
 }
 
 /// Asks for QA histograms creation
@@ -98,11 +84,7 @@ Bool_t CorrectionDetector::CreateSupportHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t CorrectionDetector::CreateQAHistograms(TList *list) {
-  Bool_t retValue = kTRUE;
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    retValue = retValue && (fConfigurations.At(ixConfiguration)->CreateQAHistograms(list));
-  }
-  return retValue;
+  return fConfiguration->CreateQAHistograms(list);
 }
 
 /// Asks for non validated entries QA histograms creation
@@ -111,11 +93,7 @@ Bool_t CorrectionDetector::CreateQAHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t CorrectionDetector::CreateNveQAHistograms(TList *list) {
-  Bool_t retValue = kTRUE;
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    retValue = retValue && (fConfigurations.At(ixConfiguration)->CreateNveQAHistograms(list));
-  }
-  return retValue;
+  return fConfiguration->CreateNveQAHistograms(list);
 }
 
 /// Asks for attaching the needed input information to the correction steps
@@ -124,12 +102,7 @@ Bool_t CorrectionDetector::CreateNveQAHistograms(TList *list) {
 /// \param list list where the input information should be found
 /// \return kTRUE if everything went OK
 Bool_t CorrectionDetector::AttachCorrectionInputs(TList *list) {
-  Bool_t retValue = kTRUE;
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    Bool_t ret = fConfigurations.At(ixConfiguration)->AttachCorrectionInputs(list);
-    retValue = retValue && ret;
-  }
-  return retValue;
+  return fConfiguration->AttachCorrectionInputs(list);
 }
 
 /// Perform after calibration histograms attach actions
@@ -139,10 +112,7 @@ Bool_t CorrectionDetector::AttachCorrectionInputs(TList *list) {
 ///
 /// The request is transmitted to the attached detector configurations
 void CorrectionDetector::AfterInputsAttachActions() {
-
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->AfterInputsAttachActions();
-  }
+  fConfiguration->AfterInputsAttachActions();
 }
 
 /// Stores the framework manager pointer and transmits it to the incorporated detector configurations if any
@@ -150,10 +120,7 @@ void CorrectionDetector::AfterInputsAttachActions() {
 /// \param manager the framework manager
 void CorrectionDetector::AttachCorrectionsManager(CorrectionCalculator *manager) {
   fCorrectionsManager = manager;
-
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntries(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->AttachCorrectionsManager(manager);
-  }
+  fConfiguration->AttachCorrectionsManager(manager);
 }
 
 /// Adds a new detector configuration to the current detector
@@ -163,31 +130,16 @@ void CorrectionDetector::AttachCorrectionsManager(CorrectionCalculator *manager)
 /// is already incorporated to the detector.
 /// \param detectorConfiguration pointer to the configuration to be added
 void CorrectionDetector::AddDetectorConfiguration(DetectorConfiguration *detectorConfiguration) {
-  if (detectorConfiguration->GetDetector()!=NULL) {
-    QnCorrectionsFatal(Form(
-        "You are adding %s detector configuration of detector Id %d to detector Id %d. FIX IT, PLEASE.",
-        detectorConfiguration->GetName(),
-        detectorConfiguration->GetDetector()->GetId(),
-        GetId()));
-    return;
-  }
-
-  if (fConfigurations.FindObject(detectorConfiguration->GetName())) {
-    QnCorrectionsFatal(Form("You are trying to add twice %s detector configuration to detector Id %d. FIX IT, PLEASE.",
-                            detectorConfiguration->GetName(),
-                            GetId()));
-    return;
-  }
   detectorConfiguration->SetDetectorOwner(this);
   detectorConfiguration->AttachCorrectionsManager(fCorrectionsManager);
-  fConfigurations.Add(detectorConfiguration);
+  fConfiguration.reset(detectorConfiguration);
 }
 
 /// Searches for a concrete detector configuration by name
 /// \param name the name of the detector configuration to find
 /// \return pointer to the found detector configuration (NULL if not found)
-DetectorConfiguration *CorrectionDetector::FindDetectorConfiguration(const char *name) {
-  return (DetectorConfiguration *) fConfigurations.FindObject(name);
+DetectorConfiguration *CorrectionDetector::GetDetectorConfiguration() {
+  return fConfiguration.get();
 }
 
 /// Include the the list of Qn vector associated to the detector
@@ -196,19 +148,14 @@ DetectorConfiguration *CorrectionDetector::FindDetectorConfiguration(const char 
 /// The request is transmitted to the attached detector configurations
 /// \param list list where the corrected Qn vector should be added
 void CorrectionDetector::IncludeQnVectors(TList *list) {
-
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->IncludeQnVectors(list);
-  }
+  fConfiguration->IncludeQnVectors(list);
 }
 
 /// Include the name of each detector configuration into the passed list
 ///
 /// \param list the list where to incorporate detector configurations name
 void CorrectionDetector::FillDetectorConfigurationNameList(TList *list) const {
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    list->Add(new TObjString(fConfigurations.At(ixConfiguration)->GetName()));
-  }
+  list->Add(new TObjString(fConfiguration->GetName()));
 }
 
 /// Include the name of the input correction steps on each detector
@@ -217,9 +164,7 @@ void CorrectionDetector::FillDetectorConfigurationNameList(TList *list) const {
 /// The request is transmitted to the attached detector configurations
 /// \param list list where the corrected Qn vector should be added
 void CorrectionDetector::FillOverallInputCorrectionStepList(TList *list) const {
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->FillOverallInputCorrectionStepList(list);
-  }
+  fConfiguration->FillOverallInputCorrectionStepList(list);
 }
 
 /// Include the name of the Qn vector correction steps on each detector
@@ -228,9 +173,7 @@ void CorrectionDetector::FillOverallInputCorrectionStepList(TList *list) const {
 /// The request is transmitted to the attached detector configurations
 /// \param list list where the corrected Qn vector should be added
 void CorrectionDetector::FillOverallQnVectorCorrectionStepList(TList *list) const {
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->FillOverallQnVectorCorrectionStepList(list);
-  }
+  fConfiguration->FillOverallQnVectorCorrectionStepList(list);
 }
 
 /// Provide information about assigned corrections on each of the detector configurations
@@ -240,9 +183,8 @@ void CorrectionDetector::FillOverallQnVectorCorrectionStepList(TList *list) cons
 /// \param calib list for incorporating the list of steps in calibrating status
 /// \param apply list for incorporating the list of steps in applying status
 void CorrectionDetector::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
-  for (Int_t ixConfiguration = 0; ixConfiguration < fConfigurations.GetEntriesFast(); ixConfiguration++) {
-    fConfigurations.At(ixConfiguration)->ReportOnCorrections(steps, calib, apply);
-  }
+  fConfiguration->ReportOnCorrections(steps, calib, apply);
 }
+
 }
 
