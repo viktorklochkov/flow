@@ -42,26 +42,32 @@ namespace Qn {
 /// \date Jan 4, 2016
 
 
-class EventClassVariablesSet : public TObjArray {
+class EventClassVariablesSet {
  public:
+  EventClassVariablesSet() = default;
+
   /// Normal constructor
   /// \param n number of variables in the set
-  EventClassVariablesSet(Int_t n = TCollection::kInitCapacity) : TObjArray(n) {}
+  EventClassVariablesSet(int initialsize) : fVariables(initialsize) {}
   /// Copy constructor
-  /// \param cecvs the object instance to be copied
-  EventClassVariablesSet(const EventClassVariablesSet &cecvs) : TObjArray(cecvs) {}
+  /// \param tocopy the object instance to be copied
+  EventClassVariablesSet(const EventClassVariablesSet &tocopy) = default;
   /// Default destructor
-  virtual ~EventClassVariablesSet() {}
+  virtual ~EventClassVariablesSet() = default;
 
-  /// Access the event class variable at the passed position
-  /// \param i position in the array (starting at zero)
-  /// \return the event class variable object a position i
-  virtual EventClassVariable *At(Int_t i) const {
-    return (EventClassVariable *) TObjArray::At(i);
-  }
-
+  std::vector<EventClassVariable>::iterator begin() { return fVariables.begin(); }
+  std::vector<EventClassVariable>::iterator end() { return fVariables.end(); }
+  std::vector<EventClassVariable>::const_iterator begin() const { return fVariables.begin(); }
+  std::vector<EventClassVariable>::const_iterator end() const { return fVariables.end(); }
+  EventClassVariable &At(unsigned int i) { return fVariables.at(i); }
+  const EventClassVariable &At(unsigned int i) const { return fVariables.at(i); }
+  void Add(EventClassVariable variable) { return fVariables.push_back(variable); }
+  template<typename... ARGS>
+  void Add(ARGS &&... args) { return fVariables.emplace_back(std::forward<ARGS>(args)...); }
+  std::vector<EventClassVariable>::size_type size() const { return fVariables.size(); }
   void GetMultidimensionalConfiguration(Int_t *nbins, Double_t *minvals, Double_t *maxvals);
-
+ private:
+  std::vector<EventClassVariable> fVariables;
 /// \cond CLASSIMP
  ClassDef(EventClassVariablesSet, 1);
 /// \endcond

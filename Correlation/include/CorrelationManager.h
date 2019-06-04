@@ -52,7 +52,7 @@ class CorrelationManager {
   }
 
   void AddProjection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
-  void AddEventAxis(const Axis &eventaxis);
+  void AddEventAxis(const AxisF &eventaxis);
   void AddCorrelation(std::string name, const std::vector<std::string> &input, function_t lambda,
                       const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
   void AddEventShape(const std::string &name,

@@ -48,6 +48,9 @@
 /// defined within the involved detector configuration
 
 #include "CorrectionOnQvector.h"
+#include "CorrectionHistogramSparse.h"
+#include "CorrectionProfileCorrelationComponents.h"
+#include "CorrectionProfileComponents.h"
 
 /// \class QnCorrectionsQnVectorAlignment
 /// \brief Encapsulates Qn vector rotation for alignment correction
@@ -92,9 +95,8 @@ class CorrectionHistogramSparse;
 
 class Alignment : public CorrectionOnQvector {
  public:
-  Alignment();
-  ~Alignment();
-
+  Alignment() : CorrectionOnQvector(szCorrectionName, szPriority) {}
+  virtual ~Alignment() = default;
   /// Set the harmonic number used for alignment
   /// \param harmonic harmonic number
   void SetHarmonicNumberForAlignment(Int_t harmonic) { fHarmonicForAlignment = harmonic; }
@@ -124,26 +126,22 @@ class Alignment : public CorrectionOnQvector {
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
-  static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
-  static const char *szCorrectionName;               ///< the name of the correction step
-  static const char *szKey;                          ///< the key of the correction step for ordering purpose
-  static const char *szSupportHistogramName;         ///< the name and title for support histograms
-  static const char *szCorrectedQnVectorName;        ///< the name of the Qn vector after applying the correction
-  static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
-  static const char *szQAQnAverageHistogramName;     ///< the name and title for Qn components average QA histograms
-  CorrectionProfileCorrelationComponents *fInputHistograms; //!<! the histogram with calibration information
-  CorrectionProfileCorrelationComponents
-      *fCalibrationHistograms; //!<! the histogram for building calibration information
-  CorrectionHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  CorrectionProfileComponents
-      *fQAQnAverageHistogram; //!<! the after correction step average Qn components QA histogram
+  using State = Qn::CorrectionStep::State;
+  static constexpr const unsigned int szPriority = CorrectionOnQvector::Priority::kAlignment; ///< the key of the correction step for ordering purpose
+  static constexpr const char *szCorrectionName = "Alignment"; ///< the name of the correction step
+  static constexpr const char *szSupportHistogramName = "QnQn"; ///< the name and title for support histograms
+  static constexpr const char *szCorrectedQnVectorName = "align"; ///< the name of the Qn vector after applying the correction
+  static constexpr const char *szQANotValidatedHistogramName = "Align NvE"; ///< the name and title for bin not validated QA histograms
+  static constexpr const char *szQAQnAverageHistogramName = "Align Qn avg "; ///< the name and title for Qn components average QA histograms
+  std::unique_ptr<CorrectionProfileCorrelationComponents> fInputHistograms = nullptr; //!<! the histogram with calibration information
+  std::unique_ptr<CorrectionProfileCorrelationComponents> fCalibrationHistograms = nullptr; //!<! the histogram for building calibration information
+  std::unique_ptr<CorrectionHistogramSparse> fQANotValidatedBin = nullptr;    //!<! the histogram with non validated bin information
+  std::unique_ptr<CorrectionProfileComponents> fQAQnAverageHistogram = nullptr; //!<! the after correction step average Qn components QA histogram
 
-  Int_t fHarmonicForAlignment;              ///< the harmonic number to be used for Qn vector alignment correction
-  TString
-      fDetectorConfigurationForAlignmentName; ///< storage for the name of the reference detector configuration for alignment correction
-  DetectorConfiguration
-      *fDetectorConfigurationForAlignment; ///< pointer to the detector configuration used as reference for alingment
-  Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
+  Int_t fHarmonicForAlignment = -1;              ///< the harmonic number to be used for Qn vector alignment correction
+  std::string fDetectorForAlignmentName; ///< storage for the name of the reference detector configuration for alignment correction
+  SubEvent *fDetectorForAlignment = nullptr; ///< pointer to the detector configuration used as reference for alingment
+  Int_t fMinNoOfEntriesToValidate = 2;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP
  ClassDef(Alignment, 3);

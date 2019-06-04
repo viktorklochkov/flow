@@ -59,7 +59,7 @@ Bool_t CorrectionHistogram::CreateHistogram(TList *histogramList) {
   entriesHistoTitle += szEntriesHistoSuffix;
 
   /* we open space for channel for event class variables */
-  Int_t nVariables = fEventClassVariables.GetEntriesFast();
+  Int_t nVariables = fEventClassVariables.size();
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
@@ -72,8 +72,8 @@ Bool_t CorrectionHistogram::CreateHistogram(TList *histogramList) {
 
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+    fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
 
   fValues->Sumw2();

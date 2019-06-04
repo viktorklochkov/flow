@@ -56,7 +56,6 @@ class Variable {
 };
 }
 
-
 namespace std {
 /**
  * std::less specialization for the Qn::Variable

@@ -50,7 +50,7 @@ struct QAHistoBase {
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::Axis> axis, Qn::Variable axisvar) :
+  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisF> axis, Qn::Variable axisvar) :
       vars_(std::move(vec)),
       axis_(std::move(axis)),
       axisvar_(axisvar) {
@@ -132,7 +132,7 @@ class QAHisto : public QAHistoBase {
 
   std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
   std::vector<HISTO> histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
-  std::unique_ptr<Qn::Axis> axis_ = nullptr; // Creates a histogram for each bin of the axis
+  std::unique_ptr<Qn::AxisF> axis_ = nullptr; // Creates a histogram for each bin of the axis
   VAR axisvar_;
   std::string name_;
 };

@@ -60,26 +60,21 @@ const char *CorrectionCalculator::szAllProcessesListName = "all data";
 /// Default constructor.
 /// The class owns the detectors and will be destroyed with it
 CorrectionCalculator::CorrectionCalculator() :
-    TObject(), fDetectorsSet(), fProcessListName(szDummyProcessListName) {
-  fDetectorsIdMap = nullptr;
+    TObject(), fSubEvents(), fProcessListName(szDummyProcessListName) {
   fDataContainer = nullptr;
   fCalibrationHistogramsList = nullptr;
   fSupportHistogramsList = nullptr;
   fQAHistogramsList = nullptr;
   fNveQAHistogramsList = nullptr;
-  fQnVectorTree = nullptr;
   fQnVectorList = nullptr;
-  fFillOutputHistograms = kFALSE;
   fFillQAHistograms = kFALSE;
   fFillNveQAHistograms = kFALSE;
-  fFillQnVectorTree = kFALSE;
   fProcessesNames = nullptr;
 }
 
 /// Default destructor
 /// Deletes the memory taken
 CorrectionCalculator::~CorrectionCalculator() {
-  delete[] fDetectorsIdMap;
   delete[] fDataContainer;
   delete fCalibrationHistogramsList;
   delete fProcessesNames;
@@ -91,7 +86,7 @@ void CorrectionCalculator::SetCalibrationHistogramsList(TFile *calibrationFile) 
   if (calibrationFile) {
     if (calibrationFile->GetListOfKeys()->GetEntries() > 0) {
       /* let's see if we already had a previous calibration histograms list */
-      if (fCalibrationHistogramsList!=nullptr) {
+      if (fCalibrationHistogramsList) {
         QnCorrectionsInfo("Changed the calibration file. Deleting the current calibration histograms list");
         /* we delete it. WARNING: at this point the whole framework got orphan of input histograms this MUST be a transient situation */
         delete fCalibrationHistogramsList;
@@ -99,7 +94,7 @@ void CorrectionCalculator::SetCalibrationHistogramsList(TFile *calibrationFile) 
       }
       fCalibrationHistogramsList =
           (TList *) ((TKey *) calibrationFile->GetListOfKeys()->FindObject(szCalibrationHistogramsKeyName))->ReadObj()->Clone();
-      if (fCalibrationHistogramsList!=nullptr) {
+      if (fCalibrationHistogramsList) {
         QnCorrectionsInfo(Form("Stored calibration list %s from file %s",
                                fCalibrationHistogramsList->GetName(),
                                calibrationFile->GetName()));
@@ -114,46 +109,22 @@ void CorrectionCalculator::SetCalibrationHistogramsList(TFile *calibrationFile) 
 /// Checks for an already added detector and for a detector id
 /// out of range. If so, gives a runtime error to inform of misuse.
 /// \param detector the new detector to incorporate to the framework
-void CorrectionCalculator::AddDetector(CorrectionDetector *detector) {
-  if (detector->GetId() < nMaxNoOfDetectors) {
-    for (const auto &det : fDetectorsSet) {
-      if (det->GetName()==detector->GetName()) {
-        QnCorrectionsFatal(Form("You are trying to add twice %s detector with detector Id %d. FIX IT, PLEASE.",
-                                detector->GetName(),
-                                detector->GetId()));
-        return;
-      }
+void CorrectionCalculator::AddDetector(std::shared_ptr<SubEvent> detector) {
+  for (const auto &det : fSubEvents) {
+    if (det->GetName()==detector->GetName()) {
+      return;
     }
-    fDetectorsSet.emplace_back(detector);
-    detector->AttachCorrectionsManager(this);
-  } else {
-    QnCorrectionsFatal(Form("You are trying to add %s detector with detector Id %d " \
-        "while the highest Id supported is %d. FIX IT, PLEASE.",
-                            detector->GetName(),
-                            detector->GetId(),
-                            nMaxNoOfDetectors - 1));
-    return;
   }
+  fSubEvents.emplace_back(detector);
+  detector->AttachCorrectionsManager(this);
 }
 
 /// Searches for a concrete detector by name
 /// \param name the name of the detector to find
 /// \return pointer to the found detector (nullptr if not found)
-CorrectionDetector *CorrectionCalculator::FindDetector(const std::string &name) const {
-  for (const auto &det : fDetectorsSet) {
+SubEvent *CorrectionCalculator::FindDetector(const std::string &name) const {
+  for (const auto &det : fSubEvents) {
     if (name==det->GetName()) {
-      return det.get();
-    }
-  }
-  return nullptr;
-}
-
-/// Searches for a concrete detector by detector id
-/// \param id the id of the detector to find
-/// \return pointer to the found detector (nullptr if not found)
-CorrectionDetector *CorrectionCalculator::FindDetector(Int_t id) const {
-  for (const auto &det : fDetectorsSet) {
-    if (det->GetId()==id) {
       return det.get();
     }
   }
@@ -163,10 +134,10 @@ CorrectionDetector *CorrectionCalculator::FindDetector(Int_t id) const {
 /// Searches for a concrete detector configuration by name
 /// \param name the name of the detector configuration to find
 /// \return pointer to the found detector configuration (nullptr if not found)
-DetectorConfiguration *CorrectionCalculator::FindDetectorConfiguration(const std::string &name) const {
-  for (const auto &det : fDetectorsSet) {
+SubEvent *CorrectionCalculator::FindDetectorConfiguration(const std::string &name) const {
+  for (const auto &det : fSubEvents) {
     if (name==det->GetName()) {
-      return det->GetDetectorConfiguration();
+      return det.get();
     }
   }
   return nullptr;
@@ -176,7 +147,7 @@ DetectorConfiguration *CorrectionCalculator::FindDetectorConfiguration(const std
 /// \param subdetector the name of the detector configuration of interest
 /// \return the found Qn vector list
 const TList *CorrectionCalculator::GetDetectorQnVectorList(const char *subdetector) const {
-  return dynamic_cast<TList *> (fQnVectorList->FindObject(subdetector));
+  return dynamic_cast<TList *>(fQnVectorList->FindObject(subdetector));
 }
 
 /// Get out of the detector configuration Qn vector list
@@ -191,9 +162,8 @@ const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVectorPtr(
     const char *altstep) const {
   (void) altstep;
   const CorrectionQnVector *theQnVector = nullptr;
-
   auto pQvecList = dynamic_cast<TList *> (fQnVectorList->FindObject(subdetector));
-  if (pQvecList!=nullptr) {
+  if (pQvecList) {
     /* the detector is present */
     if (TString(expectedstep).EqualTo("latest"))
       theQnVector = (CorrectionQnVector *) pQvecList->First();
@@ -224,7 +194,7 @@ const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVector(
     else
       theQnVector = (CorrectionQnVector *) pQvecList->FindObject(expectedstep);
 
-    if (theQnVector==nullptr || !(theQnVector->IsGoodQuality()) || theQnVector->GetN()==0) {
+    if (!theQnVector || !(theQnVector->IsGoodQuality()) || theQnVector->GetN()==0) {
       /* the Qn vector for the expected step was not there or did not have the proper quality */
       if (TString(altstep).EqualTo("latest"))
         theQnVector = (CorrectionQnVector *) pQvecList->First();
@@ -232,7 +202,7 @@ const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVector(
         theQnVector = (CorrectionQnVector *) pQvecList->FindObject(altstep);
     }
   }
-  if (theQnVector!=nullptr) {
+  if (theQnVector) {
     /* check the Qn vector quality */
     if (!(theQnVector->IsGoodQuality()) || theQnVector->GetN()==0)
       /* not good quality, discarded */
@@ -246,52 +216,40 @@ const CorrectionQnVector *CorrectionCalculator::GetDetectorQnVector(
 /// Calibration histograms are on a per process basis while QA histograms
 /// don't.
 void CorrectionCalculator::InitializeQnCorrectionsFramework() {
-
   /* the data bank */
   fDataContainer = new double[nMaxNoOfDataVariables];
-
-  /* let's build the detectors map */
-  fDetectorsIdMap = new CorrectionDetector *[nMaxNoOfDetectors];
-  for (const auto &det : fDetectorsSet) {
-    fDetectorsIdMap[det->GetId()] = det.get();
-  }
-
-  for (auto &det : fDetectorsSet) {
+  for (auto &det : fSubEvents) {
     det->CreateSupportDataStructures();
   }
-
   /* build the support histograms list */
   fSupportHistogramsList = new TList();
   fSupportHistogramsList->SetName(szCalibrationHistogramsKeyName);
   fSupportHistogramsList->SetOwner(kTRUE);
-
   /* build the support histograms lists for the list of concurrent processes */
   /* the QA histograms are no longer rooted on a per process basis */
-  if (fProcessesNames!=nullptr && fProcessesNames->GetEntries()!=0) {
+  if (fProcessesNames && fProcessesNames->GetEntries()!=0) {
     for (Int_t i = 0; i < fProcessesNames->GetEntries(); i++) {
       /* the support histgrams list */
-      TList *newList = new TList();
+      auto newList = new TList();
       newList->SetName(((TObjString *) fProcessesNames->At(i))->GetName());
       newList->SetOwner(kTRUE);
       fSupportHistogramsList->Add(newList);
-
       /* leave the selected process list name for a latter time */
       if (!fProcessListName.EqualTo(fProcessesNames->At(i)->GetName())) {
         /* build the support histograms list associated to the process */
-        for (auto &det : fDetectorsSet) {
+        for (auto &det : fSubEvents) {
           det->CreateSupportHistograms(newList);
         }
       }
     }
   }
-
   /* build the support histograms list associated to this process */
   /* and pass it to the detectors for support histograms creation */
   if (fProcessListName.Length()!=0) {
     /* let's see first whether we have the current process name within the processes names list */
     TList *processList;
-    if (fProcessesNames!=nullptr && fProcessesNames->GetEntries()!=0
-        && fSupportHistogramsList->FindObject(fProcessListName)!=nullptr) {
+    if (fProcessesNames && fProcessesNames->GetEntries()!=0
+        && fSupportHistogramsList->FindObject(fProcessListName)) {
       processList = (TList *) fSupportHistogramsList->FindObject(fProcessListName);
     } else {
       processList = new TList();
@@ -303,7 +261,7 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
     /* now transfer the order to the defined detectors */
     /* so, we always create the histograms to use the last ones */
     Bool_t retvalue = kTRUE;
-    for (auto &det : fDetectorsSet) {
+    for (auto &det : fSubEvents) {
       retvalue = retvalue && det->CreateSupportHistograms(processList);
       if (!retvalue)
         break;
@@ -314,24 +272,22 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
   } else {
     QnCorrectionsFatal("The process label is missing.");
   }
-
   /* now get the process list on the calibration histograms list if any */
   /* and pass it to the detectors for input calibration histograms attachment, */
-  if (fCalibrationHistogramsList!=nullptr) {
-    TList *processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
-    if (processList!=nullptr) {
+  if (fCalibrationHistogramsList) {
+    auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
+    if (processList) {
       QnCorrectionsInfo(Form("Assigned process list %s as the calibration histograms list",
                              processList->GetName()));
       /* now transfer the order to the defined detectors */
-      for (auto &det : fDetectorsSet) {
+      for (auto &det : fSubEvents) {
         det->AttachCorrectionInputs(processList);
       }
-      for (auto &det : fDetectorsSet) {
+      for (auto &det : fSubEvents) {
         det->AfterInputsAttachActions();
       }
     }
   }
-
   /* now build the QA histograms list if needed */
   /* QA histograms are no longer stored on a per run basis */
   if (GetShouldFillQAHistograms()) {
@@ -344,12 +300,11 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
       fNveQAHistogramsList->SetOwner(kTRUE);
     }
   }
-
   /* pass the list to the detectors for QA histograms creation */
   /* the QA histograms list if needed */
   if (GetShouldFillQAHistograms()) {
     /* pass it to the detectors for QA histograms creation */
-    for (auto &det : fDetectorsSet) {
+    for (auto &det : fSubEvents) {
       det->CreateQAHistograms(fQAHistogramsList);
     }
 
@@ -357,7 +312,7 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
   /* the non validated QA histograms list if needed */
   if (GetShouldFillNveQAHistograms()) {
     /* pass it to the detectors for non validated entries QA histograms creation */
-    for (auto &det : fDetectorsSet) {
+    for (auto &det : fSubEvents) {
       det->CreateNveQAHistograms(fNveQAHistogramsList);
     }
   }
@@ -366,7 +321,7 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
   /* the list does not own the Qn vectors */
   fQnVectorList->SetOwner(kFALSE);
   /* pass it to the detectors for Qn vector creation and attachment */
-  for (auto &det : fDetectorsSet) {
+  for (auto &det : fSubEvents) {
     det->IncludeQnVectors(fQnVectorList);
   }
 }
@@ -382,19 +337,18 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
 /// \param name the name of the list
 void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
   QnCorrectionsInfo(Form("New process list name: %s", name));
-
   if (fProcessListName.EqualTo(szDummyProcessListName)) {
-    if (fSupportHistogramsList!=nullptr) {
+    if (fSupportHistogramsList) {
       /* check the list of concurrent processes */
-      if (fProcessesNames!=nullptr && fProcessesNames->GetEntries()!=0) {
+      if (fProcessesNames && fProcessesNames->GetEntries()!=0) {
         /* the new process name should be in the list of processes names */
-        if (fSupportHistogramsList->FindObject(name)!=nullptr) {
+        if (fSupportHistogramsList->FindObject(name)) {
           /* now we have to substitute the provisional process name list with the temporal one but renamed */
-          TList *previousempty = (TList *) fSupportHistogramsList->FindObject(name);
+          auto previousempty = (TList *) fSupportHistogramsList->FindObject(name);
           Int_t finalindex = fSupportHistogramsList->IndexOf(previousempty);
           fSupportHistogramsList->RemoveAt(finalindex);
           delete previousempty;
-          TList *previoustemp = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
+          auto previoustemp = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
           fSupportHistogramsList->Remove(previoustemp);
           previoustemp->SetName(name);
           fSupportHistogramsList->AddAt(previoustemp, finalindex);
@@ -405,30 +359,30 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
               name));
         }
       } else {
-        TList *processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
+        auto processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
         processList->SetName(name);
       }
 
       /* now get the process list on the calibration histograms list if any */
       /* and pass it to the detectors for input calibration histograms attachment, */
       fProcessListName = name;
-      if (fCalibrationHistogramsList!=nullptr) {
-        TList *processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
-        if (processList!=nullptr) {
+      if (fCalibrationHistogramsList) {
+        auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
+        if (processList) {
           QnCorrectionsInfo(Form("Assigned process list %s as the calibration histograms list",
                                  processList->GetName()));
           /* now transfer the order to the defined detectors */
-          for (auto &det : fDetectorsSet) {
+          for (auto &det : fSubEvents) {
             det->AttachCorrectionInputs(processList);
           }
           /* now inform to the defined detectors the framework conditions are complete */
-          for (auto &det : fDetectorsSet) {
+          for (auto &det : fSubEvents) {
             det->AfterInputsAttachActions();
           }
         }
       }
       /* build the Qn vectors list  now that all histograms are loaded */
-      if (fQnVectorList==nullptr) {
+      if (!fQnVectorList) {
         /* first we build it if it isn't already there */
         fQnVectorList = new TList();
         /* the list does not own the Qn vectors */
@@ -436,7 +390,7 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
       }
 
       /* pass it to the detectors for Qn vector creation and attachment */
-      for (auto &det : fDetectorsSet) {
+      for (auto &det : fSubEvents) {
         det->IncludeQnVectors(fQnVectorList);
       }
     } else {
@@ -445,23 +399,22 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
     }
   } else {
     QnCorrectionsInfo(Form("Changing process on the fly from %s to %s", fProcessListName.Data(), name));
-
-    if (fSupportHistogramsList!=nullptr) {
+    if (fSupportHistogramsList) {
       /* check the list of concurrent processes */
-      if (fProcessesNames!=nullptr && fProcessesNames->GetEntries()!=0) {
+      if (fProcessesNames && fProcessesNames->GetEntries()!=0) {
         /* the new process name should be in the list of processes names */
-        if (fSupportHistogramsList->FindObject(name)!=nullptr) {
+        if (fSupportHistogramsList->FindObject(name)) {
           /* now we have to destroy the previous list associated to the new process */
-          TList *previous = (TList *) fSupportHistogramsList->FindObject(name);
+          auto previous = (TList *) fSupportHistogramsList->FindObject(name);
           Int_t finalindex = fSupportHistogramsList->IndexOf(previous);
           fSupportHistogramsList->RemoveAt(finalindex);
           delete previous;
           /* and build a new one in its place */
-          TList *newList = new TList();
+          auto newList = new TList();
           newList->SetName(name);
           newList->SetOwner(kTRUE);
           /* build the support histograms list associated to the new process passing the new list to the detectors */
-          for (auto &det : fDetectorsSet) {
+          for (auto &det : fSubEvents) {
             det->CreateSupportHistograms(newList);
           }
           fSupportHistogramsList->AddAt(newList, finalindex);
@@ -472,38 +425,34 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
               name));
         }
       } else {
-        TList *processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
+        auto processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
         processList->SetName(name);
       }
-
       /* now get the process list on the calibration histograms list if any */
       /* and pass it to the detectors for input calibration histograms attachment, */
       fProcessListName = name;
-      if (fCalibrationHistogramsList!=nullptr) {
-        TList *processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
-        if (processList!=nullptr) {
+      if (fCalibrationHistogramsList) {
+        auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
+        if (processList) {
           QnCorrectionsInfo(Form("Assigned process list %s as the calibration histograms list",
                                  processList->GetName()));
           /* now transfer the order to the defined detectors */
-          for (auto &det : fDetectorsSet) {
+          for (auto &det : fSubEvents) {
             det->AttachCorrectionInputs(processList);
           }
           /* now inform to the defined detectors the framework conditions are complete */
-          for (auto &det : fDetectorsSet) {
+          for (auto &det : fSubEvents) {
             det->AfterInputsAttachActions();
           }
         }
       }
       /* build the Qn vectors list  now that all histograms are loaded */
-      if (fQnVectorList==nullptr) {
-        /* first we build it if it isn't already there */
+      if (!fQnVectorList) {
         fQnVectorList = new TList();
         /* the list does not own the Qn vectors */
-        fQnVectorList->SetOwner(kFALSE);
       }
-
       /* pass it to the detectors for Qn vector creation and attachment */
-      for (auto &det : fDetectorsSet) {
+      for (auto &det : fSubEvents) {
         det->IncludeQnVectors(fQnVectorList);
       }
     } else {
@@ -519,54 +468,29 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
 /// Produce an understandable picture of current correction configuration
 void CorrectionCalculator::PrintFrameworkConfiguration() const {
   QnCorrectionsInfo("");
-
-  /* first get the list of detector configurations */
-  TList *detectorList = new TList();
-  detectorList->SetOwner(kTRUE);
-  detectorList->SetName("Detector configurations list");
+  std::vector<std::string> detlist;
   /* pass it to the detectors for detector configurations name inclusion */
-  for (auto &det : fDetectorsSet) {
-    det->FillDetectorConfigurationNameList(detectorList);
+  for (auto &det : fSubEvents) {
+    det->FillDetectorConfigurationNameList(detlist);
   }
-
-  /* now the list of input correction steps */
-  /* First we get an overall list of correction instances that we don't own*/
-  auto inputCorrections = new TList();
-  inputCorrections->SetOwner(kFALSE);
-  for (auto &det : fDetectorsSet) {
-    det->FillOverallInputCorrectionStepList(inputCorrections);
-  }
-  /* and now we build the correction step names list */
-  auto inputStepList = new TList();
-  /* this one we own its items */
-  inputStepList->SetOwner(kTRUE);
-  inputStepList->SetName("Input data correction steps");
-  for (Int_t i = 0; i < inputCorrections->GetEntries(); i++) {
-    /* we got them in execution order which we keep */
-    inputStepList->Add(new TObjString(inputCorrections->At(i)->GetName()));
-  }
-  /* enough for now */
-  delete inputCorrections;
-
   /* now the list of Qn vector correction steps */
-  /* First we get an overall list of correction instances that we don't own*/
-  auto vectorCorrections = new TList();
-  vectorCorrections->SetOwner(kFALSE);
-  for (auto &det : fDetectorsSet) {
-    det->FillOverallQnVectorCorrectionStepList(vectorCorrections);
+  std::set<CorrectionStep *, CompareSteps> inputcs;
+  for (auto &det : fSubEvents) {
+    det->FillOverallInputCorrectionStepList(inputcs);
   }
-
-  /* and now we build the correction step names list */
-  auto vectorStepList = new TList();
-  /* this one we own its items */
-  vectorStepList->SetOwner(kTRUE);
-  vectorStepList->SetName("Qn vector correction steps");
-  for (Int_t i = 0; i < vectorCorrections->GetEntries(); i++) {
-    /* we got them in execution order which we keep */
-    vectorStepList->Add(new TObjString(vectorCorrections->At(i)->GetName()));
+  std::vector<std::string> inpsteps;
+  for (auto &entry : inputcs) {
+    inpsteps.emplace_back(entry->GetName());
   }
-  /* enough for now */
-  delete vectorCorrections;
+  /* now the list of Qn vector correction steps */
+  std::set<CorrectionStep *, CompareSteps> vectorCs;
+  for (auto &det : fSubEvents) {
+    det->FillOverallQnVectorCorrectionStepList(vectorCs);
+  }
+  std::vector<std::string> vecsteps;
+  for (auto &entry : vectorCs) {
+    vecsteps.emplace_back(entry->GetName());
+  }
 
   /* and finally the list of correction steps applied to each detector configuration */
   auto detectorCorrectionsList = new TList();
@@ -579,87 +503,83 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
   detectorApplyingCorrectionsList->SetOwner(kTRUE);
   detectorApplyingCorrectionsList->SetName("Applying corrections");
   /* pass it to the detectors for detector configuration correction steps inclusion */
-  for (auto & det : fDetectorsSet) {
-    det->ReportOnCorrections(detectorCorrectionsList,detectorCalibratingCorrectionsList,detectorApplyingCorrectionsList);
+  for (auto &det : fSubEvents) {
+    det->ReportOnCorrections(detectorCorrectionsList,
+                             detectorCalibratingCorrectionsList,
+                             detectorApplyingCorrectionsList);
   }
 
   /* get the steps involved and the current one */
-  Int_t nNoOfSteps = inputStepList->GetEntries() + vectorStepList->GetEntries();
+  Int_t nNoOfSteps = inpsteps.size() + vecsteps.size();
   Int_t nCurrentStep = 0;
   for (Int_t i = 0; i < detectorApplyingCorrectionsList->GetEntries(); i++) {
     if (nCurrentStep < ((TList *) detectorApplyingCorrectionsList->At(i))->GetEntries()) {
       nCurrentStep = ((TList *) detectorApplyingCorrectionsList->At(i))->GetEntries();
     }
   }
-
   /* let's take some parameters */
   size_t correctionFieldSize = 0;
   size_t detectorFieldSize = 0;
   size_t margin = 3;
-
   /* the input data correction steps */
-  for (Int_t i = 0; i < inputStepList->GetEntries(); i++) {
-    if (strlen(inputStepList->At(i)->GetName()) > correctionFieldSize) {
-      correctionFieldSize = strlen(inputStepList->At(i)->GetName());
+  for (auto &in : inpsteps) {
+    if (in.length() > correctionFieldSize) {
+      correctionFieldSize = in.length();
     }
   }
   /* the Qn vector correction steps */
-  for (Int_t i = 0; i < vectorStepList->GetEntries(); i++) {
-    if (strlen(vectorStepList->At(i)->GetName()) > correctionFieldSize) {
-      correctionFieldSize = strlen(vectorStepList->At(i)->GetName());
+  for (auto &in : vecsteps) {
+    if (in.length() > correctionFieldSize) {
+      correctionFieldSize = in.length();
     }
   }
   /* add pre-margin */
   correctionFieldSize += margin;
-
   /* the detector configurations */
-  for (Int_t i = 0; i < detectorList->GetEntries(); i++) {
-    if (strlen(detectorList->At(i)->GetName()) > detectorFieldSize) {
-      detectorFieldSize = strlen(detectorList->At(i)->GetName());
+  for (const auto &det : detlist) {
+    if (det.length() > detectorFieldSize) {
+      detectorFieldSize = det.length();
     }
   }
   /* add pre-margin */
   detectorFieldSize += margin;
-
-  TString correctionFieldLine('-', correctionFieldSize + margin);
-  TString detectorsFieldLine('-', detectorList->GetEntries()*(detectorFieldSize + margin));
-  TString correctionFieldSpace(' ', correctionFieldSize + margin);
-  TString detectorsFieldSpace(' ', detectorList->GetEntries()*(detectorFieldSize + margin));
-
+  std::string correctionFieldLine(correctionFieldSize + margin, '-');
+  std::string detectorsFieldLine(detlist.size()*(detectorFieldSize + margin), '-');
+  std::string correctionFieldSpace(correctionFieldSize + margin, ' ');
+  std::string detectorsFieldSpace(detlist.size()*(detectorFieldSize + margin), ' ');
   TString line;
   Int_t textAnchor;
   /* the header */
   cout << correctionFieldLine << detectorsFieldLine << endl;
   line = Form("FLOW VECTOR FRAMEWORK (v2.0) - PASS %d/%d", nCurrentStep, nNoOfSteps);
-  textAnchor = detectorsFieldLine.Length()/2 + line.Length()/2;
+  textAnchor = detectorsFieldLine.length()/2 + line.Length()/2;
   cout << setw(correctionFieldSize + margin) << "|" << setw(textAnchor) << line
-       << setw(detectorsFieldLine.Length() - textAnchor) << "|" << endl;
+       << setw(detectorsFieldLine.length() - textAnchor) << "|" << endl;
   cout << setw(correctionFieldSize + margin) << "-" << detectorsFieldLine << endl;
   /* detectors header */
   line = "--FLOW VECTORS--";
-  textAnchor = detectorsFieldLine.Length()/2 + line.Length()/2;
+  textAnchor = detectorsFieldLine.length()/2 + line.Length()/2;
   cout << setw(correctionFieldSize + margin) << "|" << setw(textAnchor) << line
-       << setw(detectorsFieldLine.Length() - textAnchor) << "|" << endl;
+       << setw(detectorsFieldLine.length() - textAnchor) << "|" << endl;
   cout << setw(correctionFieldSize + margin) << "|";
-  for (Int_t i = 0; i < detectorList->GetEntries(); i++) {
-    cout << setw(detectorFieldSize) << detectorList->At(i)->GetName() << setw(margin) << "|";
+  for (const auto &det : detlist) {
+    cout << setw(detectorFieldSize) << det << setw(margin) << "|";
   }
   cout << endl;
 
   /* now the correction steps */
   cout << setw(correctionFieldSize) << "CORRECTIONS" << setw(margin) << "-" << detectorsFieldLine << endl;
   /* first the input correction steps */
-  for (Int_t ixInCorr = 0; ixInCorr < inputStepList->GetEntries(); ixInCorr++) {
-    cout << setw(correctionFieldSize) << inputStepList->At(ixInCorr)->GetName() << setw(margin) << "|";
-    for (Int_t ixDet = 0; ixDet < detectorList->GetEntries(); ixDet++) {
+  for (auto &inc : inpsteps) {
+    cout << setw(correctionFieldSize) << inc << setw(margin) << "|";
+    for (const auto &det: detlist) {
       TString detOut = "-";
-      if (detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-        if (((TList *) detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-            inputStepList->At(ixInCorr)->GetName())) {
+      if (detectorCorrectionsList->FindObject(det.data())) {
+        if (((TList *) detectorCorrectionsList->FindObject(det.data()))->FindObject(inc.data())) {
           detOut = "0";
-          if (detectorApplyingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-            if (((TList *) detectorApplyingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-                inputStepList->At(ixInCorr)->GetName())) {
+          if (detectorApplyingCorrectionsList->FindObject(det.data())) {
+            if (((TList *) detectorApplyingCorrectionsList->FindObject(det.data()))->FindObject(
+                inc.data())) {
               detOut = "x";
             }
           }
@@ -670,17 +590,16 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
     cout << endl;
   }
   /* now the Qn vector correction steps */
-  for (Int_t ixInCorr = 0; ixInCorr < vectorStepList->GetEntries(); ixInCorr++) {
-    cout << setw(correctionFieldSize) << vectorStepList->At(ixInCorr)->GetName() << setw(margin) << "|";
-    for (Int_t ixDet = 0; ixDet < detectorList->GetEntries(); ixDet++) {
+  for (auto &inc : vecsteps) {
+    cout << setw(correctionFieldSize) << inc << setw(margin) << "|";
+    for (const auto &det : detlist) {
       TString detOut = "-";
-      if (detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-        if (((TList *) detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-            vectorStepList->At(ixInCorr)->GetName())) {
+      if (detectorCorrectionsList->FindObject(det.data())) {
+        if (((TList *) detectorCorrectionsList->FindObject(det.data()))->FindObject(inc.data())) {
           detOut = "0";
-          if (detectorApplyingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-            if (((TList *) detectorApplyingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-                vectorStepList->At(ixInCorr)->GetName())) {
+          if (detectorApplyingCorrectionsList->FindObject(det.data())) {
+            if (((TList *) detectorApplyingCorrectionsList->FindObject(det.data()))->FindObject(
+                inc.data())) {
               detOut = "x";
             }
           }
@@ -694,17 +613,16 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
   /* now the calibration histograms */
   cout << setw(correctionFieldSize) << "FILL HISTOS" << setw(margin) << "-" << detectorsFieldLine << endl;
   /* first the input correction steps */
-  for (Int_t ixInCorr = 0; ixInCorr < inputStepList->GetEntries(); ixInCorr++) {
-    cout << setw(correctionFieldSize) << inputStepList->At(ixInCorr)->GetName() << setw(margin) << "|";
-    for (Int_t ixDet = 0; ixDet < detectorList->GetEntries(); ixDet++) {
+  for (auto &inc : inpsteps) {
+    cout << setw(correctionFieldSize) << inc << setw(margin) << "|";
+    for (const auto &det : detlist) {
       TString detOut = "-";
-      if (detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-        if (((TList *) detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-            inputStepList->At(ixInCorr)->GetName())) {
+      if (detectorCorrectionsList->FindObject(det.data())) {
+        if (((TList *) detectorCorrectionsList->FindObject(det.data()))->FindObject(inc.data())) {
           detOut = "0";
-          if (detectorCalibratingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-            if (((TList *) detectorCalibratingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-                inputStepList->At(ixInCorr)->GetName())) {
+          if (detectorCalibratingCorrectionsList->FindObject(det.data())) {
+            if (((TList *) detectorCalibratingCorrectionsList->FindObject(det.data()))->FindObject(
+                inc.data())) {
               detOut = "x";
             }
           }
@@ -715,17 +633,16 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
     cout << endl;
   }
   /* now the Qn vector correction steps */
-  for (Int_t ixInCorr = 0; ixInCorr < vectorStepList->GetEntries(); ixInCorr++) {
-    cout << setw(correctionFieldSize) << vectorStepList->At(ixInCorr)->GetName() << setw(margin) << "|";
-    for (Int_t ixDet = 0; ixDet < detectorList->GetEntries(); ixDet++) {
+  for (auto &inc : vecsteps) {
+    cout << setw(correctionFieldSize) << inc << setw(margin) << "|";
+    for (const auto &det : detlist) {
       TString detOut = "-";
-      if (detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-        if (((TList *) detectorCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-            vectorStepList->At(ixInCorr)->GetName())) {
+      if (detectorCorrectionsList->FindObject(det.data())) {
+        if (((TList *) detectorCorrectionsList->FindObject(det.data()))->FindObject(inc.data())) {
           detOut = "0";
-          if (detectorCalibratingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName())!=nullptr) {
-            if (((TList *) detectorCalibratingCorrectionsList->FindObject(detectorList->At(ixDet)->GetName()))->FindObject(
-                vectorStepList->At(ixInCorr)->GetName())) {
+          if (detectorCalibratingCorrectionsList->FindObject(det.data())) {
+            if (((TList *) detectorCalibratingCorrectionsList->FindObject(det.data()))->FindObject(
+                inc.data())) {
               detOut = "x";
             }
           }
@@ -735,20 +652,15 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
     }
     cout << endl;
   }
-
   /* finally the legend */
   cout << correctionFieldLine << detectorsFieldLine << endl;
   line = "x: this pass      0: future pass        -: N/A";
-  textAnchor = detectorsFieldLine.Length()/2 + line.Length()/2;
+  textAnchor = detectorsFieldLine.length()/2 + line.Length()/2;
   cout << setw(correctionFieldSize) << "Legend" << setw(margin) << "|" << setw(textAnchor) << line
-       << setw(detectorsFieldLine.Length() - textAnchor) << "|" << endl;
+       << setw(detectorsFieldLine.length() - textAnchor) << "|" << endl;
   cout << correctionFieldLine << detectorsFieldLine << endl;
   cout << endl;
-
   /* back to clean */
-  delete detectorList;
-  delete inputStepList;
-  delete vectorStepList;
   delete detectorCorrectionsList;
   delete detectorCalibratingCorrectionsList;
   delete detectorApplyingCorrectionsList;
@@ -757,7 +669,6 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
 /// Produce the final output and release the framework.
 /// Produce the all data lists that collect data from all concurrent processes.
 void CorrectionCalculator::FinalizeQnCorrectionsFramework() {
-
   auto processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
   fSupportHistogramsList->Add(processList->Clone(szAllProcessesListName));
 }

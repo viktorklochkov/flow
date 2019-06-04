@@ -30,20 +30,21 @@
 #include <TObjArray.h>
 
 namespace Qn {
-class EventClassVariable : public TObject {
-
+class EventClassVariable {
  public:
-  EventClassVariable();
+  EventClassVariable() = default;
   EventClassVariable(const EventClassVariable &ecv);
   EventClassVariable(Int_t varId, const char *varname, Int_t nbins, Double_t min, Double_t max);
   EventClassVariable(Int_t varId, const char *varname, Int_t nbins, Double_t *bins);
   EventClassVariable(Int_t varId, const char *varname, Double_t binsArray[][2]);
-  ~EventClassVariable();
-
+  virtual ~EventClassVariable() {
+    delete[] fBins;
+  }
+  EventClassVariable &operator=(const EventClassVariable &) = delete;
   /// Gets the variable unique Id
-  Int_t GetVariableId() const { return fVarId; }
+  Int_t GetId() const { return fVarId; }
   /// Gets the variable name / label
-  const char *GetVariableLabel() const { return (const char *) fLabel; }
+  const char *GetLabel() const { return fLabel.data(); }
   /// Gets the number of bins
   Int_t GetNBins() const { return fNBins; }
   /// Gets the actual bins edges array
@@ -54,24 +55,18 @@ class EventClassVariable : public TObject {
   /// Gets the upper edge for the passed bin number
   /// \param bin bin number starting from one
   Double_t GetBinUpperEdge(Int_t bin) const { return (((bin < 1) || (bin > fNBins)) ? 0.0 : fBins[bin]); }
-
   /// Gets the lowest variable value considered
   Double_t GetLowerEdge() { return fBins[0]; }
   /// Gets the highest variabel value considered
   Double_t GetUpperEdge() { return fBins[fNBins]; }
-
  private:
-  Int_t fVarId;        ///< The external Id for the variable in the data bank
-  Int_t fNBins;        ///< The number of bins for the variable when shown in a histogram
-  Int_t fNBinsPlusOne; ///< the number of bins plus one. Needed for object persistence
+  Int_t fVarId = -1;        ///< The external Id for the variable in the data bank
+  Int_t fNBins = 0;        ///< The number of bins for the variable when shown in a histogram
+  Int_t fNBinsPlusOne = 0; ///< the number of bins plus one. Needed for object persistence
   /// Bin edges array for the variable when shown in a histogram
-  Double_t *fBins;         //[fNBinsPlusOne]
-  TString fLabel;        ///< Label to use in an axis that shows the variable
+  Double_t *fBins = nullptr;       //[fNBinsPlusOne]
+  std::string fLabel;        ///< Label to use in an axis that shows the variable
 
- private:
-  /// Assignment operator
-  /// Not allowed. Forced private.
-  EventClassVariable &operator=(const EventClassVariable &);
 /// \cond CLASSIMP
  ClassDef(EventClassVariable, 1);
 /// \endcond

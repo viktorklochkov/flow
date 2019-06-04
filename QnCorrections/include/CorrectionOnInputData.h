@@ -18,7 +18,7 @@
 #include <TNamed.h>
 #include <TList.h>
 
-#include "CorrectionStepBase.h"
+#include "CorrectionStep.h"
 
 namespace Qn {
 
@@ -30,12 +30,17 @@ namespace Qn {
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 05, 2016
 
-class CorrectionOnInputData : public CorrectionStepBase {
+class CorrectionOnInputData : public CorrectionStep {
  public:
-  friend class DetectorConfigurationChannels;
-  CorrectionOnInputData();
-  CorrectionOnInputData(const char *name, const char *key);
-  virtual ~CorrectionOnInputData();
+
+  enum Priority {
+    kGainEqualization
+  };
+
+  friend class SubEventChannels;
+  CorrectionOnInputData() = default;
+  CorrectionOnInputData(const char *name, unsigned int prio) : CorrectionStep(name, prio) {}
+  virtual ~CorrectionOnInputData() = default;
 
   /// Informs when the detector configuration has been attached to the framework manager
   /// Basically this allows interaction between the different framework sections at configuration time

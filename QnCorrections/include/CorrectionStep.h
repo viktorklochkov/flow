@@ -15,11 +15,8 @@
 /// \brief Base class for the support of the different correction steps within Q vector correction framework
 ///
 
-#include <TNamed.h>
-#include <TList.h>
 namespace Qn {
-class DetectorConfiguration;
-class DetectorConfigurationChannels;
+class SubEvent;
 class CorrectionQnVector;
 
 /// \class QnCorrectionsCorrectionStepBase
@@ -34,7 +31,7 @@ class CorrectionQnVector;
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 05, 2016
 
-class CorrectionStepBase : public TNamed {
+class CorrectionStep {
  public:
   /// \typedef QnCorrectionStepStatus
   /// \brief The class of the id of the correction steps states
@@ -45,21 +42,23 @@ class CorrectionStepBase : public TNamed {
   ///
   /// When referring as "data being collected" means that the needed data
   /// for producing new correction parameters are being collected.
-  typedef enum {
-    QCORRSTEP_calibration,         ///< the correction step is in calibration mode collecting data
-    QCORRSTEP_apply,               ///< the correction step is being applied
-    QCORRSTEP_applyCollect,        ///< the correction step is being applied and data are being collected
-    QCORRSTEP_passive,             ///< the correction step is waiting for external conditions fulfillment
-  } QnCorrectionStepStatus;
 
-  friend class DetectorConfiguration;
-  CorrectionStepBase();
-  CorrectionStepBase(const char *name, const char *key);
-  virtual ~CorrectionStepBase();
+  enum class State {
+    CALIBRATION,         ///< the correction step is in calibration mode collecting data
+    APPLY,               ///< the correction step is being applied
+    APPLYCOLLECT,        ///< the correction step is being applied and data are being collected
+    PASSIVE,             ///< the correction step is waiting for external conditions fulfillment
+  };
 
-  /// Gets the correction ordering key
-  const char *GetKey() const { return (const char *) fKey; }
-  Bool_t Before(const CorrectionStepBase *correction);
+  friend class SubEvent;
+  CorrectionStep() = default;
+  virtual ~CorrectionStep() = default;
+  CorrectionStep(const char *name, unsigned int prio) : fPriority(prio), fName(name) {}
+  /// Copy constructor
+  CorrectionStep(CorrectionStep &) = delete;
+  /// Assignment operator
+  CorrectionStep &operator=(const CorrectionStep &) = delete;
+  const char *GetName() const { return fName.data(); }
 
   /// Informs when the detector configuration has been attached to the framework manager
   /// Basically this allows interaction between the different framework sections at configuration time
@@ -136,26 +135,35 @@ class CorrectionStepBase : public TNamed {
  protected:
   /// Stores the detector configuration owner
   /// \param detectorConfiguration the detector configuration owner
-  void SetConfigurationOwner(DetectorConfiguration *detectorConfiguration) {
-    fDetectorConfiguration = detectorConfiguration;
-  }
+  void SetConfigurationOwner(SubEvent *detectorConfiguration) { fDetector = detectorConfiguration; }
+  unsigned int fPriority = 0; ///< the correction key that codifies order information
+  std::string fName;
+  State fState = State::CALIBRATION; ///< the state in which the correction step is
+  SubEvent *fDetector = nullptr; ///< pointer to the detector configuration owner
 
-  QnCorrectionStepStatus fState;                                  ///< the state in which the correction step is
-  DetectorConfiguration *fDetectorConfiguration; ///< pointer to the detector configuration owner
-  TString
-      fKey;                                                   ///< the correction key that codifies order information
-
- private:
-  /// Copy constructor
-  /// Not allowed. Forced private.
-  CorrectionStepBase(CorrectionStepBase &);
-  /// Assignment operator
-  /// Not allowed. Forced private.
-  CorrectionStepBase &operator=(const CorrectionStepBase &);
+  friend struct CompareSteps;
+  friend bool operator<(const CorrectionStep &lh, const CorrectionStep &rh);
 
 /// \cond CLASSIMP
- ClassDef(CorrectionStepBase, 1);
+ ClassDef(CorrectionStep, 1);
 /// \endcond
 };
+
+inline bool operator<(const CorrectionStep &lh, const CorrectionStep &rh) {
+  return lh.fPriority < rh.fPriority;
+}
+
+/// Checks if should be applied before the one passed as parameter
+/// \param correction correction to check whether to be applied after
+/// \return kTRUE if to apply before the one passed as argument
+struct CompareSteps {
+  bool operator()(const CorrectionStep &lh, const CorrectionStep &rh) const {
+    return lh < rh;
+  }
+  bool operator()(const CorrectionStep *lh, const CorrectionStep *rh) const {
+    return *lh < *rh;
+  }
+};
+
 }
 #endif // QNCORRECTIONS_CORRECTIONSTEPBASE_H

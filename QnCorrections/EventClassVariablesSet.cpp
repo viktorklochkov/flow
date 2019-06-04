@@ -45,13 +45,13 @@ namespace Qn {
 /// \param nbins storage for the number of bins of each variable
 /// \param minvals storage for the lower values of each variable
 /// \param maxvals storage for the upper values of each variable
-void EventClassVariablesSet::GetMultidimensionalConfiguration(Int_t *nbins,
-                                                                           Double_t *minvals,
-                                                                           Double_t *maxvals) {
-  for (Int_t var = 0; var < GetEntriesFast(); var++) {
-    nbins[var] = At(var)->GetNBins();
-    minvals[var] = At(var)->GetLowerEdge();
-    maxvals[var] = At(var)->GetUpperEdge();
+void EventClassVariablesSet::GetMultidimensionalConfiguration(Int_t *nbins, Double_t *minvals, Double_t *maxvals) {
+  unsigned int ivar = 0;
+  for (auto & var : fVariables) {
+    nbins[ivar] = var.GetNBins();
+    minvals[ivar] = var.GetLowerEdge();
+    maxvals[ivar] = var.GetUpperEdge();
+    ++ivar;
   }
 }
 

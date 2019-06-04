@@ -108,7 +108,7 @@ Bool_t CorrectionProfileCorrelationComponents::CreateCorrelationComponentsProfil
   entriesHistoTitle += szEntriesHistoSuffix;
 
   /* now prepare the construction of the histograms */
-  Int_t nVariables = fEventClassVariables.GetEntriesFast();
+  Int_t nVariables = fEventClassVariables.size();
 
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
@@ -130,22 +130,22 @@ Bool_t CorrectionProfileCorrelationComponents::CreateCorrelationComponentsProfil
 
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fXXValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fXXValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fXYValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fXYValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fYXValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fYXValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fYYValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fYYValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+     fXXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fXXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fXYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fXYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fYXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fYXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fYYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fYYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
 
   /* ask for square sum accumulation */
@@ -170,8 +170,8 @@ Bool_t CorrectionProfileCorrelationComponents::CreateCorrelationComponentsProfil
 
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
 
   /* and finally add the entries histogram to the list */

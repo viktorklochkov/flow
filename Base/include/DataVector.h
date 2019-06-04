@@ -52,16 +52,6 @@ struct DataVector {
   /// \endcond
 };
 
-class DataVectorHolder {
- public:
-  DataVectorHolder() = default;
-  virtual ~DataVectorHolder() = default;
-  std::vector<Qn::CorrectionDataVector> *array = nullptr; //!<! non persistent
-  /// \cond CLASSIMP
- ClassDef(DataVectorHolder, 2);
-  /// \endcond
-};
-
 }
 
 #endif //FLOW_DATAVECTOR_H

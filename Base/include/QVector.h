@@ -18,7 +18,7 @@
 #ifndef FLOW_QVECTOR_H
 #define FLOW_QVECTOR_H
 
-#include <vector>
+#include <array>
 #include <bitset>
 #include <cmath>
 
@@ -99,7 +99,7 @@ class QVector {
 
   inline float x(const unsigned int i) const {
     if (bits_.test(i)) {
-      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1 << (i + 1)) - 1)).count() - 1].x;
+      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1UL << (i + 1)) - 1)).count() - 1].x;
     } else {
       throw std::out_of_range("harmonic not in range.");
     }
@@ -107,7 +107,7 @@ class QVector {
 
   inline float y(const unsigned int i) const {
     if (bits_.test(i)) {
-      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1 << (i + 1)) - 1)).count() - 1].y;
+      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1UL << (i + 1)) - 1)).count() - 1].y;
     } else {
       throw std::out_of_range("harmonic not in range.");
     }
@@ -126,7 +126,7 @@ class QVector {
   int n_ = 0;                                ///< number of data vectors contributing to the q vector
   float sum_weights_ = 0.0;                  ///< sum of weights
   std::bitset<kMaxNHarmonics> bits_{};       ///< Bitset for keeping track of the harmonics
-  std::vector<QVec> q_;                      ///< array of qvectors for the different harmonics
+  std::vector<QVec> q_;                     ///< array of qvectors for the different harmonics
   unsigned int correction_step_ = 0;         ///<  correction step defined by enumerator
 
   /// \cond CLASSIMP
@@ -143,7 +143,7 @@ class QVectorPtr {
  public:
   QVectorPtr() = default;
   // construct/copy/destroy
-  QVectorPtr(const QVector &ref) noexcept : qvector_(&ref) {}
+  explicit QVectorPtr(const QVector &ref) noexcept : qvector_(&ref) {}
   QVectorPtr(const QVectorPtr &) noexcept = default;
   // assignment
   QVectorPtr &operator=(const QVectorPtr &x) noexcept = default;

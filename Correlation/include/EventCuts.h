@@ -82,7 +82,7 @@ class EventCut : public EventCutBase {
    */
   template<std::size_t... I>
   bool CheckImpl(std::index_sequence<I...>) {
-    return lambda_(*(variables_[I]->Get())...);
+    return lambda_(*variables_[I]->Get()...);
   }
 
   std::array<VAR, sizeof...(T)> variables_; /// array of the variables used in the cut.

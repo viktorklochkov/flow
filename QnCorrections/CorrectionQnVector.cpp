@@ -78,12 +78,10 @@ CorrectionQnVector::CorrectionQnVector() : TNamed() {
 /// \param name the name of the Qn vector. Identifies its origin
 /// \param nNoOfHarmonics the desired number of harmonics
 /// \param harmonicMap ordered array with the external number of the harmonics
-CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, Int_t *harmonicMap) :
+CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, const Int_t *harmonicMap) :
     TNamed(name, name) {
-
   memset(fQnX, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   memset(fQnY, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
-
   /* check whether within the supported harmonic range */
   fHighestHarmonic = nNoOfHarmonics;
   if (harmonicMap!=NULL) {
@@ -98,7 +96,7 @@ CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, I
   fHarmonicMask = 0x0000;
   Int_t currentHarmonic = 0;
   for (Int_t h = 0; h < nNoOfHarmonics; h++) {
-    if (harmonicMap!=NULL) {
+    if (harmonicMap!=nullptr) {
       currentHarmonic = harmonicMap[h];
     } else {
       currentHarmonic++;
@@ -127,28 +125,23 @@ CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, I
 /// \param nDivisor the divisor of the harmonic number for getting the harmonic we want to create support for
 /// \param nNoOfHarmonics the number of harmonics passed within the map
 /// \param harmonicMap ordered array with the external number of the harmonics
-CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nDivisor, Int_t nNoOfHarmonics, Int_t *harmonicMap)
+CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nDivisor, Int_t nNoOfHarmonics, const Int_t *harmonicMap)
     :
     TNamed(name, name) {
-
   memset(fQnX, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   memset(fQnY, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
-
   /* check whether within the supported harmonic range */
   fHighestHarmonic = Int_t(harmonicMap[nNoOfHarmonics - 1]/nDivisor);
-
   if (MAXHARMONICNUMBERSUPPORTED < fHighestHarmonic) {
     QnCorrectionsFatal(Form(
         "You requested support for harmonic %d but the highest harmonic supported by the framework is currently %d",
         fHighestHarmonic,
         MAXHARMONICNUMBERSUPPORTED));
   }
-
   fHarmonicMask = 0x0000;
   Int_t nCurrentHarmonic;
   for (Int_t h = 0; h < nNoOfHarmonics; h++) {
     nCurrentHarmonic = harmonicMap[h];
-
     if ((nCurrentHarmonic%nDivisor)!=0) continue;
     fHarmonicMask |= harmonicNumberMask[nCurrentHarmonic/nDivisor];
   }
@@ -162,7 +155,6 @@ CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nDivisor, Int_t n
 /// \param Qn the Q vector object to copy after construction
 CorrectionQnVector::CorrectionQnVector(const CorrectionQnVector &Qn) :
     TNamed(Qn) {
-
   memcpy(fQnX, Qn.fQnX, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   memcpy(fQnY, Qn.fQnY, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   fHighestHarmonic = Qn.fHighestHarmonic;
@@ -181,35 +173,24 @@ CorrectionQnVector::CorrectionQnVector(const CorrectionQnVector &Qn) :
 /// \param Q the Q vector object to copy after construction
 CorrectionQnVector::CorrectionQnVector(Int_t nDivisor, const CorrectionQnVector &Q) :
     TNamed(Q) {
-
   memset(fQnX, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   memset(fQnY, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   fHighestHarmonic = Int_t(Q.fHighestHarmonic/nDivisor);
-
   fHarmonicMask = 0x0000;
   Int_t nCurrentHarmonic;
   for (Int_t h = 0; h < Q.fHighestHarmonic; h++) {
     nCurrentHarmonic = h + 1;
-
     /* check if integer divisor */
     if ((nCurrentHarmonic%nDivisor)!=0) continue;
-
     /* check if active */
     if ((Q.fHarmonicMask & harmonicNumberMask[nCurrentHarmonic])!=harmonicNumberMask[nCurrentHarmonic]) continue;
-
     /* activate harmonic */
     fHarmonicMask |= harmonicNumberMask[nCurrentHarmonic/nDivisor];
   }
-
   fGoodQuality = Q.fGoodQuality;
   fN = Q.fN;
   fSumW = Q.fSumW;
   fHarmonicMultiplier = Q.fHarmonicMultiplier;
-}
-
-/// Default destructor
-CorrectionQnVector::~CorrectionQnVector() {
-
 }
 
 /// Activates the desired harmonic for processing

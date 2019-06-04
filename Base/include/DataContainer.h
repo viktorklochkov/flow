@@ -31,7 +31,6 @@
 #include "TCollection.h"
 
 #include "Axis.h"
-#include "DataVector.h"
 #include "QVector.h"
 #include "EventShape.h"
 #include "Product.h"
@@ -49,7 +48,7 @@ namespace Qn {
  * @brief      Template container class for Q-vectors and correlations
  * @param T    Type of object inside of container
  */
-template<typename T>
+template<typename T, typename AxisType>
 class DataContainer : public TObject {
  public:
   enum Settings {
@@ -72,14 +71,14 @@ class DataContainer : public TObject {
  * Constructor
  * @param axes vector of axes of the datacontainer.
  */
-  explicit DataContainer(std::vector<Axis> axes) {
+  explicit DataContainer(std::vector<Axis<AxisType>> axes) {
     AddAxes(axes);
   }
   virtual ~DataContainer() {
     delete list_;
   };
 
-  using QnAxes = std::vector<Axis>;
+  using QnAxes = std::vector<Axis<AxisType>>;
   using size_type = std::size_t;
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
@@ -111,9 +110,11 @@ class DataContainer : public TObject {
  * Adds existing axis for storing the data with variable binning
  * @param axis Axis to be added.
  */
-  void AddAxis(const Axis &axis) {
+  void AddAxis(const Axis<AxisType> &axis) {
     if (integrated_) this->Reset();
-    if (std::find_if(axes_.begin(), axes_.end(), [axis](const Axis &axisc) { return axisc.Name()==axis.Name(); })
+    if (std::find_if(axes_.begin(),
+                     axes_.end(),
+                     [axis](const Axis<AxisType> &axisc) { return axisc.Name()==axis.Name(); })
         !=axes_.end())
       throw std::logic_error("Axis already defined in vector.");
     axes_.push_back(axis);
@@ -165,7 +166,7 @@ class DataContainer : public TObject {
     return diagonal;
   }
 
-  template <class TT>
+  template<class TT>
   T const &operator[](const std::vector<TT> &coords) const noexcept {
     return data_.at(GetLinearIndex(coords));
   }
@@ -198,7 +199,7 @@ class DataContainer : public TObject {
  */
   T const &At(size_type index) const noexcept { return data_.at(index); }
 
-  template <typename TT>
+  template<typename TT>
   constexpr long FindBin(const std::vector<TT> &coords) const {
     return GetLinearIndex<TT>(coords);
   }
@@ -265,7 +266,7 @@ class DataContainer : public TObject {
  * @param name  Name of the desired axis
  * @return      Axis
  */
-  Axis GetAxis(const std::string name) const {
+  Axis<AxisType> GetAxis(const std::string name) const {
     for (auto axis: axes_) {
       if (name==axis.Name()) return axis;
     }
@@ -338,9 +339,9 @@ class DataContainer : public TObject {
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Projection(const std::vector<std::string> &axis_names,
-                              Function &&lambda) const {
-    DataContainer<T> projection;
+  DataContainer<T, AxisType> Projection(const std::vector<std::string> &axis_names,
+                                        Function &&lambda) const {
+    DataContainer<T, AxisType> projection;
     unsigned long linearindex = 0;
     std::vector<bool> isprojected;
     isprojected.resize(axes_.size());
@@ -393,7 +394,7 @@ class DataContainer : public TObject {
  * @param axis_names subset of axes used for the projection.
  * @return projected datacontainer.
  */
-  DataContainer<T>
+  DataContainer<T, AxisType>
   Projection(const std::vector<std::string> axis_names = {}) const {
     auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a, b); };
     return Projection(axis_names, lambda);
@@ -408,9 +409,9 @@ class DataContainer : public TObject {
  * @return projected datacontainer.
  */
   template<typename Function>
-  DataContainer<T> ProjectionExclude(const std::vector<std::string> &axis_names,
-                                     Function &&lambda, std::vector<int> exindices) const {
-    DataContainer<T> projection;
+  DataContainer<T, AxisType> ProjectionExclude(const std::vector<std::string> &axis_names,
+                                               Function &&lambda, std::vector<int> exindices) const {
+    DataContainer<T, AxisType> projection;
     size_type linearindex = 0;
     std::vector<bool> isprojected;
     isprojected.resize(axes_.size());
@@ -468,8 +469,8 @@ class DataContainer : public TObject {
  * @return datacontainer after applying function.
  */
   template<typename Function>
-  DataContainer<T> Map(Function &&lambda) const {
-    DataContainer<T> result(*this);
+  DataContainer<T, AxisType> Map(Function &&lambda) const {
+    DataContainer<T, AxisType> result(*this);
     std::transform(data_.begin(), data_.end(), result.begin(), [&lambda](const T &element) { return lambda(element); });
     return result;
   }
@@ -482,8 +483,8 @@ class DataContainer : public TObject {
  * @param axis subrange of axis to perform selection
  * @return
  */
-  DataContainer<T> Select(const Axis &axis) const {
-    DataContainer<T> selected;
+  DataContainer<T, AxisType> Select(const Axis<AxisType> &axis) const {
+    DataContainer<T, AxisType> selected;
     long axisposition = 0;
     long tmpaxisposition = 0;
     for (const auto &a : axes_) {
@@ -527,8 +528,8 @@ class DataContainer : public TObject {
  * @return rebinned datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Rebin(const Axis &rebinaxis, Function &&lambda) const {
-    DataContainer<T> rebinned;
+  DataContainer<T, AxisType> Rebin(const Axis<AxisType> &rebinaxis, Function &&lambda) const {
+    DataContainer<T, AxisType> rebinned;
     unsigned long axisposition = 0;
     bool axisfound = false;
     // Check if axis to be rebinned is found in the datacontainer.
@@ -549,7 +550,7 @@ class DataContainer : public TObject {
     bool rebin_ok = true;
     for (const auto &rebinedge : rebinaxis) {
       bool found = false;
-      for (const auto &binedge : (Axis) axes_.at(axisposition)) {
+      for (const auto &binedge : (Axis<AxisType>) axes_.at(axisposition)) {
         float test = TMath::Abs(rebinedge - binedge);
         if (test < 10e-4) {
           found = rebin_ok;
@@ -584,7 +585,7 @@ class DataContainer : public TObject {
  * @param rebinaxis axis to be rebinned.
  * @return rebinned datacontainer.
  */
-  DataContainer<T> Rebin(const Axis &rebinaxis) const {
+  DataContainer<T, AxisType> Rebin(const Axis<AxisType> &rebinaxis) const {
     auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a, b); };
     return Rebin(rebinaxis, lambda);
   }
@@ -594,8 +595,8 @@ class DataContainer : public TObject {
    * All bins which do not pass the cut are set to 0.
    */
   template<typename Function>
-  DataContainer<T> Filter(Function &&lambda) const {
-    DataContainer<T> filtered(*this);
+  DataContainer<T, AxisType> Filter(Function &&lambda) const {
+    DataContainer<T, AxisType> filtered(*this);
     std::vector<size_type> indices(dimension_);
     for (unsigned int ibin = 0; ibin < data_.size(); ++ibin) {
       GetIndex(indices, ibin);
@@ -614,8 +615,8 @@ class DataContainer : public TObject {
  * @return resulting datacontainer.
  */
   template<typename Function>
-  DataContainer<T> Apply(const DataContainer<T> &data, Function &&lambda) const {
-    DataContainer<T> result;
+  DataContainer<T, AxisType> Apply(const DataContainer<T, AxisType> &data, Function &&lambda) const {
+    DataContainer<T, AxisType> result;
     std::vector<size_type> indices;
     unsigned long index = 0;
     if (axes_.size() > data.axes_.size()) {
@@ -682,7 +683,7 @@ class DataContainer : public TObject {
  */
   Long64_t Merge(TCollection *inputlist) {
     TIter next(inputlist);
-    while (auto data = (DataContainer<T> *) next()) {
+    while (auto data = (DataContainer<T, AxisType> *) next()) {
       auto lambda = [](const T &a, const T &b) -> T { return Qn::Merge(a, b); };
       *this = this->Apply(*data, lambda);
     }
@@ -724,7 +725,7 @@ class DataContainer : public TObject {
  * @param coordinates floating point coordinates
  * @return linear index
  */
- template <typename TT>
+  template<typename TT>
   long GetLinearIndex(const std::vector<TT> &coordinates) const noexcept {
     long offset = (axes_[dimension_ - 1].FindBin(coordinates[dimension_ - 1]));
     if (offset==-1) return -1;
@@ -805,28 +806,27 @@ class DataContainer : public TObject {
 // Common alias for types of DataContainer //
 // needed for ROOT IO                      //
 //-----------------------------------------//
-
-using DataContainerProduct = DataContainer<Qn::Product>;
-using DataContainerStats = DataContainer<Qn::Stats>;
-using DataContainerQVector = DataContainer<Qn::QVector>;
-using DataContainerDataVector = DataContainer<std::vector<DataVector>>;
-using DataContainerEventShape = DataContainer<Qn::EventShape>;
-using DataContainerQnDataVector = DataContainer<Qn::DataVectorHolder>;
+template<typename T>
+using DataF = DataContainer<T, float>;
+using DataContainerProduct = DataContainer<Qn::Product, float>;
+using DataContainerStats = DataContainer<Qn::Stats, float>;
+using DataContainerQVector = DataContainer<Qn::QVector, float>;
+using DataContainerEventShape = DataContainer<Qn::EventShape, float>;
 
 //--------------------------------------------//
 // Template specializations for visualisation //
 //--------------------------------------------//
 
 template<>
-inline void DataContainer<Stats>::Browse(TBrowser *b) {
+inline void DataContainer<Stats, float>::Browse(TBrowser *b) {
   DataContainerHelper::StatsBrowse(this, b);
 }
 template<>
-inline void DataContainer<EventShape>::Browse(TBrowser *b) {
+inline void DataContainer<EventShape, float>::Browse(TBrowser *b) {
   DataContainerHelper::EventShapeBrowse(this, b);
 }
 template<>
-inline void DataContainer<Stats>::NDraw(Option_t *option, const std::string &axis_name) {
+inline void DataContainer<Stats, float>::NDraw(Option_t *option, const std::string &axis_name) {
   DataContainerHelper::NDraw(*this, option, axis_name);
 }
 
@@ -834,7 +834,7 @@ inline void DataContainer<Stats>::NDraw(Option_t *option, const std::string &axi
 // Template specializations for bits //
 //-----------------------------------//
 template<>
-inline void DataContainer<Stats>::SetSetting(const unsigned int bits) {
+inline void DataContainer<Stats, float>::SetSetting(const unsigned int bits) {
   auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
   SetBit(cleanbits, true);
   for (auto &bin : data_) {
@@ -843,7 +843,7 @@ inline void DataContainer<Stats>::SetSetting(const unsigned int bits) {
 }
 
 template<>
-inline void DataContainer<Stats>::ResetSetting(const unsigned int bits) {
+inline void DataContainer<Stats, float>::ResetSetting(const unsigned int bits) {
   auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
   ResetBit(cleanbits);
   for (auto &bin : data_) {
@@ -854,28 +854,28 @@ inline void DataContainer<Stats>::ResetSetting(const unsigned int bits) {
 //-----------------------------------------//
 // Operations for DataContainer arithmetic //
 //-----------------------------------------//
-template<typename T>
-DataContainer<T> operator+(const DataContainer<T> &a, const DataContainer<T> &b) {
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> operator+(const DataContainer<T, AxisType> &a, const DataContainer<T, AxisType> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a + b; });
 }
-template<typename T>
-DataContainer<T> operator-(const DataContainer<T> &a, const DataContainer<T> &b) {
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> operator-(const DataContainer<T, AxisType> &a, const DataContainer<T, AxisType> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a - b; });
 }
-template<typename T>
-DataContainer<T> operator*(const DataContainer<T> &a, const DataContainer<T> &b) {
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> operator*(const DataContainer<T, AxisType> &a, const DataContainer<T, AxisType> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a*b; });
 }
-template<typename T>
-DataContainer<T> operator/(const DataContainer<T> &a, const DataContainer<T> &b) {
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> operator/(const DataContainer<T, AxisType> &a, const DataContainer<T, AxisType> &b) {
   return a.Apply(b, [](const T &a, const T &b) { return a/b; });
 }
-template<typename T>
-DataContainer<T> operator*(const DataContainer<T> &a, double b) {
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> operator*(const DataContainer<T, AxisType> &a, double b) {
   return a.Map([b](const T &a) { return a*b; });
 }
-template<typename T>
-DataContainer<T> Sqrt(const DataContainer<T> &a) {
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> Sqrt(const DataContainer<T, AxisType> &a) {
   return a.Map([](const T &x) { return Qn::Sqrt(x); });
 }
 
@@ -889,9 +889,9 @@ DataContainer<T> Sqrt(const DataContainer<T> &a) {
  * @param input DataContainer to be transformed.
  * @return Transformed DataContainer
  */
-template<typename T>
-DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
-  DataContainer<T> Summed(input);
+template<typename T, typename AxisType>
+DataContainer<T, AxisType> ExclusiveSum(const DataContainer<T, AxisType> &input) {
+  DataContainer<T, AxisType> Summed(input);
   Summed.ClearData();
   for (auto ibin = std::begin(input); ibin < std::end(input); ++ibin) {
     for (auto jbin = std::begin(input); jbin < std::end(input); ++jbin) {
@@ -904,13 +904,11 @@ DataContainer<T> ExclusiveSum(const DataContainer<T> &input) {
 }
 
 template<>
-Long64_t DataContainer<std::pair<bool, float>>::Merge(TCollection *inputlist) = delete;
+Long64_t DataContainer<std::pair<bool, float>, float>::Merge(TCollection *inputlist) = delete;
 template<>
-Long64_t DataContainer<std::vector<DataVector>>::Merge(TCollection *inputlist) = delete;
+Long64_t DataContainer<Qn::Product, float>::Merge(TCollection *inputlist) = delete;
 template<>
-Long64_t DataContainer<Qn::Product>::Merge(TCollection *inputlist) = delete;
-template<>
-Long64_t DataContainer<Qn::QVector>::Merge(TCollection *inputlist) = delete;
+Long64_t DataContainer<Qn::QVector, float>::Merge(TCollection *inputlist) = delete;
 
 };
 #endif

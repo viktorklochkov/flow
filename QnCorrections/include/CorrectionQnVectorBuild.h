@@ -46,7 +46,7 @@ class CorrectionQnVectorBuild : public CorrectionQnVector {
   /// Check the quality of the constructed Qn vector
   /// Current criteria is number of contributors should be at least one.
   /// If so happen, sets the good quality flag.
-  void CheckQuality() { fGoodQuality = ((0 < fN) ? kTRUE : kFALSE); }
+  void CheckQuality() { fGoodQuality = 0 < fN; }
   void Normalize(Normalization method);
 
   void NormalizeQoverM();
@@ -76,7 +76,6 @@ class CorrectionQnVectorBuild : public CorrectionQnVector {
 /// \param phi azimuthal angle contribution
 /// \param weight the weight of the contribution
 inline void CorrectionQnVectorBuild::Add(Double_t phi, Double_t weight) {
-
   if (weight < fMinimumSignificantValue) return;
   for (Int_t h = 1; h < fHighestHarmonic + 1; h++) {
     if ((fHarmonicMask & harmonicNumberMask[h])==harmonicNumberMask[h]) {

@@ -19,7 +19,7 @@
 #include "CorrelationManager.h"
 #include "ROOT/RMakeUnique.hxx"
 
-void Qn::EventAxes::RegisterEventAxis(Qn::Axis axis, Type type) {
+void Qn::EventAxes::RegisterEventAxis(Qn::AxisF axis, Type type) {
   auto name = axis.Name().data();
   if (type==Type::Integer) {
     event_axes_.push_back(

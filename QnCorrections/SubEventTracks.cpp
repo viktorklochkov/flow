@@ -33,22 +33,14 @@
 /// \brief Implementation of the track detector configuration class
 
 #include "CorrectionProfileComponents.h"
-#include "DetectorConfigurationTracks.h"
+#include "SubEventTracks.h"
 #include "CorrectionLog.h"
 #include "ROOT/RMakeUnique.hxx"
 
 /// \cond CLASSIMP
-ClassImp(Qn::DetectorConfigurationTracks);
+ClassImp(Qn::SubEventTracks);
 /// \endcond
 namespace Qn {
-
-const char *DetectorConfigurationTracks::szQAQnAverageHistogramName = "Plain Qn avg ";
-
-/// Default constructor
-DetectorConfigurationTracks::DetectorConfigurationTracks() : DetectorConfiguration() {
-
-  fQAQnAverageHistogram = nullptr;
-}
 
 /// Normal constructor
 /// Allocates the data vector bank.
@@ -56,33 +48,23 @@ DetectorConfigurationTracks::DetectorConfigurationTracks() : DetectorConfigurati
 /// \param eventClassesVariables the set of event classes variables
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
-DetectorConfigurationTracks::DetectorConfigurationTracks(const char *name,
-                                                                                   EventClassVariablesSet *eventClassesVariables,
-                                                                                   Int_t nNoOfHarmonics,
-                                                                                   Int_t *harmonicMap) :
-    DetectorConfiguration(name, eventClassesVariables, nNoOfHarmonics, harmonicMap) {
-
-  fQAQnAverageHistogram = nullptr;
-}
-
-/// Default destructor
-/// Memory taken is released by the parent class destructor
-DetectorConfigurationTracks::~DetectorConfigurationTracks() {
-
-  if (fQAQnAverageHistogram!=nullptr)
-    delete fQAQnAverageHistogram;
+SubEventTracks::SubEventTracks(const char *name,
+                               EventClassVariablesSet *eventClassesVariables,
+                               Int_t nNoOfHarmonics,
+                               Int_t *harmonicMap) :
+    SubEvent(name, eventClassesVariables, nNoOfHarmonics, harmonicMap) {
 }
 
 /// Stores the framework manager pointer
 /// Orders the base class to store the correction manager and informs
 /// the Qn vector corrections they are now attached to the framework
 /// \param manager the framework manager
-void DetectorConfigurationTracks::AttachCorrectionsManager(CorrectionCalculator *manager) {
+void SubEventTracks::AttachCorrectionsManager(CorrectionCalculator *manager) {
   fCorrectionsManager = manager;
 
   if (manager!=nullptr) {
-    for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-      fQnVectorCorrections.At(ixCorrection)->AttachedToFrameworkManager();
+    for (auto &correction : fQnVectorCorrections) {
+      correction->AttachedToFrameworkManager();
     }
   }
 }
@@ -91,12 +73,12 @@ void DetectorConfigurationTracks::AttachCorrectionsManager(CorrectionCalculator 
 ///
 /// The input data vector bank is allocated and the request is
 /// transmitted to the Q vector corrections.
-void DetectorConfigurationTracks::CreateSupportDataStructures() {
+void SubEventTracks::CreateSupportDataStructures() {
 
   /* this is executed in the remote node so, allocate the data bank */
-  fDataVectorBank.reserve(Qn::DetectorConfiguration::INITIALSIZE);
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    fQnVectorCorrections.At(ixCorrection)->CreateSupportDataStructures();
+  fDataVectorBank.reserve(Qn::SubEvent::INITIALSIZE);
+  for (auto &correction : fQnVectorCorrections) {
+    correction->CreateSupportDataStructures();
   }
 }
 
@@ -108,13 +90,13 @@ void DetectorConfigurationTracks::CreateSupportDataStructures() {
 /// to the passed list. Then the new list is passed to the corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t DetectorConfigurationTracks::CreateSupportHistograms(TList *list) {
+Bool_t SubEventTracks::CreateSupportHistograms(TList *list) {
   Bool_t retValue = kTRUE;
   auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    retValue = retValue && (fQnVectorCorrections.At(ixCorrection)->CreateSupportHistograms(detectorConfigurationList));
+  for (auto &correction : fQnVectorCorrections) {
+    retValue = retValue && correction->CreateSupportHistograms(detectorConfigurationList);
   }
   /* if list is empty delete it if not incorporate it */
   if (detectorConfigurationList->GetEntries()!=0) {
@@ -133,14 +115,14 @@ Bool_t DetectorConfigurationTracks::CreateSupportHistograms(TList *list) {
 /// to the passed list. Then the new list is passed to the corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t DetectorConfigurationTracks::CreateQAHistograms(TList *list) {
+Bool_t SubEventTracks::CreateQAHistograms(TList *list) {
   Bool_t retValue = kTRUE;
   TList *detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
 
   /* the own QA average Qn vector components histogram */
-  fQAQnAverageHistogram = new CorrectionProfileComponents(
+  fQAQnAverageHistogram = std::make_unique<CorrectionProfileComponents>(
       Form("%s %s", szQAQnAverageHistogramName, this->GetName()),
       Form("%s %s", szQAQnAverageHistogramName, this->GetName()),
       this->GetEventClassVariablesSet());
@@ -152,8 +134,8 @@ Bool_t DetectorConfigurationTracks::CreateQAHistograms(TList *list) {
   fQAQnAverageHistogram->CreateComponentsProfileHistograms(detectorConfigurationList, nNoOfHarmonics, harmonicsMap);
   delete[] harmonicsMap;
 
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    retValue = retValue && (fQnVectorCorrections.At(ixCorrection)->CreateQAHistograms(detectorConfigurationList));
+  for (auto &correction : fQnVectorCorrections) {
+    retValue = retValue && correction->CreateQAHistograms(detectorConfigurationList);
   }
   /* if list is empty delete it if not incorporate it */
   if (detectorConfigurationList->GetEntries()!=0) {
@@ -172,13 +154,13 @@ Bool_t DetectorConfigurationTracks::CreateQAHistograms(TList *list) {
 /// to the passed list. Then the new list is passed to the corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-Bool_t DetectorConfigurationTracks::CreateNveQAHistograms(TList *list) {
+Bool_t SubEventTracks::CreateNveQAHistograms(TList *list) {
   Bool_t retValue = kTRUE;
-  TList *detectorConfigurationList = new TList();
+  auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(this->GetName());
   detectorConfigurationList->SetOwner(kTRUE);
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    retValue = retValue && (fQnVectorCorrections.At(ixCorrection)->CreateNveQAHistograms(detectorConfigurationList));
+  for (auto &correction : fQnVectorCorrections) {
+    retValue = retValue && correction->CreateNveQAHistograms(detectorConfigurationList);
   }
   /* if list is empty delete it if not incorporate it */
   if (detectorConfigurationList->GetEntries()!=0) {
@@ -195,12 +177,12 @@ Bool_t DetectorConfigurationTracks::CreateNveQAHistograms(TList *list) {
 /// the request is transmitted to the Q vector corrections with the found list.
 /// \param list list where the input information should be found
 /// \return kTRUE if everything went OK
-Bool_t DetectorConfigurationTracks::AttachCorrectionInputs(TList *list) {
-  TList *detectorConfigurationList = (TList *) list->FindObject(this->GetName());
+Bool_t SubEventTracks::AttachCorrectionInputs(TList *list) {
+  auto detectorConfigurationList = (TList *) list->FindObject(this->GetName());
   if (detectorConfigurationList!=nullptr) {
     Bool_t retValue = kTRUE;
-    for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-      retValue = retValue && (fQnVectorCorrections.At(ixCorrection)->AttachInput(detectorConfigurationList));
+    for (auto &correction : fQnVectorCorrections) {
+      retValue = retValue && correction->AttachInput(detectorConfigurationList);
     }
     return retValue;
   }
@@ -213,18 +195,16 @@ Bool_t DetectorConfigurationTracks::AttachCorrectionInputs(TList *list) {
 /// it is time to check if their requirements are satisfied
 ///
 /// The request is transmitted to the Q vector corrections
-void DetectorConfigurationTracks::AfterInputsAttachActions() {
-
+void SubEventTracks::AfterInputsAttachActions() {
   /* now propagate it to Q vector corrections */
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    fQnVectorCorrections.At(ixCorrection)->AfterInputsAttachActions();
+  for (auto &correction : fQnVectorCorrections) {
+    correction->AfterInputsAttachActions();
   }
 }
 
 /// Fills the QA plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
-void DetectorConfigurationTracks::FillQAHistograms(const double *variableContainer) {
-
+void SubEventTracks::FillQAHistograms(const double *variableContainer) {
   if (fQAQnAverageHistogram!=nullptr) {
     Int_t harmonic = fPlainQnVector.GetFirstHarmonic();
     while (harmonic!=-1) {
@@ -248,7 +228,7 @@ void DetectorConfigurationTracks::FillQAHistograms(const double *variableContain
 /// about the process name and then the correction histograms could still not
 /// be attached and the constructed list does not contain the final Qn vectors.
 /// \param list list where the corrected Qn vector should be added
-void DetectorConfigurationTracks::IncludeQnVectors(TList *list) {
+void SubEventTracks::IncludeQnVectors(TList *list) {
 
   /* we check whether we are already there and if so we clean it and go again */
   Bool_t bAlreadyThere;
@@ -266,8 +246,8 @@ void DetectorConfigurationTracks::IncludeQnVectors(TList *list) {
 
   detectorConfigurationList->Add(&fCorrectedQnVector);
   detectorConfigurationList->Add(&fPlainQnVector);
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    fQnVectorCorrections.At(ixCorrection)->IncludeCorrectedQnVector(detectorConfigurationList);
+  for (auto &correction : fQnVectorCorrections) {
+    correction->IncludeCorrectedQnVector(detectorConfigurationList);
   }
   if (!bAlreadyThere)
     list->Add(detectorConfigurationList);
@@ -278,8 +258,8 @@ void DetectorConfigurationTracks::IncludeQnVectors(TList *list) {
 ///
 /// There are not input correction so we do nothing
 /// \param list list where the correction steps should be incorporated
-void DetectorConfigurationTracks::FillOverallInputCorrectionStepList(TList *list) const {
-  (void) list;
+void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const {
+  (void) set;
 }
 
 /// Include only one instance of each Qn vector correction step
@@ -287,9 +267,8 @@ void DetectorConfigurationTracks::FillOverallInputCorrectionStepList(TList *list
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void DetectorConfigurationTracks::FillOverallQnVectorCorrectionStepList(TList *list) const {
-
-  fQnVectorCorrections.FillOverallCorrectionsList(list);
+void SubEventTracks::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const {
+  fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 
 /// Provide information about assigned corrections
@@ -299,7 +278,7 @@ void DetectorConfigurationTracks::FillOverallQnVectorCorrectionStepList(TList *l
 /// \param steps list for incorporating the list of assigned correction steps
 /// \param calib list for incorporating the list of steps in calibrating status
 /// \param apply list for incorporating the list of steps in applying status
-void DetectorConfigurationTracks::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
+void SubEventTracks::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
   TList *mysteps = new TList();
   mysteps->SetOwner(kTRUE);
   mysteps->SetName(GetName());
@@ -312,11 +291,11 @@ void DetectorConfigurationTracks::ReportOnCorrections(TList *steps, TList *calib
 
   /* incorporate Qn vector corrections */
   Bool_t keepIncorporating = kTRUE;
-  for (Int_t ixCorrection = 0; ixCorrection < fQnVectorCorrections.GetEntries(); ixCorrection++) {
-    mysteps->Add(new TObjString(fQnVectorCorrections.At(ixCorrection)->GetName()));
+  for (auto &correction : fQnVectorCorrections) {
+    mysteps->Add(new TObjString(correction->GetName()));
     /* incorporate additional info if the step will be reached */
     if (keepIncorporating) {
-      Bool_t keep = fQnVectorCorrections.At(ixCorrection)->ReportUsage(mycalib, myapply);
+      Bool_t keep = correction->ReportUsage(mycalib, myapply);
       keepIncorporating = keepIncorporating && keep;
     }
   }

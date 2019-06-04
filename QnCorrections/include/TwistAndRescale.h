@@ -149,8 +149,7 @@ class TwistAndRescale : public CorrectionOnQvector {
   };
 
   TwistAndRescale();
-  ~TwistAndRescale();
-
+  virtual ~TwistAndRescale() = default;
   /// Sets the method for extracting twist and rescale correction parameters
   /// \param method the chosen method
   void SetTwistAndRescaleMethod(QnTwistAndRescaleMethod method) { fTwistAndRescaleMethod = method; }
@@ -164,7 +163,6 @@ class TwistAndRescale : public CorrectionOnQvector {
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
-
   virtual void AttachedToFrameworkManager();
   virtual Bool_t AttachInput(TList *list);
   virtual void AfterInputsAttachActions();
@@ -172,7 +170,6 @@ class TwistAndRescale : public CorrectionOnQvector {
   virtual Bool_t CreateSupportHistograms(TList *list);
   virtual Bool_t CreateQAHistograms(TList *list);
   virtual Bool_t CreateNveQAHistograms(TList *list);
-
   virtual Bool_t ProcessCorrections(const double *variableContainer);
   virtual Bool_t ProcessDataCollection(const double *variableContainer);
   virtual void ClearCorrectionStep();
@@ -181,11 +178,12 @@ class TwistAndRescale : public CorrectionOnQvector {
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
+  using State = Qn::CorrectionStep::State;
+  static constexpr const unsigned int szPriority = CorrectionOnQvector::Priority::kTwistAndRescale; ///< the key of the correction step for ordering purpose
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const Double_t fMaxThreshold;               ///< highest absolute value for meaningful results
   static const char *szTwistCorrectionName;          ///< the name of the twist correction step
   static const char *szRescaleCorrectionName;        ///< the name of the rescale correction step
-  static const char *szKey;                          ///< the key of the correction step for ordering purpose
   static const char *
       szDoubleHarmonicSupportHistogramName;         ///< the name and title for double harmonic method support histograms
   static const char
@@ -199,34 +197,27 @@ class TwistAndRescale : public CorrectionOnQvector {
       *szQATwistQnAverageHistogramName;     ///< the name and title for after twist Qn components average QA histograms
   static const char *
       szQARescaleQnAverageHistogramName;     ///< the name and title for after rescale Qn components average QA histograms
-  CorrectionProfileComponents
-      *fDoubleHarmonicInputHistograms; //!<! the histogram with calibration information for the double harmonic method
-  CorrectionProfileComponents *
-      fDoubleHarmonicCalibrationHistograms; //!<! the histogram for building calibration information for the doubel harmonic method
-  CorrectionProfile3DCorrelations
-      *fCorrelationsInputHistograms; //!<! the histogram with calibration information for the correlations method
-  CorrectionProfile3DCorrelations *
-      fCorrelationsCalibrationHistograms; //!<! the histogram for building calibration information for the correlations method
-  CorrectionHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  CorrectionProfileComponents
-      *fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
-  CorrectionProfileComponents
-      *fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
+  std::unique_ptr<CorrectionProfileComponents> fDoubleHarmonicInputHistograms; //!<! the histogram with calibration information for the double harmonic method
+  std::unique_ptr<CorrectionProfileComponents> fDoubleHarmonicCalibrationHistograms; //!<! the histogram for building calibration information for the doubel harmonic method
+  std::unique_ptr<CorrectionProfile3DCorrelations> fCorrelationsInputHistograms; //!<! the histogram with calibration information for the correlations method
+  std::unique_ptr<CorrectionProfile3DCorrelations> fCorrelationsCalibrationHistograms; //!<! the histogram for building calibration information for the correlations method
+  std::unique_ptr<CorrectionHistogramSparse> fQANotValidatedBin;    //!<! the histogram with non validated bin information
+  std::unique_ptr<CorrectionProfileComponents> fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
+  std::unique_ptr<CorrectionProfileComponents> fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
 
-  QnTwistAndRescaleMethod
-      fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
+  QnTwistAndRescaleMethod fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
   Bool_t fApplyTwist;              ///< apply the twist step
   Bool_t fApplyRescale;            ///< apply the rescale step
   TString fBDetectorConfigurationName; ///< the name of the B detector configuration
-  DetectorConfiguration *fBDetectorConfiguration; ///< pointer to the B detector configuration
+  SubEvent *fBDetectorConfiguration; ///< pointer to the B detector configuration
   TString fCDetectorConfigurationName; ///< the name of the C detector configuration
-  DetectorConfiguration *fCDetectorConfiguration; ///< pointer to the C detector configuration
+  SubEvent *fCDetectorConfiguration; ///< pointer to the C detector configuration
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
-  CorrectionQnVector *fTwistCorrectedQnVector;   ///< twisted Qn vector
-  CorrectionQnVector *fRescaleCorrectedQnVector; ///< rescaled Qn vector
+  std::unique_ptr<CorrectionQnVector> fTwistCorrectedQnVector;    //!<! twisted Qn vector
+  std::unique_ptr<CorrectionQnVector> fRescaleCorrectedQnVector;  //!<! rescaled Qn vector
 
 /// \cond CLASSIMP
- ClassDef(TwistAndRescale, 2);
+ ClassDef(TwistAndRescale, 3);
 /// \endcond
 };
 }

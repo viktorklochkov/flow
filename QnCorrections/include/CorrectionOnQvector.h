@@ -18,7 +18,7 @@
 #include <TNamed.h>
 #include <TList.h>
 
-#include "CorrectionStepBase.h"
+#include "CorrectionStep.h"
 
 /// \class QnCorrectionsCorrectionOnQvector
 /// \brief Base class for correction steps applied to a Q vector
@@ -29,12 +29,22 @@
 /// \date Feb 05, 2016
 
 namespace Qn {
-class CorrectionOnQvector : public CorrectionStepBase {
+class CorrectionOnQvector : public CorrectionStep {
  public:
-  CorrectionOnQvector();
-  CorrectionOnQvector(const char *name, const char *key);
-  virtual ~CorrectionOnQvector();
 
+  enum Priority {
+    kRecentering,
+    kAlignment,
+    kTwistAndRescale
+  };
+
+  CorrectionOnQvector() = default;
+  CorrectionOnQvector(const char *name, unsigned int prio) : CorrectionStep(name, prio) {}
+  virtual ~CorrectionOnQvector() = default;
+  /// Copy constructor deleted
+  CorrectionOnQvector(CorrectionOnQvector &) = delete;
+  /// Assignment operator deleted
+  CorrectionOnQvector &operator=(const CorrectionOnQvector &) = delete;
   /// Informs when the detector configuration has been attached to the framework manager
   /// Basically this allows interaction between the different framework sections at configuration time
   /// Pure virtual function
@@ -74,13 +84,13 @@ class CorrectionOnQvector : public CorrectionStepBase {
   virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
   /// Gets the corrected Qn vector
   /// \return the corrected Qn vector
-  const CorrectionQnVector *GetCorrectedQnVector() const { return fCorrectedQnVector; }
+  const CorrectionQnVector *GetCorrectedQnVector() const { return fCorrectedQnVector.get(); }
   virtual void IncludeCorrectedQnVector(TList *list);
   /// Clean the correction to accept a new event
   /// Pure virtual function
   virtual void ClearCorrectionStep() = 0;
   /// Reports if the correction step is being applied
-  /// Pure virutal function
+  /// Pure virtual function
   /// \return TRUE if the correction step is being applied
   virtual Bool_t IsBeingApplied() const = 0;
   /// Report on correction usage
@@ -94,17 +104,9 @@ class CorrectionOnQvector : public CorrectionStepBase {
   /// \return kTRUE if the correction step is being applied
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) = 0;
 
- private:
-  /// Copy constructor
-  /// Not allowed. Forced private.
-  CorrectionOnQvector(CorrectionOnQvector &);
-  /// Assignment operator
-  /// Not allowed. Forced private.
-  CorrectionOnQvector &operator=(const CorrectionOnQvector &);
-
  protected:
-  CorrectionQnVector *fCorrectedQnVector;    //!<! the step corrected Qn vector
-  const CorrectionQnVector *fInputQnVector;   //!<! the previous step corrected Qn vector
+  std::unique_ptr<CorrectionQnVector> fCorrectedQnVector; //!<! the step corrected Qn vector
+  const CorrectionQnVector *fInputQnVector = nullptr; //!<! the previous step corrected Qn vector
 /// \cond CLASSIMP
  ClassDef(CorrectionOnQvector, 2);
 /// \endcond

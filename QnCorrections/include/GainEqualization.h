@@ -154,11 +154,12 @@ class GainEqualization : public CorrectionOnInputData {
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
+  using State = Qn::CorrectionStep::State;
+  static constexpr const unsigned int szPriority = CorrectionOnInputData::Priority::kGainEqualization; ///< the key of the correction step for ordering purpose
   static const Float_t
       fMinimumSignificantValue;     ///< the minimum value that will be considered as meaningful for processing
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const char *szCorrectionName;               ///< the name of the correction step
-  static const char *szKey;                          ///< the key of the correction step for ordering purpose
   static const char *szSupportHistogramName;         ///< the name and title for support histograms
   static const char *szQAHistogramName;              ///< the name and title for QA histograms
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms

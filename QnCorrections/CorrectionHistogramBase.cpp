@@ -34,9 +34,7 @@ const Int_t CorrectionHistogramBase::nDefaultMinNoOfEntriesValidated = 2;
 /// Default constructor
 CorrectionHistogramBase::CorrectionHistogramBase() :
     TNamed(),
-    fEventClassVariables(),
     fBinAxesValues(nullptr) {
-
   fErrorMode = kERRORMEAN;
   fMinNoOfEntriesToValidate = nDefaultMinNoOfEntriesValidated;
 }
@@ -66,16 +64,13 @@ CorrectionHistogramBase::~CorrectionHistogramBase() {
 ///          bin values
 ///
 ///     's'            the bin are the standard deviation of of the bin values
-CorrectionHistogramBase::CorrectionHistogramBase(const char *name,
-                                                       const char *title,
-                                                       EventClassVariablesSet &ecvs,
-                                                       Option_t *option) :
+CorrectionHistogramBase::CorrectionHistogramBase(const char *name, const char *title, EventClassVariablesSet &ecvs, Option_t *option) :
     TNamed(name, title),
     fEventClassVariables(ecvs),
     fBinAxesValues(nullptr) {
 
   /* one place more for storing the channel number by inherited classes */
-  fBinAxesValues = new Double_t[fEventClassVariables.GetEntries() + 1];
+  fBinAxesValues = new Double_t[fEventClassVariables.size() + 1];
 
   TString opt = option;
   opt.ToLower();
@@ -897,7 +892,7 @@ THnF *CorrectionHistogramBase::DivideTHnF(THnF *hValues, THnI *hEntries, THnC *h
       /* bin content not validated */
       hResult->SetBinContent(bin, 0.0);
       hResult->SetBinError(bin, 0.0);
-      if (hValid!=NULL) hValid->SetBinContent(bin, 0.0);
+      if (hValid) hValid->SetBinContent(bin, 0.0);
       if (value!=0.0) {
         bErrorMessage = kTRUE;
         nNotValidatedBins++;
@@ -959,7 +954,7 @@ void CorrectionHistogramBase::CopyTHnF(THnF *hDest, THnF *hSource, Int_t *binsAr
 void CorrectionHistogramBase::CopyTHnFDimension(THnF *hDest, THnF *hSource, Int_t *binsArray, Int_t dimension) {
 
   /* are all variables settled */
-  if (dimension < fEventClassVariables.GetEntriesFast()) {
+  if ((unsigned long) dimension < fEventClassVariables.size()) {
     /* no then, scan this dimension and move to the next one */
     for (Long64_t bin = 0; bin < hSource->GetAxis(dimension)->GetNbins(); bin++) {
       binsArray[dimension] = bin + 1;

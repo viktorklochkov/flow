@@ -38,49 +38,25 @@
 ClassImp(Qn::CorrectionOnQvector);
 /// \endcond
 namespace Qn {
-/// Default constructor
-CorrectionOnQvector::CorrectionOnQvector() :
-    CorrectionStepBase() {
-
-  fCorrectedQnVector = NULL;
-  fInputQnVector = NULL;
-}
-
-/// Normal constructor
-/// \param name of the correction step
-/// \param key the associated ordering key
-CorrectionOnQvector::CorrectionOnQvector(const char *name, const char *key) :
-    CorrectionStepBase(name, key) {
-
-  fCorrectedQnVector = NULL;
-  fInputQnVector = NULL;
-}
-
-/// Default destructor
-CorrectionOnQvector::~CorrectionOnQvector() {
-
-  if (fCorrectedQnVector!=NULL)
-    delete fCorrectedQnVector;
-}
-
 /// Include the new corrected Qn vector into the passed list
 ///
 /// Adds the Qn vector to the passed list
 /// if the correction step is in correction states.
 /// \param list list where the corrected Qn vector should be added
 void CorrectionOnQvector::IncludeCorrectedQnVector(TList *list) {
-
   switch (fState) {
-    case QCORRSTEP_calibration:
+    case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters */
       break;
-    case QCORRSTEP_applyCollect:
+    case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters */
       /* and proceed to ... */
-    case QCORRSTEP_apply: /* apply the correction */
-      list->Add(fCorrectedQnVector);
+      /* FALLTHRU */
+    case State::APPLY: /* apply the correction */
+      list->Add(fCorrectedQnVector.get());
       break;
-    default:break;
+    default:
+      break;
   }
 }
 }

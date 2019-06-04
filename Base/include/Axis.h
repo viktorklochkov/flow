@@ -30,7 +30,7 @@ namespace Qn {
  *
  * Basic axis implementation
  */
-
+template<typename T>
 class Axis {
  public:
 
@@ -42,7 +42,7 @@ class Axis {
    * @param name name of axis.
    * @param bin_edges vector of bin edges. starting with lowest bin edge and ending with uppermost bin edge.
    */
-  Axis(std::string name, std::vector<float> bin_edges)
+  Axis(std::string name, std::vector<T> bin_edges)
       : name_(std::move(name)), bin_edges_(std::move(bin_edges)) {}
 
   /**
@@ -52,20 +52,20 @@ class Axis {
    * @param lowbin lowest bin edge
    * @param upbin uppermost bin edge
    */
-  Axis(std::string name, const int nbins, const float lowbin, const float upbin)
+  Axis(std::string name, const int nbins, const T lowbin, const T upbin)
       : name_(std::move(name)) {
     for (int i = 0; i < nbins + 1; ++i) {
-      float bin_width = (upbin - lowbin)/(float) nbins;
+      T bin_width = (upbin - lowbin)/(T) nbins;
       bin_edges_.push_back(lowbin + i*bin_width);
     }
   }
 
-  Axis(const Qn::Axis &axis) : name_(axis.name_), bin_edges_(axis.bin_edges_) {}
+  Axis(const Axis<T> &axis) : name_(axis.name_), bin_edges_(axis.bin_edges_) {}
 
   bool operator==(const Axis &axis) const { return name_==axis.name_; }
 
-  typedef typename std::vector<float>::const_iterator citerator;
-  typedef typename std::vector<float>::iterator iterator;
+  typedef typename std::vector<T>::const_iterator citerator;
+  typedef typename std::vector<T>::iterator iterator;
   citerator begin() const { return bin_edges_.cbegin(); } ///< iterator for external use
   citerator end() const { return bin_edges_.cend(); } ///< iterator for external use
   iterator begin() { return bin_edges_.begin(); } ///< iterator for external use
@@ -86,13 +86,13 @@ class Axis {
    * @param value for finding corresponding bin
    * @return bin index
    */
-  inline long FindBin(const float value) const {
+  inline long FindBin(const T value) const {
     long bin = 0;
     if (value < *bin_edges_.begin()) {
       bin = -1;
     } else {
       auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
-      if (lb == bin_edges_.begin() || *lb == value)
+      if (lb==bin_edges_.begin() || *lb==value)
         bin = (lb - bin_edges_.begin());
       else
         bin = (lb - bin_edges_.begin()) - 1;
@@ -102,54 +102,65 @@ class Axis {
     return bin;
   };
 
-  inline std::string GetBinName(unsigned int i) const {return name_+":"+std::to_string(GetLowerBinEdge(i));}
+  std::string GetBinName(unsigned int i) const { return name_ + ":" + std::to_string(GetLowerBinEdge(i)); }
   /**
  * Finds bin iterator for a given value
  * if value is smaller than lowest bin returns end().
  * @param value for finding corresponding bin
  * @return bin index
  */
-  inline citerator FindBinIter(const float value);
-
+  citerator FindBinIter(const float value) {
+    citerator bin;
+    if (value < *bin_edges_.begin()) {
+      bin = end();
+    } else {
+      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
+      if (lb==bin_edges_.begin() || *lb==value)
+        bin = lb;
+      else
+        bin = lb - 1;
+    }
+    if (*bin >= (long) bin_edges_.size() - 1 || *bin < 0) bin = end();
+    return bin;
+  }
   /**
    * Returns number of bins.
    * @return number of bins.
    */
-  inline std::vector<float>::size_type size() const { return bin_edges_.size() - 1; }
+  typename std::vector<T>::size_type size() const { return bin_edges_.size() - 1; }
   /**
    * Gets lower bin edge
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline float GetLowerBinEdge(const unsigned long bin) const { return bin_edges_.at(bin); }
+  inline T GetLowerBinEdge(const unsigned long bin) const { return bin_edges_.at(bin); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline float GetUpperBinEdge(const unsigned long bin) const { return bin_edges_.at(bin + 1); }
+  inline T GetUpperBinEdge(const unsigned long bin) const { return bin_edges_.at(bin + 1); }
   /**
    * Gets lower bin edge
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest
    */
-  inline float GetFirstBinEdge() const { return bin_edges_.front(); }
+  inline T GetFirstBinEdge() const { return bin_edges_.front(); }
   /**
    * Gets upper bin edge
    * @param bin Index of bin of interest
    * @return upper edge of bin of interest
    */
-  inline float GetLastBinEdge() const { return bin_edges_.back(); }
-
-
+  inline T GetLastBinEdge() const { return bin_edges_.back(); }
  private:
   std::string name_;
-  std::vector<float> bin_edges_;
+  std::vector<T> bin_edges_;
 
   /// \cond CLASSIMP
- ClassDef(Axis, 3);
+ ClassDef(Axis, 4);
   /// \endcond
 };
-
+using AxisF = Axis<float>;
+using AxisD = Axis<double>;
 }
 #endif //FLOW_QNAXIS_H

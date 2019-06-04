@@ -15,24 +15,22 @@
 /// \brief The base of a concrete detector configuration (sub-detector) within Q vector correction framework
 ///
 
-#include <TObject.h>
-#include <TList.h>
-#include <TObjArray.h>
-#include <TClonesArray.h>
-#include <TH3.h>
-#include "CorrectionsSetOnInputData.h"
-#include "CorrectionsSetOnQvector.h"
+#include "TObject.h"
+#include "TList.h"
+#include "TObjArray.h"
+#include "TClonesArray.h"
+#include "TH3.h"
+#include "TObjString.h"
+
+#include "CorrectionsSet.h"
 #include "EventClassVariablesSet.h"
 #include "CorrectionQnVector.h"
 #include "CorrectionQnVectorBuild.h"
 #include "CorrectionDataVector.h"
+#include "CorrectionProfileComponents.h"
 
 namespace Qn {
-
-class DetectorConfigurationsSet;
-class CorrectionDetector;
 class CorrectionCalculator;
-
 /// \class QnCorrectionsDetectorConfigurationBase
 /// \brief The base of a concrete detector configuration within Q vector correction framework
 ///
@@ -61,40 +59,40 @@ class CorrectionCalculator;
 /// \author Ilya Selyuzhenkov <ilya.selyuzhenkov@gmail.com>, GSI
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 08, 2016
-
-class DetectorConfiguration : public TNamed {
+class SubEvent {
  public:
-  friend class CorrectionStepBase;
-  friend class CorrectionDetector;
-  DetectorConfiguration();
-  DetectorConfiguration(const char *name,
-                        EventClassVariablesSet *eventClassesVariables,
-                        Int_t nNoOfHarmonics,
-                        Int_t *harmonicMap = NULL);
-  virtual ~DetectorConfiguration();
+  friend class CorrectionStep;
+  friend class SubEvent;
+  SubEvent() = default;
+  SubEvent(const char *name,
+                     EventClassVariablesSet *eventClassesVariables,
+                     Int_t nharm,
+                     Int_t *harmmap = nullptr) :
+      fName(name),
+      fPlainQnVector(szPlainQnVectorName, nharm, harmmap),
+      fPlainQ2nVector(Form("%s2n", szPlainQnVectorName), nharm, harmmap),
+      fCorrectedQnVector(szPlainQnVectorName, nharm, harmmap),
+      fCorrectedQ2nVector(Form("%s2n", szPlainQnVectorName), nharm, harmmap),
+      fTempQnVector("temp", nharm, harmmap),
+      fTempQ2nVector("temp2n", nharm, harmmap),
+      fQnVectorCorrections() {
+    fEventClassVariables = eventClassesVariables;
+    fPlainQ2nVector.SetHarmonicMultiplier(2);
+    fCorrectedQ2nVector.SetHarmonicMultiplier(2);
+    fTempQ2nVector.SetHarmonicMultiplier(2);
+  }
 
-  /// Sets the normalization method for Q vectors
-  /// \param method the Qn vector normalizatio method
-  void SetNormalization(CorrectionQnVector::Normalization method) {
-    fQnNormalizationMethod = method;
-  }
-  /// Get the normalization method for Q vectors
-  CorrectionQnVector::Normalization GetQVectorNormalizationMethod() const {
-    return fQnNormalizationMethod;
-  }
- public:
-  /// Stores the detector reference
-  /// \param detector the detector owner
-  void SetDetectorOwner(CorrectionDetector *detector) { fDetector = detector; }
-  /// Gets the detector reference
-  ///
-  /// \return detector pointer
-  CorrectionDetector *GetDetector() { return fDetector; }
+  virtual ~SubEvent() = default;
+  SubEvent(const SubEvent &) = delete;
+  SubEvent &operator=(const SubEvent &) = delete;
+
+  const char *GetName() const { return fName.data(); }
+  void SetNormalization(CorrectionQnVector::Normalization method) { fNormalizationMethod = method; }
+  CorrectionQnVector::Normalization GetQVectorNormalizationMethod() const { return fNormalizationMethod; }
   /// Stores the framework manager pointer
   /// Pure virtual function
   /// \param manager the framework manager
   virtual void AttachCorrectionsManager(CorrectionCalculator *manager) = 0;
- public:
   /// Get the input data bank.
   /// Makes it available for input corrections steps.
   /// \return pointer to the input data bank
@@ -122,7 +120,7 @@ class DetectorConfiguration : public TNamed {
   /// Get the plain Q2n vector
   /// Makes it available for correction steps which need it.
   /// \return pointer to the plain Qn vector instance
-  CorrectionQnVector *GetPlainQ2nVector() { return &fPlainQ2nVector; }
+  const CorrectionQnVector &GetPlainQ2nVector() const { return fPlainQ2nVector; }
   /// Update the current Qn vector
   /// Update towards what is the latest values of the Qn vector after executing a
   /// correction step to make it available to further steps.
@@ -154,7 +152,6 @@ class DetectorConfiguration : public TNamed {
   /// Pure virtual function
   /// \return TRUE if it is a tracking detector configuration
   virtual Bool_t GetIsTrackingDetector() const = 0;
- public:
   /// Asks for support data structures creation
   ///
   /// The request is transmitted to the different corrections.
@@ -215,10 +212,28 @@ class DetectorConfiguration : public TNamed {
   virtual void AddCorrectionOnQnVector(CorrectionOnQvector *correctionOnQn);
   virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
 
-  /// Builds Qn vector before Q vector corrections but
+  /// Builds Qn vectors before Q vector corrections but
   /// considering the chosen calibration method.
-  /// Pure virtual function
-  virtual void BuildQnVector() = 0;
+  /// Remember, this configuration does not have a channelized
+  /// approach so, the built Q vectors are the ones to be used for
+  /// subsequent corrections.
+  inline void BuildQnVector() {
+    fTempQnVector.Reset();
+    fTempQ2nVector.Reset();
+    for (const auto &dataVector : fDataVectorBank) {
+      fTempQnVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
+      fTempQ2nVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
+    }
+    /* check the quality of the Qn vector */
+    fTempQnVector.CheckQuality();
+    fTempQ2nVector.CheckQuality();
+    fTempQnVector.Normalize(fNormalizationMethod);
+    fTempQ2nVector.Normalize(fNormalizationMethod);
+    fPlainQnVector.Set(&fTempQnVector, kFALSE);
+    fPlainQ2nVector.Set(&fTempQ2nVector, kFALSE);
+    fCorrectedQnVector.Set(&fTempQnVector, kFALSE);
+    fCorrectedQ2nVector.Set(&fTempQ2nVector, kFALSE);
+  }
   /// Include the list of associated Qn vectors into the passed list
   ///
   /// Pure virtual function
@@ -229,13 +244,13 @@ class DetectorConfiguration : public TNamed {
   ///
   /// Pure virtual function
   /// \param list list where the correction steps should be incorporated
-  virtual void FillOverallInputCorrectionStepList(TList *list) const = 0;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const = 0;
   /// Include only one instance of each Qn vector correction step
   /// in execution order
   ///
   /// Pure virtual function
   /// \param list list where the correction steps should be incorporated
-  virtual void FillOverallQnVectorCorrectionStepList(TList *list) const = 0;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const = 0;
   /// Provide information about assigned corrections
   ///
   /// Pure virtual function
@@ -243,7 +258,6 @@ class DetectorConfiguration : public TNamed {
   /// \param calib list for incorporating the list of steps in calibrating status
   /// \param apply list for incorporating the list of steps in applying status
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const = 0;
-
   /// New data vector for the detector configuration
   /// Pure virtual function
   /// \param variableContainer pointer to the variable content bank
@@ -251,53 +265,38 @@ class DetectorConfiguration : public TNamed {
   /// \param weight the weight of the data vector
   /// \param channelId the channel Id that originates the data vector
   /// \return kTRUE if the data vector was accepted and stored
-  virtual Bool_t AddDataVector(const double *variableContainer, Double_t phi, Double_t weight, Int_t channelId) = 0;
-
-  virtual Bool_t IsSelected(const double *variableContainer) = 0;
-  virtual Bool_t IsSelected(const double *variableContainer, Int_t nChannel) = 0;
-
+  constexpr void AddDataVector(const Double_t phi, const Double_t weight, const Int_t channelId) {
+    fDataVectorBank.emplace_back(channelId, phi, weight);
+  }
   /// Clean the configuration to accept a new event
   /// Pure virtual function
-  virtual void ClearConfiguration() = 0;
-
-  virtual void SetChannelsScheme(Bool_t *bUsedChannel,
-                                 Int_t *nChannelGroup = nullptr,
-                                 Float_t *hardCodedGroupWeights = nullptr) {
+  virtual void ClearDetector() = 0;
+  virtual void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup, Float_t *hardCodedGroupWeights) {
     (void) bUsedChannel;
     (void) nChannelGroup;
     (void) hardCodedGroupWeights;
   }
-
- private:
-  CorrectionDetector *fDetector;    ///< pointer to the detector that owns the configuration
+  void FillDetectorConfigurationNameList(std::vector<std::string> &vec) const { vec.emplace_back(fName); }
  protected:
-  static const char *szPlainQnVectorName; ///< the name of the Qn plain, not corrected Qn vectors
-  /// set of cuts that define the detector configuration
-  CorrectionCalculator *fCorrectionsManager; /// the framework manager pointer
-/// The default initial size of data vectors banks
-  static constexpr unsigned int INITIALSIZE = 4;
+  std::string fName;
+  CorrectionCalculator *fCorrectionsManager = nullptr; /// the framework manager pointer
   std::vector<Qn::CorrectionDataVector> fDataVectorBank; //!<! input data for the current process / event
-  CorrectionQnVector fPlainQnVector;     ///< Qn vector from the post processed input data
+  CorrectionQnVector fPlainQnVector;      ///< Qn vector from the post processed input data
   CorrectionQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
-  CorrectionQnVector fCorrectedQnVector; ///< Qn vector after subsequent correction steps
+  CorrectionQnVector fCorrectedQnVector;  ///< Qn vector after subsequent correction steps
   CorrectionQnVector fCorrectedQ2nVector; ///< Q2n vector after subsequent correction steps
-  CorrectionQnVectorBuild fTempQnVector; ///< temporary Qn vector for efficient Q vector building
+  CorrectionQnVectorBuild fTempQnVector;  ///< temporary Qn vector for efficient Q vector building
   CorrectionQnVectorBuild fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
-  CorrectionQnVector::Normalization fQnNormalizationMethod; ///< the method for Q vector normalization
+  CorrectionQnVector::Normalization fNormalizationMethod = CorrectionQnVector::Normalization::NONE; ///< the method for Q vector normalization
   CorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
-  /// set of variables that define event classes
-  EventClassVariablesSet *fEventClassVariables; //->
-
- private:
-  /// Copy constructor
-  /// Not allowed. Forced private.
-  DetectorConfiguration(const DetectorConfiguration &);
-  /// Assignment operator
-  /// Not allowed. Forced private.
-  DetectorConfiguration &operator=(const DetectorConfiguration &);
+  EventClassVariablesSet *fEventClassVariables = nullptr; //-> /// set of variables that define event classes
+  std::unique_ptr<CorrectionProfileComponents> fQAQnAverageHistogram = nullptr; //!<! the plain average Qn components QA histogram
+  static const char *szPlainQnVectorName; ///< the name of the Qn plain, not corrected Qn vectors
+  static const char *szQAQnAverageHistogramName; ///< name and title for plain Qn vector average QA histograms
+  static constexpr unsigned int INITIALSIZE = 4; ///< The default initial size of data vectors banks
 
 /// \cond CLASSIMP
- ClassDef(DetectorConfiguration, 3);
+ ClassDef(SubEvent, 3);
 /// \endcond
 };
 }

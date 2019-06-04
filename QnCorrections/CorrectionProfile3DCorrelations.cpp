@@ -179,7 +179,7 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
   }
 
   /* now prepare the construction of the histograms */
-  Int_t nVariables = fEventClassVariables.GetEntriesFast();
+  Int_t nVariables = fEventClassVariables.size();
 
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
@@ -240,30 +240,30 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
 
       /* now let's set the proper binning and label on each axis */
       for (Int_t var = 0; var < nVariables; var++) {
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                              fEventClassVariables.At(var)->GetBins());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                              fEventClassVariables.At(var).GetBins());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
       }
 
       /* ask for square sum accumulation */
@@ -301,8 +301,8 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
 
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
 
   /* and finally add the entries histogram to the list */

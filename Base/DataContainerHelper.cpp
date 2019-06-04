@@ -72,7 +72,7 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
     std::cout << "Data Container dimension has wrong dimension " << data.GetAxes().size() << "\n";
     return nullptr;
   }
-  Axis axis;
+  AxisF axis;
   try { axis = data.GetAxis(axisname); }
   catch (std::exception &) {
     throw std::logic_error("axis not found");
@@ -87,7 +87,7 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
   return multigraph;
 }
 
-void DataContainerHelper::StatsBrowse(DataContainer<Stats> *data, TBrowser *b) {
+void DataContainerHelper::StatsBrowse(DataContainerStats *data, TBrowser *b) {
   using DrawErrorGraph = Internal::ProjectionDrawable<TGraphAsymmErrors *>;
   using DrawMultiGraph = Internal::ProjectionDrawable<TMultiGraph *>;
   if (!data->list_) data->list_ = new TList();
@@ -127,7 +127,7 @@ void DataContainerHelper::StatsBrowse(DataContainer<Stats> *data, TBrowser *b) {
   }
 }
 
-void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBrowser *b) {
+void DataContainerHelper::EventShapeBrowse(DataContainerEventShape *data, TBrowser *b) {
   if (!data->list_) data->list_ = new TList();
   unsigned long i = 0;
   auto hlist = new TList();
@@ -159,7 +159,7 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
     b->Add(data->list_->At(j));
   }
 }
-void DataContainerHelper::NDraw(DataContainer<Stats> &data,
+void DataContainerHelper::NDraw(DataContainerStats &data,
                                 std::string option,
                                 const std::string &axis_name = {}) {
   option = (option.empty()) ? std::string("ALP PMC PLC Z") : option;

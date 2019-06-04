@@ -35,7 +35,7 @@ class EventAxisInterface {
   virtual unsigned long GetBin() = 0;
   virtual bool IsValid() = 0;
   virtual ~EventAxisInterface() = default;
-  virtual const Qn::Axis &GetAxis() const = 0;
+  virtual const Qn::AxisF &GetAxis() const = 0;
 };
 
 /**
@@ -51,7 +51,7 @@ class EventAxis : public EventAxisInterface {
    * @param axis Binning of the EventAxis.
    * @param value Associated value in the input tree
    */
-  EventAxis(const Qn::Axis &axis, TTreeReaderValue<T> value) :
+  EventAxis(const Qn::AxisF &axis, TTreeReaderValue<T> value) :
       axis_(axis),
       value_(std::move(value)) {}
 
@@ -66,7 +66,7 @@ class EventAxis : public EventAxisInterface {
    * @brief Get the underlying Qn::Axis
    * @return Returns the underlying Qn::Axis
    */
-  const Qn::Axis &GetAxis() const override { return axis_; }
+  const Qn::AxisF &GetAxis() const override { return axis_; }
 
   /**
    * Checks if the current entry read from the tree is a valid number (no NAN in case of float)
@@ -75,7 +75,7 @@ class EventAxis : public EventAxisInterface {
   bool IsValid() override { return !isnan(*value_.Get()); }
 
  private:
-  Qn::Axis axis_; /// Underlying axies determining the binning and the name
+  Qn::AxisF axis_; /// Underlying axies determining the binning and the name
   TTreeReaderValue<T> value_; /// value of the currently read entry from the TTree
 };
 
@@ -102,7 +102,7 @@ class EventAxes {
    * @param axis Axis specifing the name and the size of the binning for the correlations.
    * @param type Data type in which the information was saved to the tree.
    */
-  void RegisterEventAxis(Axis axis, Type type);
+  void RegisterEventAxis(AxisF axis, Type type);
 
   /**
    * @brief Check if current event is inside the event axes.
@@ -129,8 +129,8 @@ class EventAxes {
    * @brief Returns a vector of the event axes.
    * @return vector of axes
    */
-  const std::vector<Qn::Axis> GetAxes() const {
-    std::vector<Qn::Axis> axes;
+  const std::vector<Qn::AxisF> GetAxes() const {
+    std::vector<Qn::AxisF> axes;
     for (auto &axis : event_axes_) {
       axes.push_back(axis->GetAxis());
     }

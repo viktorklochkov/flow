@@ -103,15 +103,13 @@ class CorrectionHistogramSparse;
 class Recentering : public CorrectionOnQvector {
  public:
   Recentering();
-  ~Recentering();
-
+  virtual ~Recentering() = default;
   /// Controls if width equalization step shall be additionally applied
   /// \param apply kTRUE for applying the width equalization step
   void SetApplyWidthEqualization(Bool_t apply) { fApplyWidthEqualization = apply; }
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
-
   /// Informs when the detector configuration has been attached to the framework manager
   /// Basically this allows interaction between the different framework sections at configuration time
   /// No action for Qn vector recentering
@@ -121,14 +119,12 @@ class Recentering : public CorrectionOnQvector {
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
   /// it is time to check if their requirements are satisfied
-  ///
-  /// Does nothin for the time being
+  /// Does nothing for the time being
   virtual void AfterInputsAttachActions() {};
   virtual void CreateSupportDataStructures();
   virtual Bool_t CreateSupportHistograms(TList *list);
   virtual Bool_t CreateQAHistograms(TList *list);
   virtual Bool_t CreateNveQAHistograms(TList *list);
-
   virtual Bool_t ProcessCorrections(const double *variableContainer);
   virtual Bool_t ProcessDataCollection(const double *variableContainer);
   virtual void ClearCorrectionStep();
@@ -136,20 +132,19 @@ class Recentering : public CorrectionOnQvector {
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
+  using State = Qn::CorrectionStep::State;
+  static constexpr const unsigned int szPriority = CorrectionOnQvector::Priority::kRecentering; ///< the key of the correction step for ordering purpose
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const char *szCorrectionName;               ///< the name of the correction step
-  static const char *szKey;                          ///< the key of the correction step for ordering purpose
   static const char *szSupportHistogramName;         ///< the name and title for support histograms
   static const char *szCorrectedQnVectorName;        ///< the name of the Qn vector after applying the correction
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
   static const char *szQAQnAverageHistogramName;     ///< the name and title for Qn components average QA histograms
-  CorrectionProfileComponents *fInputHistograms; //!<! the histogram with calibration information
-  CorrectionProfileComponents *fCalibrationHistograms; //!<! the histogram for building calibration information
-  CorrectionHistogramSparse *fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  CorrectionProfileComponents
-      *fQAQnAverageHistogram; //!<! the after correction step average Qn components QA histogram
-
-  Bool_t fApplyWidthEqualization;              ///< apply the width equalization step
+  std::unique_ptr<CorrectionProfileComponents> fInputHistograms;       //!<! the histogram with calibration information
+  std::unique_ptr<CorrectionProfileComponents> fCalibrationHistograms; //!<! the histogram for building calibration information
+  std::unique_ptr<CorrectionHistogramSparse>   fQANotValidatedBin;     //!<! the histogram with non validated bin information
+  std::unique_ptr<CorrectionProfileComponents> fQAQnAverageHistogram;  //!<! the after correction step average Qn components QA histogram
+  Bool_t fApplyWidthEqualization;               ///< apply the width equalization step
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP

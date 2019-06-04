@@ -56,7 +56,7 @@
 #include <TObject.h>
 #include <TList.h>
 #include <TTree.h>
-#include "CorrectionDetector.h"
+#include "SubEvent.h"
 namespace Qn {
 class CorrectionCalculator : public TObject {
  public:
@@ -68,25 +68,15 @@ class CorrectionCalculator : public TObject {
   void SetListOfProcessesNames(TObjArray *names) { fProcessesNames = names; }
   void SetCurrentProcessListName(const char *name);
   void SetCalibrationHistogramsList(TFile *calibrationFile);
-  /// Enables disables the filling of histograms for building correction parameters
-  /// \param enable kTRUE for enabling histograms filling
-  void SetShouldFillOutputHistograms(Bool_t enable = kTRUE) { fFillOutputHistograms = enable; }
   /// Enables disables the filling of QA histograms
   /// \param enable kTRUE for enabling QA histograms filling
   void SetShouldFillQAHistograms(Bool_t enable = kTRUE) { fFillQAHistograms = enable; }
   /// Enables disables the filling of non validated entries QA histograms
   /// \param enable kTRUE for enabling non validated entries QA histograms filling
   void SetShouldFillNveQAHistograms(Bool_t enable = kTRUE) { fFillNveQAHistograms = enable; }
-  /// Enables disables the output of Qn vector on a TTree structure
-  /// \param enable kTRUE for enabling Qn vector output into a TTree
-  void SetShouldFillQnVectorTree(Bool_t enable = kTRUE) { fFillQnVectorTree = enable; }
-
-  void AddDetector(CorrectionDetector *detector);
-
-  CorrectionDetector *FindDetector(const std::string &name) const;
-  CorrectionDetector *FindDetector(Int_t id) const;
-  DetectorConfiguration *FindDetectorConfiguration(const std::string &name) const;
-
+  void AddDetector(std::shared_ptr<SubEvent> detector);
+  SubEvent *FindDetector(const std::string &name) const;
+  SubEvent *FindDetectorConfiguration(const std::string &name) const;
   /// Gets a pointer to the data variables bank
   /// \return the pointer to the data container
   double *GetDataContainer() { return fDataContainer; }
@@ -95,18 +85,13 @@ class CorrectionCalculator : public TObject {
   /// \return the pointer to the data container
   double **GetDataPointer() { return &fDataContainer; }
 
-  /// Get whether the output histograms should be filled
-  /// \return kTRUE if the output histograms should be filled
-  Bool_t GetShouldFillOutputHistograms() const { return fFillOutputHistograms; }
+
   /// Get whether the QA histograms should be filled
   /// \return kTRUE if the QA histograms should be filled
   Bool_t GetShouldFillQAHistograms() const { return fFillQAHistograms; }
   /// Get whether the non validated entries QA histograms should be filled
   /// \return kTRUE if the non validated entries QA histograms should be filled
   Bool_t GetShouldFillNveQAHistograms() const { return fFillNveQAHistograms; }
-  /// Get whether the Qn vector tree should be populated
-  /// \return kTRUE if the Qn vector should be written into a TTree
-  Bool_t GetShouldFillQnVectorTree() const { return fFillQnVectorTree; }
   /// Gets the output histograms list
   /// \return the list of histograms for building correction parameters
   TList *GetOutputHistogramsList() const { return fSupportHistogramsList; }
@@ -116,9 +101,6 @@ class CorrectionCalculator : public TObject {
   /// Gets the non validated entries QA histograms list
   /// \return the list of QA histograms
   TList *GetNveQAHistogramsList() const { return fNveQAHistogramsList; }
-  /// Gets the Qn vector tree
-  /// \return the tree of histograms for building correction parameters
-  TTree *GetQnVectorTree() const { return fQnVectorTree; }
   /// Gets the Qn vector tree
   /// \return the list of detector configurations Qn vectors
   TList *GetQnVectorList() const { return fQnVectorList; }
@@ -147,30 +129,21 @@ class CorrectionCalculator : public TObject {
 
  private:
   static const Int_t nMaxNoOfDetectors;              ///< the highest detector id currently supported by the framework
-  static const Int_t
-      nMaxNoOfDataVariables;          ///< the maximum number of variables currently supported by the framework
-  static const char
-      *szCalibrationHistogramsKeyName; ///< the name of the key under which calibration histograms lists are stored
-  static const char
-      *szCalibrationQAHistogramsKeyName; ///< the name of the key under which calibration QA histograms lists are stored
-  static const char *
-      szCalibrationNveQAHistogramsKeyName; ///< the name of the key under which non validated calibration entries QA histograms lists are stored
+  static const Int_t nMaxNoOfDataVariables;          ///< the maximum number of variables currently supported by the framework
+  static const char *szCalibrationHistogramsKeyName; ///< the name of the key under which calibration histograms lists are stored
+  static const char *szCalibrationQAHistogramsKeyName; ///< the name of the key under which calibration QA histograms lists are stored
+  static const char *szCalibrationNveQAHistogramsKeyName; ///< the name of the key under which non validated calibration entries QA histograms lists are stored
   static const char *szDummyProcessListName; ///< accepted temporary name before getting the definitive one
   static const char *szAllProcessesListName; ///< the name of the list that collects data from all concurrent processes
-  std::vector<std::unique_ptr<CorrectionDetector>> fDetectorsSet; ///< the list of detectors
-  CorrectionDetector **fDetectorsIdMap; //!<! map between external detector Id and internal detector
-  double *fDataContainer;              //!<! the data variables bank
+  std::vector<std::shared_ptr<SubEvent>> fSubEvents; ///< the list of detectors
+  double *fDataContainer;               //!<! the data variables bank
   TList *fCalibrationHistogramsList;    ///< the list of the input calibration histograms
   TList *fSupportHistogramsList;        //!<! the list of the support histograms
   TList *fQAHistogramsList;             //!<! the list of QA histograms
   TList *fNveQAHistogramsList;          //!<! the list of not validated entries QA histograms
-  TTree *fQnVectorTree;                 //!<! the tree to out Qn vectors
   TList *fQnVectorList;                 //!<! list that contains the current event corrected Qn vectors
-  Bool_t
-      fFillOutputHistograms;         ///< kTRUE if output histograms for building correction parameters must be filled
   Bool_t fFillQAHistograms;             ///< kTRUE if QA histograms must be filled
   Bool_t fFillNveQAHistograms;          ///< kTRUE if non validated entries QA histograms must be filled
-  Bool_t fFillQnVectorTree;             ///< kTRUE if Qn vectors must be written in a TTree structure
   TString fProcessListName;             ///< the name of the list associated to the current process
   TObjArray *fProcessesNames;           ///< array with the list of processes names
 
@@ -195,10 +168,10 @@ class CorrectionCalculator : public TObject {
 /// Must be called only when the whole data vectors for the event
 /// have been incorporated to the framework.
 inline void CorrectionCalculator::ProcessEvent() {
-  for (auto &detector : fDetectorsSet) {
+  for (auto &detector : fSubEvents) {
     detector->ProcessCorrections(fDataContainer);
   }
-  for (auto &detector : fDetectorsSet) {
+  for (auto &detector : fSubEvents) {
     detector->ProcessDataCollection(fDataContainer);
   }
 }
@@ -209,7 +182,7 @@ inline void CorrectionCalculator::ProcessEvent() {
 ///
 /// Must be called only at the end of each event to start processing the next one
 inline void CorrectionCalculator::ClearEvent() {
-  for (auto &detector : fDetectorsSet) {
+  for (auto &detector : fSubEvents) {
     detector->ClearDetector();
   }
 }

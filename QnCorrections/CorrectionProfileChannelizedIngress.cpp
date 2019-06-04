@@ -193,13 +193,13 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
   if (origEntries!=NULL && origEntries->GetEntries()!=0) {
     /* so we get it! */
     /* let's check the channel axis */
-    if (fActualNoOfChannels!=origEntries->GetAxis(fEventClassVariables.GetEntriesFast())->GetNbins())
+    if (fActualNoOfChannels!=origEntries->GetAxis(fEventClassVariables.size())->GetNbins())
       return kFALSE;
     THnF *origValues = (THnF *) histogramList->FindObject((const char *) histoName);
     if (origValues==NULL)
       return kFALSE;
     /* let's check the channel axis */
-    if (fActualNoOfChannels!=origValues->GetAxis(fEventClassVariables.GetEntriesFast())->GetNbins())
+    if (fActualNoOfChannels!=origValues->GetAxis(fEventClassVariables.size())->GetNbins())
       return kFALSE;
 
     /* so we got the original histograms */
@@ -208,7 +208,7 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
 
     /* let's first prepare the bin validation information */
     /* we open space for channel variable as well */
-    Int_t nVariables = fEventClassVariables.GetEntriesFast();
+    Int_t nVariables = fEventClassVariables.size();
     Double_t *minvals = new Double_t[nVariables + 1];
     Double_t *maxvals = new Double_t[nVariables + 1];
     Int_t *nbins = new Int_t[nVariables + 1];
@@ -252,9 +252,9 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
 
       /* now let's set the proper binning and label on each axis */
       for (Int_t var = 0; var < nVariables; var++) {
-        fGroupValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                        fEventClassVariables.At(var)->GetBins());
-        fGroupValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+        fGroupValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                        fEventClassVariables.At(var).GetBins());
+        fGroupValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
       }
 
       /* and now the channel axis */

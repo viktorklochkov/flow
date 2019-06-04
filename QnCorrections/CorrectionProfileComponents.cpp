@@ -39,9 +39,9 @@ CorrectionProfileComponents::CorrectionProfileComponents() :
 ///
 ///     's'            the bin are the standard deviation of of the bin values
 CorrectionProfileComponents::CorrectionProfileComponents(const char *name,
-                                                               const char *title,
-                                                               EventClassVariablesSet &ecvs,
-                                                               Option_t *option) :
+                                                         const char *title,
+                                                         EventClassVariablesSet &ecvs,
+                                                         Option_t *option) :
     CorrectionHistogramBase(name, title, ecvs, option) {
 
   fXValues = NULL;
@@ -87,8 +87,8 @@ CorrectionProfileComponents::~CorrectionProfileComponents() {
 /// \param harmonicMap ordered array with the external number of the harmonics
 /// \return true if properly created
 Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *histogramList,
-                                                                         Int_t nNoOfHarmonics,
-                                                                         Int_t *harmonicMap) {
+                                                                      Int_t nNoOfHarmonics,
+                                                                      Int_t *harmonicMap) {
   /* let's build the histograms names and titles */
   TString histoXName = GetName();
   histoXName += szXComponentSuffix;
@@ -128,7 +128,6 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
   } else {
     nNumberOfSlots += nNoOfHarmonics;
   }
-
   /* now allocate the slots for the values histograms */
   fXValues = new THnF *[nNumberOfSlots];
   fYValues = new THnF *[nNumberOfSlots];
@@ -137,18 +136,14 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
     fXValues[i] = NULL;
     fYValues[i] = NULL;
   }
-
   /* now prepare the construction of the histograms */
-  Int_t nVariables = fEventClassVariables.GetEntriesFast();
-
+  Int_t nVariables = fEventClassVariables.size();
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
   TString sVariableLabels = "";
-
   /* get the multidimensional structure */
   fEventClassVariables.GetMultidimensionalConfiguration(nbins, minvals, maxvals);
-
   /* create the values multidimensional histograms for each harmonic */
   Int_t currentHarmonic = 0;
   for (Int_t i = 0; i < nNoOfHarmonics; i++) {
@@ -163,52 +158,43 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
     fYValues[currentHarmonic] = new THnF(Form("%s_h%d", (const char *) histoYName, currentHarmonic),
                                          Form("%s h%d", (const char *) histoYTitle, currentHarmonic),
                                          nVariables, nbins, minvals, maxvals);
-
     /* now let's set the proper binning and label on each axis */
     for (Int_t var = 0; var < nVariables; var++) {
-      fXValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                   fEventClassVariables.At(var)->GetBins());
-      fXValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                   fEventClassVariables.At(var)->GetBins());
-      fXValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-      fXValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-      fYValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                   fEventClassVariables.At(var)->GetBins());
-      fYValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(),
-                                                   fEventClassVariables.At(var)->GetBins());
-      fYValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-      fYValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+      fXValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                   fEventClassVariables.At(var).GetBins());
+      fXValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                   fEventClassVariables.At(var).GetBins());
+      fXValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+      fXValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+      fYValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                   fEventClassVariables.At(var).GetBins());
+      fYValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
+                                                   fEventClassVariables.At(var).GetBins());
+      fYValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+      fYValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
     }
-
     /* ask for square sum accumulation */
     fXValues[currentHarmonic]->Sumw2();
     fYValues[currentHarmonic]->Sumw2();
-
     /* and finally add the histograms to the list */
     histogramList->Add(fXValues[currentHarmonic]);
     histogramList->Add(fYValues[currentHarmonic]);
-
     /* and update the fully filled condition */
     fFullFilled |= harmonicNumberMask[currentHarmonic];
   }
-
   /* create the entries multidimensional histogram */
   fEntries =
       new THnI((const char *) entriesHistoName, (const char *) entriesHistoTitle, nVariables, nbins, minvals, maxvals);
-
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
-
   /* and finally add the entries histogram to the list */
   histogramList->Add(fEntries);
-
   delete[] minvals;
   delete[] maxvals;
   delete[] nbins;
-
   return kTRUE;
 }
 
@@ -233,49 +219,41 @@ Bool_t CorrectionProfileComponents::AttachHistograms(TList *histogramList) {
   entriesHistoName += szXComponentSuffix;
   entriesHistoName += szYComponentSuffix;
   entriesHistoName += szEntriesHistoSuffix;
-
   /* initialize. Remember we don't own the histograms */
-  fEntries = NULL;
-  if (fXValues!=NULL) {
+  fEntries = nullptr;
+  if (fXValues!=nullptr) {
     delete[] fXValues;
-    fXValues = NULL;
+    fXValues = nullptr;
   }
-  if (fYValues!=NULL) {
+  if (fYValues!=nullptr) {
     delete[] fYValues;
-    fYValues = NULL;
+    fYValues = nullptr;
   }
   fXharmonicFillMask = 0x0000;
   fYharmonicFillMask = 0x0000;
   fFullFilled = 0x0000;
-
   fEntries = (THnI *) histogramList->FindObject((const char *) entriesHistoName);
-  if (fEntries!=NULL && fEntries->GetEntries()!=0) {
+  if (fEntries!=nullptr && fEntries->GetEntries()!=0) {
     /* allocate enough space for the supported harmonic numbers */
     fXValues = new THnF *[nMaxHarmonicNumberSupported + 1];
     fYValues = new THnF *[nMaxHarmonicNumberSupported + 1];
-
     /* search the multidimensional histograms for each harmonic */
     Int_t currentHarmonic = 0;
     for (Int_t i = 0; i < nMaxHarmonicNumberSupported; i++) {
       currentHarmonic++;
-
       fXValues[currentHarmonic] =
           (THnF *) histogramList->FindObject(Form("%s_h%d", (const char *) histoXName, currentHarmonic));
       fYValues[currentHarmonic] =
           (THnF *) histogramList->FindObject(Form("%s_h%d", (const char *) histoYName, currentHarmonic));
-
       /* and update the fully filled condition whether applicable */
-      if ((fXValues[currentHarmonic]!=NULL) && (fYValues[currentHarmonic]!=NULL))
+      if ((fXValues[currentHarmonic]!=nullptr) && (fYValues[currentHarmonic]!=nullptr))
         fFullFilled |= harmonicNumberMask[currentHarmonic];
     }
-  } else
+  } else {
     return kFALSE;
-
+  }
   /* check that we actually got something */
-  if (fFullFilled!=0x0000)
-    return kTRUE;
-  else
-    return kFALSE;
+  return fFullFilled!=0x0000;
 }
 
 /// Get the bin number for the current variable content
@@ -298,13 +276,7 @@ Long64_t CorrectionProfileComponents::GetBin(const double *variableContainer) {
 /// \param bin the bin to check its content validity
 /// \return kTRUE if the content is valid kFALSE otherwise
 Bool_t CorrectionProfileComponents::BinContentValidated(Long64_t bin) {
-  Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
-
-  if (nEntries < fMinNoOfEntriesToValidate) {
-    return kFALSE;
-  } else {
-    return kTRUE;
-  }
+  return Int_t(fEntries->GetBinContent(bin)) >= fMinNoOfEntriesToValidate;
 }
 
 /// Get the X component bin content for the passed bin number
@@ -317,7 +289,6 @@ Bool_t CorrectionProfileComponents::BinContentValidated(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t CorrectionProfileComponents::GetXBinContent(Int_t harmonic, Long64_t bin) {
-
   /* sanity check */
   if (fXValues[harmonic]==NULL) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in component histogram %s. FIX IT, PLEASE.",
@@ -325,12 +296,10 @@ Float_t CorrectionProfileComponents::GetXBinContent(Int_t harmonic, Long64_t bin
                             GetName()));
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
-    return fXValues[harmonic]->GetBinContent(bin)/Float_t(nEntries);
+    return fXValues[harmonic]->GetBinContent(bin)/fEntries->GetBinContent(bin);
   }
 }
 
@@ -344,20 +313,17 @@ Float_t CorrectionProfileComponents::GetXBinContent(Int_t harmonic, Long64_t bin
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t CorrectionProfileComponents::GetYBinContent(Int_t harmonic, Long64_t bin) {
-
   /* sanity check */
-  if (fYValues[harmonic]==NULL) {
+  if (fYValues[harmonic]==nullptr) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in component histogram %s. FIX IT, PLEASE.",
                             harmonic,
                             GetName()));
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
-    return fYValues[harmonic]->GetBinContent(bin)/Float_t(nEntries);
+    return fYValues[harmonic]->GetBinContent(bin)/fEntries->GetBinContent(bin);
   }
 }
 
@@ -371,7 +337,6 @@ Float_t CorrectionProfileComponents::GetYBinContent(Int_t harmonic, Long64_t bin
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t CorrectionProfileComponents::GetXBinError(Int_t harmonic, Long64_t bin) {
-
   /* sanity check */
   if (fXValues[harmonic]==NULL) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in component histogram %s. FIX IT, PLEASE.",
@@ -379,25 +344,21 @@ Float_t CorrectionProfileComponents::GetXBinError(Int_t harmonic, Long64_t bin) 
                             GetName()));
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     Float_t values = fXValues[harmonic]->GetBinContent(bin);
     Float_t error2 = fXValues[harmonic]->GetBinError2(bin);
-
     Double_t average = values/nEntries;
     Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
     switch (fErrorMode) {
       case kERRORMEAN:
         /* standard error on the mean of the bin values */
         return serror/TMath::Sqrt(nEntries);
-        break;
       case kERRORSPREAD:
         /* standard deviation of the bin values */
         return serror;
-        break;
       default:return 0.0;
     }
   }
@@ -413,33 +374,28 @@ Float_t CorrectionProfileComponents::GetXBinError(Int_t harmonic, Long64_t bin) 
 /// \param bin the interested bin number
 /// \return the bin content error
 Float_t CorrectionProfileComponents::GetYBinError(Int_t harmonic, Long64_t bin) {
-
   /* sanity check */
-  if (fYValues[harmonic]==NULL) {
+  if (fYValues[harmonic]==nullptr) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in component histogram %s. FIX IT, PLEASE.",
                             harmonic,
                             GetName()));
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     Float_t values = fYValues[harmonic]->GetBinContent(bin);
     Float_t error2 = fYValues[harmonic]->GetBinError2(bin);
-
     Double_t average = values/nEntries;
     Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
     switch (fErrorMode) {
       case kERRORMEAN:
         /* standard error on the mean of the bin values */
         return serror/TMath::Sqrt(nEntries);
-        break;
       case kERRORSPREAD:
         /* standard deviation of the bin values */
         return serror;
-        break;
       default:return 0.0;
     }
   }
@@ -458,31 +414,25 @@ Float_t CorrectionProfileComponents::GetYBinError(Int_t harmonic, Long64_t bin) 
 /// \param weight the increment in the bin content
 void CorrectionProfileComponents::FillX(Int_t harmonic, const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
-  if (fXValues[harmonic]==NULL) {
+  if (fXValues[harmonic]==nullptr) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in component histogram %s. FIX IT, PLEASE.",
                             harmonic,
                             GetName()));
   }
-
   if (fXharmonicFillMask & harmonicNumberMask[harmonic]) {
     QnCorrectionsFatal(Form("Filling twice the harmonic %d before entries update in histogram %s.\n" \
         "   This means you probably have not updated the other components for this harmonic. FIX IT, PLEASE.",
                             harmonic,
                             GetName()));
   }
-
   /* now it's safe to continue */
-
   /* keep total entries in fValues updated */
   Double_t nEntries = fXValues[harmonic]->GetEntries();
-
   FillBinAxesValues(variableContainer);
   fXValues[harmonic]->Fill(fBinAxesValues, weight);
   fXValues[harmonic]->SetEntries(nEntries + 1);
-
   /* update harmonic fill mask */
   fXharmonicFillMask |= harmonicNumberMask[harmonic];
-
   /* now check if time for updating entries histogram */
   if (fXharmonicFillMask!=fFullFilled) return;
   if (fYharmonicFillMask!=fFullFilled) return;
@@ -505,31 +455,25 @@ void CorrectionProfileComponents::FillX(Int_t harmonic, const double *variableCo
 /// \param weight the increment in the bin content
 void CorrectionProfileComponents::FillY(Int_t harmonic, const double *variableContainer, Float_t weight) {
   /* first the sanity checks */
-  if (fYValues[harmonic]==NULL) {
+  if (fYValues[harmonic]==nullptr) {
     QnCorrectionsFatal(Form("Accessing non allocated harmonic %d in component histogram %s. FIX IT, PLEASE.",
                             harmonic,
                             GetName()));
   }
-
   if (fYharmonicFillMask & harmonicNumberMask[harmonic]) {
     QnCorrectionsFatal(Form("Filling twice the harmonic %d before entries update in histogram %s.\n" \
         "   This means you probably have not updated the other components for this harmonic. FIX IT, PLEASE.",
                             harmonic,
                             GetName()));
   }
-
   /* now it's safe to continue */
-
   /* keep total entries in fValues updated */
   Double_t nEntries = fYValues[harmonic]->GetEntries();
-
   FillBinAxesValues(variableContainer);
   fYValues[harmonic]->Fill(fBinAxesValues, weight);
   fYValues[harmonic]->SetEntries(nEntries + 1);
-
   /* update harmonic fill mask */
   fYharmonicFillMask |= harmonicNumberMask[harmonic];
-
   /* now check if time for updating entries histogram */
   if (fYharmonicFillMask!=fFullFilled) return;
   if (fXharmonicFillMask!=fFullFilled) return;

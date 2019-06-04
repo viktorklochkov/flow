@@ -66,7 +66,7 @@ class CorrectionDataVector {
   constexpr Float_t EqualizedWeight() const { return fEqualizedWeight; }
 
  protected:
-  Int_t fId;                    //!<! the id associated with the data vector
+  Int_t   fId;                  //!<! the id associated with the data vector
   Float_t fPhi;                 //!<! the azimuthal angle of the data vector
   Float_t fWeight;              //!<! raw weight assigned to the data vector
   Float_t fEqualizedWeight;     //!<! eq weight assigned to the data vector

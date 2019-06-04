@@ -56,7 +56,7 @@ void CorrelationManager::AddProjection(const std::string &name,
  * @param eventaxis Event variable defined as a Axis, which is used in the correlations.
  */
 
-void CorrelationManager::AddEventAxis(const Qn::Axis &eventaxis) {
+void CorrelationManager::AddEventAxis(const Qn::AxisF &eventaxis) {
   event_axes_.RegisterEventAxis(eventaxis, Qn::EventAxes::Type::Float);
 }
 

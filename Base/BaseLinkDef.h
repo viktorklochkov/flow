@@ -25,11 +25,9 @@
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 
-#pragma link C++ class Qn::Axis+;
+#pragma link C++ class Qn::Axis<float>+;
+#pragma link C++ class Qn::Axis<double>+;
 #pragma link C++ class Qn::DataVector+;
-#pragma link C++ class vector<Qn::DataVector >+;
-#pragma link C++ class vector<vector <Qn::DataVector> >+;
-#pragma link C++ class vector<Qn::CorrectionQnVector >+;
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
@@ -39,21 +37,21 @@
 #pragma link C++ class Qn::SubSamples+;
 #pragma link C++ class Qn::Stats+;
 #pragma link C++ class Qn::EventShape+;
-#pragma link C++ class Qn::DataVectorHolder+;
-#pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
-#pragma link C++ class Qn::DataContainer<Qn::EventShape>+;
-#pragma link C++ class Qn::DataContainer<Qn::Product>+;
-#pragma link C++ class Qn::DataContainer<Qn::Stats>+;
-#pragma link C++ class Qn::DataContainer<Qn::QVector>+;
-#pragma link C++ class Qn::DataContainer<Qn::DataVectorHolder>+;
-#pragma link C++ class Qn::DataContainer<float>+;
-#pragma link C++ class Qn::DataContainer<TH1F>+;
+#pragma link C++ class Qn::SubEventHolder+;
+#pragma link C++ class Qn::DataContainer<Qn::EventShape,float>+;
+#pragma link C++ class Qn::DataContainer<Qn::Product,float>+;
+#pragma link C++ class Qn::DataContainer<Qn::Stats,float>+;
+#pragma link C++ class Qn::DataContainer<Qn::QVector,float>+;
+#pragma link C++ class Qn::DataContainer<std::shared_ptr<Qn::SubEvent>,float>+;
+#pragma link C++ class Qn::DataContainer<float,float>+;
+#pragma link C++ class Qn::DataContainer<TH1F, float>+;
 #pragma link C++ class Qn::DataContainerHelper+;
 
 #pragma link C++ typedef Qn::DataContainerProduct;
+#pragma link C++ typedef Qn::AxisF;
+#pragma link C++ typedef Qn::AxisD;
 #pragma link C++ typedef Qn::DataContainerStats;
 #pragma link C++ typedef Qn::DataContainerQVector;
-#pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ typedef Qn::DataContainerEventShape;
 #pragma link C++ typedef Qn::Errors;
 

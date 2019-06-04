@@ -35,7 +35,6 @@ namespace Qn {
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Jun 21, 2016
 class CorrectionQnVector : public TNamed {
-
  public:
   /// \enum QnVectorNormalizationMethod
   /// \brief The class of the id of the supported Q vector normalization methods
@@ -51,14 +50,12 @@ class CorrectionQnVector : public TNamed {
     M,        ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\mbox{M}} \f$
     MAGNITUDE   ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{|\mbox{Q}|} \f$
   };
-
   CorrectionQnVector();
-  CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, Int_t *harmonicMap = NULL);
-  CorrectionQnVector(const char *name, Int_t nExtractMultipleOf, Int_t nNoOfHarmonics, Int_t *harmonicMap);
+  CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, const Int_t *harmonicMap = nullptr);
+  CorrectionQnVector(const char *name, Int_t nExtractMultipleOf, Int_t nNoOfHarmonics, const Int_t *harmonicMap);
   CorrectionQnVector(const CorrectionQnVector &Q);
   CorrectionQnVector(Int_t nDivisor, const CorrectionQnVector &Q);
-  virtual ~CorrectionQnVector();
-
+  virtual ~CorrectionQnVector() = default;
   void ActivateHarmonic(Int_t harmonic);
   Int_t GetNoOfHarmonics() const;
   void GetHarmonicsMap(Int_t *harmonicMap) const;
@@ -67,7 +64,6 @@ class CorrectionQnVector : public TNamed {
   /// Get the harmonic multiplier
   /// \return the harmonic multiplier
   Int_t GetHarmonicMultiplier() const { return fHarmonicMultiplier; }
-
   /// Sets the X component for the considered harmonic
   /// \param harmonic the intended harmonic
   /// \param qx the X component for the Q vector
@@ -93,9 +89,7 @@ class CorrectionQnVector : public TNamed {
   Float_t Length(Int_t harmonic) const { return TMath::Sqrt(Qx(harmonic)*Qx(harmonic) + Qy(harmonic)*Qy(harmonic)); }
   Float_t QxNorm(Int_t harmonic) const;
   Float_t QyNorm(Int_t harmonic) const;
-
   virtual void Reset();
-
   /// Gets the Q vector X component for the considered harmonic
   /// \param harmonic the intended harmonic
   /// \return the Q vector X component
@@ -107,18 +101,14 @@ class CorrectionQnVector : public TNamed {
   /// Get the Qn vector quality flag
   /// \return Qn vector quality flag
   Bool_t IsGoodQuality() const { return fGoodQuality; }
-
   /// Gets the number of elements that were used for Q vector building
   /// \return number of elements
   Int_t GetN() const { return fN; }
   /// Gets the sum of weights of the elements that were used for Q vector building
   /// \return sum of weights
   Float_t GetSumOfWeights() const { return fSumW; }
-
   Double_t EventPlane(Int_t harmonic) const;
-
   virtual void Print(Option_t *) const;
-
   /// Assignment operator
   CorrectionQnVector &operator=(const CorrectionQnVector &Qn) {
     memcpy(fQnX, Qn.fQnX, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
@@ -131,21 +121,19 @@ class CorrectionQnVector : public TNamed {
     fHarmonicMultiplier = Qn.fHarmonicMultiplier;
     return *this;
   }
-
  protected:
-
   static const Float_t
       fMinimumSignificantValue;     ///< the minimum value that will be considered as meaningful for processing
-  static const UInt_t harmonicNumberMask[];         ///< Mask for each external harmonic number
+  static const UInt_t harmonicNumberMask[];     ///< Mask for each external harmonic number
 
-  Float_t fQnX[MAXHARMONICNUMBERSUPPORTED + 1];   ///< the Q vector X component for each harmonic
-  Float_t fQnY[MAXHARMONICNUMBERSUPPORTED + 1];   ///< the Q vector Y component for each harmonic
-  Int_t fHighestHarmonic;                    ///< the highest harmonic number handled
-  UInt_t fHarmonicMask;                       ///< the mask for the supported harmonics
-  Bool_t fGoodQuality;                        ///< Qn vector good quality flag
-  Int_t fN;                                    ///< number of elements used for Qn vector building
-  Float_t fSumW;                               ///< the sum of weights
-  Int_t fHarmonicMultiplier;                   ///< the multiplier of the different harmonics
+  Float_t fQnX[MAXHARMONICNUMBERSUPPORTED + 1]{}; ///< the Q vector X component for each harmonic
+  Float_t fQnY[MAXHARMONICNUMBERSUPPORTED + 1]{}; ///< the Q vector Y component for each harmonic
+  Int_t fHighestHarmonic;                       ///< the highest harmonic number handled
+  UInt_t fHarmonicMask;                         ///< the mask for the supported harmonics
+  Bool_t fGoodQuality;                          ///< Qn vector good quality flag
+  Int_t fN;                                     ///< number of elements used for Qn vector building
+  Float_t fSumW;                                ///< the sum of weights
+  Int_t fHarmonicMultiplier;                    ///< the multiplier of the different harmonics
 
 /// \cond CLASSIMP
  ClassDef(CorrectionQnVector, 4);

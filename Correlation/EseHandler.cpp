@@ -46,7 +46,7 @@ Qn::Correlation *Qn::EseHandler::RequestCorrelation(const Qn::SubEventPrototype 
   return manager_->RegisterCorrelation(prototype.name, prototype.input, prototype.lambda, prototype.weights);
 }
 
-void Qn::EseHandler::RequestEventAxis(const Qn::Axis &axis) { manager_->AddEventAxis(axis); }
+void Qn::EseHandler::RequestEventAxis(const Qn::AxisF &axis) { manager_->AddEventAxis(axis); }
 
 void Qn::EseHandler::SetRunEventId(const std::string &run, const std::string &event) {
   run_id_input_ = std::make_unique<TTreeReaderValue<Long64_t>>(*manager_->GetReader(), run.data());

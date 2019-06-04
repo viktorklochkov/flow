@@ -21,16 +21,15 @@
 #include <memory>
 #include <utility>
 
-#include "CorrectionDetector.h"
 #include "CorrectionCalculator.h"
 #include "EventClassVariablesSet.h"
-#include "DetectorConfigurationChannels.h"
-#include "DetectorConfigurationTracks.h"
+#include "SubEventChannels.h"
+#include "SubEventTracks.h"
+#include "SubEventHolder.h"
 
 #include "VariableManager.h"
 #include "DataContainer.h"
 #include "QVector.h"
-#include "DataVector.h"
 #include "QAHistogram.h"
 #include "VariableCutBase.h"
 
@@ -48,13 +47,11 @@ enum class DetectorType {
 class DetectorBase {
  public:
   virtual ~DetectorBase() = default;
-
-  virtual std::unique_ptr<DataContainerQnDataVector> &GetDataContainer() = 0;
   virtual std::unique_ptr<DataContainerQVector> &GetQnDataContainer() = 0;
-
-  virtual CorrectionDetector *GenerateDetector(int globalid, int binid, EventClassVariablesSet *set) = 0;
-  virtual DetectorConfiguration *CreateDetectorConfiguration(const std::string &name, EventClassVariablesSet *set) = 0;
-  virtual void SetConfig(std::function<void(DetectorConfiguration *config)> conf) = 0;
+  virtual std::shared_ptr<SubEvent> CreateDetectorConfiguration(const std::string &name,
+                                                                EventClassVariablesSet *set) = 0;
+  virtual void AddSubEvents(CorrectionCalculator &calc, EventClassVariablesSet *set) = 0;
+  virtual void SetConfig(std::function<void(SubEvent *config)> conf) = 0;
   virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
   virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
   virtual void InitializeCutReports() = 0;
@@ -76,7 +73,7 @@ template<std::size_t N>
 class Detector : public DetectorBase {
   static_assert(N <= Qn::QVector::kMaxNHarmonics, "Detector requested more harmonics than the maximum of 8.");
  public:
-  Detector(std::string name, const DetectorType type, std::vector<Qn::Axis> axes, const Variable phi,
+  Detector(std::string name, const DetectorType type, std::vector<AxisF> axes, const Variable phi,
            const Variable weight, const std::vector<Variable> &vars, int const(&harmo)[N]) :
       nchannels_(phi.length()),
       name_(name),
@@ -87,12 +84,11 @@ class Detector : public DetectorBase {
       vars_(vars),
       cuts_(new Qn::Cuts),
       int_cuts_(new Qn::Cuts),
-      datavector_(new Qn::DataContainerQnDataVector()),
+      subevents_(new Qn::DataContainer<std::shared_ptr<SubEvent>, float>()),
       qvector_(new Qn::DataContainerQVector()) {
     coordinates_.resize(vars.size());
-    datavector_->AddAxes(axes);
     qvector_->AddAxes(axes);
-    correction_ptrs_.resize(qvector_->size());
+    subevents_->AddAxes(axes);
     for (unsigned int i = 0; i < N; ++i) {
       harmonics_[i] = harmo[i];
       harmonics_bits_.set(harmo[i]);
@@ -108,29 +104,18 @@ class Detector : public DetectorBase {
     }
   }
 
-  /**
-   * Generate the detector and configure the calibration procedure based on the preset configuration
-   * @param globalid global ID used in the correction calculator. It is unique.
-   * @param binid local bin ID
-   * @param set the set of event variables used for correction.
-   * @return configured detector.
-   */
-  CorrectionDetector *GenerateDetector(int globalid, int binid, EventClassVariablesSet *set) override {
+  void AddSubEvents(CorrectionCalculator &calc, EventClassVariablesSet *set) override {
     if (!configuration_) {
       throw (std::runtime_error("No Qn correction configuration found for " + name_));
     }
-    std::string name;
-    if (datavector_->IsIntegrated()) {
-      name = name_;
-    } else {
-      name = name_ + std::to_string(binid);
+    int ibin = 0;
+    for (auto &bin : *subevents_) {
+      std::string name = name_;
+      if (!subevents_->IsIntegrated()) name += std::to_string(ibin);
+      bin = CreateDetectorConfiguration(name, set);
+      configuration_(bin.get());
+      calc.AddDetector(bin);
     }
-    auto detector = new CorrectionDetector(name.data(), globalid);
-    auto configuration = CreateDetectorConfiguration(name, set);
-    configuration_(configuration);
-    normalization_ = configuration->GetQVectorNormalizationMethod();
-    detector->AddDetectorConfiguration(configuration);
-    return detector;
   }
 
   /**
@@ -139,22 +124,14 @@ class Detector : public DetectorBase {
    * @param set The set of event variables used for the configuration.
    * @return The detector configuration.
    */
-  DetectorConfiguration *CreateDetectorConfiguration(const std::string &name, EventClassVariablesSet *set) override {
-    DetectorConfiguration *configuration = nullptr;
+  std::shared_ptr<SubEvent> CreateDetectorConfiguration(const std::string &name, EventClassVariablesSet *set) override {
     if (type_==DetectorType::CHANNEL) {
-      configuration =
-          new DetectorConfigurationChannels(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
-    }
-    if (type_==DetectorType::TRACK)
-      configuration = new DetectorConfigurationTracks(name.data(), set, nharmonics_, harmonics_.get());
-    return configuration;
+      return std::make_shared<SubEventChannels>(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
+    } else if (type_==DetectorType::TRACK)
+      return std::make_shared<SubEventTracks>(name.data(), set, nharmonics_, harmonics_.get());
+    return nullptr;
   }
 
-  /**
-   * @brief Get the datacontainer associated to the detector.
-   * @return A reference to the Datacontainer.
-   */
-  std::unique_ptr<DataContainerQnDataVector> &GetDataContainer() override { return datavector_; }
   /**
    * @brief Get the Qn vector data container associated to the detector.
    * @return A reference to the Datacontainer.
@@ -165,7 +142,7 @@ class Detector : public DetectorBase {
    * @brief Add the configuration function to the detector.
    * @param conf function which configures the detector. needs to have the specified form.
    */
-  void SetConfig(std::function<void(DetectorConfiguration *config)> conf) override {
+  void SetConfig(std::function<void(SubEvent *config)> conf) override {
     configuration_ = conf;
   }
 
@@ -196,16 +173,15 @@ class Detector : public DetectorBase {
         continue;
       }
       if (vars_.empty()) {
-        datavector_->At(0).array->emplace_back(i, phi, *(weight_.begin() + i));
+        subevents_->At(0)->AddDataVector(i, phi, *(weight_.begin() + i));
       } else {
         long icoord = 0;
         for (const auto &var : vars_) {
           coordinates_.at(icoord) = *(var.begin() + i);
           ++icoord;
         }
-        const auto ibin = datavector_->FindBin(coordinates_);
-        if (ibin > -1)
-          datavector_->At(ibin).array->emplace_back(i, phi, *(weight_.begin() + i));
+        const auto ibin = subevents_->FindBin(coordinates_);
+        if (ibin > -1) subevents_->At(ibin)->AddDataVector(i, phi, *(weight_.begin() + i));
       }
       ++i;
     }
@@ -256,21 +232,21 @@ class Detector : public DetectorBase {
    * @param step specification which correction step is supposed to be retrieved.
    */
   void SetUpCorrectionVectorPtrs(const Qn::CorrectionCalculator &calc, std::string step) override {
-    int ibin = 0;
-    for (auto &bin : correction_ptrs_) {
-      std::string binname;
-      if (qvector_->IsIntegrated()) {
-        binname = name_;
-      } else {
-        binname = (name_ + std::to_string(ibin));
-      }
-      ++ibin;
-      bin = calc.GetDetectorQnVectorPtr(binname.data(), step.data(), step.data());
-    }
-    for (auto &bin : *qvector_) {
-      bin.SetHarmonics(harmonics_bits_);
-      bin.SetNormalization(normalization_);
-    }
+//    int ibin = 0;
+//    for (auto &bin : correction_ptrs_) {
+//      std::string binname;
+//      if (qvector_->IsIntegrated()) {
+//        binname = name_;
+//      } else {
+//        binname = (name_ + std::to_string(ibin));
+//      }
+//      ++ibin;
+//      bin = calc.GetDetectorQnVectorPtr(binname.data(), step.data(), step.data());
+//    }
+//    for (auto &bin : *qvector_) {
+//      bin.SetHarmonics(harmonics_bits_);
+//      bin.SetNormalization(normalization_);
+//    }
   }
 
   /**
@@ -278,11 +254,11 @@ class Detector : public DetectorBase {
    * This function is called every event before the output tree is filled.
    */
   void GetCorrectedQVectors() override {
-    int ibin = 0;
-    for (auto &bin : *qvector_) {
-      bin.SetQVector(correction_ptrs_[ibin]);
-      ++ibin;
-    }
+//    int ibin = 0;
+//    for (auto &bin : *qvector_) {
+//      bin.SetQVector(correction_ptrs_[ibin]);
+//      ++ibin;
+//    }
   }
 
  private:
@@ -300,10 +276,9 @@ class Detector : public DetectorBase {
   std::unique_ptr<Cuts> cuts_; /// per channel selection  cuts
   std::unique_ptr<Cuts> int_cuts_; /// integrated selection cuts
   std::vector<std::unique_ptr<QAHistoBase>> histograms_; /// QA histograms of the detector
-  std::unique_ptr<DataContainerQnDataVector> datavector_; /// Container holding the data vectors of the current event.
+  std::unique_ptr<DataContainer<std::shared_ptr<SubEvent>, float>> subevents_;
   std::unique_ptr<DataContainerQVector> qvector_; /// Container holding the Q vectors of the current event.
-  std::vector<const Qn::CorrectionQnVector *> correction_ptrs_; /// pointers to the latest corrected Q vectors
-  std::function<void(DetectorConfiguration *config)> configuration_; /// correction configuration function
+  std::function<void(SubEvent *config)> configuration_; /// correction configuration function
 };
 }
 

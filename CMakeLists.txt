@@ -20,15 +20,11 @@ if ("${CMAKE_COMPILER_ID}" STREQUAL "Clang")
 endif ()
 
 set(QNCORR_SOURCES
-        QnCorrections/CorrectionOnInputData.cpp
         QnCorrections/EventClassVariablesSet.cpp
         QnCorrections/CorrectionOnQvector.cpp
         QnCorrections/CorrectionHistogram.cpp
-        QnCorrections/CorrectionStepBase.cpp
         QnCorrections/CorrectionHistogramBase.cpp
-        QnCorrections/CorrectionsSetOnInputData.cpp
         QnCorrections/CorrectionHistogramChannelized.cpp
-        QnCorrections/CorrectionsSetOnQvector.cpp
         QnCorrections/CorrectionHistogramChannelizedSparse.cpp
         QnCorrections/CorrectionHistogramSparse.cpp
         QnCorrections/GainEqualization.cpp
@@ -41,13 +37,12 @@ set(QNCORR_SOURCES
         QnCorrections/CorrectionDataVector.cpp
         QnCorrections/CorrectionProfileComponents.cpp
         QnCorrections/CorrectionProfileCorrelationComponents.cpp
-        QnCorrections/CorrectionDetector.cpp
         QnCorrections/CorrectionProfileCorrelationComponentsHarmonics.cpp
-        QnCorrections/DetectorConfiguration.cpp
+        QnCorrections/SubEvent.cpp
         QnCorrections/CorrectionQnVector.cpp
-        QnCorrections/DetectorConfigurationChannels.cpp
+        QnCorrections/SubEventChannels.cpp
         QnCorrections/Alignment.cpp
-        QnCorrections/DetectorConfigurationTracks.cpp
+        QnCorrections/SubEventTracks.cpp
         QnCorrections/CorrectionQnVectorBuild.cpp
         QnCorrections/Recentering.cpp
         QnCorrections/EventClassVariable.cpp
@@ -70,7 +65,6 @@ set(DIFF_SOURCES
         )
 
 set(BASE_SOURCES
-        Base/Axis.cpp
         Base/QVector.cpp
         Base/Profile.cpp
         Base/DataContainerHelper.cpp
@@ -93,7 +87,6 @@ set(CORR_HEADERS
         )
 
 set(BASE_HEADERS DataContainer.h
-        DataVector.h
         DataContainerHelper.h
         Axis.h
         Profile.h
@@ -101,6 +94,7 @@ set(BASE_HEADERS DataContainer.h
         QVector.h
         SubSamples.h
         Product.h
+        SubEventHolder.h
         Stats.h
         )
 
@@ -108,11 +102,10 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
         EventClassVariablesSet.h
         CorrectionOnQvector.h
         CorrectionHistogram.h
-        CorrectionStepBase.h
+        CorrectionStep.h
         CorrectionHistogramBase.h
-        CorrectionsSetOnInputData.h
         CorrectionHistogramChannelized.h
-        CorrectionsSetOnQvector.h
+        CorrectionsSet.h
         CorrectionHistogramChannelizedSparse.h
         CorrectionHistogramSparse.h
         CorrectionCalculator.h
@@ -123,13 +116,12 @@ set(QNCORR_HEADERS CorrectionOnInputData.h
         CorrectionDataVector.h
         CorrectionProfileComponents.h
         CorrectionProfileCorrelationComponents.h
-        CorrectionDetector.h
         CorrectionProfileCorrelationComponentsHarmonics.h
-        DetectorConfigurationChannels.h
-        DetectorConfigurationTracks.h
+        SubEvent.h
+        SubEventChannels.h
+        SubEventTracks.h
         CorrectionQnVectorBuild.h
         EventClassVariable.h
-        DetectorConfiguration.h
         GainEqualization.h
         CorrectionLog.h
         CorrectionQnVector.h
@@ -248,6 +240,9 @@ IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src ${CMAKE_BINARY_DIR}/googletest-build EXCLUDE_FROM_ALL)
     add_subdirectory(test)
 ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
+
+add_executable(main main.cpp)
+target_link_libraries(main ${ROOT_LIBRARIES} Base Correction QnCorrections Correlation)
 
 # Install configuration
 

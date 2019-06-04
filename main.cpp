@@ -1,11 +1,9 @@
-
-
 #include <random>
-#include "gtest/gtest.h"
+#include "TFile.h"
 #include "CorrectionManager.h"
+#include "Correlation/include/CorrelationManager.h"
 
-
-TEST(CorrectionUnitTest, Correction) {
+int main() {
   using namespace Qn;
   enum values {
     kCent,
@@ -30,50 +28,42 @@ TEST(CorrectionUnitTest, Correction) {
   man.AddVariable("MultB",kMultB,4);
   man.AddVariable("Cent",kCent,1);
 
-  auto correction = [](Qn::DetectorConfiguration *config) {
+  auto correction = [](Qn::SubEvent *config) {
     config->SetNormalization(Qn::QVector::Normalization::M);
     config->AddCorrectionOnQnVector(new Qn::Recentering());
     auto channels = new bool[4]{true, true, true, true};
     auto group = new int[4]{0, 0, 0, 0};
-    config->SetChannelsScheme(channels, group, nullptr);
+    config->SetChannelsScheme(channels, group,{});
   };
-  auto correctiongain = [](Qn::DetectorConfiguration *config) {
+
+  auto correctiontrk = [](Qn::SubEvent *config) {
     config->SetNormalization(Qn::QVector::Normalization::M);
     config->AddCorrectionOnQnVector(new Qn::Recentering());
-    auto channels = new bool[4]{true, true, true, true};
-    auto group = new int[4]{0, 0, 0, 0};
-    config->SetChannelsScheme(channels, group, nullptr);
-    auto gain = new GainEqualization();
-    gain->SetEqualizationMethod(GainEqualization::Method::AVERAGE);
-    gain->SetUseChannelGroupsWeights(true);
-    config->AddCorrectionOnInputData(gain);
+    auto rescaling = new TwistAndRescale();
+    rescaling->SetApplyRescale(true);
+    rescaling->SetApplyTwist(true);
+    rescaling->SetTwistAndRescaleMethod(TwistAndRescale::TWRESCALE_doubleHarmonic);
+    config->AddCorrectionOnQnVector(rescaling);
   };
-  auto correctiontrk = [](Qn::DetectorConfiguration *config) {
-    config->SetNormalization(Qn::QVector::Normalization::M);
-    config->AddCorrectionOnQnVector(new Qn::Recentering());
-//    auto rescaling = new TwistAndRescale();
-//    rescaling->SetApplyRescale(true);
-//    rescaling->SetApplyTwist(true);
-//    rescaling->SetTwistAndRescaleMethod(TwistAndRescale::TWRESCALE_doubleHarmonic);
-//    config->AddCorrectionOnQnVector(rescaling);
-  };
-  man.AddDetector("AA",DetectorType::CHANNEL,"PhiA","MultA",{},{1});
-  man.SetCorrectionSteps("AA",correctiongain);
+
+
   man.AddDetector("BB",DetectorType::CHANNEL,"PhiB","MultB",{},{1});
   man.SetCorrectionSteps("BB",correction);
-  man.AddDetector("CC",DetectorType::TRACK,"PhiT","Ones",{{"Pt",20,0.,100.}},{1,2,3,4});
+  man.AddDetector("CC",DetectorType::TRACK,"PhiT","Ones",{{"Pt",20,0.,100.}},{1});
   man.SetCorrectionSteps("CC",correctiontrk);
+  man.AddDetector("AA",DetectorType::CHANNEL,"PhiA","MultA",{},{1});
+  man.SetCorrectionSteps("AA",correction);
   man.AddEventVariable("Cent");
   man.AddCorrectionAxis({"Cent",100,0,100});
 
-  man.Initialize(calibfile);
+  man.Initialize(nullptr);
 
   auto caliblist = man.GetCalibrationList();
   auto calibqalist = man.GetCalibrationQAList();
 
   man.SetProcessName("test");
 
-  const unsigned int nevents = 10000;
+  const unsigned int nevents = 1000;
   std::default_random_engine gen;
   std::uniform_real_distribution<double> uniform(0,100);
   std::uniform_int_distribution<unsigned int> trk(0,1000);
@@ -91,7 +81,6 @@ TEST(CorrectionUnitTest, Correction) {
       values[kMultA+ich] = std::abs(gauss(gen));
       values[kMultB+ich] = std::abs(gauss(gen));
     }
-    values[kMultA] = values[kMultA] + 100.;
     man.ProcessEvent();
     man.FillChannelDetectors();
     unsigned int ntracks = trk(gen);

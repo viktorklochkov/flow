@@ -28,7 +28,7 @@
  * either version 3 of the License, or (at your option) any later version.                        *
  *                                                                                                *
  **************************************************************************************************/
- 
+
 /// \file QnCorrectionsEventClassVariable.cxx
 /// \brief Implementation of a variable used for defining an event class class
 
@@ -38,29 +38,16 @@ ClassImp(Qn::EventClassVariable)
 /// \endcond
 namespace Qn {
 
-/// Default constructor
-EventClassVariable::EventClassVariable() :
-    TObject(),
-    fVarId(-1),
-    fNBins(0),
-    fNBinsPlusOne(0),
-    fBins(NULL),
-    fLabel("") {
-
-}
-
 /// Copy constructor
 EventClassVariable::EventClassVariable(const EventClassVariable &ecv) :
-    TObject(ecv),
     fVarId(ecv.fVarId),
     fNBins(ecv.fNBins),
     fNBinsPlusOne(ecv.fNBinsPlusOne),
-    fBins(NULL),
+    fBins(new Double_t[ecv.fNBinsPlusOne]),
     fLabel(ecv.fLabel) {
-
-  fBins = new Double_t[ecv.fNBins + 1];
-  for (Int_t i = 0; i < ecv.fNBins + 1; i++)
+  for (Int_t i = 0; i < ecv.fNBins + 1; i++) {
     fBins[i] = ecv.fBins[i];
+  }
 }
 
 /// Normal constructor
@@ -74,18 +61,15 @@ EventClassVariable::EventClassVariable(const EventClassVariable &ecv) :
 /// \param min lower edge value for the first bin
 /// \param max upper edge value for the last bin
 EventClassVariable::EventClassVariable(Int_t varId,
-                                                                 const char *varname,
-                                                                 Int_t nbins,
-                                                                 Double_t min,
-                                                                 Double_t max) :
-    TObject(),
+                                       const char *varname,
+                                       Int_t nbins,
+                                       Double_t min,
+                                       Double_t max) :
     fVarId(varId),
     fNBins(nbins),
     fNBinsPlusOne(nbins + 1),
-    fBins(NULL),
+    fBins(new Double_t[fNBinsPlusOne]),
     fLabel(varname) {
-
-  fBins = new Double_t[fNBins + 1];
   Double_t low = min;
   Double_t width = (max - min)/fNBins;
   for (Int_t i = 0; i < fNBins + 1; i++) {
@@ -104,17 +88,14 @@ EventClassVariable::EventClassVariable(Int_t varId,
 /// \param nbins number of bins
 /// \param bins array with bins lower edge value plus the upper of the last one
 EventClassVariable::EventClassVariable(Int_t varId,
-                                                                 const char *varname,
-                                                                 Int_t nbins,
-                                                                 Double_t *bins) :
-    TObject(),
+                                       const char *varname,
+                                       Int_t nbins,
+                                       Double_t *bins) :
     fVarId(varId),
     fNBins(nbins),
     fNBinsPlusOne(nbins + 1),
-    fBins(NULL),
+    fBins(new Double_t[fNBinsPlusOne]),
     fLabel(varname) {
-
-  fBins = new Double_t[fNBins + 1];
   for (Int_t i = 0; i < fNBins + 1; i++) {
     fBins[i] = bins[i];
   }
@@ -134,31 +115,19 @@ EventClassVariable::EventClassVariable(Int_t varId,
 /// \param varname variable name or label for a variable axis
 /// \param binArray array with bin segments of different granularity
 EventClassVariable::EventClassVariable(Int_t varId,
-                                                                 const char *varname,
-                                                                 Double_t binArray[][2]) :
-    TObject(),
+                                       const char *varname,
+                                       Double_t binArray[][2]) :
     fVarId(varId),
-    fNBins(0),
-    fNBinsPlusOne(0),
-    fBins(NULL),
     fLabel(varname) {
-
   for (Int_t section = 1; section < (Int_t) binArray[0][1]; section++)
     fNBins += Int_t(binArray[section][1]);
-
   fNBinsPlusOne = fNBins + 1;
   fBins = new Double_t[fNBins + 1];
-
   Double_t low = binArray[0][0];
-
   fBins[0] = binArray[0][0];
-
   Int_t bin = 0;
-
   for (Int_t section = 1; section < binArray[0][1]; section++) {
-
     Double_t sectionWidth = (binArray[section][0] - binArray[section - 1][0])/binArray[section][1];
-
     for (Int_t sectionBin = 0; sectionBin < binArray[section][1]; sectionBin++) {
       fBins[bin] = low;
       low += sectionWidth;
@@ -168,14 +137,4 @@ EventClassVariable::EventClassVariable(Int_t varId,
   fBins[bin] = low;
 }
 
-/// Default destructor
-///
-/// Release heap memory if taken
-EventClassVariable::~EventClassVariable() {
-
-  if (fBins!=NULL) {
-    delete[] fBins;
-    fBins = NULL;
-  }
-}
 }

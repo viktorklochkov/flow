@@ -17,11 +17,10 @@
 #pragma link C++ class Qn::CorrectionOnQvector+;
 #pragma link C++ class Qn::CorrectionsSetOnInputData+;
 #pragma link C++ class Qn::CorrectionsSetOnQvector+;
-#pragma link C++ class Qn::CorrectionStepBase+;
-#pragma link C++ class Qn::CorrectionDetector+;
-#pragma link C++ class Qn::DetectorConfiguration+;
-#pragma link C++ class Qn::DetectorConfigurationChannels+;
-#pragma link C++ class Qn::DetectorConfigurationTracks+;
+#pragma link C++ class Qn::CorrectionStep+;
+#pragma link C++ class Qn::SubEvent+;
+#pragma link C++ class Qn::SubEventChannels+;
+#pragma link C++ class Qn::SubEventTracks+;
 #pragma link C++ class Qn::EventClassVariable+;
 #pragma link C++ class Qn::EventClassVariablesSet+;
 #pragma link C++ class Qn::CorrectionHistogram+;

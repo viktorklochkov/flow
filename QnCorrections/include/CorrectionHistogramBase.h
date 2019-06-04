@@ -49,10 +49,7 @@ class CorrectionHistogramBase : public TNamed {
   } QnCorrectionHistogramErrorMode;
  public:
   CorrectionHistogramBase();
-  CorrectionHistogramBase(const char *name,
-                             const char *title,
-                             EventClassVariablesSet &ecvs,
-                             Option_t *option = "");
+  CorrectionHistogramBase(const char *name, const char *title, EventClassVariablesSet &ecvs, Option_t *option = "");
   virtual ~CorrectionHistogramBase();
 
   virtual Bool_t AttachHistograms(TList *histogramList);
@@ -153,10 +150,12 @@ class CorrectionHistogramBase : public TNamed {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param chgrpId additional optional channel or group Id
 inline void CorrectionHistogramBase::FillBinAxesValues(const double *variableContainer, Int_t chgrpId) {
-  for (Int_t var = 0; var < fEventClassVariables.GetEntriesFast(); var++) {
-    fBinAxesValues[var] = variableContainer[fEventClassVariables.At(var)->GetVariableId()];
+  unsigned int ivar = 0;
+    for (const auto &var : fEventClassVariables) {
+    fBinAxesValues[ivar] = variableContainer[var.GetId()];
+    ++ivar;
   }
-  fBinAxesValues[fEventClassVariables.GetEntriesFast()] = chgrpId;
+  fBinAxesValues[fEventClassVariables.size()] = chgrpId;
 }
 
 }

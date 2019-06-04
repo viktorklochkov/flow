@@ -78,20 +78,16 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
   entriesHistoName += szEntriesHistoSuffix;
   TString entriesHistoTitle = GetTitle();
   entriesHistoTitle += szEntriesHistoSuffix;
-
   /* we open space for channel variable as well */
-  Int_t nVariables = fEventClassVariables.GetEntriesFast();
+  Int_t nVariables = fEventClassVariables.size();
   Double_t *minvals = new Double_t[nVariables + 1];
   Double_t *maxvals = new Double_t[nVariables + 1];
   Int_t *nbins = new Int_t[nVariables + 1];
-
   /* get the multidimensional structure */
   fEventClassVariables.GetMultidimensionalConfiguration(nbins, minvals, maxvals);
-
   /* lets consider now the channel information */
   fUsedChannel = new Bool_t[fNoOfChannels];
   fChannelMap = new Int_t[fNoOfChannels];
-
   fActualNoOfChannels = 0;
   for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
     if (bUsedChannel!=NULL) {
@@ -99,13 +95,11 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
     } else {
       fUsedChannel[ixChannel] = kTRUE;
     }
-
     if (fUsedChannel[ixChannel]) {
       fChannelMap[ixChannel] = fActualNoOfChannels;
       fActualNoOfChannels++;
     }
   }
-
   /* There will be a wrong external view of the channel number especially */
   /* manifested when there are holes in the channel assignment */
   /* so, lets complete the dimension information */
@@ -120,8 +114,8 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
 
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+    fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
 
   /* and now the channel axis */

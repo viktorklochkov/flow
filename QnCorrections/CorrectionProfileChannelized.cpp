@@ -98,7 +98,7 @@ Bool_t CorrectionProfileChannelized::CreateProfileHistograms(TList *histogramLis
   entriesHistoTitle += szEntriesHistoSuffix;
 
   /* we open space for channel variable as well */
-  Int_t nVariables = fEventClassVariables.GetEntriesFast();
+  Int_t nVariables = fEventClassVariables.size();
   Double_t *minvals = new Double_t[nVariables + 1];
   Double_t *maxvals = new Double_t[nVariables + 1];
   Int_t *nbins = new Int_t[nVariables + 1];
@@ -149,10 +149,10 @@ Bool_t CorrectionProfileChannelized::CreateProfileHistograms(TList *histogramLis
 
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fValues->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var)->GetNBins(), fEventClassVariables.At(var)->GetBins());
-    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var)->GetVariableLabel());
+    fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
+    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
 
   /* and now the channel axis */
