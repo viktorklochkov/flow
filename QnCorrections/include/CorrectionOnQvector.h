@@ -16,8 +16,8 @@
 ///
 
 #include <TNamed.h>
-#include <TList.h>
-
+#include "TList.h"
+#include "CorrectionQnVector.h"
 #include "CorrectionStep.h"
 
 /// \class QnCorrectionsCorrectionOnQvector
@@ -85,7 +85,27 @@ class CorrectionOnQvector : public CorrectionStep {
   /// Gets the corrected Qn vector
   /// \return the corrected Qn vector
   const CorrectionQnVector *GetCorrectedQnVector() const { return fCorrectedQnVector.get(); }
-  virtual void IncludeCorrectedQnVector(TList *list);
+  /// Include the new corrected Qn vector into the passed list
+  ///
+  /// Adds the Qn vector to the passed list
+  /// if the correction step is in correction states.
+  /// \param list list where the corrected Qn vector should be added
+  void IncludeCorrectedQnVector(TList *list) {
+    switch (fState) {
+      case State::CALIBRATION:
+        /* collect the data needed to further produce correction parameters */
+        break;
+      case State::APPLYCOLLECT:
+        /* collect the data needed to further produce correction parameters */
+        /* and proceed to ... */
+        /* FALLTHRU */
+      case State::APPLY: /* apply the correction */
+        list->Add(fCorrectedQnVector.get());
+        break;
+      default:
+        break;
+    }
+  }
   /// Clean the correction to accept a new event
   /// Pure virtual function
   virtual void ClearCorrectionStep() = 0;
@@ -103,7 +123,6 @@ class CorrectionOnQvector : public CorrectionStep {
   /// \param applyList list containing the correction steps applying corrections
   /// \return kTRUE if the correction step is being applied
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) = 0;
-
  protected:
   std::unique_ptr<CorrectionQnVector> fCorrectedQnVector; //!<! the step corrected Qn vector
   const CorrectionQnVector *fInputQnVector = nullptr; //!<! the previous step corrected Qn vector

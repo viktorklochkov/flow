@@ -45,7 +45,6 @@ namespace Qn {
 class EventClassVariablesSet {
  public:
   EventClassVariablesSet() = default;
-
   /// Normal constructor
   /// \param n number of variables in the set
   EventClassVariablesSet(int initialsize) : fVariables(initialsize) {}
@@ -54,7 +53,6 @@ class EventClassVariablesSet {
   EventClassVariablesSet(const EventClassVariablesSet &tocopy) = default;
   /// Default destructor
   virtual ~EventClassVariablesSet() = default;
-
   std::vector<EventClassVariable>::iterator begin() { return fVariables.begin(); }
   std::vector<EventClassVariable>::iterator end() { return fVariables.end(); }
   std::vector<EventClassVariable>::const_iterator begin() const { return fVariables.begin(); }
@@ -65,7 +63,7 @@ class EventClassVariablesSet {
   template<typename... ARGS>
   void Add(ARGS &&... args) { return fVariables.emplace_back(std::forward<ARGS>(args)...); }
   std::vector<EventClassVariable>::size_type size() const { return fVariables.size(); }
-  void GetMultidimensionalConfiguration(Int_t *nbins, Double_t *minvals, Double_t *maxvals);
+  void GetMultidimensionalConfiguration(Int_t *nbins, Double_t *minvals, Double_t *maxvals) const;
  private:
   std::vector<EventClassVariable> fVariables;
 /// \cond CLASSIMP

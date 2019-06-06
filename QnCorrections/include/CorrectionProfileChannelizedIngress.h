@@ -41,44 +41,33 @@ namespace Qn {
 class CorrectionProfileChannelizedIngress : public CorrectionHistogramBase {
  public:
   CorrectionProfileChannelizedIngress();
-  CorrectionProfileChannelizedIngress(const char *name,
-                                         const char *title,
-                                         EventClassVariablesSet &ecvs,
-                                         Int_t nNoOfChannels,
-                                         Option_t *option = "");
+  CorrectionProfileChannelizedIngress(std::string name, std::string title,
+                                      const EventClassVariablesSet &ecvs,
+                                      Int_t nNoOfChannels,
+                                      ErrorMode mode);
   virtual ~CorrectionProfileChannelizedIngress();
-
-  virtual Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
-  /// wrong call for this class invoke base class behavior
-  virtual Bool_t AttachHistograms(TList *histogramList) {
-    return CorrectionHistogramBase::AttachHistograms(histogramList);
-  }
-
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
-  virtual Long64_t GetGrpBin(const double *variableContainer, Int_t nChannel);
-  /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const double *variableContainer) { return CorrectionHistogramBase::GetBin(variableContainer); }
-  virtual Bool_t BinContentValidated(Long64_t bin);
-  virtual Float_t GetBinContent(Long64_t bin);
-  virtual Float_t GetGrpBinContent(Long64_t bin);
-  virtual Float_t GetBinError(Long64_t bin);
-  virtual Float_t GetGrpBinError(Long64_t bin);
-
+  Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
+  Long64_t GetBin(const double *variableContainer, Int_t nChannel);
+  Long64_t GetGrpBin(const double *variableContainer, Int_t nChannel);
+  Bool_t BinContentValidated(Long64_t bin);
+  Float_t GetBinContent(Long64_t bin);
+  Float_t GetGrpBinContent(Long64_t bin);
+  Float_t GetBinError(Long64_t bin);
+  Float_t GetGrpBinError(Long64_t bin);
  private:
-  THnF *fValues;              //!<! the values and errors on each event class and channel
-  THnF *fGroupValues;         //!<! the values and errors on each event class and group
-  THnC *fValidated;           //!<! bin content validated flag
-  Bool_t *fUsedChannel;       //!<! array, which of the detector channels are used for this configuration
-  Int_t *fChannelGroup;       //!<! array, the group to which the channel pertains
-  Int_t fNoOfChannels;        //!<! The number of channels associated to the whole detector
-  Int_t fActualNoOfChannels;  //!<! The actual number of channels handled by the histogram
-  Int_t *fChannelMap;         //!<! array, the map from histo to detector channel number
-  Bool_t fUseGroups;          //!<! the groups structures must be used
-  Bool_t *fUsedGroup;         //!<! array, which of the detector groups are used for this configuration
-  Int_t fNoOfGroups;          //!<! the number of groups associated with the whole detector
-  Int_t fActualNoOfGroups;    //!<! The actual number of groups handled by the histogram
-  Int_t *fGroupMap;           //!<! array, the map from histo to detector channel group number
-
+  THnF *fValues = nullptr;              //!<! the values and errors on each event class and channel
+  THnF *fGroupValues = nullptr;         //!<! the values and errors on each event class and group
+  THnC *fValidated = nullptr;            //!<! bin content validated flag
+  Bool_t *fUsedChannel = nullptr;       //!<! array, which of the detector channels are used for this configuration
+  Int_t *fChannelGroup = nullptr;        //!<! array, the group to which the channel pertains
+  Int_t fNoOfChannels = 0;        //!<! The number of channels associated to the whole detector
+  Int_t fActualNoOfChannels = 0;  //!<! The actual number of channels handled by the histogram
+  Int_t *fChannelMap = nullptr;          //!<! array, the map from histo to detector channel number
+  Bool_t fUseGroups = false;          //!<! the groups structures must be used
+  Bool_t *fUsedGroup = nullptr;         //!<! array, which of the detector groups are used for this configuration
+  Int_t fNoOfGroups = 0;          //!<! the number of groups associated with the whole detector
+  Int_t fActualNoOfGroups = 0;    //!<! The actual number of groups handled by the histogram
+  Int_t *fGroupMap = nullptr;           //!<! array, the map from histo to detector channel group number
 
   /// \cond CLASSIMP
  ClassDef(CorrectionProfileChannelizedIngress, 2);

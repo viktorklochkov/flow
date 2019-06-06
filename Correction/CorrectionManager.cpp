@@ -83,7 +83,6 @@ void Qn::CorrectionManager::Initialize(TFile *in_calibration_file_) {
     }
     var_manager_->SetOutputToTree(out_tree_);
   }
-  CalculateCorrectionAxis();
   CreateDetectors();
   for (auto &det : detectors_track_) {
     det.second->InitializeCutReports();
@@ -182,24 +181,12 @@ TList *Qn::CorrectionManager::GetEventAndDetectorQAList() {
   return qa_list_;
 }
 
-void Qn::CorrectionManager::CalculateCorrectionAxis() {
-  qnc_varset_ = std::make_unique<EventClassVariablesSet>();
-  for (const auto &axis : correction_axes_) {
-    double axisbins[kMaxCorrectionArrayLength];
-    auto nbins = axis.size();
-    for (unsigned int ibin = 0; ibin < nbins + 1; ++ibin) {
-      axisbins[ibin] = *(axis.begin() + ibin);
-    }
-    qnc_varset_->Add(var_manager_->FindNum(axis.Name()), axis.Name().data(), nbins, axisbins);
-  }
-}
-
 void Qn::CorrectionManager::CreateDetectors() {
   for (auto &pair : detectors_track_) {
-    pair.second->AddSubEvents(qnc_calculator_,qnc_varset_.get());
+    pair.second->AddSubEvents(qnc_calculator_, correction_axes_);
   }
   for (auto &pair : detectors_channel_) {
-    pair.second->AddSubEvents(qnc_calculator_,qnc_varset_.get());
+    pair.second->AddSubEvents(qnc_calculator_, correction_axes_);
   }
 }
 

@@ -34,34 +34,24 @@ namespace Qn {
 /// \date Jun 18, 2016
 class CorrectionHistogramChannelizedSparse : public CorrectionHistogramBase {
  public:
-  CorrectionHistogramChannelizedSparse();
-  CorrectionHistogramChannelizedSparse(const char *name,
-                                          const char *title,
-                                          EventClassVariablesSet &ecvs,
+  CorrectionHistogramChannelizedSparse() = default;
+  CorrectionHistogramChannelizedSparse(std::string name,
+                                          std::string title,
+                                          const EventClassVariablesSet &ecvs,
                                           Int_t nNoOfChannels);
   virtual ~CorrectionHistogramChannelizedSparse();
-
   Bool_t CreateChannelizedHistogram(TList *histogramList, const Bool_t *bUsedChannel);
-
-  /// wrong call for this class invoke base class behaviour
-  virtual Long64_t GetBin(const double *variableContainer) { return CorrectionHistogramBase::GetBin(variableContainer); }
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
-  virtual Bool_t BinContentValidated(Long64_t bin);
-  virtual Float_t GetBinContent(Long64_t bin);
-  virtual Float_t GetBinError(Long64_t bin);
-
-  /// wrong call for this class invoke base class behavior
-  virtual void Fill(const double *variableContainer, Float_t weight) {
-    CorrectionHistogramBase::Fill(variableContainer,
-                                     weight);
-  }
-  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
+  Long64_t GetBin(const double *variableContainer, Int_t nChannel);
+  Bool_t BinContentValidated(Long64_t bin);
+  Float_t GetBinContent(Long64_t bin);
+  Float_t GetBinError(Long64_t bin);
+  void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
  private:
-  THnSparseF *fValues;              //!<! Cumulates values for each of the event classes
-  Bool_t *fUsedChannel;       //!<! array, which of the detector channels is used for this configuration
-  Int_t fNoOfChannels;        //!<! The number of channels associated to the whole detector
-  Int_t fActualNoOfChannels;  //!<! The actual number of channels handled by the histogram
-  Int_t *fChannelMap;         //!<! array, the map from histo to detector channel number
+  THnSparseF *fValues = nullptr;              //!<! Cumulates values for each of the event classes
+  Bool_t *fUsedChannel = nullptr;       //!<! array, which of the detector channels is used for this configuration
+  Int_t fNoOfChannels = 0;        //!<! The number of channels associated to the whole detector
+  Int_t fActualNoOfChannels = 0;  //!<! The actual number of channels handled by the histogram
+  Int_t *fChannelMap = nullptr;         //!<! array, the map from histo to detector channel number
 
   /// \cond CLASSIMP
  ClassDef(CorrectionHistogramChannelizedSparse, 1);

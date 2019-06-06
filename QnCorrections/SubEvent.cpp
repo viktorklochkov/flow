@@ -33,7 +33,6 @@
 /// \brief Implementation of the base detector configuration class within Q vector correction framework
 
 #include "SubEvent.h"
-#include "CorrectionLog.h"
 
 /// \cond CLASSIMP
 ClassImp(Qn::SubEvent);
@@ -66,7 +65,7 @@ void SubEvent::AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInput
 /// \param correctionOnQn the correction to find its predecessor corrected Qn vector
 /// \return the corrected Qn vector from the correction step predecessor or the plain Qn vector
 const CorrectionQnVector *SubEvent::GetPreviousCorrectedQnVector(CorrectionOnQvector *correctionOnQn) const {
-  if (fQnVectorCorrections.GetPrevious(correctionOnQn)!=nullptr) {
+  if (fQnVectorCorrections.GetPrevious(correctionOnQn)) {
     return fQnVectorCorrections.GetPrevious(correctionOnQn)->GetCorrectedQnVector();
   }
   else {

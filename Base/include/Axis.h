@@ -74,12 +74,15 @@ class Axis {
    * Set Name of axis.
    * @param name name of axis
    */
-  inline void SetName(const std::string name) { name_ = name; }
+  void SetName(const std::string name) { name_ = name; }
   /**
    * Returns Name of axis.
    * @return name of axis
    */
-  inline std::string Name() const { return name_; }
+  std::string Name() const { return name_; }
+  typename std::vector<T>::size_type GetNBins() const { return bin_edges_.size() - 1;}
+  const T* GetPtr() const {return bin_edges_.data();}
+
   /**
    * Finds bin index for a given value
    * if value is smaller than lowest bin return -1.
@@ -157,7 +160,7 @@ class Axis {
   std::vector<T> bin_edges_;
 
   /// \cond CLASSIMP
- ClassDef(Axis, 4);
+ ClassDef(Axis, 5);
   /// \endcond
 };
 using AxisF = Axis<float>;

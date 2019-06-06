@@ -41,46 +41,29 @@ namespace Qn {
 /// \date Jan 15, 2016
 class CorrectionProfileComponents : public CorrectionHistogramBase {
  public:
-  CorrectionProfileComponents();
-  CorrectionProfileComponents(const char *name,
-                                 const char *title,
-                                 EventClassVariablesSet &ecvs,
-                                 Option_t *option = "");
+  CorrectionProfileComponents() = default;
+  CorrectionProfileComponents(std::string name,
+                              std::string title,
+                              const EventClassVariablesSet &ecvs,
+                              ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfileComponents();
-
   Bool_t CreateComponentsProfileHistograms(TList *histogramList, Int_t nNoOfHarmonics, Int_t *harmonicMap = NULL);
-  virtual Bool_t AttachHistograms(TList *histogramList);
-  /// wrong call for this class invoke base class behavior
-  virtual Bool_t AttachHistograms(TList *histogramList,
-                                  const Bool_t *bUsedChannel,
-                                  const Int_t *nChannelGroup) {
-    return CorrectionHistogramBase::AttachHistograms(histogramList,
-                                                        bUsedChannel,
-                                                        nChannelGroup);
-  }
-
-  virtual Long64_t GetBin(const double *variableContainer);
-  /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel) {
-    return CorrectionHistogramBase::GetBin(variableContainer,
-                                              nChannel);
-  }
-  virtual Bool_t BinContentValidated(Long64_t bin);
-  virtual Float_t GetXBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetXBinError(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYBinError(Int_t harmonic, Long64_t bin);
-
-  virtual void FillX(Int_t harmonic, const double *variableContainer, Float_t weight);
-  virtual void FillY(Int_t harmonic, const double *variableContainer, Float_t weight);
-
+  Bool_t AttachHistograms(TList *histogramList);
+  Long64_t GetBin(const double *variableContainer);
+  Bool_t BinContentValidated(Long64_t bin);
+  Float_t GetXBinContent(Int_t harmonic, Long64_t bin);
+  Float_t GetYBinContent(Int_t harmonic, Long64_t bin);
+  Float_t GetXBinError(Int_t harmonic, Long64_t bin);
+  Float_t GetYBinError(Int_t harmonic, Long64_t bin);
+  void FillX(Int_t harmonic, const double *variableContainer, Float_t weight);
+  void FillY(Int_t harmonic, const double *variableContainer, Float_t weight);
  private:
-  THnF **fXValues;            //!<! X component histogram for each requested harmonic
-  THnF **fYValues;            //!<! Y component histogram for each requested harmonic
-  UInt_t fXharmonicFillMask;  //!<! keeps track of harmonic X component filled values
-  UInt_t fYharmonicFillMask;  //!<! keeps track of harmonic Y component filled values
-  UInt_t fFullFilled;         //!<! mask for the fully filled condition
-  THnI *fEntries;            //!<! Cumulates the number on each of the event classes
+  THnF **fXValues = nullptr;            //!<! X component histogram for each requested harmonic
+  THnF **fYValues = nullptr;            //!<! Y component histogram for each requested harmonic
+  UInt_t fXharmonicFillMask = 0x0000;  //!<! keeps track of harmonic X component filled values
+  UInt_t fYharmonicFillMask = 0x0000;  //!<! keeps track of harmonic Y component filled values
+  UInt_t fFullFilled = 0x0000;         //!<! mask for the fully filled condition
+  THnI *fEntries = nullptr;            //!<! Cumulates the number on each of the event classes
   /// \cond CLASSIMP
  ClassDef(CorrectionProfileComponents, 1);
   /// \endcond

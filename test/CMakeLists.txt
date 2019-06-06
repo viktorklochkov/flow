@@ -13,9 +13,10 @@ set(TEST_SOURCES
         ProductUnitTest.cpp
         StatsUnitTest.cpp
         QAHistogramUnitTest.cpp
-        CorrectionUnitTest.cpp)
+        CorrectionUnitTest.cpp
+        QVectorUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})
-target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correlation QnCorrections Correction)
+target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correlation Correction)
 add_test(NAME all_tests COMMAND tests)

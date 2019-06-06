@@ -39,24 +39,38 @@ inline QVec operator+(QVec a, QVec b) { return {a.x + b.x, a.y + b.y}; }
 inline QVec operator-(QVec a, QVec b) { return {a.x - b.x, a.y - b.y}; }
 inline QVec operator/(QVec a, float s) { return {a.x/s, a.y/s}; }
 inline QVec operator*(QVec a, float s) { return {a.x*s, a.y*s}; }
-inline float norm(QVec a) { return sqrt(a.x*a.x + a.y*a.y); }
+inline float norm(QVec a) { return std::sqrt(a.x*a.x + a.y*a.y); }
 
-class QVector {
+class CorrectionQnVector {
  public:
 
   enum CorrectionStep {
     UNCORRECTED,
+    GAINEQUALIZED,
     RECENTERED,
     TWIST,
     RESCALED,
     ALIGNED
   };
+  static constexpr std::array<unsigned char, 8> kharmonicmask = {0x01,  // b 0000 0001
+                                                                 0x02,  // b 0000 0010
+                                                                 0x04,  // b 0000 0100
+                                                                 0x08,  // b 0000 1000
+                                                                 0x10,  // b 0001 0000
+                                                                 0x20,  // b 0010 0000
+                                                                 0x40,  // b 0100 0000
+                                                                 0x80}; // b 1000 0000
+  static constexpr int   kmaxharmonics = 8;
+  static constexpr float kminimumweight = 1e-6;
 
-  static constexpr int kMaxNHarmonics = 8;
   using Normalization = CorrectionQnVector::Normalization;
 
   QVector() = default;
   virtual ~QVector() = default;
+
+  QVector(Normalization norm, std::bitset<kmaxharmonics> bits) :
+  norm_(norm),
+  bits_(bits) {}
 
   QVector(Normalization norm, int n, float sum, std::vector<QVec> q) :
       norm_(norm),
@@ -74,40 +88,36 @@ class QVector {
   void ResetQVector() {
     n_ = 0;
     sum_weights_ = 0.;
+    quality_ = false;
   }
-
   void SetQVector(const CorrectionQnVector *vector);
-
-  void SetHarmonics(std::bitset<kMaxNHarmonics> bits) {
+  void SetQuality(bool quality) { quality_ = quality; }
+  bool GetQuality() const { return quality_; }
+  void SetHarmonics(std::bitset<kmaxharmonics> bits) {
     bits_ = bits;
     q_.resize(static_cast<size_t>(bits.count()));
   }
-
-  void SetNormalization(Normalization norm) {norm_ = norm;}
-
+  void SetNormalization(Normalization norm) { norm_ = norm; }
+  void SetCorrectionStep(CorrectionStep step) {correction_step_ = step;}
   void SetCorrectionStep(const std::string &name) {
-    if (name == "plain") correction_step_ = CorrectionStep::UNCORRECTED;
-    else if (name == "rec") correction_step_ = CorrectionStep::RECENTERED;
-    else if (name == "twist") correction_step_ = CorrectionStep::TWIST;
-    else if (name == "rescale") correction_step_ = CorrectionStep::RESCALED;
-    else if (name == "align") correction_step_ = CorrectionStep::ALIGNED;
+    if (name=="plain") correction_step_ = CorrectionStep::UNCORRECTED;
+    else if (name=="rec") correction_step_ = CorrectionStep::RECENTERED;
+    else if (name=="twist") correction_step_ = CorrectionStep::TWIST;
+    else if (name=="rescale") correction_step_ = CorrectionStep::RESCALED;
+    else if (name=="align") correction_step_ = CorrectionStep::ALIGNED;
   }
-
-  unsigned int GetCorrectionStep() const {return correction_step_;}
-
-  QVector(Normalization norm, const CorrectionQnVector *vector, std::bitset<kMaxNHarmonics> bits);
-
+  unsigned int GetCorrectionStep() const { return correction_step_; }
+  QVector(Normalization norm, const CorrectionQnVector *vector, std::bitset<kmaxharmonics> bits);
   inline float x(const unsigned int i) const {
     if (bits_.test(i)) {
-      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1UL << (i + 1)) - 1)).count() - 1].x;
+      return q_[std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i + 1)) - 1)).count() - 1].x;
     } else {
       throw std::out_of_range("harmonic not in range.");
     }
   }
-
   inline float y(const unsigned int i) const {
     if (bits_.test(i)) {
-      return q_[std::bitset<kMaxNHarmonics>(bits_ & std::bitset<kMaxNHarmonics>((1UL << (i + 1)) - 1)).count() - 1].y;
+      return q_[std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i + 1)) - 1)).count() - 1].y;
     } else {
       throw std::out_of_range("harmonic not in range.");
     }
@@ -122,15 +132,35 @@ class QVector {
   QVector Normal(Normalization norm) const;
   QVector DeNormal() const;
 
+
+  inline void Add(double phi, double weight) {
+    if (weight < kminimumweight) return;
+    unsigned int pos = 0;
+    for (unsigned int h = 1; h < kmaxharmonics; ++h) {
+      if (bitflag_ & kharmonicmask[h]) {
+        q_[pos].x += (weight*std::cos(h*harmonic_multiplier_*phi));
+        q_[pos].y += (weight*std::sin(h*harmonic_multiplier_*phi));
+        ++pos;
+      }
+    }
+    sum_weights_ += weight;
+    n_ += 1;
+  }
+ private:
   Normalization norm_ = Normalization::NONE; ///< normalization method
   int n_ = 0;                                ///< number of data vectors contributing to the q vector
   float sum_weights_ = 0.0;                  ///< sum of weights
-  std::bitset<kMaxNHarmonics> bits_{};       ///< Bitset for keeping track of the harmonics
-  std::vector<QVec> q_;                     ///< array of qvectors for the different harmonics
+  std::bitset<kmaxharmonics> bits_{};       ///< Bitset for keeping track of the harmonics
+  unsigned char bitflag_;
+  unsigned char maxharmonic_;
+  unsigned char harmonic_multiplier_ = 1;
+  std::vector<QVec> q_;                      ///< array of qvectors for the different harmonics
   unsigned int correction_step_ = 0;         ///<  correction step defined by enumerator
+  bool quality_ = false;
+
 
   /// \cond CLASSIMP
- ClassDef(QVector, 9);
+ ClassDef(QVector, 10);
   /// \endcond
 };
 
@@ -153,7 +183,7 @@ class QVectorPtr {
   inline float mag(const unsigned int i) const { return qvector_->mag(i); }
   inline float sumweights() const { return qvector_->sumweights(); }
   inline float n() const { return qvector_->n(); }
-  inline unsigned int GetCorrectionStep() const {return qvector_->GetCorrectionStep();}
+  inline unsigned int GetCorrectionStep() const { return qvector_->GetCorrectionStep(); }
   inline Normalization GetNorm() const { return qvector_->GetNorm(); }
   inline QVector Normal(Normalization norm) const { return qvector_->Normal(norm); }
   inline QVector DeNormal() const { return qvector_->DeNormal(); }

@@ -47,9 +47,9 @@ class CorrectionManager {
 
   using MapDetectors = std::map<std::string, std::unique_ptr<DetectorBase>>;
 
-  CorrectionManager()
-      : event_cuts_(new Cuts()),
-        var_manager_(new VariableManager()) {
+  CorrectionManager() :
+      event_cuts_(new Cuts()),
+      var_manager_(new VariableManager()) {
     var_manager_->CreateVariableOnes();
   }
 
@@ -67,7 +67,7 @@ class CorrectionManager {
    * Adds a axis used for correction.
    * @param axis Axis used for correction. The name of the axis corresponds to the name of a variable.
    */
-  void AddCorrectionAxis(const Qn::AxisF &axis) { correction_axes_.push_back(axis); }
+  void AddCorrectionAxis(const Qn::AxisD &axis) { correction_axes_.Add(var_manager_->FindNum(axis.Name()), axis); }
 
   /**
    * Adds a event variable, which will be saved to the output tree.
@@ -180,7 +180,9 @@ class CorrectionManager {
    */
   void AddEventHisto2D(const std::vector<Qn::AxisF> &axes, const std::string &weightname = "Ones");
 
-  void AddEventHisto2D(const std::vector<Qn::AxisF> &axes, const Qn::AxisF &axis, const std::string &weightname = "Ones");
+  void AddEventHisto2D(const std::vector<Qn::AxisF> &axes,
+                       const Qn::AxisF &axis,
+                       const std::string &weightname = "Ones");
 
   /**
   * @brief Adds a one dimensional histogram to a detector.
@@ -321,12 +323,9 @@ class CorrectionManager {
     }
   }
 
-  void CalculateCorrectionAxis();
-
-  std::unique_ptr<EventClassVariablesSet> qnc_varset_ = nullptr; ///!<! CorrectionCalculator correction axes
+  EventClassVariablesSet correction_axes_; ///!<! CorrectionCalculator correction axes
   std::unique_ptr<Cuts> event_cuts_; ///< Pointer to the event cuts
   TList *qa_list_ = nullptr; ///!<! List holding the Detector QA histograms. Lifetime has to be managed by the user.
-  std::vector<Qn::AxisF> correction_axes_; ///< vector of event axes used in the correctionstep
   CorrectionCalculator qnc_calculator_; ///< calculator of the corrections
   std::shared_ptr<VariableManager> var_manager_; ///< manager of the variables
   std::map<std::string, std::unique_ptr<DetectorBase>> detectors_track_; ///< map of tracking detectors

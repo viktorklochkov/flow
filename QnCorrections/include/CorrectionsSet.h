@@ -66,7 +66,7 @@ class CorrectionsSet {
 
   /// Fill the global list of correction steps
 /// \param correctionlist (partial) global list of corrections ordered by correction key
-  void FillOverallCorrectionsList(std::set<CorrectionStep*, CompareSteps> &set) const {
+  void FillOverallCorrectionsList(std::set<CorrectionStep*> &set) const {
     for (auto & entry : list_) {
       set.emplace(entry.get());
     }

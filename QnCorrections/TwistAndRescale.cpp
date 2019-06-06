@@ -36,7 +36,6 @@
 #include "CorrectionProfile3DCorrelations.h"
 #include "CorrectionHistogramSparse.h"
 #include "CorrectionCalculator.h"
-#include "CorrectionLog.h"
 #include "TwistAndRescale.h"
 #include "ROOT/RMakeUnique.hxx"
 

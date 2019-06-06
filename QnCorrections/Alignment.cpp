@@ -35,7 +35,6 @@
 
 #include "EventClassVariablesSet.h"
 #include "CorrectionCalculator.h"
-#include "CorrectionLog.h"
 #include "Alignment.h"
 
 /// \cond CLASSIMP

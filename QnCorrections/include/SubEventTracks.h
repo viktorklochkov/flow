@@ -19,7 +19,6 @@
 
 #include "CorrectionDataVector.h"
 #include "SubEvent.h"
-#include "CorrectionLog.h"
 namespace Qn {
 class CorrectionProfileComponents;
 
@@ -41,8 +40,8 @@ class SubEventTracks : public SubEvent {
   friend class CorrectionStep;
   friend class SubEvent;
   SubEventTracks() = default;
-  SubEventTracks(const char *name,
-                              EventClassVariablesSet *eventClassesVariables,
+  SubEventTracks(std::string name,
+                              const EventClassVariablesSet *eventClassesVariables,
                               Int_t nNoOfHarmonics,
                               Int_t *harmonicMap = NULL);
   virtual ~SubEventTracks() = default;
@@ -64,8 +63,8 @@ class SubEventTracks : public SubEvent {
   virtual Bool_t ProcessDataCollection(const double *variableContainer);
 
   virtual void IncludeQnVectors(TList *list);
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*, CompareSteps> &set) const;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*, CompareSteps> &set) const;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*> &set) const;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*> &set) const;
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
   virtual void ClearDetector();
 

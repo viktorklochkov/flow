@@ -35,73 +35,24 @@ namespace Qn {
 /// \author Ilya Selyuzhenkov <ilya.selyuzhenkov@gmail.com>, GSI
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Jan 11, 2016
-class CorrectionHistogramBase : public TNamed {
- protected:
+class CorrectionHistogramBase {
   /// \typedef QnCorrectionHistogramErrorMode
   /// \brief The type of bin errors supported by the framework histograms.
-  ///
-  /// Actually it is not a class because the C++ level of implementation.
-  /// But full protection will be reached when were possible declaring it
-  /// as a class.
-  typedef enum {
-    kERRORMEAN = 0,                 ///< the bin errors are the standard error on the mean
-    kERRORSPREAD                    ///< the bin errors are the standard deviation
-  } QnCorrectionHistogramErrorMode;
  public:
-  CorrectionHistogramBase();
-  CorrectionHistogramBase(const char *name, const char *title, EventClassVariablesSet &ecvs, Option_t *option = "");
+  enum class ErrorMode{
+    MEAN,  ///< the bin errors are the standard error on the mean
+    SPREAD ///< the bin errors are the standard deviation
+  };
+ public:
+  CorrectionHistogramBase() = default;
+  CorrectionHistogramBase(std::string name, std::string title, const EventClassVariablesSet &ecvs, ErrorMode mode);
+  CorrectionHistogramBase(std::string name, std::string title, const EventClassVariablesSet &ecvs);
   virtual ~CorrectionHistogramBase();
-
-  virtual Bool_t AttachHistograms(TList *histogramList);
-  virtual Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
-
-  virtual Long64_t GetBin(const double *variableContainer);
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
-  /// Check the validity of the content of the passed bin
-  /// Pure virtual function
-  /// \param bin the bin to check its content validity
-  /// \return kTRUE if the content is valid kFALSE otherwise
-  virtual Bool_t BinContentValidated(Long64_t bin) = 0;
   /// Set the minimum number of entries needed to validate the bin content
   /// \param nNoOfEntries the number of entries threshold
   virtual void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
-
-  virtual Float_t GetBinContent(Long64_t bin);
-  virtual Float_t GetXBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetXXBinContent(Long64_t bin);
-  virtual Float_t GetXYBinContent(Long64_t bin);
-  virtual Float_t GetYXBinContent(Long64_t bin);
-  virtual Float_t GetYYBinContent(Long64_t bin);
-  virtual Float_t GetXXBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetXYBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYXBinContent(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYYBinContent(Int_t harmonic, Long64_t bin);
-
-  virtual Float_t GetBinError(Long64_t bin);
-  virtual Float_t GetXBinError(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYBinError(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetXXBinError(Long64_t bin);
-  virtual Float_t GetXYBinError(Long64_t bin);
-  virtual Float_t GetYXBinError(Long64_t bin);
-  virtual Float_t GetYYBinError(Long64_t bin);
-  virtual Float_t GetXXBinError(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetXYBinError(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYXBinError(Int_t harmonic, Long64_t bin);
-  virtual Float_t GetYYBinError(Int_t harmonic, Long64_t bin);
-
-  virtual void Fill(const double *variableContainer, Float_t weight);
-  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
-  virtual void FillX(Int_t harmonic, const double *variableContainer, Float_t weight);
-  virtual void FillY(Int_t harmonic, const double *variableContainer, Float_t weight);
-  virtual void FillXX(const double *variableContainer, Float_t weight);
-  virtual void FillXY(const double *variableContainer, Float_t weight);
-  virtual void FillYX(const double *variableContainer, Float_t weight);
-  virtual void FillYY(const double *variableContainer, Float_t weight);
-  virtual void FillXX(Int_t harmonic, const double *variableContainer, Float_t weight);
-  virtual void FillXY(Int_t harmonic, const double *variableContainer, Float_t weight);
-  virtual void FillYX(Int_t harmonic, const double *variableContainer, Float_t weight);
-  virtual void FillYY(Int_t harmonic, const double *variableContainer, Float_t weight);
+  std::string GetName() const { return fName;}
+  std::string GetTitle() const { return fTitle;}
 
  protected:
   void FillBinAxesValues(const double *variableContainer, Int_t chgrpId = -1);
@@ -109,11 +60,12 @@ class CorrectionHistogramBase : public TNamed {
   void CopyTHnF(THnF *hDest, THnF *hSource, Int_t *binsArray);
   void CopyTHnFDimension(THnF *hDest, THnF *hSource, Int_t *binsArray, Int_t dimension);
 
-  EventClassVariablesSet fEventClassVariables;  //!<! The variables set that determines the event classes
-  Double_t *fBinAxesValues;                                  //!<! Runtime place holder for computing bin number
-  QnCorrectionHistogramErrorMode fErrorMode;                 //!<! The error type for the current instance
-  Int_t
-      fMinNoOfEntriesToValidate;                           ///< the minimum number of entries for validating a bin content
+  std::string fName;
+  std::string fTitle;
+  const EventClassVariablesSet fEventClassVariables{};  //!<! The variables set that determines the event classes
+  Double_t *fBinAxesValues = nullptr;                                  //!<! Runtime place holder for computing bin number
+  ErrorMode fErrorMode = ErrorMode::MEAN;                 //!<! The error type for the current instance
+  Int_t fMinNoOfEntriesToValidate = nDefaultMinNoOfEntriesValidated;     ///< the minimum number of entries for validating a bin content
   /// \cond CLASSIMP
  ClassDef(CorrectionHistogramBase, 2);
   /// \endcond
@@ -123,22 +75,17 @@ class CorrectionHistogramBase : public TNamed {
   static const char *szEntriesHistoSuffix;               ///< The suffix for the name of the entries histograms
   static const char *szXComponentSuffix;                 ///< The suffix for the name of X component histograms
   static const char *szYComponentSuffix;                 ///< The suffix for the name of Y component histograms
-  static const char
-      *szXXCorrelationComponentSuffix;     ///< The suffix for the name of XX correlation component histograms
-  static const char
-      *szXYCorrelationComponentSuffix;     ///< The suffix for the name of XY correlation component histograms
-  static const char
-      *szYXCorrelationComponentSuffix;     ///< The suffix for the name of YX correlation component histograms
-  static const char
-      *szYYCorrelationComponentSuffix;     ///< The suffix for the name of YY correlation component histograms
+  static const char *szXXCorrelationComponentSuffix;     ///< The suffix for the name of XX correlation component histograms
+  static const char *szXYCorrelationComponentSuffix;     ///< The suffix for the name of XY correlation component histograms
+  static const char *szYXCorrelationComponentSuffix;     ///< The suffix for the name of YX correlation component histograms
+  static const char *szYYCorrelationComponentSuffix;     ///< The suffix for the name of YY correlation component histograms
   static const Int_t nMaxHarmonicNumberSupported;        ///< The maximum external harmonic number the framework support
   static const UInt_t harmonicNumberMask[];              ///< Mask for each external harmonic number
   static const UInt_t correlationXXmask;                 ///< Maks for XX correlation component
   static const UInt_t correlationXYmask;                 ///< Maks for XY correlation component
   static const UInt_t correlationYXmask;                 ///< Maks for YX correlation component
   static const UInt_t correlationYYmask;                 ///< Maks for YY correlation component
-  static const Int_t
-      nDefaultMinNoOfEntriesValidated;    ///< The default minimum number of entries for validating a bin content
+  constexpr static const Int_t nDefaultMinNoOfEntriesValidated =2; ///< The default minimum number of entries for validating a bin content
 };
 
 /// Fills the axes values for the current passed variable container

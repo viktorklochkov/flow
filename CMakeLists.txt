@@ -21,31 +21,22 @@ endif ()
 
 set(QNCORR_SOURCES
         QnCorrections/EventClassVariablesSet.cpp
-        QnCorrections/CorrectionOnQvector.cpp
-        QnCorrections/CorrectionHistogram.cpp
         QnCorrections/CorrectionHistogramBase.cpp
-        QnCorrections/CorrectionHistogramChannelized.cpp
         QnCorrections/CorrectionHistogramChannelizedSparse.cpp
         QnCorrections/CorrectionHistogramSparse.cpp
         QnCorrections/GainEqualization.cpp
-        QnCorrections/CorrectionLog.cpp
         QnCorrections/CorrectionCalculator.cpp
-        QnCorrections/CorrectionProfile.cpp
         QnCorrections/CorrectionProfile3DCorrelations.cpp
         QnCorrections/CorrectionProfileChannelized.cpp
         QnCorrections/CorrectionProfileChannelizedIngress.cpp
-        QnCorrections/CorrectionDataVector.cpp
         QnCorrections/CorrectionProfileComponents.cpp
         QnCorrections/CorrectionProfileCorrelationComponents.cpp
-        QnCorrections/CorrectionProfileCorrelationComponentsHarmonics.cpp
         QnCorrections/SubEvent.cpp
-        QnCorrections/CorrectionQnVector.cpp
+#        QnCorrections/CorrectionQnVector.cpp
         QnCorrections/SubEventChannels.cpp
         QnCorrections/Alignment.cpp
         QnCorrections/SubEventTracks.cpp
-        QnCorrections/CorrectionQnVectorBuild.cpp
         QnCorrections/Recentering.cpp
-        QnCorrections/EventClassVariable.cpp
         QnCorrections/TwistAndRescale.cpp
         )
 
@@ -68,7 +59,6 @@ set(BASE_SOURCES
         Base/QVector.cpp
         Base/Profile.cpp
         Base/DataContainerHelper.cpp
-        Base/Efficiency.cpp
         Base/SubSamples.cpp
         Base/EventShape.cpp
         Base/Stats.cpp
@@ -90,7 +80,6 @@ set(BASE_HEADERS DataContainer.h
         DataContainerHelper.h
         Axis.h
         Profile.h
-        Efficiency.h
         QVector.h
         SubSamples.h
         Product.h
@@ -99,31 +88,25 @@ set(BASE_HEADERS DataContainer.h
         )
 
 set(QNCORR_HEADERS CorrectionOnInputData.h
+        EventClassVariable.h
         EventClassVariablesSet.h
-        CorrectionOnQvector.h
-        CorrectionHistogram.h
+#        CorrectionOnQvector.h
         CorrectionStep.h
         CorrectionHistogramBase.h
-        CorrectionHistogramChannelized.h
         CorrectionsSet.h
         CorrectionHistogramChannelizedSparse.h
         CorrectionHistogramSparse.h
         CorrectionCalculator.h
-        CorrectionProfile.h
         CorrectionProfile3DCorrelations.h
         CorrectionProfileChannelized.h
         CorrectionProfileChannelizedIngress.h
         CorrectionDataVector.h
         CorrectionProfileComponents.h
         CorrectionProfileCorrelationComponents.h
-        CorrectionProfileCorrelationComponentsHarmonics.h
         SubEvent.h
         SubEventChannels.h
         SubEventTracks.h
-        CorrectionQnVectorBuild.h
-        EventClassVariable.h
         GainEqualization.h
-        CorrectionLog.h
         CorrectionQnVector.h
         Alignment.h
         Recentering.h
@@ -140,49 +123,48 @@ include(${ROOT_USE_FILE})
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
 set(ROOTCLING ${ROOT_DIR}/../bin/rootcling)
-add_custom_command(OUTPUT G__QnCorrections.cxx
-        COMMAND ${ROOTCLING} -v -f G__QnCorrections.cxx
-        -rml libQnCorrections${CMAKE_SHARED_LIBRARY_SUFFIX}
-        -rmf libQnCorrections.rootmap
-        -s libQnCorrections
-        -I${CMAKE_SOURCE_DIR}/QnCorrections -I${CMAKE_SOURCE_DIR}/QnCorrections/include
-        ${QNCORR_HEADERS}
-        ${CMAKE_SOURCE_DIR}/QnCorrections/QnLinkDef.h
-        )
-
-add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
-add_library(Qn::QnCorrections ALIAS QnCorrections)
-target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
-target_include_directories(QnCorrections
-        PRIVATE
-        ${ROOT_INCLUDE_DIRS}
-        PUBLIC
-        $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/QnCorrections/include>
-        )
-target_link_libraries(QnCorrections PRIVATE ${ROOT_LIBRARIES})
+#add_custom_command(OUTPUT G__QnCorrections.cxx
+#        COMMAND ${ROOTCLING} -v -f G__QnCorrections.cxx
+#        -rml libQnCorrections${CMAKE_SHARED_LIBRARY_SUFFIX}
+#        -rmf libQnCorrections.rootmap
+#        -s libQnCorrections
+#        -I${CMAKE_SOURCE_DIR}/QnCorrections -I${CMAKE_SOURCE_DIR}/QnCorrections/include
+#        ${QNCORR_HEADERS}
+#        ${CMAKE_SOURCE_DIR}/QnCorrections/QnLinkDef.h
+#        )
+#add_library(QnCorrections SHARED ${QNCORR_SOURCES} G__QnCorrections)
+#add_library(Qn::QnCorrections ALIAS QnCorrections)
+#target_compile_definitions(QnCorrections PUBLIC "-DUSE_ROOT")
+#target_include_directories(QnCorrections
+#        PRIVATE
+#        ${ROOT_INCLUDE_DIRS}
+#        PUBLIC
+#        $<INSTALL_INTERFACE:include>
+#        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/QnCorrections/include>
+#        )
+#target_link_libraries(QnCorrections PRIVATE ${ROOT_LIBRARIES})
 add_custom_command(OUTPUT G__Base.cxx
         COMMAND ${ROOTCLING} -v -f G__Base.cxx
         -rml libBase${CMAKE_SHARED_LIBRARY_SUFFIX}
         -rmf libBase.rootmap
         -s libBase
         -I${CMAKE_SOURCE_DIR}/Base -I${CMAKE_SOURCE_DIR}/Base/include -I${CMAKE_SOURCE_DIR}/QnCorrections/include -I${CMAKE_SOURCE_DIR}/QnCorrections
-        ${BASE_HEADERS}
+        ${BASE_HEADERS} ${QNCORR_HEADERS}
         ${CMAKE_SOURCE_DIR}/Base/BaseLinkDef.h
         )
-add_library(Base SHARED ${BASE_SOURCES} G__Base)
+add_library(Base SHARED ${QNCORR_SOURCES} ${BASE_SOURCES} G__Base)
 add_library(Qn::Base ALIAS Base)
 target_compile_definitions(Base PUBLIC "-DUSE_ROOT")
 target_include_directories(Base
         PRIVATE
         ${ROOT_INCLUDE_DIRS}
-        QnCorrections/include
         ${CMAKE_CURRENT_BINARY_DIR}/common
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Base/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/QnCorrections/include>
         )
-target_link_libraries(Base PUBLIC QnCorrections PRIVATE ${ROOT_LIBRARIES})
+target_link_libraries(Base PUBLIC PRIVATE ${ROOT_LIBRARIES})
 
 add_library(Correction SHARED ${DIFF_SOURCES})
 add_library(Qn::Correction ALIAS Correction)
@@ -194,7 +176,6 @@ target_include_directories(Correction
         PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Correction/include>
-
         )
 target_link_libraries(Correction PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
@@ -242,7 +223,7 @@ IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 add_executable(main main.cpp)
-target_link_libraries(main ${ROOT_LIBRARIES} Base Correction QnCorrections Correlation)
+target_link_libraries(main ${ROOT_LIBRARIES} Base Correction Correlation)
 
 # Install configuration
 
@@ -253,12 +234,10 @@ install(DIRECTORY QnCorrections/include/ Base/include/ Correction/include/ Corre
 # Installion of ROOT dictionaries
 install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libBase.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${CMAKE_BINARY_DIR}/libQnCorrections.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libCorrelation.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 
-install(TARGETS Base Correction Correlation QnCorrections
+install(TARGETS Base Correction Correlation
         EXPORT QnTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -288,5 +267,5 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/QnConfigVersion.cmake
         DESTINATION ${INSTALL_CONFIGDIR})
 
-export(TARGETS Base Correction Correlation QnCorrections NAMESPACE Qn:: FILE QnTargets.cmake)
+export(TARGETS Base Correction Correlation NAMESPACE Qn:: FILE QnTargets.cmake)
 export(PACKAGE Qn)

@@ -47,7 +47,6 @@ class CorrectionOnInputData : public CorrectionStep {
   /// Pure virtual function
   virtual void AttachedToFrameworkManager() = 0;
   /// Attaches the needed input information to the correction step
-  ///
   /// Pure virtual function
   /// \param list list where the inputs should be found
   /// \return kTRUE if everything went OK
@@ -60,27 +59,22 @@ class CorrectionOnInputData : public CorrectionStep {
   /// Does nothing for the time being
   virtual void AfterInputsAttachActions() {}
   /// Asks for support data structures creation
-  ///
   /// Pure virtual function
   virtual void CreateSupportDataStructures() = 0;
   /// Asks for support histograms creation
-  ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
   virtual Bool_t CreateSupportHistograms(TList *list) = 0;
   /// Processes the correction step
-  ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
   virtual Bool_t ProcessCorrections(const double *variableContainer) = 0;
   /// Processes the correction step data collection
-  ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
   virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
   /// Include the new corrected Qn vector into the passed list
-  ///
   /// Does nothing. Not applicable for corrections on input data
   /// \param list list where the corrected Qn vector should be added
   virtual void IncludeCorrectedQnVector(TList *list) { (void) list; }

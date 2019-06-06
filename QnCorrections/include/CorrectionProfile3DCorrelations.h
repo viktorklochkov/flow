@@ -45,37 +45,22 @@ class CorrectionQnVector;
 /// \date Jan 19, 2016
 class CorrectionProfile3DCorrelations : public CorrectionHistogramBase {
  public:
-  CorrectionProfile3DCorrelations();
+  CorrectionProfile3DCorrelations() = default;
   CorrectionProfile3DCorrelations(
-      const char *name,
-      const char *title,
-      const char *nameA,
-      const char *nameB,
-      const char *nameC,
-      EventClassVariablesSet &ecvs,
-      Option_t *option = "");
+      std::string name,
+      std::string title,
+      std::string nameA,
+      std::string nameB,
+      std::string nameC,
+      const EventClassVariablesSet &ecvs,
+      ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfile3DCorrelations();
-
   Bool_t CreateCorrelationComponentsProfileHistograms(TList *histogramList,
                                                       Int_t nNoOfHarmonics,
                                                       Int_t nHarmonicMultiplier = 1,
                                                       Int_t *harmonicMap = NULL);
   virtual Bool_t AttachHistograms(TList *histogramList);
-  /// wrong call for this class invoke base class behavior
-  virtual Bool_t AttachHistograms(TList *histogramList,
-                                  const Bool_t *bUsedChannel,
-                                  const Int_t *nChannelGroup) {
-    return CorrectionHistogramBase::AttachHistograms(histogramList,
-                                                        bUsedChannel,
-                                                        nChannelGroup);
-  }
-
   virtual Long64_t GetBin(const double *variableContainer);
-  /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel) {
-    return CorrectionHistogramBase::GetBin(variableContainer,
-                                              nChannel);
-  }
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetXXBinContent(const char *comb, Int_t harmonic, Long64_t bin);
   virtual Float_t GetXYBinContent(const char *comb, Int_t harmonic, Long64_t bin);
@@ -85,92 +70,18 @@ class CorrectionProfile3DCorrelations : public CorrectionHistogramBase {
   virtual Float_t GetXYBinError(const char *comb, Int_t harmonic, Long64_t bin);
   virtual Float_t GetYXBinError(const char *comb, Int_t harmonic, Long64_t bin);
   virtual Float_t GetYYBinError(const char *comb, Int_t harmonic, Long64_t bin);
-
-  void Fill(const CorrectionQnVector *QnA,
-            const CorrectionQnVector *QnB,
-            const CorrectionQnVector *QnC,
-            const double *variableContainer);
-
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXXBinContent(Long64_t bin) { return CorrectionHistogramBase::GetXXBinContent(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXYBinContent(Long64_t bin) { return CorrectionHistogramBase::GetXYBinContent(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYXBinContent(Long64_t bin) { return CorrectionHistogramBase::GetYXBinContent(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYYBinContent(Long64_t bin) { return CorrectionHistogramBase::GetYYBinContent(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXXBinError(Long64_t bin) { return CorrectionHistogramBase::GetXXBinError(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXYBinError(Long64_t bin) { return CorrectionHistogramBase::GetXYBinError(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYXBinError(Long64_t bin) { return CorrectionHistogramBase::GetYXBinError(bin); }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYYBinError(Long64_t bin) { return CorrectionHistogramBase::GetYYBinError(bin); }
-
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXXBinContent(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetXXBinContent(harmonic,
-                                                       bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXYBinContent(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetXYBinContent(harmonic,
-                                                       bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYXBinContent(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetYXBinContent(harmonic,
-                                                       bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYYBinContent(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetYYBinContent(harmonic,
-                                                       bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXXBinError(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetXXBinError(harmonic,
-                                                     bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetXYBinError(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetXYBinError(harmonic,
-                                                     bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYXBinError(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetYXBinError(harmonic,
-                                                     bin);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual Float_t GetYYBinError(Int_t harmonic, Long64_t bin) {
-    return CorrectionHistogramBase::GetYYBinError(harmonic,
-                                                     bin);
-  }
-
-  /// wrong call for this class invoke base class behavior
-  virtual void Fill(const double *variableContainer, Float_t weight) {
-    CorrectionHistogramBase::Fill(variableContainer,
-                                     weight);
-  }
-  /// wrong call for this class invoke base class behavior
-  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
-    CorrectionHistogramBase::Fill(variableContainer,
-                                     nChannel,
-                                     weight);
-  }
-
+  void Fill(const CorrectionQnVector *QnA, const CorrectionQnVector *QnB,
+            const CorrectionQnVector *QnC, const double *variableContainer);
  private:
-  THnF ***fXXValues;            //!<! XX component histogram for each requested harmonic
-  THnF ***fXYValues;            //!<! XY component histogram for each requested harmonic
-  THnF ***fYXValues;            //!<! YX component histogram for each requested harmonic
-  THnF ***fYYValues;            //!<! YY component histogram for each requested harmonic
-  THnI *fEntries;             //!<! Cumulates the number on each of the event classes
-  TString fNameA;               ///< the name of the A detector
-  TString fNameB;               ///< the name of the B detector
-  TString fNameC;               ///< the name of the C detector
-  Int_t fHarmonicMultiplier;    ///< the multiplier for the harmonic number
+  THnF ***fXXValues = nullptr;            //!<! XX component histogram for each requested harmonic
+  THnF ***fXYValues = nullptr;            //!<! XY component histogram for each requested harmonic
+  THnF ***fYXValues = nullptr;            //!<! YX component histogram for each requested harmonic
+  THnF ***fYYValues = nullptr;            //!<! YY component histogram for each requested harmonic
+  THnI *fEntries = nullptr;             //!<! Cumulates the number on each of the event classes
+  std::string fNameA;               ///< the name of the A detector
+  std::string fNameB;               ///< the name of the B detector
+  std::string fNameC;               ///< the name of the C detector
+  Int_t fHarmonicMultiplier = 1;    ///< the multiplier for the harmonic number
   /// \cond CLASSIMP
  ClassDef(CorrectionProfile3DCorrelations, 1);
   /// \endcond

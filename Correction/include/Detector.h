@@ -49,8 +49,8 @@ class DetectorBase {
   virtual ~DetectorBase() = default;
   virtual std::unique_ptr<DataContainerQVector> &GetQnDataContainer() = 0;
   virtual std::shared_ptr<SubEvent> CreateDetectorConfiguration(const std::string &name,
-                                                                EventClassVariablesSet *set) = 0;
-  virtual void AddSubEvents(CorrectionCalculator &calc, EventClassVariablesSet *set) = 0;
+                                                                const EventClassVariablesSet &set) = 0;
+  virtual void AddSubEvents(CorrectionCalculator &calc, const EventClassVariablesSet &set) = 0;
   virtual void SetConfig(std::function<void(SubEvent *config)> conf) = 0;
   virtual void AddCut(std::unique_ptr<VariableCutBase> cut) = 0;
   virtual void AddHistogram(std::unique_ptr<QAHistoBase> base) = 0;
@@ -71,7 +71,7 @@ class DetectorBase {
  */
 template<std::size_t N>
 class Detector : public DetectorBase {
-  static_assert(N <= Qn::QVector::kMaxNHarmonics, "Detector requested more harmonics than the maximum of 8.");
+  static_assert(N <= Qn::QVector::kmaxharmonics, "Detector requested more harmonics than the maximum of 8.");
  public:
   Detector(std::string name, const DetectorType type, std::vector<AxisF> axes, const Variable phi,
            const Variable weight, const std::vector<Variable> &vars, int const(&harmo)[N]) :
@@ -104,7 +104,7 @@ class Detector : public DetectorBase {
     }
   }
 
-  void AddSubEvents(CorrectionCalculator &calc, EventClassVariablesSet *set) override {
+  void AddSubEvents(CorrectionCalculator &calc, const EventClassVariablesSet &set) override {
     if (!configuration_) {
       throw (std::runtime_error("No Qn correction configuration found for " + name_));
     }
@@ -124,11 +124,11 @@ class Detector : public DetectorBase {
    * @param set The set of event variables used for the configuration.
    * @return The detector configuration.
    */
-  std::shared_ptr<SubEvent> CreateDetectorConfiguration(const std::string &name, EventClassVariablesSet *set) override {
+  std::shared_ptr<SubEvent> CreateDetectorConfiguration(const std::string &name, const EventClassVariablesSet &set) override {
     if (type_==DetectorType::CHANNEL) {
-      return std::make_shared<SubEventChannels>(name.data(), set, nchannels_, nharmonics_, harmonics_.get());
+      return std::make_shared<SubEventChannels>(name, &set, nchannels_, nharmonics_, harmonics_.get());
     } else if (type_==DetectorType::TRACK)
-      return std::make_shared<SubEventTracks>(name.data(), set, nharmonics_, harmonics_.get());
+      return std::make_shared<SubEventTracks>(name, &set, nharmonics_, harmonics_.get());
     return nullptr;
   }
 
@@ -266,7 +266,7 @@ class Detector : public DetectorBase {
   int nchannels_ = 0; /// number of channels in case of channel detector
   const int nharmonics_ = N; /// number of harmonics
   const std::string name_; /// name of  the detector
-  std::bitset<Qn::QVector::kMaxNHarmonics> harmonics_bits_; /// bitset of all activated harmonics
+  std::bitset<Qn::QVector::kmaxharmonics> harmonics_bits_; /// bitset of all activated harmonics
   std::unique_ptr<int[]> harmonics_; /// int array of all activated harmonics
   const DetectorType type_; /// type of the detector: channel or tracking detector
   const Variable phi_; /// variable holding the azimuthal angle

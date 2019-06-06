@@ -25,7 +25,6 @@
 #include "CorrectionsSet.h"
 #include "EventClassVariablesSet.h"
 #include "CorrectionQnVector.h"
-#include "CorrectionQnVectorBuild.h"
 #include "CorrectionDataVector.h"
 #include "CorrectionProfileComponents.h"
 
@@ -64,8 +63,8 @@ class SubEvent {
   friend class CorrectionStep;
   friend class SubEvent;
   SubEvent() = default;
-  SubEvent(const char *name,
-                     EventClassVariablesSet *eventClassesVariables,
+  SubEvent(std::string name,
+                     const EventClassVariablesSet *eventClassesVariables,
                      Int_t nharm,
                      Int_t *harmmap = nullptr) :
       fName(name),
@@ -100,7 +99,7 @@ class SubEvent {
   /// Get the event class variables set
   /// Makes it available for corrections steps
   /// \return pointer to the event class variables set
-  EventClassVariablesSet &GetEventClassVariablesSet() { return *fEventClassVariables; }
+  const EventClassVariablesSet &GetEventClassVariablesSet() { return *fEventClassVariables; }
   /// Get the current Qn vector
   /// Makes it available for subsequent correction steps.
   /// It could have already supported previous correction steps
@@ -244,13 +243,13 @@ class SubEvent {
   ///
   /// Pure virtual function
   /// \param list list where the correction steps should be incorporated
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const = 0;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const = 0;
   /// Include only one instance of each Qn vector correction step
   /// in execution order
   ///
   /// Pure virtual function
   /// \param list list where the correction steps should be incorporated
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const = 0;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const = 0;
   /// Provide information about assigned corrections
   ///
   /// Pure virtual function
@@ -285,11 +284,11 @@ class SubEvent {
   CorrectionQnVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
   CorrectionQnVector fCorrectedQnVector;  ///< Qn vector after subsequent correction steps
   CorrectionQnVector fCorrectedQ2nVector; ///< Q2n vector after subsequent correction steps
-  CorrectionQnVectorBuild fTempQnVector;  ///< temporary Qn vector for efficient Q vector building
-  CorrectionQnVectorBuild fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
+  CorrectionQnVector fTempQnVector;  ///< temporary Qn vector for efficient Q vector building
+  CorrectionQnVector fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
   CorrectionQnVector::Normalization fNormalizationMethod = CorrectionQnVector::Normalization::NONE; ///< the method for Q vector normalization
   CorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
-  EventClassVariablesSet *fEventClassVariables = nullptr; //-> /// set of variables that define event classes
+  const EventClassVariablesSet *fEventClassVariables = nullptr; //-> /// set of variables that define event classes
   std::unique_ptr<CorrectionProfileComponents> fQAQnAverageHistogram = nullptr; //!<! the plain average Qn components QA histogram
   static const char *szPlainQnVectorName; ///< the name of the Qn plain, not corrected Qn vectors
   static const char *szQAQnAverageHistogramName; ///< name and title for plain Qn vector average QA histograms

@@ -5,8 +5,7 @@
 #include "TList.h"
 
 #include "EventClassVariablesSet.h"
-#include "CorrectionQnVector.h"
-#include "CorrectionLog.h"
+#include "QVector.h"
 
 #include "CorrectionProfile3DCorrelations.h"
 
@@ -16,19 +15,6 @@ ClassImp(Qn::CorrectionProfile3DCorrelations);
 namespace Qn {
 ///< the number of Qn supported
 #define CORRELATIONSNOOFQNVECTORS 3
-
-/// Default constructor
-CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations() :
-    CorrectionHistogramBase(), fNameA(""), fNameB(""), fNameC("") {
-
-  fXXValues = NULL;
-  fXYValues = NULL;
-  fYXValues = NULL;
-  fYYValues = NULL;
-  fEntries = NULL;
-  fHarmonicMultiplier = 1;
-}
-
 /// Normal constructor
 ///
 /// Stores the set of variables that identify the
@@ -47,21 +33,14 @@ CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations() :
 ///          bin values
 ///
 ///     's'            the bin are the standard deviation of of the bin values
-CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations(const char *name,
-                                                                       const char *title,
-                                                                       const char *nameA,
-                                                                       const char *nameB,
-                                                                       const char *nameC,
-                                                                       EventClassVariablesSet &ecvs,
-                                                                       Option_t *option) :
-    CorrectionHistogramBase(name, title, ecvs, option), fNameA(nameA), fNameB(nameB), fNameC(nameC) {
-
-  fXXValues = NULL;
-  fXYValues = NULL;
-  fYXValues = NULL;
-  fYYValues = NULL;
-  fEntries = NULL;
-  fHarmonicMultiplier = 1;
+CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations(std::string name,
+                                                                 std::string title,
+                                                                 std::string nameA,
+                                                                 std::string nameB,
+                                                                 std::string nameC,
+                                                                 const EventClassVariablesSet &ecvs,
+                                                                 ErrorMode mode) :
+    CorrectionHistogramBase(name, title, ecvs, mode), fNameA(nameA), fNameB(nameB), fNameC(nameC) {
 }
 
 /// Default destructor
@@ -69,32 +48,27 @@ CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations(const char *nam
 /// Returns the only taken memory, the harmonic histograms storage,
 /// the own histograms and other members are not own at destruction time
 CorrectionProfile3DCorrelations::~CorrectionProfile3DCorrelations() {
-
-  if (fXXValues!=NULL) {
+  if (fXXValues) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fXXValues[ixComb]!=NULL)
-        delete[] fXXValues[ixComb];
+      delete[] fXXValues[ixComb];
     }
     delete[] fXXValues;
   }
-  if (fXYValues!=NULL) {
+  if (fXYValues) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fXYValues[ixComb]!=NULL)
-        delete[] fXYValues[ixComb];
+      delete[] fXYValues[ixComb];
     }
     delete[] fXYValues;
   }
-  if (fYXValues!=NULL) {
+  if (fYXValues) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fYXValues[ixComb]!=NULL)
-        delete[] fYXValues[ixComb];
+      delete[] fYXValues[ixComb];
     }
     delete[] fYXValues;
   }
-  if (fYYValues!=NULL) {
+  if (fYYValues) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fYYValues[ixComb]!=NULL)
-        delete[] fYYValues[ixComb];
+      delete[] fYYValues[ixComb];
     }
     delete[] fYYValues;
   }
@@ -129,30 +103,26 @@ CorrectionProfile3DCorrelations::~CorrectionProfile3DCorrelations() {
 /// \param harmonicMap ordered array with the external number of the harmonics
 /// \return true if properly created
 Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistograms(TList *histogramList,
-                                                                                        Int_t nNoOfHarmonics,
-                                                                                        Int_t nHarmonicMultiplier,
-                                                                                        Int_t *harmonicMap) {
-
+                                                                                     Int_t nNoOfHarmonics,
+                                                                                     Int_t nHarmonicMultiplier,
+                                                                                     Int_t *harmonicMap) {
   /* store the potential harmonic multiplier */
   fHarmonicMultiplier = nHarmonicMultiplier;
   /* for now on, everything is handled as if the multiplier were m=1 so, we only consider n */
 
   /* check whether within the supported harmonic range */
   Int_t nHigherHarmonic = nNoOfHarmonics;
-  if (harmonicMap!=NULL) {
+  if (harmonicMap!=nullptr) {
     nHigherHarmonic = harmonicMap[nNoOfHarmonics - 1];
   }
   if (nMaxHarmonicNumberSupported < nHigherHarmonic) {
-    QnCorrectionsFatal(Form(
-        "You requested support for harmonic %d but the highest harmonic supported by the framework is currently %d",
-        nHigherHarmonic,
-        nMaxHarmonicNumberSupported));
+    return false;
   }
 
   /* let's support the external harmonic number map */
   /* external harmonic number will always start from one */
   Int_t nNumberOfSlots = 1;
-  if (harmonicMap!=NULL) {
+  if (harmonicMap!=nullptr) {
     /* the highest harmonic number within the map if any */
     nNumberOfSlots += harmonicMap[nNoOfHarmonics - 1];
   } else {
@@ -171,39 +141,35 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
     fYYValues[ixComb] = new THnF *[nNumberOfSlots];
     /* and initiallize them */
     for (Int_t i = 0; i < nNumberOfSlots; i++) {
-      fXXValues[ixComb][i] = NULL;
-      fXYValues[ixComb][i] = NULL;
-      fYXValues[ixComb][i] = NULL;
-      fYYValues[ixComb][i] = NULL;
+      fXXValues[ixComb][i] = nullptr;
+      fXYValues[ixComb][i] = nullptr;
+      fYXValues[ixComb][i] = nullptr;
+      fYYValues[ixComb][i] = nullptr;
     }
   }
-
   /* now prepare the construction of the histograms */
   Int_t nVariables = fEventClassVariables.size();
-
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
   TString sVariableLabels = "";
-
   /* get the multidimensional structure */
   fEventClassVariables.GetMultidimensionalConfiguration(nbins, minvals, maxvals);
-
   /* create the values multidimensional histograms for each Qn vector correlation combination and harmonic */
-  const char *combNames[CORRELATIONSNOOFQNVECTORS] = {fNameA.Data(), fNameB.Data(), fNameC.Data()};
+  const char *combNames[CORRELATIONSNOOFQNVECTORS] = {fNameA.data(), fNameB.data(), fNameC.data()};
   for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
     Int_t currentHarmonic = 0;
     for (Int_t i = 0; i < nNoOfHarmonics; i++) {
-      if (harmonicMap!=NULL) {
+      if (harmonicMap!=nullptr) {
         currentHarmonic = harmonicMap[i];
       } else {
         currentHarmonic++;
       }
       /* let's build the histograms names and titles */
       TString
-          BaseName = Form("%s %sx%s", GetName(), combNames[ixComb], combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS]);
-      TString BaseTitle =
-          Form("%s %sx%s", GetTitle(), combNames[ixComb], combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS]);
+          BaseName = GetName() + " " + combNames[ixComb] + "x" + combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS];
+      TString
+          BaseTitle = GetTitle() + " " + combNames[ixComb] + "x" + combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS];
       TString histoXXName = BaseName;
       histoXXName += szXXCorrelationComponentSuffix;
       TString histoXYName = BaseName;
@@ -220,7 +186,6 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
       histoYXTitle += szYXCorrelationComponentSuffix;
       TString histoYYTitle = BaseTitle;
       histoYYTitle += szYYCorrelationComponentSuffix;
-
       fXXValues[ixComb][currentHarmonic] =
           new THnF(Form("%s_h%d", (const char *) histoXXName, currentHarmonic*fHarmonicMultiplier),
                    Form("%s h%d", (const char *) histoXXTitle, currentHarmonic),
@@ -237,7 +202,6 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
           new THnF(Form("%s_h%d", (const char *) histoYYName, currentHarmonic*fHarmonicMultiplier),
                    Form("%s h%d", (const char *) histoYYTitle, currentHarmonic),
                    nVariables, nbins, minvals, maxvals);
-
       /* now let's set the proper binning and label on each axis */
       for (Int_t var = 0; var < nVariables; var++) {
         fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
@@ -265,13 +229,11 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
         fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
         fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
       }
-
       /* ask for square sum accumulation */
       fXXValues[ixComb][currentHarmonic]->Sumw2();
       fXYValues[ixComb][currentHarmonic]->Sumw2();
       fYXValues[ixComb][currentHarmonic]->Sumw2();
       fYYValues[ixComb][currentHarmonic]->Sumw2();
-
       /* and finally add the histograms to the list */
       histogramList->Add(fXXValues[ixComb][currentHarmonic]);
       histogramList->Add(fXYValues[ixComb][currentHarmonic]);
@@ -294,24 +256,19 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
   entriesHistoTitle += szYXCorrelationComponentSuffix;
   entriesHistoTitle += szYYCorrelationComponentSuffix;
   entriesHistoTitle += szEntriesHistoSuffix;
-
   /* create the entries multidimensional histogram */
   fEntries =
       new THnI((const char *) entriesHistoName, (const char *) entriesHistoTitle, nVariables, nbins, minvals, maxvals);
-
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
     fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
     fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
-
   /* and finally add the entries histogram to the list */
   histogramList->Add(fEntries);
-
   delete[] minvals;
   delete[] maxvals;
   delete[] nbins;
-
   return kTRUE;
 }
 
@@ -332,37 +289,35 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
 /// \return true if properly attached else false
 Bool_t CorrectionProfile3DCorrelations::AttachHistograms(TList *histogramList) {
   /* initialize. Remember we don't own the histograms */
-  QnCorrectionsInfo("");
-  fEntries = NULL;
-  if (fXXValues!=NULL) {
+  fEntries = nullptr;
+  if (fXXValues!=nullptr) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fXXValues[ixComb]!=NULL)
+      if (fXXValues[ixComb]!=nullptr)
         delete[] fXXValues[ixComb];
     }
     delete[] fXXValues;
   }
-  if (fXYValues!=NULL) {
+  if (fXYValues!=nullptr) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fXYValues[ixComb]!=NULL)
+      if (fXYValues[ixComb]!=nullptr)
         delete[] fXYValues[ixComb];
     }
     delete[] fXYValues;
   }
-  if (fYXValues!=NULL) {
+  if (fYXValues!=nullptr) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fYXValues[ixComb]!=NULL)
+      if (fYXValues[ixComb]!=nullptr)
         delete[] fYXValues[ixComb];
     }
     delete[] fYXValues;
   }
-  if (fYYValues!=NULL) {
+  if (fYYValues!=nullptr) {
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
-      if (fYYValues[ixComb]!=NULL)
+      if (fYYValues[ixComb]!=nullptr)
         delete[] fYYValues[ixComb];
     }
     delete[] fYYValues;
   }
-
   /* let's build the entries histogram name */
   TString entriesHistoName = GetName();
   entriesHistoName = entriesHistoName + fNameA + fNameB + fNameC;
@@ -371,10 +326,9 @@ Bool_t CorrectionProfile3DCorrelations::AttachHistograms(TList *histogramList) {
   entriesHistoName += szYXCorrelationComponentSuffix;
   entriesHistoName += szYYCorrelationComponentSuffix;
   entriesHistoName += szEntriesHistoSuffix;
-
   UInt_t harmonicFilledMask = 0x0000;
   fEntries = (THnI *) histogramList->FindObject((const char *) entriesHistoName);
-  if (fEntries!=NULL && fEntries->GetEntries()!=0) {
+  if (fEntries && fEntries->GetEntries()!=0) {
     /* allocate enough space for the supported harmonic numbers */
     fXXValues = new THnF **[CORRELATIONSNOOFQNVECTORS];
     fXYValues = new THnF **[CORRELATIONSNOOFQNVECTORS];
@@ -387,14 +341,14 @@ Bool_t CorrectionProfile3DCorrelations::AttachHistograms(TList *histogramList) {
       fYYValues[ixComb] = new THnF *[nMaxHarmonicNumberSupported + 1];
     }
     /* search the multidimensional histograms for each harmonic and Qn vecto correlation combination */
-    const char *combNames[CORRELATIONSNOOFQNVECTORS] = {fNameA.Data(), fNameB.Data(), fNameC.Data()};
+    const char *combNames[CORRELATIONSNOOFQNVECTORS] = {fNameA.data(), fNameB.data(), fNameC.data()};
     for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
       Int_t currentHarmonic = 0;
       /* let's build the histograms names */
       TString
-          BaseName = Form("%s %sx%s", GetName(), combNames[ixComb], combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS]);
-      TString BaseTitle =
-          Form("%s %sx%s", GetTitle(), combNames[ixComb], combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS]);
+      BaseName = GetName() + " " + combNames[ixComb] + "x" + combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS];
+      TString
+          BaseTitle = GetTitle() + " " + combNames[ixComb] + "x" + combNames[(ixComb + 1)%CORRELATIONSNOOFQNVECTORS];
       TString histoXXName = BaseName;
       histoXXName += szXXCorrelationComponentSuffix;
       TString histoXYName = BaseName;
@@ -405,7 +359,6 @@ Bool_t CorrectionProfile3DCorrelations::AttachHistograms(TList *histogramList) {
       histoYYName += szYYCorrelationComponentSuffix;
       for (Int_t i = 0; i < nMaxHarmonicNumberSupported; i++) {
         currentHarmonic++;
-
         fXXValues[ixComb][currentHarmonic] = (THnF *) histogramList->FindObject(Form("%s_h%d",
                                                                                      (const char *) histoXXName,
                                                                                      currentHarmonic
@@ -424,21 +377,17 @@ Bool_t CorrectionProfile3DCorrelations::AttachHistograms(TList *histogramList) {
                                                                                          *fHarmonicMultiplier));
 
         /* update the correcto condition */
-        if ((fXXValues[ixComb][currentHarmonic]!=NULL) && (fXYValues[ixComb][currentHarmonic]!=NULL)
-            && (fYXValues[ixComb][currentHarmonic]!=NULL) && (fYYValues[ixComb][currentHarmonic]!=NULL))
+        if ((fXXValues[ixComb][currentHarmonic]!=nullptr) && (fXYValues[ixComb][currentHarmonic]!=nullptr)
+            && (fYXValues[ixComb][currentHarmonic]!=nullptr) && (fYYValues[ixComb][currentHarmonic]!=nullptr))
           harmonicFilledMask |= harmonicNumberMask[currentHarmonic];
       }
     }
   } else {
-    QnCorrectionsInfo(Form("Calibration histogram %s NOT FOUND", (const char *) entriesHistoName));
     return kFALSE;
   }
 
   /* check that we actually got something */
-  if (harmonicFilledMask!=0x0000)
-    return kTRUE;
-  else
-    return kFALSE;
+  return harmonicFilledMask!=0x0000;
 }
 
 /// Get the bin number for the current variable content
@@ -461,13 +410,9 @@ Long64_t CorrectionProfile3DCorrelations::GetBin(const double *variableContainer
 /// \param bin the bin to check its content validity
 /// \return kTRUE if the content is valid kFALSE otherwise
 Bool_t CorrectionProfile3DCorrelations::BinContentValidated(Long64_t bin) {
-  Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+  auto nEntries = Int_t(fEntries->GetBinContent(bin));
 
-  if (nEntries < fMinNoOfEntriesToValidate) {
-    return kFALSE;
-  } else {
-    return kTRUE;
-  }
+  return nEntries >= fMinNoOfEntriesToValidate;
 }
 
 /// Get the XX correlation component bin content for the passed bin number
@@ -490,22 +435,16 @@ Float_t CorrectionProfile3DCorrelations::GetXXBinContent(const char *comb, Int_t
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fXXValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (fXXValues[ixComb][harmonic]==nullptr) {
     return 0.0;
   }
 
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     return fXXValues[ixComb][harmonic]->GetBinContent(bin)/Float_t(nEntries);
   }
 }
@@ -530,22 +469,15 @@ Float_t CorrectionProfile3DCorrelations::GetXYBinContent(const char *comb, Int_t
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fXYValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (!fXYValues[ixComb][harmonic]) {
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     return fXYValues[ixComb][harmonic]->GetBinContent(bin)/Float_t(nEntries);
   }
 }
@@ -570,22 +502,15 @@ Float_t CorrectionProfile3DCorrelations::GetYXBinContent(const char *comb, Int_t
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fYXValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (!fYXValues[ixComb][harmonic]) {
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     return fYXValues[ixComb][harmonic]->GetBinContent(bin)/Float_t(nEntries);
   }
 }
@@ -610,22 +535,15 @@ Float_t CorrectionProfile3DCorrelations::GetYYBinContent(const char *comb, Int_t
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fYYValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s  in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (fYYValues[ixComb][harmonic]==nullptr) {
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     return fYYValues[ixComb][harmonic]->GetBinContent(bin)/Float_t(nEntries);
   }
 }
@@ -650,36 +568,23 @@ Float_t CorrectionProfile3DCorrelations::GetXXBinError(const char *comb, Int_t h
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fXXValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (fXXValues[ixComb][harmonic]==nullptr) {
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     Float_t values = fXXValues[ixComb][harmonic]->GetBinContent(bin);
     Float_t error2 = fXXValues[ixComb][harmonic]->GetBinError2(bin);
 
     Double_t average = values/nEntries;
     Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
     switch (fErrorMode) {
-      case kERRORMEAN:
-        /* standard error on the mean of the bin values */
-        return serror/TMath::Sqrt(nEntries);
-        break;
-      case kERRORSPREAD:
-        /* standard deviation of the bin values */
-        return serror;
-        break;
+      case ErrorMode::MEAN:return serror/TMath::Sqrt(nEntries);
+      case ErrorMode::SPREAD:return serror;
       default:return 0.0;
     }
   }
@@ -705,18 +610,11 @@ Float_t CorrectionProfile3DCorrelations::GetXYBinError(const char *comb, Int_t h
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fXYValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (fXYValues[ixComb][harmonic]==nullptr) {
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
@@ -727,14 +625,8 @@ Float_t CorrectionProfile3DCorrelations::GetXYBinError(const char *comb, Int_t h
     Double_t average = values/nEntries;
     Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
     switch (fErrorMode) {
-      case kERRORMEAN:
-        /* standard error on the mean of the bin values */
-        return serror/TMath::Sqrt(nEntries);
-        break;
-      case kERRORSPREAD:
-        /* standard deviation of the bin values */
-        return serror;
-        break;
+      case ErrorMode::MEAN:return serror/TMath::Sqrt(nEntries);
+      case ErrorMode::SPREAD:return serror;
       default:return 0.0;
     }
   }
@@ -760,36 +652,25 @@ Float_t CorrectionProfile3DCorrelations::GetYXBinError(const char *comb, Int_t h
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
+    return 0.0;
 
   /* sanity check */
-  if (fYXValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (fYXValues[ixComb][harmonic]==nullptr) {
     return 0.0;
   }
 
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     Float_t values = fYXValues[ixComb][harmonic]->GetBinContent(bin);
     Float_t error2 = fYXValues[ixComb][harmonic]->GetBinError2(bin);
 
     Double_t average = values/nEntries;
     Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
     switch (fErrorMode) {
-      case kERRORMEAN:
-        /* standard error on the mean of the bin values */
-        return serror/TMath::Sqrt(nEntries);
-        break;
-      case kERRORSPREAD:
-        /* standard deviation of the bin values */
-        return serror;
-        break;
+      case ErrorMode::MEAN:return serror/TMath::Sqrt(nEntries);
+      case ErrorMode::SPREAD:return serror;
       default:return 0.0;
     }
   }
@@ -815,36 +696,22 @@ Float_t CorrectionProfile3DCorrelations::GetYYBinError(const char *comb, Int_t h
   else if (szComb.EqualTo("AC"))
     ixComb = 2;
   else
-    QnCorrectionsFatal(Form("Accessing non existing Qn vector correlation combination %s. FIX IT, PLEASE.", comb));
-
+    return 0.0;
   /* sanity check */
-  if (fYYValues[ixComb][harmonic]==NULL) {
-    QnCorrectionsFatal(Form(
-        "Accessing non allocated harmonic %d of Qn vector combination %s in correlation component histogram %s. FIX IT, PLEASE.",
-        harmonic,
-        comb,
-        GetName()));
+  if (fYYValues[ixComb][harmonic]==nullptr) {
     return 0.0;
   }
-
   if (!BinContentValidated(bin)) {
     return 0.0;
   } else {
-    Int_t nEntries = Int_t(fEntries->GetBinContent(bin));
+    auto nEntries = Int_t(fEntries->GetBinContent(bin));
     Float_t values = fYYValues[ixComb][harmonic]->GetBinContent(bin);
     Float_t error2 = fYYValues[ixComb][harmonic]->GetBinError2(bin);
-
     Double_t average = values/nEntries;
     Double_t serror = TMath::Sqrt(TMath::Abs(error2/nEntries - average*average));
     switch (fErrorMode) {
-      case kERRORMEAN:
-        /* standard error on the mean of the bin values */
-        return serror/TMath::Sqrt(nEntries);
-        break;
-      case kERRORSPREAD:
-        /* standard deviation of the bin values */
-        return serror;
-        break;
+      case ErrorMode::MEAN:return serror/TMath::Sqrt(nEntries);
+      case ErrorMode::SPREAD:return serror;
       default:return 0.0;
     }
   }
@@ -865,21 +732,17 @@ Float_t CorrectionProfile3DCorrelations::GetYYBinError(const char *comb, Int_t h
 /// \param QnC C Qn vector
 /// \param variableContainer the current variables content addressed by var Id
 void CorrectionProfile3DCorrelations::Fill(const CorrectionQnVector *QnA,
-                                              const CorrectionQnVector *QnB,
-                                              const CorrectionQnVector *QnC,
-                                              const double *variableContainer) {
-
+                                           const CorrectionQnVector *QnB,
+                                           const CorrectionQnVector *QnC,
+                                           const double *variableContainer) {
   /* first the sanity checks */
   if (!((QnA->IsGoodQuality()) && (QnB->IsGoodQuality()) && (QnC->IsGoodQuality()))) return;
   if ((QnA->GetHarmonicMultiplier()!=QnB->GetHarmonicMultiplier())
       || (QnA->GetHarmonicMultiplier()!=QnC->GetHarmonicMultiplier())) {
-    QnCorrectionsFatal("Your are accessing here with Qn vectors with different harmonic multipliers. FIX IT, PLEASE.");
     return;
   }
-
   /* let's get the axis information */
   FillBinAxesValues(variableContainer);
-
   /* consider all combinations */
   const CorrectionQnVector *combQn[CORRELATIONSNOOFQNVECTORS] = {QnA, QnB, QnC};
   for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
@@ -887,18 +750,14 @@ void CorrectionProfile3DCorrelations::Fill(const CorrectionQnVector *QnA,
     Int_t nCurrentHarmonic = QnA->GetFirstHarmonic();
     while (nCurrentHarmonic!=-1) {
       /* first the sanity checks */
-      if (fXXValues[ixComb][nCurrentHarmonic]==NULL) {
-        QnCorrectionsFatal(Form("Non allocated harmonic %d in 3D correlation component histogram %s. FIX IT, PLEASE.",
-                                nCurrentHarmonic,
-                                GetName()));
+      if (fXXValues[ixComb][nCurrentHarmonic]==nullptr) {
+        return;
       }
-
       /* keep total entries in fValues updated */
       Double_t nXXEntries = fXXValues[ixComb][nCurrentHarmonic]->GetEntries();
       Double_t nXYEntries = fXYValues[ixComb][nCurrentHarmonic]->GetEntries();
       Double_t nYXEntries = fYXValues[ixComb][nCurrentHarmonic]->GetEntries();
       Double_t nYYEntries = fYYValues[ixComb][nCurrentHarmonic]->GetEntries();
-
       fXXValues[ixComb][nCurrentHarmonic]->Fill(fBinAxesValues,
                                                 combQn[ixComb]->Qx(nCurrentHarmonic)*combQn[(ixComb + 1)
                                                     %CORRELATIONSNOOFQNVECTORS]->Qx(nCurrentHarmonic));
@@ -911,16 +770,13 @@ void CorrectionProfile3DCorrelations::Fill(const CorrectionQnVector *QnA,
       fYYValues[ixComb][nCurrentHarmonic]->Fill(fBinAxesValues,
                                                 combQn[ixComb]->Qy(nCurrentHarmonic)*combQn[(ixComb + 1)
                                                     %CORRELATIONSNOOFQNVECTORS]->Qy(nCurrentHarmonic));
-
       fXXValues[ixComb][nCurrentHarmonic]->SetEntries(nXXEntries + 1);
       fXYValues[ixComb][nCurrentHarmonic]->SetEntries(nXYEntries + 1);
       fYXValues[ixComb][nCurrentHarmonic]->SetEntries(nYXEntries + 1);
       fYYValues[ixComb][nCurrentHarmonic]->SetEntries(nYYEntries + 1);
-
       nCurrentHarmonic = QnA->GetNextHarmonic(nCurrentHarmonic);
     }
   }
-
   /* update the profile entries */
   fEntries->Fill(fBinAxesValues, 1.0);
 }

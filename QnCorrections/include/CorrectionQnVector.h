@@ -109,6 +109,14 @@ class CorrectionQnVector : public TNamed {
   Float_t GetSumOfWeights() const { return fSumW; }
   Double_t EventPlane(Int_t harmonic) const;
   virtual void Print(Option_t *) const;
+  void Add(Double_t phi, Double_t weight = 1.0);
+  /// Check the quality of the constructed Qn vector
+  /// Current criteria is number of contributors should be at least one.
+  /// If so happen, sets the good quality flag.
+  void CheckQuality() { fGoodQuality = 0 < fN; }
+  void Normalize(Normalization method);
+  void NormalizeQoverM();
+  void NormalizeQoverSquareRootOfM();
   /// Assignment operator
   CorrectionQnVector &operator=(const CorrectionQnVector &Qn) {
     memcpy(fQnX, Qn.fQnX, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
@@ -186,5 +194,74 @@ inline Float_t CorrectionQnVector::QyNorm(Int_t harmonic) const {
     return Qy(harmonic)/Length(harmonic);
   }
 }
+
+/// Adds a contribution to the build Q vector
+/// A check for weight significant value is made. Not passing it ignores the contribution.
+/// The process of incorporating contributions takes into account the harmonic multiplier
+/// \param phi azimuthal angle contribution
+/// \param weight the weight of the contribution
+inline void CorrectionQnVector::Add(Double_t phi, Double_t weight) {
+  if (weight < fMinimumSignificantValue) return;
+  for (Int_t h = 1; h < fHighestHarmonic + 1; h++) {
+    if ((fHarmonicMask & harmonicNumberMask[h])==harmonicNumberMask[h]) {
+      fQnX[h] += (weight*std::cos(h*fHarmonicMultiplier*phi));
+      fQnY[h] += (weight*std::sin(h*fHarmonicMultiplier*phi));
+    }
+  }
+  fSumW += weight;
+  fN += 1;
 }
+
+/// Calibrates the Q vector according to the method passed
+/// \param method the method of calibration
+inline void CorrectionQnVector::Normalize(Normalization method) {
+  switch (method) {
+    case Normalization::NONE:break;
+    case Normalization::SQRT_M:NormalizeQoverSquareRootOfM();
+      break;
+    case Normalization::M:NormalizeQoverM();
+      break;
+    case Normalization::MAGNITUDE:CorrectionQnVector::Normalize();
+      break;
+  }
+}
+
+/// Normalizes the build Q vector for the whole harmonics set
+///
+/// Normalizes the build Q vector as \f$ Qn = \frac{Qn}{M} \f$.
+/// A check for significant value is made. Not passing it
+/// does set the Q vector quality as bad
+inline void CorrectionQnVector::NormalizeQoverM() {
+  if (fSumW < fMinimumSignificantValue) {
+    SetGood(kFALSE);
+  } else {
+    for (Int_t h = 1; h < fHighestHarmonic + 1; h++) {
+      if ((fHarmonicMask & harmonicNumberMask[h])==harmonicNumberMask[h]) {
+        fQnX[h] = (fQnX[h]/fSumW);
+        fQnY[h] = (fQnY[h]/fSumW);
+      }
+    }
+  }
+}
+
+/// Normalizes the build Q vector for the whole harmonics set
+///
+/// Normalizes the build Q vector as \f$ Qn = \frac{Qn}{\sqrt{M}} \f$.
+/// A check for significant value is made. Not passing it
+/// does set the Q vector quality as bad
+inline void CorrectionQnVector::NormalizeQoverSquareRootOfM() {
+  if (fSumW < fMinimumSignificantValue) {
+    SetGood(kFALSE);
+  } else {
+    for (Int_t h = 1; h < fHighestHarmonic + 1; h++) {
+      if ((fHarmonicMask & harmonicNumberMask[h])==harmonicNumberMask[h]) {
+        fQnX[h] = fQnX[h]/TMath::Sqrt(fSumW);
+        fQnY[h] = fQnY[h]/TMath::Sqrt(fSumW);
+      }
+    }
+  }
+}
+
+}
+
 #endif /* QNCORRECTIONS_QNVECTORS_H */

@@ -53,38 +53,28 @@ namespace Qn {
 /// \date Feb 11, 2016
 class CorrectionProfileChannelized : public CorrectionHistogramBase {
  public:
-  CorrectionProfileChannelized();
-  CorrectionProfileChannelized(const char *name,
-                                  const char *title,
-                                  EventClassVariablesSet &ecvs,
-                                  Int_t nNoOfChannels,
-                                  Option_t *option = "");
+  CorrectionProfileChannelized() = default;
+  CorrectionProfileChannelized(std::string name,
+      std::string title,
+      const EventClassVariablesSet &ecvs,
+      Int_t nNoOfChannels,
+      ErrorMode mode = ErrorMode::MEAN);
+
   virtual ~CorrectionProfileChannelized();
-
   Bool_t CreateProfileHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
-
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel);
-  /// wrong call for this class invoke base class behavior
-  virtual Long64_t GetBin(const double *variableContainer) { return CorrectionHistogramBase::GetBin(variableContainer); }
-  virtual Bool_t BinContentValidated(Long64_t bin);
-  virtual Float_t GetBinContent(Long64_t bin);
-  virtual Float_t GetBinError(Long64_t bin);
-
-  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
-  /// wrong call for this class invoke base class behavior
-  virtual void Fill(const double *variableContainer, Float_t weight) {
-    CorrectionHistogramBase::Fill(variableContainer,
-                                     weight);
-  }
+  Long64_t GetBin(const double *variableContainer, Int_t nChannel);
+  Bool_t BinContentValidated(Long64_t bin);
+  Float_t GetBinContent(Long64_t bin);
+  Float_t GetBinError(Long64_t bin);
+  void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
  private:
-  THnF *fValues;              //!<! Cumulates values for each of the event classes
-  THnI *fEntries;             //!<! Cumulates the number on each of the event classes
-  Bool_t *fUsedChannel;       //!<! array, which of the detector channels is used for this configuration
-  Int_t *fChannelGroup;       //!<! array, the group to which the channel pertains
-  Int_t fNoOfChannels;        //!<! The number of channels associated to the whole detector
-  Int_t fActualNoOfChannels;  //!<! The actual number of channels handled by the histogram
-  Int_t *fChannelMap;         //!<! array, the map from histo to detector channel number
-
+  THnF *fValues = nullptr;              //!<! Cumulates values for each of the event classes
+  THnI *fEntries = nullptr;             //!<! Cumulates the number on each of the event classes
+  Bool_t *fUsedChannel = nullptr;       //!<! array, which of the detector channels is used for this configuration
+  Int_t *fChannelGroup = nullptr;       //!<! array, the group to which the channel pertains
+  Int_t fNoOfChannels = 0;        //!<! The number of channels associated to the whole detector
+  Int_t fActualNoOfChannels = 0;  //!<! The actual number of channels handled by the histogram
+  Int_t *fChannelMap = nullptr;         //!<! array, the map from histo to detector channel number
 
   /// \cond CLASSIMP
  ClassDef(CorrectionProfileChannelized, 1);

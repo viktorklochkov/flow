@@ -64,8 +64,7 @@ class CorrectionDataVector {
   /// Gets the equalized weight for the data vector
   /// \return defaults to weights
   constexpr Float_t EqualizedWeight() const { return fEqualizedWeight; }
-
- protected:
+ private:
   Int_t   fId;                  //!<! the id associated with the data vector
   Float_t fPhi;                 //!<! the azimuthal angle of the data vector
   Float_t fWeight;              //!<! raw weight assigned to the data vector

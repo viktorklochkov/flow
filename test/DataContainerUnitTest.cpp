@@ -14,29 +14,29 @@
 #include "Sampler.h"
 
 TEST(DataContainerTest, Copy) {
-  Qn::DataContainer<Qn::QVector> container;
+  Qn::DataContainerQVector container;
   container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
-  Qn::DataContainer<Qn::QVector> copy(container);
+  Qn::DataContainerQVector copy(container);
   EXPECT_EQ(copy.size(), container.size());
 }
 
 TEST(DataContainerTest, TClones) {
-  Qn::DataContainerQnDataVector a;
+  Qn::DataContainerQVector a;
 }
 
 TEST(DataContainerTest, AddAxes) {
-  Qn::DataContainer<Qn::QVector> container;
+  Qn::DataContainerQVector container;
   container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   EXPECT_EQ(100, container.size());
 }
 
 TEST(DataContainerTest, Filter) {
-  Qn::DataContainer<float> container;
+  Qn::DataContainer<float,float> container;
   container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : container) {
     bin = 1;
   }
-  const auto lambda = [](const std::vector<Qn::Axis> &axes, const std::vector<std::size_t> binindex) {
+  const auto lambda = [](const std::vector<Qn::AxisF> &axes, const std::vector<std::size_t> binindex) {
     return axes[0].GetLowerBinEdge(binindex[0]) >= 4.9999 && axes[1].GetLowerBinEdge(binindex[1]) < 2.;
   };
   auto filtered = container.Filter(lambda);
@@ -53,7 +53,7 @@ TEST(DataContainerTest, Filter) {
 }
 
 TEST(DataContainerTest, Projection) {
-  Qn::DataContainer<float> container;
+  Qn::DataContainer<float, float> container;
   container.AddAxes({{"a1", 30, 0, 10}, {"a2", 20, 0, 10}, {"a3", 10, 0, 10}});
   for (auto &bin : container) {
     bin = 1;
@@ -113,12 +113,12 @@ TEST(DataContainerTest, SqrtStats) {
 }
 
 TEST(DataContainerTest, Division) {
-  Qn::DataContainer<float> container;
+  Qn::DataContainer<float, float> container;
   container.AddAxes({{"a1", 30, 0, 10}, {"a2", 40, 0, 20}, {"a3", 40, 0, 20}});
   for (auto &bin : container) {
     bin = 4;
   }
-  Qn::DataContainer<float> b;
+  Qn::DataContainer<float, float> b;
   b.AddAxes({{"a1", 30, 0, 10}, {"a2", 40, 0, 20}});
   for (auto &bin : b) {
     bin = 2;
@@ -174,7 +174,7 @@ TEST(DataContainerTest, Division) {
 //}
 //
 TEST(DataContainerTest, Rebin) {
-  Qn::DataContainer<float> container;
+  Qn::DataContainer<float, float> container;
   container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : container) {
     bin = 1;
@@ -189,7 +189,7 @@ TEST(DataContainerTest, Rebin) {
 }
 //
 TEST(DataContainerTest, Select) {
-  Qn::DataContainer<float> container;
+  Qn::DataContainer<float, float> container;
   container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : container) {
     bin = 1;
@@ -204,12 +204,12 @@ TEST(DataContainerTest, Select) {
 }
 //
 TEST(DataContainerTest, Addition) {
-  Qn::DataContainer<float> container_a;
+  Qn::DataContainer<float, float> container_a;
   container_a.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : container_a) {
     bin = 1;
   }
-  Qn::DataContainer<float> container_b;
+  Qn::DataContainer<float, float> container_b;
   container_b.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
   for (auto &bin : container_b) {
     bin = 1;
@@ -224,7 +224,7 @@ TEST(DataContainerTest, Addition) {
 }
 
 TEST(DataContainerTest, Bits) {
-  Qn::DataContainer<Qn::Stats> dcstat;
+  Qn::DataContainerStats dcstat;
   dcstat.SetSetting(Qn::Stats::Settings::CORRELATEDERRORS);
   std::default_random_engine generator;
   std::normal_distribution<double> gauss(0, 1);
@@ -273,7 +273,7 @@ TEST(DataContainerTest, GetNameTest) {
 }
 
 TEST(DataContainerTest, LinearIndexing) {
-  Qn::DataContainer<float> a;
+  Qn::DataContainer<float, float> a;
   a.AddAxis({"A",2,0,2});
   a.AddAxis({"B",2,0,2});
   a.At(0) = 99.;

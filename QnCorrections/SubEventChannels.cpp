@@ -1,3 +1,5 @@
+#include <utility>
+
 /**************************************************************************************************
  *                                                                                                *
  * Package:       FlowVectorCorrections                                                           *
@@ -34,7 +36,6 @@
 
 #include "CorrectionProfileComponents.h"
 #include "SubEventChannels.h"
-#include "CorrectionLog.h"
 #include "ROOT/RMakeUnique.hxx"
 
 /// \cond CLASSIMP
@@ -51,12 +52,12 @@ const char *SubEventChannels::szQAMultiplicityHistoName = "Multiplicity";
 /// \param nNoOfChannels the number of channels of the associated detector
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
-SubEventChannels::SubEventChannels(const char *name,
-                                   EventClassVariablesSet *eventClassesVariables,
+SubEventChannels::SubEventChannels(std::string name,
+                                   const EventClassVariablesSet *eventClassesVariables,
                                    Int_t nNoOfChannels,
                                    Int_t nNoOfHarmonics,
                                    Int_t *harmonicMap) :
-    SubEvent(name, eventClassesVariables, nNoOfHarmonics, harmonicMap),
+    SubEvent(std::move(name), eventClassesVariables, nNoOfHarmonics, harmonicMap),
     fRawQnVector(szRawQnVectorName, nNoOfHarmonics, harmonicMap),
     fInputDataCorrections() {
   fNoOfChannels = nNoOfChannels;
@@ -465,7 +466,7 @@ inline void SubEventChannels::IncludeQnVectors(TList *list) {
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void SubEventChannels::FillOverallInputCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const {
+void SubEventChannels::FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const {
   fInputDataCorrections.FillOverallCorrectionsList(set);
 }
 
@@ -474,7 +475,7 @@ void SubEventChannels::FillOverallInputCorrectionStepList(std::set<CorrectionSte
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void SubEventChannels::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const {
+void SubEventChannels::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const {
   fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 

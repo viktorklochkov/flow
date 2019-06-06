@@ -5,7 +5,6 @@
 
 #include "EventClassVariablesSet.h"
 #include "CorrectionProfileChannelizedIngress.h"
-#include "CorrectionLog.h"
 
 /// \cond CLASSIMP
 ClassImp(Qn::CorrectionProfileChannelizedIngress);
@@ -14,20 +13,6 @@ namespace Qn {
 /// Default constructor
 CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress() :
     CorrectionHistogramBase() {
-
-  fValues = NULL;
-  fGroupValues = NULL;
-  fValidated = NULL;
-  fUsedChannel = NULL;
-  fChannelGroup = NULL;
-  fNoOfChannels = 0;
-  fActualNoOfChannels = 0;
-  fChannelMap = NULL;
-  fUseGroups = kFALSE;
-  fUsedGroup = NULL;
-  fActualNoOfGroups = 0;
-  fNoOfGroups = 0;
-  fGroupMap = NULL;
 }
 
 /// Normal constructor
@@ -46,40 +31,25 @@ CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress() :
 ///          bin values
 ///
 ///     's'            the bin are the standard deviation of of the bin values
-CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress(const char *name,
-                                                                               const char *title,
-                                                                               EventClassVariablesSet &ecvs,
-                                                                               Int_t nNoOfChannels,
-                                                                               Option_t *option)
-    : CorrectionHistogramBase(name, title, ecvs, option) {
-
-  fValues = NULL;
-  fGroupValues = NULL;
-  fValidated = NULL;
-  fUsedChannel = NULL;
-  fChannelGroup = NULL;
-  fNoOfChannels = nNoOfChannels;
-  fActualNoOfChannels = 0;
-  fChannelMap = NULL;
-  fUseGroups = kFALSE;
-  fUsedGroup = NULL;
-  fActualNoOfGroups = 0;
-  fNoOfGroups = 0;
-  fGroupMap = NULL;
-}
+CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress(std::string name,
+                                                                         std::string title,
+                                                                         const EventClassVariablesSet &ecvs,
+                                                                         Int_t nNoOfChannels,
+                                                                         ErrorMode mode)
+    : CorrectionHistogramBase(name, title, ecvs, mode),
+      fNoOfChannels(nNoOfChannels) {}
 
 /// Default destructor
 /// Releases the memory taken
 CorrectionProfileChannelizedIngress::~CorrectionProfileChannelizedIngress() {
-
-  if (fUsedChannel!=NULL) delete[] fUsedChannel;
-  if (fChannelGroup!=NULL) delete[] fChannelGroup;
-  if (fChannelMap!=NULL) delete[] fChannelMap;
-  if (fValues!=NULL) delete fValues;
-  if (fGroupValues!=NULL) delete fGroupValues;
-  if (fValidated!=NULL) delete fValidated;
-  if (fUsedGroup!=NULL) delete[] fUsedGroup;
-  if (fGroupMap!=NULL) delete[] fGroupMap;
+  delete[] fUsedChannel;
+  delete[] fChannelGroup;
+  delete[] fChannelMap;
+  delete fValues;
+  delete fGroupValues;
+  delete fValidated;
+  delete[] fUsedGroup;
+  delete[] fGroupMap;
 }
 
 /// Attaches existing histograms as the support histograms for the profile function
@@ -91,9 +61,9 @@ CorrectionProfileChannelizedIngress::~CorrectionProfileChannelizedIngress() {
 /// the channel map and the actual number of channels and the channels groups
 /// and the actual number of groups. The information
 /// is matched with the found histogram to validate it. If
-/// bUsedChannel is NULL all channels
+/// bUsedChannel is nullptr all channels
 /// within fNoOfChannels are assigned to this profile.
-/// If nChannelGroup is NULL all channels assigned to this
+/// If nChannelGroup is nullptr all channels assigned to this
 /// profile are allocated to the same group.
 ///
 /// Once the histograms are found and validated, a unique value / error channel histogram
@@ -104,27 +74,21 @@ CorrectionProfileChannelizedIngress::~CorrectionProfileChannelizedIngress() {
 /// \param nChannelGroup array of group number for each channel
 /// \return true if properly attached else false
 Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramList,
-                                                                const Bool_t *bUsedChannel,
-                                                                const Int_t *nChannelGroup) {
+                                                             const Bool_t *bUsedChannel,
+                                                             const Int_t *nChannelGroup) {
   /* let's build the histograms names */
   TString histoName = GetName();
   TString entriesHistoName = GetName();
   entriesHistoName += szEntriesHistoSuffix;
-
   /* initialize. Remember we own the histograms */
-  if (fValues!=NULL) delete fValues;
-  if (fGroupValues!=NULL) delete fGroupValues;
-  if (fValidated!=NULL) delete fValidated;
-  fValues = NULL;
-  fGroupValues = NULL;
-  fValidated = NULL;
-  if (fUsedChannel!=NULL) delete[] fUsedChannel;
-  if (fChannelGroup!=NULL) delete[] fChannelGroup;
-  if (fChannelMap!=NULL) delete[] fChannelMap;
-  if (fUsedGroup!=NULL) delete[] fUsedGroup;
-  if (fGroupMap!=NULL) delete[] fGroupMap;
-
-
+  delete fValues;
+  delete fGroupValues;
+  delete fValidated;
+  delete[] fUsedChannel;
+  delete[] fChannelGroup;
+  delete[] fChannelMap;
+  delete[] fUsedGroup;
+  delete[] fGroupMap;
   /* lets consider now the channel information */
   fUsedChannel = new Bool_t[fNoOfChannels];
   fChannelGroup = new Int_t[fNoOfChannels];
@@ -134,18 +98,17 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
     fChannelGroup[i] = 0;
     fChannelMap[i] = -1;
   }
-
   Int_t nMinGroup = 0xFFFF;
   Int_t nMaxGroup = 0x0000;
   fActualNoOfChannels = 0;
   for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
-    if (bUsedChannel!=NULL) {
+    if (bUsedChannel) {
       fUsedChannel[ixChannel] = bUsedChannel[ixChannel];
     } else {
       fUsedChannel[ixChannel] = kTRUE;
     }
     if (fUsedChannel[ixChannel]) {
-      if (nChannelGroup!=NULL) {
+      if (nChannelGroup) {
         fChannelGroup[ixChannel] = nChannelGroup[ixChannel];
         /* update min max group number */
         if (nChannelGroup[ixChannel] < nMinGroup)
@@ -161,7 +124,7 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
       fActualNoOfChannels++;
     }
   }
-  fUseGroups = (nChannelGroup!=NULL) && (nMinGroup!=nMaxGroup);
+  fUseGroups = (nChannelGroup!=nullptr) && (nMinGroup!=nMaxGroup);
 
   if (fUseGroups) {
     /* let's build the groups support structures */
@@ -187,16 +150,15 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
       }
     }
   }
-
   /* let's first try the Values / Entries structure */
   THnI *origEntries = (THnI *) histogramList->FindObject((const char *) entriesHistoName);
-  if (origEntries!=NULL && origEntries->GetEntries()!=0) {
+  if (origEntries && origEntries->GetEntries()!=0) {
     /* so we get it! */
     /* let's check the channel axis */
     if (fActualNoOfChannels!=origEntries->GetAxis(fEventClassVariables.size())->GetNbins())
       return kFALSE;
     THnF *origValues = (THnF *) histogramList->FindObject((const char *) histoName);
-    if (origValues==NULL)
+    if (!origValues)
       return kFALSE;
     /* let's check the channel axis */
     if (fActualNoOfChannels!=origValues->GetAxis(fEventClassVariables.size())->GetNbins())
@@ -226,14 +188,12 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
                           maxvals);
     /* and now the definitive histogram value /error getting validation information */
     fValues = DivideTHnF(origValues, origEntries, fValidated);
-
     if (fUseGroups) {
       /* let's then build the groups histogram */
       TString histoGroupName = szGroupHistoPrefix;
       histoGroupName += GetName();
       TString histoGroupTitle = szGroupHistoPrefix;
       histoGroupTitle += GetTitle();
-
       /* There will be a wrong external view of the channel number especially */
       /* manifested when there are holes in the channel assignment */
       /* so, lets complete the dimension information */
@@ -241,7 +201,6 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
       minvals[nVariables] = -0.5;
       maxvals[nVariables] = -0.5 + fActualNoOfGroups;
       nbins[nVariables] = fActualNoOfGroups;
-
       /* create the values and entries multidimensional histograms */
       fGroupValues = new THnF((const char *) histoGroupName,
                               (const char *) histoGroupTitle,
@@ -282,8 +241,8 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
       for (Int_t ixGroup = 0; ixGroup < fNoOfGroups; ixGroup++) {
         if (fUsedGroup[ixGroup]) {
           /* new group, let's add its contributor channels */
-          THnF *hCumProjected = NULL;
-          THnI *hCumProjectedEntries = NULL;
+          THnF *hCumProjected = nullptr;
+          THnI *hCumProjectedEntries = nullptr;
           for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
             if (fUsedChannel[ixChannel]) {
               if (fChannelGroup[ixChannel]==ixGroup) {
@@ -291,7 +250,7 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
                 /* first filter the projection */
                 origValues->GetAxis(nVariables)->SetRange(fChannelMap[ixChannel] + 1, fChannelMap[ixChannel] + 1);
                 origEntries->GetAxis(nVariables)->SetRange(fChannelMap[ixChannel] + 1, fChannelMap[ixChannel] + 1);
-                if (hCumProjected!=NULL) {
+                if (hCumProjected!=nullptr) {
                   /* let's accumulate the new channel */
                   THnF *hProjected = (THnF *) origValues->Projection(nVariables, dimToProject, "E");
                   THnI *hProjectedEntries = (THnI *) origEntries->Projection(nVariables, dimToProject);
@@ -309,7 +268,6 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
           }
           /* let's build the final group weight */
           THnF *hChannelsGroupWeights = DivideTHnF(hCumProjected, hCumProjectedEntries);
-
           /* let's store the channels contribution to the group values for the group */
           /* the group for which we are storing values */
           for (Int_t var = 0; var < nVariables; var++)
@@ -334,7 +292,6 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
     delete[] nbins;
   } else
     return kFALSE;
-
   return kTRUE;
 }
 
@@ -347,8 +304,6 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
 Long64_t CorrectionProfileChannelizedIngress::GetBin(const double *variableContainer, Int_t nChannel) {
-
-  /* store also the channel number */
   FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
   return fValues->GetBin(fBinAxesValues);
 }
@@ -359,12 +314,7 @@ Long64_t CorrectionProfileChannelizedIngress::GetBin(const double *variableConta
 /// \param bin the bin to check its content validity
 /// \return kTRUE if the content is valid kFALSE otherwise
 Bool_t CorrectionProfileChannelizedIngress::BinContentValidated(Long64_t bin) {
-
-  if (fValidated->GetBinContent(bin) < 0.5) {
-    return kFALSE;
-  } else {
-    return kTRUE;
-  }
+  return fValidated->GetBinContent(bin) >= 0.5;
 }
 
 /// Get the bin content for the passed bin number
@@ -375,7 +325,6 @@ Bool_t CorrectionProfileChannelizedIngress::BinContentValidated(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t CorrectionProfileChannelizedIngress::GetBinContent(Long64_t bin) {
-
   return fValues->GetBinContent(bin);
 }
 
@@ -387,7 +336,6 @@ Float_t CorrectionProfileChannelizedIngress::GetBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content error
 Float_t CorrectionProfileChannelizedIngress::GetBinError(Long64_t bin) {
-
   return fValues->GetBinError(bin);
 }
 
@@ -400,8 +348,6 @@ Float_t CorrectionProfileChannelizedIngress::GetBinError(Long64_t bin) {
 /// \param nChannel the interested external channel number which group number is asked
 /// \return the associated bin to the current variables content
 Long64_t CorrectionProfileChannelizedIngress::GetGrpBin(const double *variableContainer, Int_t nChannel) {
-
-  /* check the groups structures are in place */
   if (fUseGroups) {
     /* store also the group number */
     FillBinAxesValues(variableContainer, fGroupMap[fChannelGroup[nChannel]]);
@@ -418,12 +364,7 @@ Long64_t CorrectionProfileChannelizedIngress::GetGrpBin(const double *variableCo
 /// \param bin the interested group bin number
 /// \return the group bin number content
 Float_t CorrectionProfileChannelizedIngress::GetGrpBinContent(Long64_t bin) {
-
-  /* check the groups structures are in place */
-  if (fUseGroups) {
-    return fGroupValues->GetBinContent(bin);
-  }
-  return 1.0;
+  return fUseGroups ? fGroupValues->GetBinContent(bin) : 1.0;
 }
 
 /// Get the group bin content error for the passed bin number
@@ -434,12 +375,7 @@ Float_t CorrectionProfileChannelizedIngress::GetGrpBinContent(Long64_t bin) {
 /// \param bin the interested group bin number
 /// \return the bin number content error
 Float_t CorrectionProfileChannelizedIngress::GetGrpBinError(Long64_t bin) {
-
-  /* check the groups structures are in place */
-  if (fUseGroups) {
-    return fGroupValues->GetBinError(bin);
-  }
-  return 1.0;
+  return fUseGroups ? fGroupValues->GetBinError(bin) : 1.0;
 }
 }
 

@@ -17,7 +17,6 @@
 
 #include "CorrectionsSet.h"
 #include "SubEvent.h"
-#include "CorrectionLog.h"
 #include "CorrectionDataVector.h"
 
 namespace Qn {
@@ -43,8 +42,8 @@ class SubEventChannels : public SubEvent {
   friend class CorrectionStep;
   friend class SubEvent;
   SubEventChannels() = default;
-  SubEventChannels(const char *name,
-                                EventClassVariablesSet *eventClassesVariables,
+  SubEventChannels(std::string name,
+                                const EventClassVariablesSet *eventClassesVariables,
                                 Int_t nNoOfChannels,
                                 Int_t nNoOfHarmonics,
                                 Int_t *harmonicMap = NULL);
@@ -107,8 +106,8 @@ class SubEventChannels : public SubEvent {
   virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
   void BuildRawQnVector();
   virtual void IncludeQnVectors(TList *list);
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*, CompareSteps> &set) const;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*, CompareSteps> &set) const;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*> &set) const;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*> &set) const;
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
   virtual void ClearDetector();
 

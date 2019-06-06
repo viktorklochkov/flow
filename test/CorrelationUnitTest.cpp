@@ -17,7 +17,7 @@ TEST(CorrelationTest, ConfigSameDetSameAxis) {
   auto contb = new Qn::DataContainerQVector();
   contb->AddAxes({{"b",10,0,10}});
   mappy->emplace("B",contb);
-  std::vector<Qn::Axis> eventaxes = {{"Ev",10,0,10}};
+  std::vector<Qn::AxisF> eventaxes = {{"Ev",10,0,10}};
   correlation.Configure(mappy, eventaxes);
   auto axes = correlation.GetResult().GetAxes();
   EXPECT_STREQ(axes[0].Name().data(), "Ev");
@@ -38,7 +38,7 @@ TEST(CorrelationTest, ConfigSameAxis) {
   contb->AddAxes({{"a",10,0,10}});
   mappy->emplace("A",conta);
   mappy->emplace("B",contb);
-  std::vector<Qn::Axis> eventaxes = {{"Ev",10,0,10}};
+  std::vector<Qn::AxisF> eventaxes = {{"Ev",10,0,10}};
   correlation.Configure(mappy, eventaxes);
   auto axes = correlation.GetResult().GetAxes();
   EXPECT_STREQ(axes[0].Name().data(), "Ev");
@@ -59,7 +59,7 @@ TEST(CorrelationTest, ConfigDifferentAxes) {
   contb->AddAxes({{"b",10,0,10}});
   mappy->emplace("A",conta);
   mappy->emplace("B",contb);
-  std::vector<Qn::Axis> eventaxes = {{"Ev",10,0,10}};
+  std::vector<Qn::AxisF> eventaxes = {{"Ev",10,0,10}};
   correlation.Configure(mappy, eventaxes);
   auto axes = correlation.GetResult().GetAxes();
   EXPECT_STREQ(axes[0].Name().data(), "Ev");

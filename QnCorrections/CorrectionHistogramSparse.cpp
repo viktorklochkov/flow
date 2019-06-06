@@ -5,18 +5,12 @@
 
 #include "EventClassVariablesSet.h"
 #include "CorrectionHistogramSparse.h"
-#include "CorrectionLog.h"
 
 /// \cond CLASSIMP
 ClassImp(Qn::CorrectionHistogramSparse);
 /// \endcond
 namespace Qn {
 
-/// Default constructor
-CorrectionHistogramSparse::CorrectionHistogramSparse() :
-    CorrectionHistogramBase() {
-  fValues = NULL;
-}
 
 /// Normal constructor
 ///
@@ -28,18 +22,10 @@ CorrectionHistogramSparse::CorrectionHistogramSparse() :
 /// \param name base for the name of the histograms
 /// \param title base for the title of the histograms
 /// \param ecvs the event classes variables set
-CorrectionHistogramSparse::CorrectionHistogramSparse(const char *name,
-                                                           const char *title,
-                                                           EventClassVariablesSet &ecvs) :
-    CorrectionHistogramBase(name, title, ecvs) {
-  fValues = NULL;
-}
-
-/// Default destructor
-/// Releases the memory taken
-CorrectionHistogramSparse::~CorrectionHistogramSparse() {
-
-}
+CorrectionHistogramSparse::CorrectionHistogramSparse(std::string name,
+                                                           std::string title,
+                                                           const EventClassVariablesSet &ecvs) :
+    CorrectionHistogramBase(name, title, ecvs) {}
 
 /// Creates the support histogram for the histogram function
 ///
@@ -54,33 +40,25 @@ Bool_t CorrectionHistogramSparse::CreateHistogram(TList *histogramList) {
   /* let's build the histograms names and titles */
   TString histoName = GetName();
   TString histoTitle = GetTitle();
-
   /* we open space for channel for event class variables */
   Int_t nVariables = fEventClassVariables.size();
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
-
   /* get the multidimensional structure */
   fEventClassVariables.GetMultidimensionalConfiguration(nbins, minvals, maxvals);
-
   /* create the values multidimensional histogram */
-  fValues = new THnSparseF((const char *) histoName, (const char *) histoTitle, nVariables, nbins, minvals, maxvals);
-
+  fValues = new THnSparseF(histoName, histoTitle, nVariables, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
     fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
     fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
-
   fValues->Sumw2();
-
   histogramList->Add(fValues);
-
   delete[] minvals;
   delete[] maxvals;
   delete[] nbins;
-
   return kTRUE;
 }
 
@@ -92,7 +70,6 @@ Bool_t CorrectionHistogramSparse::CreateHistogram(TList *histogramList) {
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
 Long64_t CorrectionHistogramSparse::GetBin(const double *variableContainer) {
-
   FillBinAxesValues(variableContainer);
   /* store the channel number */
   return fValues->GetBin(fBinAxesValues);
@@ -104,7 +81,6 @@ Long64_t CorrectionHistogramSparse::GetBin(const double *variableContainer) {
 /// \param bin the bin to check its content validity
 /// \return kTRUE if the content is valid kFALSE otherwise
 Bool_t CorrectionHistogramSparse::BinContentValidated(Long64_t) {
-
   return kTRUE;
 }
 
@@ -116,7 +92,6 @@ Bool_t CorrectionHistogramSparse::BinContentValidated(Long64_t) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t CorrectionHistogramSparse::GetBinContent(Long64_t bin) {
-
   return fValues->GetBinContent(bin);
 }
 
@@ -128,7 +103,6 @@ Float_t CorrectionHistogramSparse::GetBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content error
 Float_t CorrectionHistogramSparse::GetBinError(Long64_t bin) {
-
   return fValues->GetBinError(bin);
 }
 
@@ -143,7 +117,6 @@ Float_t CorrectionHistogramSparse::GetBinError(Long64_t bin) {
 void CorrectionHistogramSparse::Fill(const double *variableContainer, Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
-
   FillBinAxesValues(variableContainer);
   /* and now update the bin */
   fValues->Fill(fBinAxesValues, weight);

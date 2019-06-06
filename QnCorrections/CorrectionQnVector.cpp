@@ -35,7 +35,6 @@
 #include <Riostream.h>
 
 #include "CorrectionQnVector.h"
-#include "CorrectionLog.h"
 
 using std::cout;
 using std::endl;
@@ -84,19 +83,16 @@ CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nNoOfHarmonics, c
   memset(fQnY, 0, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   /* check whether within the supported harmonic range */
   fHighestHarmonic = nNoOfHarmonics;
-  if (harmonicMap!=NULL) {
+  if (harmonicMap) {
     fHighestHarmonic = harmonicMap[nNoOfHarmonics - 1];
   }
   if (MAXHARMONICNUMBERSUPPORTED < fHighestHarmonic) {
-    QnCorrectionsFatal(Form(
-        "You requested support for harmonic %d but the highest harmonic supported by the framework is currently %d",
-        fHighestHarmonic,
-        MAXHARMONICNUMBERSUPPORTED));
+    throw std::runtime_error("max harmonic!");
   }
   fHarmonicMask = 0x0000;
   Int_t currentHarmonic = 0;
   for (Int_t h = 0; h < nNoOfHarmonics; h++) {
-    if (harmonicMap!=nullptr) {
+    if (harmonicMap) {
       currentHarmonic = harmonicMap[h];
     } else {
       currentHarmonic++;
@@ -133,10 +129,7 @@ CorrectionQnVector::CorrectionQnVector(const char *name, Int_t nDivisor, Int_t n
   /* check whether within the supported harmonic range */
   fHighestHarmonic = Int_t(harmonicMap[nNoOfHarmonics - 1]/nDivisor);
   if (MAXHARMONICNUMBERSUPPORTED < fHighestHarmonic) {
-    QnCorrectionsFatal(Form(
-        "You requested support for harmonic %d but the highest harmonic supported by the framework is currently %d",
-        fHighestHarmonic,
-        MAXHARMONICNUMBERSUPPORTED));
+    throw std::runtime_error("maximum harmonic!");
   }
   fHarmonicMask = 0x0000;
   Int_t nCurrentHarmonic;
@@ -204,10 +197,7 @@ CorrectionQnVector::CorrectionQnVector(Int_t nDivisor, const CorrectionQnVector 
 void CorrectionQnVector::ActivateHarmonic(Int_t harmonic) {
   /* check whether within the supported harmonic range */
   if (MAXHARMONICNUMBERSUPPORTED < harmonic) {
-    QnCorrectionsFatal(Form(
-        "You requested support for harmonic %d but the highest harmonic supported by the framework is currently %d",
-        harmonic,
-        MAXHARMONICNUMBERSUPPORTED));
+    throw std::runtime_error("maximum harmonic!");
   }
   /* checks whether already active */
   if (fHighestHarmonic < harmonic) {
@@ -267,9 +257,7 @@ void CorrectionQnVector::Set(CorrectionQnVector *Qn, Bool_t changename) {
   if ((fHighestHarmonic!=Qn->fHighestHarmonic) ||
       (fHarmonicMask!=Qn->fHarmonicMask) ||
       (fHarmonicMultiplier!=Qn->fHarmonicMultiplier)) {
-    QnCorrectionsFatal("You requested set a Q vector with the values of other Q " \
-        "vector but the harmonic structures do not match");
-    return;
+    throw std::runtime_error("not matching harmonic!");
   }
   memcpy(fQnX, Qn->fQnX, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));
   memcpy(fQnY, Qn->fQnY, (MAXHARMONICNUMBERSUPPORTED + 1)*sizeof(Float_t));

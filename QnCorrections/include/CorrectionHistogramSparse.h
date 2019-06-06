@@ -25,34 +25,19 @@ namespace Qn {
 /// \date Jun 18, 2016
 class CorrectionHistogramSparse : public CorrectionHistogramBase {
  public:
-  CorrectionHistogramSparse();
-  CorrectionHistogramSparse(const char *name,
-                               const char *title,
-                               EventClassVariablesSet &ecvs);
-  virtual ~CorrectionHistogramSparse();
-
+  CorrectionHistogramSparse() = default;
+  CorrectionHistogramSparse(std::string name,
+                               std::string title,
+                               const EventClassVariablesSet &ecvs);
+  virtual ~CorrectionHistogramSparse() = default;
   Bool_t CreateHistogram(TList *histogramList);
-
-  virtual Long64_t GetBin(const double *variableContainer);
-  /// wrong call for this class invoke base class behaviour
-  virtual Long64_t GetBin(const double *variableContainer, Int_t nChannel) {
-    return CorrectionHistogramBase::GetBin(variableContainer,
-                                              nChannel);
-  }
-  virtual Bool_t BinContentValidated(Long64_t bin);
-  virtual Float_t GetBinContent(Long64_t bin);
-  virtual Float_t GetBinError(Long64_t bin);
-
+  Long64_t GetBin(const double *variableContainer);
+  Bool_t BinContentValidated(Long64_t bin);
+  Float_t GetBinContent(Long64_t bin);
+  Float_t GetBinError(Long64_t bin);
   virtual void Fill(const double *variableContainer, Float_t weight);
-  /// wrong call for this class invoke base class behavior
-  virtual void Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
-    CorrectionHistogramBase::Fill(variableContainer,
-                                     nChannel,
-                                     weight);
-  }
  private:
-  THnSparseF *fValues;              //!<! Cumulates values for each of the event classes
-
+  THnSparseF *fValues = nullptr; //!<! Cumulates values for each of the event classes
   /// \cond CLASSIMP
  ClassDef(CorrectionHistogramSparse, 1);
   /// \endcond

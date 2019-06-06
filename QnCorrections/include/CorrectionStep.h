@@ -140,30 +140,29 @@ class CorrectionStep {
   std::string fName;
   State fState = State::CALIBRATION; ///< the state in which the correction step is
   SubEvent *fDetector = nullptr; ///< pointer to the detector configuration owner
-
-  friend struct CompareSteps;
   friend bool operator<(const CorrectionStep &lh, const CorrectionStep &rh);
 
 /// \cond CLASSIMP
  ClassDef(CorrectionStep, 1);
 /// \endcond
 };
-
-inline bool operator<(const CorrectionStep &lh, const CorrectionStep &rh) {
+inline bool operator<(const Qn::CorrectionStep &lh, const Qn::CorrectionStep &rh) {
   return lh.fPriority < rh.fPriority;
+}
 }
 
 /// Checks if should be applied before the one passed as parameter
 /// \param correction correction to check whether to be applied after
 /// \return kTRUE if to apply before the one passed as argument
-struct CompareSteps {
-  bool operator()(const CorrectionStep &lh, const CorrectionStep &rh) const {
-    return lh < rh;
-  }
-  bool operator()(const CorrectionStep *lh, const CorrectionStep *rh) const {
-    return *lh < *rh;
+namespace std {
+/**
+ * std::less specialization for the Qn::CorrectionStep
+ */
+template<>
+struct less<Qn::CorrectionStep*> {
+  bool operator()(Qn::CorrectionStep *lhs, Qn::CorrectionStep *rhs) const {
+    return *lhs < *rhs;
   }
 };
-
 }
 #endif // QNCORRECTIONS_CORRECTIONSTEPBASE_H

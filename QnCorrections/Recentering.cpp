@@ -36,7 +36,6 @@
 #include "EventClassVariablesSet.h"
 #include "CorrectionProfileComponents.h"
 #include "CorrectionHistogramSparse.h"
-#include "CorrectionLog.h"
 #include "Recentering.h"
 #include "SubEvent.h"
 #include "ROOT/RMakeUnique.hxx"
@@ -90,11 +89,13 @@ Bool_t Recentering::CreateSupportHistograms(TList *list) {
   fInputHistograms = std::make_unique<CorrectionProfileComponents>(histoNameAndTitle.Data(),
                                                                    histoNameAndTitle.Data(),
                                                                    fDetector->GetEventClassVariablesSet(),
-                                                                   "s");
+                                                                   CorrectionHistogramBase::ErrorMode::SPREAD);
   fInputHistograms->SetNoOfEntriesThreshold(fMinNoOfEntriesToValidate);
   fCalibrationHistograms =
-      std::make_unique<CorrectionProfileComponents>(histoNameAndTitle.Data(), histoNameAndTitle.Data(),
-                                                    fDetector->GetEventClassVariablesSet(), "s");
+      std::make_unique<CorrectionProfileComponents>(histoNameAndTitle.Data(),
+                                                    histoNameAndTitle.Data(),
+                                                    fDetector->GetEventClassVariablesSet(),
+                                                    CorrectionHistogramBase::ErrorMode::SPREAD);
   /* get information about the configured harmonics to pass it for histogram creation */
   Int_t nNoOfHarmonics = fDetector->GetNoOfHarmonics();
   auto harmonicsMap = new Int_t[nNoOfHarmonics];
@@ -109,7 +110,6 @@ Bool_t Recentering::CreateSupportHistograms(TList *list) {
 /// \return kTRUE if everything went OK
 Bool_t Recentering::AttachInput(TList *list) {
   if (fInputHistograms->AttachHistograms(list)) {
-//    QnCorrectionsInfo(Form("Recentering on %s going to be applied", fDetector->GetName()));
     fState = State::APPLYCOLLECT;
     return kTRUE;
   }

@@ -1,3 +1,5 @@
+#include <utility>
+
 /**************************************************************************************************
  *                                                                                                *
  * Package:       FlowVectorCorrections                                                           *
@@ -34,7 +36,6 @@
 
 #include "CorrectionProfileComponents.h"
 #include "SubEventTracks.h"
-#include "CorrectionLog.h"
 #include "ROOT/RMakeUnique.hxx"
 
 /// \cond CLASSIMP
@@ -48,11 +49,11 @@ namespace Qn {
 /// \param eventClassesVariables the set of event classes variables
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
-SubEventTracks::SubEventTracks(const char *name,
-                               EventClassVariablesSet *eventClassesVariables,
+SubEventTracks::SubEventTracks(std::string name,
+                               const EventClassVariablesSet *eventClassesVariables,
                                Int_t nNoOfHarmonics,
                                Int_t *harmonicMap) :
-    SubEvent(name, eventClassesVariables, nNoOfHarmonics, harmonicMap) {
+    SubEvent(std::move(name), eventClassesVariables, nNoOfHarmonics, harmonicMap) {
 }
 
 /// Stores the framework manager pointer
@@ -258,7 +259,7 @@ void SubEventTracks::IncludeQnVectors(TList *list) {
 ///
 /// There are not input correction so we do nothing
 /// \param list list where the correction steps should be incorporated
-void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const {
+void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const {
   (void) set;
 }
 
@@ -267,7 +268,7 @@ void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionStep 
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void SubEventTracks::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *, CompareSteps> &set) const {
+void SubEventTracks::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const {
   fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 

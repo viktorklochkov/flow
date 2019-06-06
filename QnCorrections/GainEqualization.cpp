@@ -36,40 +36,15 @@
 #include "CorrectionProfileChannelized.h"
 #include "CorrectionHistogramChannelizedSparse.h"
 #include "SubEventChannels.h"
-#include "CorrectionLog.h"
 #include "GainEqualization.h"
 /// \cond CLASSIMP
 ClassImp(Qn::GainEqualization);
 /// \endcond
 namespace Qn {
-const Float_t  GainEqualization::fMinimumSignificantValue = 1E-6;
-const Int_t GainEqualization::fDefaultMinNoOfEntries = 2;
-const char *GainEqualization::szCorrectionName = "Gain equalization";
-const char *GainEqualization::szSupportHistogramName = "Multiplicity";
-const char *GainEqualization::szQAHistogramName = "QA Multiplicity";
-const char *GainEqualization::szQANotValidatedHistogramName = "GE NvE";
-
-/// Default value for the shift parameter
-#define GAINEQUALIZATION_SHIFTDEFAULT 0.0
-/// Default value for the scale parameter
-#define GAINEQUALIZATION_SCALEDEFAULT 1.0
 
 /// Default constructor
 /// Passes to the base class the identity data for the Gain equalization correction step
-GainEqualization::GainEqualization() :
-    CorrectionOnInputData(szCorrectionName, szPriority) {
-  fInputHistograms = NULL;
-  fCalibrationHistograms = NULL;
-  fQAMultiplicityBefore = NULL;
-  fQAMultiplicityAfter = NULL;
-  fQANotValidatedBin = NULL;
-  fEqualizationMethod = Method::NONE;
-  fShift = GAINEQUALIZATION_SHIFTDEFAULT;
-  fScale = GAINEQUALIZATION_SCALEDEFAULT;
-  fUseChannelGroupsWeights = kFALSE;
-  fHardCodedWeights = NULL;
-  fMinNoOfEntriesToValidate = fDefaultMinNoOfEntries;
-}
+GainEqualization::GainEqualization() : CorrectionOnInputData(szCorrectionName, szPriority) {}
 
 /// Default destructor
 /// Releases the memory taken
@@ -88,8 +63,7 @@ GainEqualization::~GainEqualization() {
 /// \param list list where the inputs should be found
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::AttachInput(TList *list) {
-  SubEventChannels *ownerConfiguration =
-      static_cast<SubEventChannels *>(fDetector);
+  auto *ownerConfiguration = dynamic_cast<SubEventChannels *>(fDetector);
   if (fInputHistograms->AttachHistograms(list,
                                          ownerConfiguration->GetUsedChannelsMask(),
                                          ownerConfiguration->GetChannelsGroups())) {
@@ -119,27 +93,18 @@ void GainEqualization::CreateSupportDataStructures() {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::CreateSupportHistograms(TList *list) {
-
-  TString histoNameAndTitle = Form("%s %s",
-                                   szSupportHistogramName,
-                                   fDetector->GetName());
-
-  SubEventChannels *ownerConfiguration =
-      static_cast<SubEventChannels *>(fDetector);
-  if (fInputHistograms!=NULL) delete fInputHistograms;
-  fInputHistograms =
-      new CorrectionProfileChannelizedIngress((const char *) histoNameAndTitle,
-                                                 (const char *) histoNameAndTitle,
-                                                 ownerConfiguration->GetEventClassVariablesSet(),
-                                                 ownerConfiguration->GetNoOfChannels(),
-                                                 "s");
+  std::string name = std::string(szSupportHistogramName) + " " + fDetector->GetName();
+  auto *ownerConfiguration = dynamic_cast<SubEventChannels *>(fDetector);
+  delete fInputHistograms;
+  fInputHistograms = new CorrectionProfileChannelizedIngress(name, name,
+                                                             ownerConfiguration->GetEventClassVariablesSet(),
+                                                             ownerConfiguration->GetNoOfChannels(),
+                                                             CorrectionHistogramBase::ErrorMode::SPREAD);
   fInputHistograms->SetNoOfEntriesThreshold(fMinNoOfEntriesToValidate);
-  fCalibrationHistograms =
-      new CorrectionProfileChannelized((const char *) histoNameAndTitle,
-                                          (const char *) histoNameAndTitle,
-                                          ownerConfiguration->GetEventClassVariablesSet(),
-                                          ownerConfiguration->GetNoOfChannels(),
-                                          "s");
+  fCalibrationHistograms = new CorrectionProfileChannelized(name, name,
+                                                            ownerConfiguration->GetEventClassVariablesSet(),
+                                                            ownerConfiguration->GetNoOfChannels(),
+                                                            CorrectionHistogramBase::ErrorMode::SPREAD);
   fCalibrationHistograms->CreateProfileHistograms(list,
                                                   ownerConfiguration->GetUsedChannelsMask(),
                                                   ownerConfiguration->GetChannelsGroups());
@@ -152,38 +117,22 @@ Bool_t GainEqualization::CreateSupportHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::CreateQAHistograms(TList *list) {
-  TString beforeName = Form("%s %s",
-                            szSupportHistogramName,
-                            fDetector->GetName());
-  beforeName += "Before";
-  TString beforeTitle = Form("%s %s",
-                             szSupportHistogramName,
-                             fDetector->GetName());
-  beforeTitle += " before gain equalization";
-  TString afterName = Form("%s %s",
-                           szSupportHistogramName,
-                           fDetector->GetName());
-  afterName += "After";
-  TString afterTitle = Form("%s %s",
-                            szSupportHistogramName,
-                            fDetector->GetName());
-  afterTitle += " after gain equalization";
-  SubEventChannels *ownerConfiguration =
-      static_cast<SubEventChannels *>(fDetector);
-  fQAMultiplicityBefore = new CorrectionProfileChannelized(
-      (const char *) beforeName,
-      (const char *) beforeTitle,
-      ownerConfiguration->GetEventClassVariablesSet(), ownerConfiguration->GetNoOfChannels());
-  fQAMultiplicityBefore->CreateProfileHistograms(list,
-                                                 ownerConfiguration->GetUsedChannelsMask(),
-                                                 ownerConfiguration->GetChannelsGroups());
-  fQAMultiplicityAfter = new CorrectionProfileChannelized(
-      (const char *) afterName,
-      (const char *) afterTitle,
-      ownerConfiguration->GetEventClassVariablesSet(), ownerConfiguration->GetNoOfChannels());
-  fQAMultiplicityAfter->CreateProfileHistograms(list,
-                                                ownerConfiguration->GetUsedChannelsMask(),
-                                                ownerConfiguration->GetChannelsGroups());
+  std::string name = std::string(szSupportHistogramName) + " " + fDetector->GetName();
+  std::string beforeName = name + "Before";
+  std::string beforeTitle = name + " before gain equalization";
+  std::string afterName = name + "After";
+  std::string afterTitle = name + " after gain equalization";
+  auto *subevent = dynamic_cast<SubEventChannels *>(fDetector);
+  fQAMultiplicityBefore = new CorrectionProfileChannelized(beforeName, beforeTitle,
+                                                           subevent->GetEventClassVariablesSet(),
+                                                           subevent->GetNoOfChannels());
+  fQAMultiplicityBefore->CreateProfileHistograms(list, subevent->GetUsedChannelsMask(),
+                                                 subevent->GetChannelsGroups());
+  fQAMultiplicityAfter = new CorrectionProfileChannelized(afterName, afterTitle,
+                                                          subevent->GetEventClassVariablesSet(),
+                                                          subevent->GetNoOfChannels());
+  fQAMultiplicityAfter->CreateProfileHistograms(list, subevent->GetUsedChannelsMask(),
+                                                subevent->GetChannelsGroups());
   return kTRUE;
 }
 
@@ -193,14 +142,13 @@ Bool_t GainEqualization::CreateQAHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 Bool_t GainEqualization::CreateNveQAHistograms(TList *list) {
-  SubEventChannels *ownerConfiguration =
-      static_cast<SubEventChannels *>(fDetector);
-  fQANotValidatedBin = new CorrectionHistogramChannelizedSparse(
-      Form("%s %s", szQANotValidatedHistogramName, fDetector->GetName()),
-      Form("%s %s", szQANotValidatedHistogramName, fDetector->GetName()),
-      ownerConfiguration->GetEventClassVariablesSet(),
-      ownerConfiguration->GetNoOfChannels());
-  fQANotValidatedBin->CreateChannelizedHistogram(list, ownerConfiguration->GetUsedChannelsMask());
+  auto *subevent = dynamic_cast<SubEventChannels *>(fDetector);
+  std::string name = std::string(szQANotValidatedHistogramName) + " " + fDetector->GetName();
+  fQANotValidatedBin = new CorrectionHistogramChannelizedSparse(name,
+                                                                name,
+                                                                subevent->GetEventClassVariablesSet(),
+                                                                subevent->GetNoOfChannels());
+  fQANotValidatedBin->CreateChannelizedHistogram(list, subevent->GetUsedChannelsMask());
   return kTRUE;
 }
 
@@ -217,34 +165,34 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce equalization parameters */
-      for (const auto & dataVector : fDetector->GetInputDataBank()) {
+      for (const auto &dataVector : fDetector->GetInputDataBank()) {
         fCalibrationHistograms->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
       }
       return kFALSE;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce equalization parameters */
-      for (const auto & dataVector : fDetector->GetInputDataBank()) {
+      for (const auto &dataVector : fDetector->GetInputDataBank()) {
         fCalibrationHistograms->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
       }
       /* and proceed to ... */
       /* FALLTHRU */
     case State::APPLY: /* apply the equalization */
       /* collect QA data if asked */
-      if (fQAMultiplicityBefore!=NULL) {
-        for (const auto & dataVector : fDetector->GetInputDataBank()) {
+      if (fQAMultiplicityBefore) {
+        for (const auto &dataVector : fDetector->GetInputDataBank()) {
           fQAMultiplicityBefore->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }
       /* store the equalized weights in the data vector bank according to equalization method */
       switch (fEqualizationMethod) {
         case Method::NONE:
-          for (auto & dataVector : fDetector->GetInputDataBank()) {
+          for (auto &dataVector : fDetector->GetInputDataBank()) {
             dataVector.SetEqualizedWeight(dataVector.EqualizedWeight());
           }
           break;
         case Method::AVERAGE:
-          for (auto & dataVector : fDetector->GetInputDataBank()) {
+          for (auto &dataVector : fDetector->GetInputDataBank()) {
             Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector.GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average = fInputHistograms->GetBinContent(bin);
@@ -254,7 +202,7 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
                 groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
                                                                                              dataVector.GetId()));
               } else {
-                if (fHardCodedWeights!=NULL) {
+                if (fHardCodedWeights) {
                   groupweight = fHardCodedWeights[dataVector.GetId()];
                 }
               }
@@ -263,12 +211,12 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
               else
                 dataVector.SetEqualizedWeight(0.0);
             } else {
-              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
+              if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
             }
           }
           break;
         case Method::WIDTH:
-          for (auto & dataVector : fDetector->GetInputDataBank()) {
+          for (auto &dataVector : fDetector->GetInputDataBank()) {
             Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector.GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average =
@@ -281,7 +229,7 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
                 groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
                                                                                              dataVector.GetId()));
               } else {
-                if (fHardCodedWeights!=NULL) {
+                if (fHardCodedWeights) {
                   groupweight = fHardCodedWeights[dataVector.GetId()];
                 }
               }
@@ -291,14 +239,14 @@ Bool_t GainEqualization::ProcessCorrections(const double *variableContainer) {
               else
                 dataVector.SetEqualizedWeight(0.0);
             } else {
-              if (fQANotValidatedBin!=NULL) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
+              if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
             }
           }
           break;
       }
       /* collect QA data if asked */
-      if (fQAMultiplicityAfter!=NULL) {
-        for (const auto & dataVector : fDetector->GetInputDataBank()) {
+      if (fQAMultiplicityAfter) {
+        for (const auto &dataVector : fDetector->GetInputDataBank()) {
           fQAMultiplicityAfter->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }

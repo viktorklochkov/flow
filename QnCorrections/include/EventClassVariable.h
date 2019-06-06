@@ -24,48 +24,40 @@
 /// \author Ilya Selyuzhenkov <ilya.selyuzhenkov@gmail.com>, GSI
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Jan 4, 2016
- 
+
 
 #include <TObject.h>
 #include <TObjArray.h>
+#include <Axis.h>
 
 namespace Qn {
 class EventClassVariable {
  public:
   EventClassVariable() = default;
-  EventClassVariable(const EventClassVariable &ecv);
-  EventClassVariable(Int_t varId, const char *varname, Int_t nbins, Double_t min, Double_t max);
-  EventClassVariable(Int_t varId, const char *varname, Int_t nbins, Double_t *bins);
-  EventClassVariable(Int_t varId, const char *varname, Double_t binsArray[][2]);
-  virtual ~EventClassVariable() {
-    delete[] fBins;
-  }
+  EventClassVariable(Int_t id, AxisD axis) : id_(id), axis_(axis) {}
+  virtual ~EventClassVariable() = default;
   EventClassVariable &operator=(const EventClassVariable &) = delete;
   /// Gets the variable unique Id
-  Int_t GetId() const { return fVarId; }
+  Int_t GetId() const { return id_; }
   /// Gets the variable name / label
-  const char *GetLabel() const { return fLabel.data(); }
+  const char *GetLabel() const { return axis_.Name().data(); }
   /// Gets the number of bins
-  Int_t GetNBins() const { return fNBins; }
+  Int_t GetNBins() const { return axis_.GetNBins(); }
   /// Gets the actual bins edges array
-  const Double_t *GetBins() const { return fBins; }
+  const Double_t *GetBins() const { return axis_.GetPtr(); }
   /// Gets the lower edge for the passed bin number
   /// \param bin bin number starting from one
-  Double_t GetBinLowerEdge(Int_t bin) const { return (((bin < 1) || (bin > fNBins)) ? 0.0 : fBins[bin - 1]); }
+  Double_t GetBinLowerEdge(Int_t bin) const { return axis_.GetLowerBinEdge(bin); }
   /// Gets the upper edge for the passed bin number
   /// \param bin bin number starting from one
-  Double_t GetBinUpperEdge(Int_t bin) const { return (((bin < 1) || (bin > fNBins)) ? 0.0 : fBins[bin]); }
+  Double_t GetBinUpperEdge(Int_t bin) const { return axis_.GetUpperBinEdge(bin); }
   /// Gets the lowest variable value considered
-  Double_t GetLowerEdge() { return fBins[0]; }
+  Double_t GetLowerEdge() const { return axis_.GetFirstBinEdge(); }
   /// Gets the highest variabel value considered
-  Double_t GetUpperEdge() { return fBins[fNBins]; }
+  Double_t GetUpperEdge() const { return axis_.GetLastBinEdge(); }
  private:
-  Int_t fVarId = -1;        ///< The external Id for the variable in the data bank
-  Int_t fNBins = 0;        ///< The number of bins for the variable when shown in a histogram
-  Int_t fNBinsPlusOne = 0; ///< the number of bins plus one. Needed for object persistence
-  /// Bin edges array for the variable when shown in a histogram
-  Double_t *fBins = nullptr;       //[fNBinsPlusOne]
-  std::string fLabel;        ///< Label to use in an axis that shows the variable
+  Int_t id_ = -1;        ///< The external Id for the variable in the data bank
+  AxisD axis_;
 
 /// \cond CLASSIMP
  ClassDef(EventClassVariable, 1);

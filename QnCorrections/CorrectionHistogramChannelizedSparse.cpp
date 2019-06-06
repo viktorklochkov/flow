@@ -5,22 +5,11 @@
 
 #include "EventClassVariablesSet.h"
 #include "CorrectionHistogramChannelizedSparse.h"
-#include "CorrectionLog.h"
 
 /// \cond CLASSIMP
 ClassImp(Qn::CorrectionHistogramChannelizedSparse);
 /// \endcond
 namespace Qn {
-/// Default constructor
-CorrectionHistogramChannelizedSparse::CorrectionHistogramChannelizedSparse() :
-    CorrectionHistogramBase() {
-  fValues = NULL;
-  fUsedChannel = NULL;
-  fNoOfChannels = 0;
-  fActualNoOfChannels = 0;
-  fChannelMap = NULL;
-}
-
 /// Normal constructor
 ///
 /// Stores the set of variables that identify the
@@ -32,25 +21,17 @@ CorrectionHistogramChannelizedSparse::CorrectionHistogramChannelizedSparse() :
 /// \param title base for the title of the histograms
 /// \param ecvs the event classes variables set
 /// \param nNoOfChannels the number of channels associated
-CorrectionHistogramChannelizedSparse::CorrectionHistogramChannelizedSparse(const char *name,
-                                                                                 const char *title,
-                                                                                 EventClassVariablesSet &ecvs,
-                                                                                 Int_t nNoOfChannels) :
-    CorrectionHistogramBase(name, title, ecvs) {
-  fValues = NULL;
-  fValues = NULL;
-  fUsedChannel = NULL;
-  fNoOfChannels = nNoOfChannels;
-  fActualNoOfChannels = 0;
-  fChannelMap = NULL;
-}
+CorrectionHistogramChannelizedSparse::CorrectionHistogramChannelizedSparse(std::string name,
+                                                                           std::string title,
+                                                                           const EventClassVariablesSet &ecvs,
+                                                                           Int_t nNoOfChannels) :
+    CorrectionHistogramBase(name, title, ecvs), fNoOfChannels(nNoOfChannels) {}
 
 /// Default destructor
 /// Releases the memory taken
 CorrectionHistogramChannelizedSparse::~CorrectionHistogramChannelizedSparse() {
-
-  if (fUsedChannel!=NULL) delete[] fUsedChannel;
-  if (fChannelMap!=NULL) delete[] fChannelMap;
+  delete[] fUsedChannel;
+  delete[] fChannelMap;
 }
 
 /// Creates the support histogram for the channelize histogram function
@@ -64,13 +45,13 @@ CorrectionHistogramChannelizedSparse::~CorrectionHistogramChannelizedSparse() {
 ///
 /// The actual number of channels is stored and a mask from
 /// external channel number to histogram channel number. If
-/// bUsedChannel is NULL all channels
+/// bUsedChannel is nullptr all channels
 /// within fNoOfChannels are assigned to this profile.
 /// \param histogramList list where the histograms have to be added
 /// \param bUsedChannel array of booleans one per each channel
 /// \return true if properly created
 Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *histogramList,
-                                                                           const Bool_t *bUsedChannel) {
+                                                                        const Bool_t *bUsedChannel) {
   /* let's build the histograms names and titles */
   TString histoName = GetName();
   TString histoTitle = GetTitle();
@@ -90,7 +71,7 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
   fChannelMap = new Int_t[fNoOfChannels];
   fActualNoOfChannels = 0;
   for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
-    if (bUsedChannel!=NULL) {
+    if (bUsedChannel!=nullptr) {
       fUsedChannel[ixChannel] = bUsedChannel[ixChannel];
     } else {
       fUsedChannel[ixChannel] = kTRUE;
@@ -107,17 +88,14 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
   minvals[nVariables] = -0.5;
   maxvals[nVariables] = -0.5 + fActualNoOfChannels;
   nbins[nVariables] = fActualNoOfChannels;
-
   /* create the values multidimensional histogram */
   fValues =
-      new THnSparseF((const char *) histoName, (const char *) histoTitle, nVariables + 1, nbins, minvals, maxvals);
-
+      new THnSparseF(histoName, histoTitle, nVariables + 1, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
     fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
     fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel());
   }
-
   /* and now the channel axis */
   fValues->GetAxis(nVariables)->SetTitle(szChannelAxisTitle);
 
@@ -129,15 +107,11 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
       }
     }
   }
-
   fValues->Sumw2();
-
   histogramList->Add(fValues);
-
   delete[] minvals;
   delete[] maxvals;
   delete[] nbins;
-
   return kTRUE;
 }
 
@@ -150,7 +124,6 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
 Long64_t CorrectionHistogramChannelizedSparse::GetBin(const double *variableContainer, Int_t nChannel) {
-
   FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
   /* store the channel number */
   return fValues->GetBin(fBinAxesValues);
@@ -162,7 +135,6 @@ Long64_t CorrectionHistogramChannelizedSparse::GetBin(const double *variableCont
 /// \param bin the bin to check its content validity
 /// \return kTRUE if the content is valid kFALSE otherwise
 Bool_t CorrectionHistogramChannelizedSparse::BinContentValidated(Long64_t) {
-
   return kTRUE;
 }
 
@@ -174,7 +146,6 @@ Bool_t CorrectionHistogramChannelizedSparse::BinContentValidated(Long64_t) {
 /// \param bin the interested bin number
 /// \return the bin number content
 Float_t CorrectionHistogramChannelizedSparse::GetBinContent(Long64_t bin) {
-
   return fValues->GetBinContent(bin);
 }
 
@@ -186,7 +157,6 @@ Float_t CorrectionHistogramChannelizedSparse::GetBinContent(Long64_t bin) {
 /// \param bin the interested bin number
 /// \return the bin number content error
 Float_t CorrectionHistogramChannelizedSparse::GetBinError(Long64_t bin) {
-
   return fValues->GetBinError(bin);
 }
 
@@ -202,7 +172,6 @@ Float_t CorrectionHistogramChannelizedSparse::GetBinError(Long64_t bin) {
 void CorrectionHistogramChannelizedSparse::Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
-
   FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
   /* and now update the bin */
   fValues->Fill(fBinAxesValues, weight);

@@ -35,7 +35,6 @@
 #include <TList.h>
 #include <TKey.h>
 #include "CorrectionCalculator.h"
-#include "CorrectionLog.h"
 
 #include <iostream>
 #include <iomanip>
@@ -87,7 +86,6 @@ void CorrectionCalculator::SetCalibrationHistogramsList(TFile *calibrationFile) 
     if (calibrationFile->GetListOfKeys()->GetEntries() > 0) {
       /* let's see if we already had a previous calibration histograms list */
       if (fCalibrationHistogramsList) {
-        QnCorrectionsInfo("Changed the calibration file. Deleting the current calibration histograms list");
         /* we delete it. WARNING: at this point the whole framework got orphan of input histograms this MUST be a transient situation */
         delete fCalibrationHistogramsList;
         fCalibrationHistogramsList = nullptr;
@@ -95,9 +93,6 @@ void CorrectionCalculator::SetCalibrationHistogramsList(TFile *calibrationFile) 
       fCalibrationHistogramsList =
           (TList *) ((TKey *) calibrationFile->GetListOfKeys()->FindObject(szCalibrationHistogramsKeyName))->ReadObj()->Clone();
       if (fCalibrationHistogramsList) {
-        QnCorrectionsInfo(Form("Stored calibration list %s from file %s",
-                               fCalibrationHistogramsList->GetName(),
-                               calibrationFile->GetName()));
         /* we need the histograms ownership once we go to the GRID */
         fCalibrationHistogramsList->SetOwner(kTRUE);
       }
@@ -267,18 +262,17 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
         break;
     }
     if (!retvalue) {
-      QnCorrectionsFatal("Failed to build the necessary support histograms.");
+      std::clog << "Failed to build the necessary support histograms." << std::endl;
     }
   } else {
-    QnCorrectionsFatal("The process label is missing.");
+    std::clog << "process label is missing." << std::endl;
   }
   /* now get the process list on the calibration histograms list if any */
   /* and pass it to the detectors for input calibration histograms attachment, */
   if (fCalibrationHistogramsList) {
     auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
     if (processList) {
-      QnCorrectionsInfo(Form("Assigned process list %s as the calibration histograms list",
-                             processList->GetName()));
+
       /* now transfer the order to the defined detectors */
       for (auto &det : fSubEvents) {
         det->AttachCorrectionInputs(processList);
@@ -336,7 +330,7 @@ void CorrectionCalculator::InitializeQnCorrectionsFramework() {
 /// in the list. If not a run time error is raised.
 /// \param name the name of the list
 void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
-  QnCorrectionsInfo(Form("New process list name: %s", name));
+  std::clog << "New process list name : " << name << std::endl;
   if (fProcessListName.EqualTo(szDummyProcessListName)) {
     if (fSupportHistogramsList) {
       /* check the list of concurrent processes */
@@ -354,9 +348,7 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
           fSupportHistogramsList->AddAt(previoustemp, finalindex);
         } else {
           /* nop! we raise an execution error */
-          QnCorrectionsFatal(Form(
-              "The name of the process you want to run: %s, is not in the list of concurrent processes",
-              name));
+          throw std::runtime_error("nope");
         }
       } else {
         auto processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
@@ -369,8 +361,7 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
       if (fCalibrationHistogramsList) {
         auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
         if (processList) {
-          QnCorrectionsInfo(Form("Assigned process list %s as the calibration histograms list",
-                                 processList->GetName()));
+          std::clog << "assigned processlist:" << processList->GetName() << std::endl;
           /* now transfer the order to the defined detectors */
           for (auto &det : fSubEvents) {
             det->AttachCorrectionInputs(processList);
@@ -398,7 +389,6 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
       fProcessListName = name;
     }
   } else {
-    QnCorrectionsInfo(Form("Changing process on the fly from %s to %s", fProcessListName.Data(), name));
     if (fSupportHistogramsList) {
       /* check the list of concurrent processes */
       if (fProcessesNames && fProcessesNames->GetEntries()!=0) {
@@ -420,9 +410,7 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
           fSupportHistogramsList->AddAt(newList, finalindex);
         } else {
           /* nop! we raise an execution error */
-          QnCorrectionsFatal(Form(
-              "The name of the process you want to run: %s, is not in the list of concurrent processes",
-              name));
+          throw std::runtime_error("nope");
         }
       } else {
         auto processList = (TList *) fSupportHistogramsList->FindObject((const char *) fProcessListName);
@@ -434,8 +422,6 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
       if (fCalibrationHistogramsList) {
         auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
         if (processList) {
-          QnCorrectionsInfo(Form("Assigned process list %s as the calibration histograms list",
-                                 processList->GetName()));
           /* now transfer the order to the defined detectors */
           for (auto &det : fSubEvents) {
             det->AttachCorrectionInputs(processList);
@@ -467,14 +453,13 @@ void CorrectionCalculator::SetCurrentProcessListName(const char *name) {
 
 /// Produce an understandable picture of current correction configuration
 void CorrectionCalculator::PrintFrameworkConfiguration() const {
-  QnCorrectionsInfo("");
   std::vector<std::string> detlist;
   /* pass it to the detectors for detector configurations name inclusion */
   for (auto &det : fSubEvents) {
     det->FillDetectorConfigurationNameList(detlist);
   }
   /* now the list of Qn vector correction steps */
-  std::set<CorrectionStep *, CompareSteps> inputcs;
+  std::set<CorrectionStep *> inputcs;
   for (auto &det : fSubEvents) {
     det->FillOverallInputCorrectionStepList(inputcs);
   }
@@ -483,7 +468,7 @@ void CorrectionCalculator::PrintFrameworkConfiguration() const {
     inpsteps.emplace_back(entry->GetName());
   }
   /* now the list of Qn vector correction steps */
-  std::set<CorrectionStep *, CompareSteps> vectorCs;
+  std::set<CorrectionStep *> vectorCs;
   for (auto &det : fSubEvents) {
     det->FillOverallQnVectorCorrectionStepList(vectorCs);
   }

@@ -25,7 +25,7 @@ namespace Qn {
  * @param norm normalisation method
  * @param vector QnCorrectionsQnVector to construct the QVector from. It is used internally by the framework but not exposed to the user.
  */
-QVector::QVector(QVector::Normalization norm, const CorrectionQnVector *vector, std::bitset<kMaxNHarmonics> bits) :
+QVector::QVector(QVector::Normalization norm, const CorrectionQnVector *vector, std::bitset<kmaxharmonics> bits) :
     norm_(norm),
     bits_(bits) {
   q_.resize(static_cast<size_t>(bits.count()));
@@ -33,7 +33,7 @@ QVector::QVector(QVector::Normalization norm, const CorrectionQnVector *vector, 
     if (vector->IsGoodQuality()) {
       n_ = vector->GetN();
       sum_weights_ = vector->GetSumOfWeights();
-      auto harmonicsmap = new int[kMaxNHarmonics];
+      auto harmonicsmap = new int[kmaxharmonics];
       vector->GetHarmonicsMap(harmonicsmap);
       for (unsigned int i = 0; i < bits.count(); i++) {
         auto iharmonic = harmonicsmap[i];
