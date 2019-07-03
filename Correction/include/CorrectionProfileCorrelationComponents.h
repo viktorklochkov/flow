@@ -25,6 +25,9 @@ namespace Qn {
 class CorrectionProfileCorrelationComponents : public CorrectionHistogramBase {
  public:
   CorrectionProfileCorrelationComponents() = default;
+  CorrectionProfileCorrelationComponents(const std::string name,
+                                         const EventClassVariablesSet &ecvs,
+                                         ErrorMode mode = ErrorMode::MEAN);
   CorrectionProfileCorrelationComponents(std::string name,
                                          std::string title,
                                          const EventClassVariablesSet &ecvs,

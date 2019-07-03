@@ -139,11 +139,11 @@ class GainEqualization : public CorrectionOnInputData {
   /// Basically this allows interaction between the different framework sections at configuration time
   /// No action for input gain equalization
   virtual void AttachedToFrameworkManager() {}
-  virtual Bool_t AttachInput(TList *list);
+  virtual void AttachInput(TList *list);
   virtual void CreateSupportDataStructures();
-  virtual Bool_t CreateSupportHistograms(TList *list);
-  virtual Bool_t CreateQAHistograms(TList *list);
-  virtual Bool_t CreateNveQAHistograms(TList *list);
+  virtual void AttachSupportHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
 
   virtual Bool_t ProcessCorrections(const double *variableContainer);
   virtual Bool_t ProcessDataCollection(const double *variableContainer);

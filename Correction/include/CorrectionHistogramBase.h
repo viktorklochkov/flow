@@ -56,7 +56,7 @@ class CorrectionHistogramBase {
 
  protected:
   void FillBinAxesValues(const double *variableContainer, Int_t chgrpId = -1);
-  THnF *DivideTHnF(THnF *values, THnI *entries, THnC *valid = NULL);
+  THnF *DivideTHnF(THnF *values, THnI *entries, THnC *valid = nullptr);
   void CopyTHnF(THnF *hDest, THnF *hSource, Int_t *binsArray);
   void CopyTHnFDimension(THnF *hDest, THnF *hSource, Int_t *binsArray, Int_t dimension);
 
@@ -97,9 +97,10 @@ class CorrectionHistogramBase {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param chgrpId additional optional channel or group Id
 inline void CorrectionHistogramBase::FillBinAxesValues(const double *variableContainer, Int_t chgrpId) {
+  (void) variableContainer;
   unsigned int ivar = 0;
     for (const auto &var : fEventClassVariables) {
-    fBinAxesValues[ivar] = variableContainer[var.GetId()];
+    fBinAxesValues[ivar] = var.GetValue();//variableContainer[var.GetId()];
     ++ivar;
   }
   fBinAxesValues[fEventClassVariables.size()] = chgrpId;

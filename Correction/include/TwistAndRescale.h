@@ -138,9 +138,9 @@ class TwistAndRescale : public CorrectionOnQvector {
   /// But full protection will be reached when were possible declaring it
   /// as a class.
   ///
-  enum QnTwistAndRescaleMethod {
-    TWRESCALE_doubleHarmonic,      ///< \f$ A^{\pm}_{2n} = 1 \pm \langle X_{2n} \rangle, \qquad \Lambda ^{\pm}_{2n} = \frac{\langle Y_{2n} \rangle}{A^{\pm}_{2n}} \f$
-    TWRESCALE_correlations,    ///< \f$ A^{A+}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle X^{A}_{n} X^{B}_{n} \rangle}
+  enum class Method {
+    DOUBLE_HARMONIC,      ///< \f$ A^{\pm}_{2n} = 1 \pm \langle X_{2n} \rangle, \qquad \Lambda ^{\pm}_{2n} = \frac{\langle Y_{2n} \rangle}{A^{\pm}_{2n}} \f$
+    CORRELATIONS    ///< \f$ A^{A+}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle X^{A}_{n} X^{B}_{n} \rangle}
     /// {\sqrt{\langle X^{A}_{n} X^{B}_{n} \rangle \langle X^{B}_{n} X^{C}_{n} \rangle + \langle X^{A}_{n} Y^{B}_{n} \rangle \langle X^{B}_{n} Y^{C}_{n} \rangle}}, \\ \,
     /// A^{A-}_{2n} = \frac{\sqrt{2 \langle X^{A}_{n} X^{C}_{n} \rangle}\langle Y^{A}_{n} Y^{B}_{n} \rangle}
     /// {\sqrt{\langle X^{A}_{n} X^{B}_{n} \rangle \langle X^{B}_{n} X^{C}_{n} \rangle + \langle X^{A}_{n} Y^{B}_{n} \rangle \langle X^{B}_{n} Y^{C}_{n} \rangle}}, \\ \,
@@ -152,7 +152,7 @@ class TwistAndRescale : public CorrectionOnQvector {
   virtual ~TwistAndRescale() = default;
   /// Sets the method for extracting twist and rescale correction parameters
   /// \param method the chosen method
-  void SetTwistAndRescaleMethod(QnTwistAndRescaleMethod method) { fTwistAndRescaleMethod = method; }
+  void SetTwistAndRescaleMethod(Method method) { fTwistAndRescaleMethod = method; }
   /// Controls if twist step shall be applied
   /// \param apply kTRUE for applying the twist step
   void SetApplyTwist(Bool_t apply) { fApplyTwist = apply; }
@@ -163,13 +163,12 @@ class TwistAndRescale : public CorrectionOnQvector {
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
-  virtual void AttachedToFrameworkManager();
-  virtual Bool_t AttachInput(TList *list);
+  virtual void AttachInput(TList *list);
   virtual void AfterInputsAttachActions();
   virtual void CreateSupportDataStructures();
-  virtual Bool_t CreateSupportHistograms(TList *list);
-  virtual Bool_t CreateQAHistograms(TList *list);
-  virtual Bool_t CreateNveQAHistograms(TList *list);
+  virtual void AttachSupportHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
   virtual Bool_t ProcessCorrections(const double *variableContainer);
   virtual Bool_t ProcessDataCollection(const double *variableContainer);
   virtual void ClearCorrectionStep();
@@ -205,13 +204,13 @@ class TwistAndRescale : public CorrectionOnQvector {
   std::unique_ptr<CorrectionProfileComponents> fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
   std::unique_ptr<CorrectionProfileComponents> fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
 
-  QnTwistAndRescaleMethod fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
+  Method fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
   Bool_t fApplyTwist;              ///< apply the twist step
   Bool_t fApplyRescale;            ///< apply the rescale step
-  TString fBDetectorConfigurationName; ///< the name of the B detector configuration
-  SubEvent *fBDetectorConfiguration; ///< pointer to the B detector configuration
-  TString fCDetectorConfigurationName; ///< the name of the C detector configuration
-  SubEvent *fCDetectorConfiguration; ///< pointer to the C detector configuration
+  std::string fBDetectorConfigurationName; ///< the name of the B detector configuration
+  SubEvent *fSubEventB; ///< pointer to the B detector configuration
+  std::string fCDetectorConfigurationName; ///< the name of the C detector configuration
+  SubEvent *fSubEventC; ///< pointer to the C detector configuration
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
   std::unique_ptr<QVector> fTwistCorrectedQnVector;    //!<! twisted Qn vector
   std::unique_ptr<QVector> fRescaleCorrectedQnVector;  //!<! rescaled Qn vector

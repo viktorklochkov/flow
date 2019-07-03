@@ -26,19 +26,20 @@
 /// \date Jan 4, 2016
 
 
-#include <TObject.h>
-#include <TObjArray.h>
-#include <Axis.h>
+#include "Axis.h"
+#include "InputVariable.h"
 
 namespace Qn {
 class EventClassVariable {
  public:
   EventClassVariable() = default;
-  EventClassVariable(Int_t id, AxisD axis) : id_(id), axis_(axis) {}
+  EventClassVariable(InputVariableD variable, AxisD axis) : variable_(variable), axis_(axis) {}
   virtual ~EventClassVariable() = default;
   EventClassVariable &operator=(const EventClassVariable &) = delete;
   /// Gets the variable unique Id
-  Int_t GetId() const { return id_; }
+  Int_t GetId() const { return variable_.id(); }
+  /// Gets the value of the variable
+  double GetValue() const {return *variable_.begin();}
   /// Gets the variable name / label
   std::string GetLabel() const { return axis_.Name(); }
   /// Gets the number of bins
@@ -56,7 +57,7 @@ class EventClassVariable {
   /// Gets the highest variabel value considered
   Double_t GetUpperEdge() const { return axis_.GetLastBinEdge(); }
  private:
-  Int_t id_ = -1;        ///< The external Id for the variable in the data bank
+  InputVariableD variable_;
   AxisD axis_;
 
 /// \cond CLASSIMP

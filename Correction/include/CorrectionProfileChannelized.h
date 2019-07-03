@@ -55,10 +55,14 @@ class CorrectionProfileChannelized : public CorrectionHistogramBase {
  public:
   CorrectionProfileChannelized() = default;
   CorrectionProfileChannelized(std::string name,
-      std::string title,
-      const EventClassVariablesSet &ecvs,
-      Int_t nNoOfChannels,
-      ErrorMode mode = ErrorMode::MEAN);
+                               std::string title,
+                               const EventClassVariablesSet &ecvs,
+                               Int_t nNoOfChannels,
+                               ErrorMode mode = ErrorMode::MEAN);
+  CorrectionProfileChannelized(std::string name,
+                               const EventClassVariablesSet &ecvs,
+                               Int_t nNoOfChannels,
+                               ErrorMode mode = ErrorMode::MEAN);
 
   virtual ~CorrectionProfileChannelized();
   Bool_t CreateProfileHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);

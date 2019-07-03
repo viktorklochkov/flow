@@ -15,6 +15,8 @@
 /// \brief Base class for the support of the different correction steps within Q vector correction framework
 ///
 
+#include "TList.h"
+
 namespace Qn {
 class SubEvent;
 class QVector;
@@ -60,16 +62,12 @@ class CorrectionStep {
   CorrectionStep &operator=(const CorrectionStep &) = delete;
   const char *GetName() const { return fName.data(); }
 
-  /// Informs when the detector configuration has been attached to the framework manager
-  /// Basically this allows interaction between the different framework sections at configuration time
-  /// Pure virtual function
-  virtual void AttachedToFrameworkManager() = 0;
   /// Attaches the needed input information to the correction step
   ///
   /// Pure virtual function
   /// \param list list where the inputs should be found
   /// \return kTRUE if everything went OK
-  virtual Bool_t AttachInput(TList *list) = 0;
+  virtual void AttachInput(TList *list) = 0;
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
@@ -86,30 +84,30 @@ class CorrectionStep {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual Bool_t CreateSupportHistograms(TList *list) = 0;
+  virtual void AttachSupportHistograms(TList *list) = 0;
   /// Asks for QA histograms creation
   ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
 
-  virtual Bool_t CreateQAHistograms(TList *list) = 0;
+  virtual void AttachQAHistograms(TList *list) = 0;
   /// Asks for non validated entries QA histograms creation
   ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual Bool_t CreateNveQAHistograms(TList *list) = 0;
+  virtual void AttachNveQAHistograms(TList *list) = 0;
   /// Processes the correction step
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessCorrections(const double *variableContainer) = 0;
+  virtual bool ProcessCorrections(const double *variableContainer) = 0;
   /// Processes the correction step data collection
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
+  virtual bool ProcessDataCollection(const double *variableContainer) = 0;
   /// Clean the correction to accept a new event
   /// Pure virtual function
   virtual void ClearCorrectionStep() = 0;
@@ -129,12 +127,12 @@ class CorrectionStep {
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) = 0;
  protected:
   /// Stores the detector configuration owner
-  /// \param detectorConfiguration the detector configuration owner
-  void SetConfigurationOwner(SubEvent *detectorConfiguration) { fDetector = detectorConfiguration; }
+  /// \param subevent the detector configuration owner
+  void SetOwner(SubEvent *subevent) { fSubEvent = subevent; }
   unsigned int fPriority = 0; ///< the correction key that codifies order information
   std::string fName;
   State fState = State::CALIBRATION; ///< the state in which the correction step is
-  SubEvent *fDetector = nullptr; ///< pointer to the detector configuration owner
+  SubEvent *fSubEvent = nullptr; ///< pointer to the detector configuration owner
   friend bool operator<(const CorrectionStep &lh, const CorrectionStep &rh);
 
 /// \cond CLASSIMP

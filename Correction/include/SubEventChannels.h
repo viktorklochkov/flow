@@ -42,7 +42,7 @@ class SubEventChannels : public SubEvent {
   friend class CorrectionStep;
   friend class SubEvent;
   SubEventChannels() = default;
-  SubEventChannels(std::string name,
+  SubEventChannels(unsigned int bin_id,
                                 const EventClassVariablesSet *eventClassesVariables,
                                 Int_t nNoOfChannels, std::bitset<QVector::kmaxharmonics> harmonics);
   virtual ~SubEventChannels();
@@ -84,12 +84,10 @@ class SubEventChannels : public SubEvent {
     fQAMultiplicityMax = max;
   }
 
-  virtual void AttachCorrectionsManager(CorrectionCalculator *manager);
-
   virtual void CreateSupportDataStructures();
-  virtual Bool_t CreateSupportHistograms(TList *list);
-  virtual Bool_t CreateQAHistograms(TList *list);
-  virtual Bool_t CreateNveQAHistograms(TList *list);
+  virtual void AttachSupportHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
 
   /// Activate the processing for the passed harmonic
   /// \param harmonic the desired harmonic number to activate
@@ -97,7 +95,7 @@ class SubEventChannels : public SubEvent {
     SubEvent::ActivateHarmonic(harmonic);
     fRawQnVector.ActivateHarmonic(harmonic);
   }
-  virtual Bool_t AttachCorrectionInputs(TList *list);
+  virtual void AttachCorrectionInputs(TList *list);
   virtual void AfterInputsAttachActions();
   virtual Bool_t ProcessCorrections(const double *variableContainer);
   virtual Bool_t ProcessDataCollection(const double *variableContainer);
@@ -107,7 +105,7 @@ class SubEventChannels : public SubEvent {
   virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*> &set) const;
   virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*> &set) const;
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
-  virtual void ClearDetector();
+  virtual void Clear();
 
  private:
   static const char *szRawQnVectorName;   ///< the name of the raw Qn vector from raw data without input data corrections
@@ -210,7 +208,7 @@ inline Bool_t SubEventChannels::ProcessDataCollection(const double *variableCont
 /// to the input data correction steps and finally
 /// cleans the own Q vector and the input data vector bank
 /// for accepting the next event.
-inline void SubEventChannels::ClearDetector() {
+inline void SubEventChannels::Clear() {
   for (auto &correction : fQnVectorCorrections) {
     correction->ClearCorrectionStep();
   }

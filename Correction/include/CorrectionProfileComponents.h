@@ -46,6 +46,7 @@ class CorrectionProfileComponents : public CorrectionHistogramBase {
                               std::string title,
                               const EventClassVariablesSet &ecvs,
                               ErrorMode mode = ErrorMode::MEAN);
+  CorrectionProfileComponents(std::string name, const EventClassVariablesSet &ecvs, ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfileComponents();
   Bool_t CreateComponentsProfileHistograms(TList *histogramList, Int_t nNoOfHarmonics, Int_t *harmonicMap = NULL);
   Bool_t AttachHistograms(TList *histogramList);

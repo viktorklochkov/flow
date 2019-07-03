@@ -54,6 +54,13 @@ class CorrectionProfile3DCorrelations : public CorrectionHistogramBase {
       std::string nameC,
       const EventClassVariablesSet &ecvs,
       ErrorMode mode = ErrorMode::MEAN);
+  CorrectionProfile3DCorrelations(
+      std::string name,
+      std::string nameA,
+      std::string nameB,
+      std::string nameC,
+      const EventClassVariablesSet &ecvs,
+      ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfile3DCorrelations();
   Bool_t CreateCorrelationComponentsProfileHistograms(TList *histogramList,
                                                       Int_t nNoOfHarmonics,

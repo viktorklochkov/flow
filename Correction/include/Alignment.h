@@ -105,8 +105,7 @@ class Alignment : public CorrectionOnQvector {
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
 
-  virtual void AttachedToFrameworkManager();
-  virtual Bool_t AttachInput(TList *list);
+  virtual void AttachInput(TList *list);
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
@@ -115,9 +114,9 @@ class Alignment : public CorrectionOnQvector {
   /// Does nothing for the time being
   virtual void AfterInputsAttachActions() {}
   virtual void CreateSupportDataStructures();
-  virtual Bool_t CreateSupportHistograms(TList *list);
-  virtual Bool_t CreateQAHistograms(TList *list);
-  virtual Bool_t CreateNveQAHistograms(TList *list);
+  virtual void AttachSupportHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
 
   virtual Bool_t ProcessCorrections(const double *variableContainer);
   virtual Bool_t ProcessDataCollection(const double *variableContainer);

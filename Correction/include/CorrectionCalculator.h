@@ -183,7 +183,7 @@ inline void CorrectionCalculator::ProcessEvent() {
 /// Must be called only at the end of each event to start processing the next one
 inline void CorrectionCalculator::ClearEvent() {
   for (auto &detector : fSubEvents) {
-    detector->ClearDetector();
+    detector->Clear();
   }
 }
 

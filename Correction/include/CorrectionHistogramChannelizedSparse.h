@@ -39,6 +39,9 @@ class CorrectionHistogramChannelizedSparse : public CorrectionHistogramBase {
                                           std::string title,
                                           const EventClassVariablesSet &ecvs,
                                           Int_t nNoOfChannels);
+  CorrectionHistogramChannelizedSparse(std::string name,
+                                       const EventClassVariablesSet &ecvs,
+                                       Int_t nNoOfChannels);
   virtual ~CorrectionHistogramChannelizedSparse();
   Bool_t CreateChannelizedHistogram(TList *histogramList, const Bool_t *bUsedChannel);
   Long64_t GetBin(const double *variableContainer, Int_t nChannel);

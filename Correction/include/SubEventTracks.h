@@ -40,7 +40,7 @@ class SubEventTracks : public SubEvent {
   friend class CorrectionStep;
   friend class SubEvent;
   SubEventTracks() = default;
-  SubEventTracks(std::string name,
+  SubEventTracks(unsigned int bin_id,
                               const EventClassVariablesSet *eventClassesVariables,
                               std::bitset<QVector::kmaxharmonics> harmonics);
   virtual ~SubEventTracks() = default;
@@ -49,13 +49,11 @@ class SubEventTracks : public SubEvent {
   /// \return TRUE, this is tracking detector configuration
   virtual Bool_t GetIsTrackingDetector() const { return kTRUE; }
 
-  virtual void AttachCorrectionsManager(CorrectionCalculator *manager);
-
   virtual void CreateSupportDataStructures();
-  virtual Bool_t CreateSupportHistograms(TList *list);
-  virtual Bool_t CreateQAHistograms(TList *list);
-  virtual Bool_t CreateNveQAHistograms(TList *list);
-  virtual Bool_t AttachCorrectionInputs(TList *list);
+  virtual void AttachSupportHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
+  virtual void AttachCorrectionInputs(TList *list);
   virtual void AfterInputsAttachActions();
 
   virtual Bool_t ProcessCorrections(const double *variableContainer);
@@ -65,7 +63,7 @@ class SubEventTracks : public SubEvent {
   virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*> &set) const;
   virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*> &set) const;
   virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
-  virtual void ClearDetector();
+  virtual void Clear();
 
  private:
   /* QA section */
@@ -81,7 +79,7 @@ class SubEventTracks : public SubEvent {
 /// Transfers the order to the Q vector correction steps and
 /// cleans the own Q vector and the input data vector bank
 /// for accepting the next event.
-inline void SubEventTracks::ClearDetector() {
+inline void SubEventTracks::Clear() {
   /* transfer the order to the Q vector corrections */
   for (auto &correction : fQnVectorCorrections) {
     correction->ClearCorrectionStep();
@@ -122,10 +120,8 @@ inline Bool_t SubEventTracks::ProcessCorrections(const double *variableContainer
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
 inline Bool_t SubEventTracks::ProcessDataCollection(const double *variableContainer) {
-
   /* fill QA information */
   FillQAHistograms(variableContainer);
-
   /* we transfer the request to the Q vector correction steps */
   /* the loop is broken when a correction step has not been applied */
   for (auto &correction : fQnVectorCorrections) {

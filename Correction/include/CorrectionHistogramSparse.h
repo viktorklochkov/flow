@@ -26,9 +26,8 @@ namespace Qn {
 class CorrectionHistogramSparse : public CorrectionHistogramBase {
  public:
   CorrectionHistogramSparse() = default;
-  CorrectionHistogramSparse(std::string name,
-                               std::string title,
-                               const EventClassVariablesSet &ecvs);
+  CorrectionHistogramSparse(const std::string name, const std::string title, const EventClassVariablesSet &ecvs);
+  CorrectionHistogramSparse(const std::string name, const EventClassVariablesSet &ecvs);
   virtual ~CorrectionHistogramSparse() = default;
   Bool_t CreateHistogram(TList *histogramList);
   Long64_t GetBin(const double *variableContainer);

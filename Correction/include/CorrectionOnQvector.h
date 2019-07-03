@@ -15,7 +15,6 @@
 /// \brief Correction steps on Qn vectors support within Q vector correction framework
 ///
 #include <map>
-#include <TNamed.h>
 #include "TList.h"
 #include "QVector.h"
 #include "CorrectionStep.h"
@@ -31,13 +30,11 @@
 namespace Qn {
 class CorrectionOnQvector : public CorrectionStep {
  public:
-
   enum Priority {
     kRecentering,
     kAlignment,
     kTwistAndRescale
   };
-
   CorrectionOnQvector() = default;
   CorrectionOnQvector(const char *name, unsigned int prio) : CorrectionStep(name, prio) {}
   virtual ~CorrectionOnQvector() = default;
@@ -45,16 +42,6 @@ class CorrectionOnQvector : public CorrectionStep {
   CorrectionOnQvector(CorrectionOnQvector &) = delete;
   /// Assignment operator deleted
   CorrectionOnQvector &operator=(const CorrectionOnQvector &) = delete;
-  /// Informs when the detector configuration has been attached to the framework manager
-  /// Basically this allows interaction between the different framework sections at configuration time
-  /// Pure virtual function
-  virtual void AttachedToFrameworkManager() = 0;
-  /// Attaches the needed input information to the correction step
-  ///
-  /// Pure virtual function
-  /// \param list list where the inputs should be found
-  /// \return kTRUE if everything went OK
-  virtual Bool_t AttachInput(TList *list) = 0;
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
@@ -62,26 +49,6 @@ class CorrectionOnQvector : public CorrectionStep {
   ///
   /// Pure virtual function
   virtual void AfterInputsAttachActions() = 0;
-  /// Asks for support data structures creation
-  ///
-  /// Pure virtual function
-  virtual void CreateSupportDataStructures() = 0;
-  /// Asks for support histograms creation
-  ///
-  /// Pure virtual function
-  /// \param list list where the histograms should be incorporated for its persistence
-  /// \return kTRUE if everything went OK
-  virtual Bool_t CreateSupportHistograms(TList *list) = 0;
-  /// Processes the correction step
-  ///
-  /// Pure virtual function
-  /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessCorrections(const double *variableContainer) = 0;
-  /// Processes the correction step data collection
-  ///
-  /// Pure virtual function
-  /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
   /// Gets the corrected Qn vector
   /// \return the corrected Qn vector
   const QVector *GetCorrectedQnVector() const { return fCorrectedQnVector.get(); }
@@ -90,7 +57,7 @@ class CorrectionOnQvector : public CorrectionStep {
   /// Adds the Qn vector to the passed list
   /// if the correction step is in correction states.
   /// \param list list where the corrected Qn vector should be added
-  void IncludeCorrectedQnVector(std::map<QVector::CorrectionStep, QVector *> &qvectors) const {
+  virtual void IncludeCorrectedQnVector(std::map<QVector::CorrectionStep, QVector *> &qvectors) const {
     switch (fState) {
       case State::CALIBRATION:
         /* collect the data needed to further produce correction parameters */
@@ -105,23 +72,6 @@ class CorrectionOnQvector : public CorrectionStep {
       default:break;
     }
   }
-  /// Clean the correction to accept a new event
-  /// Pure virtual function
-  virtual void ClearCorrectionStep() = 0;
-  /// Reports if the correction step is being applied
-  /// Pure virtual function
-  /// \return TRUE if the correction step is being applied
-  virtual Bool_t IsBeingApplied() const = 0;
-  /// Report on correction usage
-  /// Pure virtual function
-  /// Correction step should incorporate its name in calibration
-  /// list if it is producing information calibration in the ongoing
-  /// step and in the apply list if it is applying correction in
-  /// the ongoing step.
-  /// \param calibrationList list containing the correction steps producing calibration information
-  /// \param applyList list containing the correction steps applying corrections
-  /// \return kTRUE if the correction step is being applied
-  virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) = 0;
  protected:
   std::unique_ptr<QVector> fCorrectedQnVector; //!<! the step corrected Qn vector
   const QVector *fInputQnVector = nullptr; //!<! the previous step corrected Qn vector

@@ -31,7 +31,7 @@
 #include "CorrectionProfileComponents.h"
 
 namespace Qn {
-class CorrectionCalculator;
+class Detector;
 /// \class QnCorrectionsDetectorConfigurationBase
 /// \brief The base of a concrete detector configuration within Q vector correction framework
 ///
@@ -63,11 +63,11 @@ class CorrectionCalculator;
 class SubEvent {
  public:
   friend class CorrectionStep;
-  friend class SubEvent;
   SubEvent() = default;
-  SubEvent(std::string name, const EventClassVariablesSet *eventClassesVariables,
-                     std::bitset<QVector::kmaxharmonics> harmonics) :
-      fName(name),
+  SubEvent(unsigned int bin_id,
+           const EventClassVariablesSet *eventClassesVariables,
+           std::bitset<QVector::kmaxharmonics> harmonics) :
+      binid_(bin_id),
       fPlainQnVector(harmonics, QVector::CorrectionStep::PLAIN),
       fPlainQ2nVector(harmonics, QVector::CorrectionStep::PLAIN),
       fCorrectedQnVector(harmonics, QVector::CorrectionStep::PLAIN),
@@ -85,13 +85,9 @@ class SubEvent {
   SubEvent(const SubEvent &) = delete;
   SubEvent &operator=(const SubEvent &) = delete;
 
-  const char *GetName() const { return fName.data(); }
+  std::string GetName() const;
   void SetNormalization(QVector::Normalization method) { fNormalizationMethod = method; }
   QVector::Normalization GetQVectorNormalizationMethod() const { return fNormalizationMethod; }
-  /// Stores the framework manager pointer
-  /// Pure virtual function
-  /// \param manager the framework manager
-  virtual void AttachCorrectionsManager(CorrectionCalculator *manager) = 0;
   /// Get the input data bank.
   /// Makes it available for input corrections steps.
   /// \return pointer to the input data bank
@@ -147,7 +143,8 @@ class SubEvent {
   std::bitset<QVector::kmaxharmonics> GetHarmonics() const { return fCorrectedQnVector.GetHarmonics(); }
   /// Get the pointer to the framework manager
   /// \return the stored pointer to the corrections framework
-  CorrectionCalculator *GetCorrectionsManager() const { return fCorrectionsManager; }
+  Detector *GetDetector() const { return fDetector; }
+  void SetDetector(Detector *det) { fDetector = det; }
   /// Get if the detector configuration is own by a tracking detector
   /// Pure virtual function
   /// \return TRUE if it is a tracking detector configuration
@@ -164,7 +161,7 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual Bool_t CreateSupportHistograms(TList *list) = 0;
+  virtual void AttachSupportHistograms(TList *list) = 0;
 
   /// Asks for QA histograms creation
   ///
@@ -172,7 +169,7 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual Bool_t CreateQAHistograms(TList *list) = 0;
+  virtual void AttachQAHistograms(TList *list) = 0;
 
   /// Asks for non validated entries QA histograms creation
   ///
@@ -180,7 +177,7 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual Bool_t CreateNveQAHistograms(TList *list) = 0;
+  virtual void AttachNveQAHistograms(TList *list) = 0;
 
   /// Asks for attaching the needed input information to the correction steps
   ///
@@ -188,7 +185,7 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the input information should be found
   /// \return kTRUE if everything went OK
-  virtual Bool_t AttachCorrectionInputs(TList *list) = 0;
+  virtual void AttachCorrectionInputs(TList *list) = 0;
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
@@ -266,16 +263,16 @@ class SubEvent {
   }
   /// Clean the configuration to accept a new event
   /// Pure virtual function
-  virtual void ClearDetector() = 0;
+  virtual void Clear() = 0;
   virtual void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup, Float_t *hardCodedGroupWeights) {
     (void) bUsedChannel;
     (void) nChannelGroup;
     (void) hardCodedGroupWeights;
   }
-  void FillDetectorConfigurationNameList(std::vector<std::string> &vec) const { vec.emplace_back(fName); }
+//  void FillDetectorConfigurationNameList(std::vector<std::string> &vec) const { vec.emplace_back(fName); }
  protected:
-  std::string fName;
-  CorrectionCalculator *fCorrectionsManager = nullptr; /// the framework manager pointer
+  unsigned int binid_;
+  Detector *fDetector = nullptr; /// the framework manager pointer
   std::vector<Qn::CorrectionDataVector> fDataVectorBank; //!<! input data for the current process / event
   QVector fPlainQnVector;      ///< Qn vector from the post processed input data
   QVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
@@ -283,7 +280,7 @@ class SubEvent {
   QVector fCorrectedQ2nVector; ///< Q2n vector after subsequent correction steps
   QVector fTempQnVector;  ///< temporary Qn vector for efficient Q vector building
   QVector fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
-  std::map<QVector::CorrectionStep, QVector*> qvectors_;
+  std::map<QVector::CorrectionStep, QVector *> qvectors_;
   QVector::Normalization fNormalizationMethod = QVector::Normalization::NONE; ///< the method for Q vector normalization
   CorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
   const EventClassVariablesSet *fEventClassVariables = nullptr; //-> /// set of variables that define event classes
