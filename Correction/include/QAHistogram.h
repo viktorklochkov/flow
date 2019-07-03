@@ -50,7 +50,7 @@ struct QAHistoBase {
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisF> axis, Qn::Variable axisvar) :
+  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisF> axis, Qn::InputVariableD axisvar) :
       vars_(std::move(vec)),
       axis_(std::move(axis)),
       axisvar_(axisvar) {
@@ -138,8 +138,8 @@ class QAHisto : public QAHistoBase {
 };
 
 /// specializations used in the framework
-using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::Variable>;
-using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::Variable>;
+using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::InputVariableD>;
+using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::InputVariableD>;
 
 }
 

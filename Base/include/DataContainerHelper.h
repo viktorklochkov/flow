@@ -28,6 +28,7 @@
 #include "SubSamples.h"
 #include "Stats.h"
 #include "EventShape.h"
+#include "Axis.h"
 
 namespace Qn {
 //Forward declaration of DataContainer
@@ -68,21 +69,21 @@ class DataContainerHelper {
  public:
   enum class Errors { Yonly, XandY };
 
-  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Qn::Stats, float> &data, Errors x = Errors::Yonly);
-  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Qn::Stats, float> &data,
+  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Stats,AxisF> &data, Errors x = Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Stats,AxisF> &data,
                                             int i,
                                             int max,
                                             Errors x = Errors::Yonly);
-  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Qn::Stats, float> &data,
+  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Stats,AxisF> &data,
                                     const std::string &axisname,
                                     Errors x = Errors::Yonly);
 
  private:
-  friend DataContainer<Qn::Stats, float>;
-  friend DataContainer<Qn::EventShape, float>;
-  static void StatsBrowse(Qn::DataContainer<Qn::Stats, float> *data, TBrowser *b);
-  static void EventShapeBrowse(Qn::DataContainer<Qn::EventShape, float> *data, TBrowser *b);
-  static void NDraw(Qn::DataContainer<Qn::Stats, float> &data, std::string option, const std::string &axis_name);
+  friend Qn::DataContainer<Stats,AxisF>;
+  friend Qn::DataContainer<EventShape,AxisF>;
+  static void StatsBrowse(Qn::DataContainer<Stats,AxisF> *data, TBrowser *b);
+  static void EventShapeBrowse(Qn::DataContainer<EventShape,AxisF> *data, TBrowser *b);
+  static void NDraw(Qn::DataContainer<Stats,AxisF> &data, std::string option, const std::string &axis_name);
 
 };
 

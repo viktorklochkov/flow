@@ -35,7 +35,6 @@
 #include "EventShape.h"
 #include "Product.h"
 #include "Stats.h"
-#include "CorrectionQnVector.h"
 
 #include "DataContainerHelper.h"
 
@@ -71,14 +70,14 @@ class DataContainer : public TObject {
  * Constructor
  * @param axes vector of axes of the datacontainer.
  */
-  explicit DataContainer(std::vector<Axis<AxisType>> axes) {
+  explicit DataContainer(std::vector<AxisType> axes) {
     AddAxes(axes);
   }
   virtual ~DataContainer() {
     delete list_;
   };
 
-  using QnAxes = std::vector<Axis<AxisType>>;
+  using QnAxes = std::vector<AxisType>;
   using size_type = std::size_t;
   using iterator = typename std::vector<T>::iterator;
   using const_iterator = typename std::vector<T>::const_iterator;
@@ -110,11 +109,11 @@ class DataContainer : public TObject {
  * Adds existing axis for storing the data with variable binning
  * @param axis Axis to be added.
  */
-  void AddAxis(const Axis<AxisType> &axis) {
+  void AddAxis(const AxisType &axis) {
     if (integrated_) this->Reset();
     if (std::find_if(axes_.begin(),
                      axes_.end(),
-                     [axis](const Axis<AxisType> &axisc) { return axisc.Name()==axis.Name(); })
+                     [axis](const AxisType &axisc) { return axisc.Name()==axis.Name(); })
         !=axes_.end())
       throw std::logic_error("Axis already defined in vector.");
     axes_.push_back(axis);
@@ -266,7 +265,7 @@ class DataContainer : public TObject {
  * @param name  Name of the desired axis
  * @return      Axis
  */
-  Axis<AxisType> GetAxis(const std::string name) const {
+  AxisType GetAxis(const std::string name) const {
     for (auto axis: axes_) {
       if (name==axis.Name()) return axis;
     }
@@ -319,16 +318,22 @@ class DataContainer : public TObject {
     GetIndex(indices, offset);
     if (indices.empty()) return "invalid offset";
     std::string outstring;
-    int i = 0;
-    for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
-      const auto &axis = *it;
-      outstring += axis.Name();
-      outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
-          + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
-      if (it + 1!=axes_.cend()) outstring += "; ";
-      ++i;
+    if (integrated_) {
+      return outstring;
+    } else {
+      int i = 0;
+      for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
+        const auto &axis = *it;
+        outstring += axis.Name();
+        outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
+            + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
+        if (it + 1!=axes_.cend()) outstring += "; ";
+        ++i;
+      }
+      outstring.erase(outstring.find_last_not_of('0') + 1, std::string::npos );
+      outstring.erase(outstring.find_last_not_of('.') + 1, std::string::npos );
+      return outstring;
     }
-    return outstring;
   }
 
 /**
@@ -483,7 +488,7 @@ class DataContainer : public TObject {
  * @param axis subrange of axis to perform selection
  * @return
  */
-  DataContainer<T, AxisType> Select(const Axis<AxisType> &axis) const {
+  DataContainer<T, AxisType> Select(const AxisType &axis) const {
     DataContainer<T, AxisType> selected;
     long axisposition = 0;
     long tmpaxisposition = 0;
@@ -528,7 +533,7 @@ class DataContainer : public TObject {
  * @return rebinned datacontainer.
  */
   template<typename Function>
-  DataContainer<T, AxisType> Rebin(const Axis<AxisType> &rebinaxis, Function &&lambda) const {
+  DataContainer<T, AxisType> Rebin(const AxisType &rebinaxis, Function &&lambda) const {
     DataContainer<T, AxisType> rebinned;
     unsigned long axisposition = 0;
     bool axisfound = false;
@@ -550,7 +555,7 @@ class DataContainer : public TObject {
     bool rebin_ok = true;
     for (const auto &rebinedge : rebinaxis) {
       bool found = false;
-      for (const auto &binedge : (Axis<AxisType>) axes_.at(axisposition)) {
+      for (const auto &binedge : (AxisType) axes_.at(axisposition)) {
         float test = TMath::Abs(rebinedge - binedge);
         if (test < 10e-4) {
           found = rebin_ok;
@@ -585,7 +590,7 @@ class DataContainer : public TObject {
  * @param rebinaxis axis to be rebinned.
  * @return rebinned datacontainer.
  */
-  DataContainer<T, AxisType> Rebin(const Axis<AxisType> &rebinaxis) const {
+  DataContainer<T, AxisType> Rebin(const AxisType &rebinaxis) const {
     auto lambda = [](const T &a, const T &b) { return Qn::MergeBins(a, b); };
     return Rebin(rebinaxis, lambda);
   }
@@ -807,26 +812,26 @@ class DataContainer : public TObject {
 // needed for ROOT IO                      //
 //-----------------------------------------//
 template<typename T>
-using DataF = DataContainer<T, float>;
-using DataContainerProduct = DataContainer<Qn::Product, float>;
-using DataContainerStats = DataContainer<Qn::Stats, float>;
-using DataContainerQVector = DataContainer<Qn::QVector, float>;
-using DataContainerEventShape = DataContainer<Qn::EventShape, float>;
+using DataF = DataContainer<T, AxisF>;
+using DataContainerProduct = DataContainer<Qn::Product, AxisF>;
+using DataContainerStats = DataContainer<Qn::Stats, AxisF>;
+using DataContainerQVector = DataContainer<Qn::QVector, AxisF>;
+using DataContainerEventShape = DataContainer<Qn::EventShape, AxisF>;
 
 //--------------------------------------------//
 // Template specializations for visualisation //
 //--------------------------------------------//
 
 template<>
-inline void DataContainer<Stats, float>::Browse(TBrowser *b) {
+inline void DataContainer<Stats, AxisF>::Browse(TBrowser *b) {
   DataContainerHelper::StatsBrowse(this, b);
 }
 template<>
-inline void DataContainer<EventShape, float>::Browse(TBrowser *b) {
+inline void DataContainer<EventShape, AxisF>::Browse(TBrowser *b) {
   DataContainerHelper::EventShapeBrowse(this, b);
 }
 template<>
-inline void DataContainer<Stats, float>::NDraw(Option_t *option, const std::string &axis_name) {
+inline void DataContainer<Stats, AxisF>::NDraw(Option_t *option, const std::string &axis_name) {
   DataContainerHelper::NDraw(*this, option, axis_name);
 }
 

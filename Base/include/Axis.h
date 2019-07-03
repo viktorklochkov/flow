@@ -130,7 +130,7 @@ class Axis {
    * Returns number of bins.
    * @return number of bins.
    */
-  typename std::vector<T>::size_type size() const { return bin_edges_.size() - 1; }
+  constexpr typename std::vector<T>::size_type size() const { return bin_edges_.size() - 1; }
   /**
    * Gets lower bin edge
    * @param bin Index of bin of interest

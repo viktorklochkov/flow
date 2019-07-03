@@ -24,7 +24,6 @@
 #include "DataContainer.h"
 
 namespace Qn {
-
 TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats &data,
                                                         int i,
                                                         int maxi, Errors drawerrors) {

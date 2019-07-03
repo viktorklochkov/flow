@@ -1,5 +1,3 @@
-#include <utility>
-
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -24,49 +22,9 @@
 #include <map>
 #include <utility>
 #include <cmath>
-
 #include "TTree.h"
 
-namespace Qn {
-/**
- * Variable
- * Constructor is private so it is only created in the variable manager
- * with the correct pointer to the values container.
- */
-class Variable {
- private:
-  Variable(const int id, const int length) : id_(id), length_(length), name_("") {}
-  Variable(const int id, const int length, std::string name) : id_(id), length_(length), name_(std::move(name)) {}
-  int id_{}; /// position in the values container
-  int length_{}; /// length in the  values container
-  double *var_container = nullptr; /// pointer to the values container
-  std::string name_; /// name of the variable
-  friend class VariableManager;
-  friend struct std::less<Qn::Variable>;
-  friend class Cuts;
- public:
-  Variable() = default;
-  inline double *begin() noexcept { return &var_container[id_]; } /// implements begin for iteration
-  inline double *end() noexcept { return &var_container[id_ + length_]; } /// implements end for iteration
-  inline double *begin() const noexcept { return &var_container[id_]; }  /// implements begin for iteration
-  inline double *end() const noexcept { return &var_container[id_ + length_]; }  /// implements end for iteration
-  inline double *at(int i) noexcept { return &var_container[id_ + i]; }
-  inline int length() const noexcept { return length_; }
-  std::string Name() const { return name_; }
-};
-}
-
-namespace std {
-/**
- * std::less specialization for the Qn::Variable
- */
-template<>
-struct less<Qn::Variable> {
-  bool operator()(const Qn::Variable &lhs, const Qn::Variable &rhs) const {
-    return lhs.id_ < rhs.id_;
-  }
-};
-}
+#include "InputVariable.h"
 
 /**
  * @brief Attaches a variable to a chosen tree.
@@ -76,7 +34,7 @@ struct less<Qn::Variable> {
 template<typename T>
 class OutValue {
  public:
-  explicit OutValue(Qn::Variable var) : var_(std::move(var)) {}
+  explicit OutValue(Qn::InputVariableD var) : var_(std::move(var)) {}
   /**
    * @brief updates the value. To be called every event.
    */
@@ -88,7 +46,7 @@ class OutValue {
   void SetToTree(TTree *tree) { tree->Branch(var_.Name().data(), &value_); }
  private:
   T value_; /// value which is written
-  Qn::Variable var_; /// Variable to be written to the tree
+  Qn::InputVariableD var_; /// Variable to be written to the tree
 };
 
 namespace Qn {
@@ -102,8 +60,17 @@ class VariableManager {
 
   VariableManager() {
     for (int i = 0; i < kMaxSize; ++i) {
-      var_container_[i] = NAN;
+      variable_values_float_[i] = NAN;
     }
+  }
+
+  void InitializeVariableContainers() {
+    variable_values_float_ = new double[kMaxSize]; /// non-owning pointer to variables
+    variable_values_ones_ = new double[kMaxSize]; /// values container of ones.
+    for (auto &var : name_var_map_) {
+      var.second.var_container = variable_values_float_;
+    }
+    name_var_map_["Ones"].var_container = variable_values_ones_;
   }
 
   /**
@@ -113,20 +80,16 @@ class VariableManager {
    * @param length length of the variable in the values container.
    */
   void CreateVariable(std::string name, const int id, const int length) {
-    Variable var(id, length, name);
-    var.var_container = var_container_;
+    InputVariableD var(id, length, name);
     name_var_map_.emplace(name, var);
-    var_name_map_.emplace(var, name);
   }
   /**
    * @brief Initializes the variable container for ones.
    */
   void CreateVariableOnes() {
-    Variable var(0, kMaxSize, "Ones");
-    for (unsigned int i = 0; i < kMaxSize; ++i) { var_ones_[i] = 1.0; }
-    var.var_container = var_ones_;
+    InputVariableD var(0, kMaxSize, "Ones");
+    for (unsigned int i = 0; i < kMaxSize; ++i) { variable_values_ones_[i] = 1.0; }
     name_var_map_.emplace("Ones", var);
-    var_name_map_.emplace(var, "Ones");
   }
   /**
    * @brief Creates a channel variable (variables which counts from 0 to the size-1).
@@ -134,19 +97,18 @@ class VariableManager {
    * @param size number of channels
    */
   void CreateChannelVariable(std::string name, const int size) {
-    Variable var(0, size, name);
+    InputVariableD var(0, size, name);
     auto *arr = new double[size];
     for (int i = 0; i < size; ++i) { arr[i] = i; }
     var.var_container = arr;
     name_var_map_.emplace(name, var);
-    var_name_map_.emplace(var, name);
   }
   /**
    * @brief Finds the variable in the variable manager.
    * @param name Name of the variable.
    * @return Variable of the given name.
    */
-  Variable FindVariable(const std::string &name) const { return name_var_map_.at(name); }
+  InputVariableD FindVariable(const std::string &name) const { return name_var_map_.at(name); }
   /**
    * @brief Find the position in the values container of a variable with a given name.
    * @param name Name of the variable.
@@ -157,13 +119,13 @@ class VariableManager {
    * @brief Get the values container.
    * @return a pointer to the values container.
    */
-  double *GetVariableContainer() { return var_container_; }
+  double *GetVariableContainer() { return variable_values_float_; }
   /**
    * @brief Sets the given pointer to the pointer to the values container.
    * It is used to forward the data to the correction step
    * @param var values container pointer pointer.
    */
-  void FillToQnCorrections(double **var) {*var = var_container_;}
+  void FillToQnCorrections(double **var) {*var = variable_values_float_;}
 
   /**
    * @brief Register the variable to be saved in the output tree as float.
@@ -204,10 +166,9 @@ class VariableManager {
 
  private:
   static constexpr int kMaxSize = 11000; /// Maximum number of variables.
-  double *var_container_ = new double[kMaxSize]; /// non-owning pointer to variables
-  double *var_ones_ = new double[kMaxSize]; /// values container of ones.
-  std::map<std::string, Variable> name_var_map_; /// name to variable map
-  std::map<Variable, std::string> var_name_map_; ///  variable to name map
+  double *variable_values_float_ = nullptr; /// non-owning pointer to variables
+  double *variable_values_ones_ = nullptr; /// values container of ones.
+  std::map<std::string, InputVariableD> name_var_map_; /// name to variable map
   std::vector<OutValue<float>> output_vars_f_; /// variables registered for output as float
   std::vector<OutValue<Long64_t>> output_vars_l_; /// variables registered for output as long
 };

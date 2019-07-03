@@ -1,6 +1,6 @@
 #include <random>
 #include "TFile.h"
-#include "CorrectionManager.h"
+#include "Correction/include/CorrectionManager.h"
 #include "Correlation/include/CorrelationManager.h"
 
 int main() {
@@ -42,7 +42,7 @@ int main() {
     auto rescaling = new TwistAndRescale();
     rescaling->SetApplyRescale(true);
     rescaling->SetApplyTwist(true);
-    rescaling->SetTwistAndRescaleMethod(TwistAndRescale::TWRESCALE_doubleHarmonic);
+    rescaling->SetTwistAndRescaleMethod(TwistAndRescale::Method::DOUBLE_HARMONIC);
     config->AddCorrectionOnQnVector(rescaling);
   };
 

@@ -21,35 +21,6 @@
 
 namespace Qn {
 /**
- * Constructor
- * @param norm normalisation method
- * @param vector QnCorrectionsQnVector to construct the QVector from. It is used internally by the framework but not exposed to the user.
- */
-QVector::QVector(QVector::Normalization norm, const CorrectionQnVector *vector, std::bitset<kmaxharmonics> bits) :
-    norm_(norm),
-    bits_(bits) {
-  q_.resize(static_cast<size_t>(bits.count()));
-  if (vector) {
-    if (vector->IsGoodQuality()) {
-      n_ = vector->GetN();
-      sum_weights_ = vector->GetSumOfWeights();
-      auto harmonicsmap = new int[kmaxharmonics];
-      vector->GetHarmonicsMap(harmonicsmap);
-      for (unsigned int i = 0; i < bits.count(); i++) {
-        auto iharmonic = harmonicsmap[i];
-        if (!std::isinf(vector->Qx(iharmonic)) && !std::isinf(vector->Qy(iharmonic)) &&
-            !std::isnan(vector->Qx(iharmonic)) && !std::isnan(vector->Qy(iharmonic)))
-          q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
-      }
-      delete[] harmonicsmap;
-    }
-  } else {
-    n_ = 0;
-    sum_weights_ = 0;
-  }
-}
-
-/**
  * Adds two Q vectors taking into account for the normalizations
  * @param a Q vector
  * @param b Q vector
@@ -150,26 +121,6 @@ QVector QVector::DeNormal() const {
   }
   c.norm_ = Normalization::NONE;
   return c;
-}
-
-void QVector::SetQVector(const CorrectionQnVector *vector) {
-  if (vector) {
-    if (vector->IsGoodQuality()) {
-      SetCorrectionStep(vector->GetName());
-      n_ = vector->GetN();
-      sum_weights_ = vector->GetSumOfWeights();
-      unsigned int i = 0;
-      for (unsigned int iharmonic = 0; iharmonic < bits_.size(); ++iharmonic) {
-        if (!bits_[iharmonic]) continue;
-        else {
-          if (!std::isinf(vector->Qx(iharmonic)) && !std::isinf(vector->Qy(iharmonic)) &&
-              !std::isnan(vector->Qx(iharmonic)) && !std::isnan(vector->Qy(iharmonic)))
-            q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
-          ++i;
-        }
-      }
-    }
-  }
 }
 
 }

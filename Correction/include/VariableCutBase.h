@@ -47,7 +47,7 @@ struct VariableCutBase {
 template<typename... T>
 class VariableCutNDim : public VariableCutBase {
  public:
-  VariableCutNDim(Variable const (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
+  VariableCutNDim(InputVariableD const (&arr)[sizeof...(T)], std::function<bool(T...)> lambda)
       : lambda_(lambda) {
     int i = 0;
     for (const auto &a : arr) {
@@ -96,7 +96,7 @@ class VariableCutNDim : public VariableCutBase {
     return name;
   }
 
-  std::array<Variable, sizeof...(T)> variables_; /// array of the variables used in the cut.
+  std::array<InputVariableD, sizeof...(T)> variables_; /// array of the variables used in the cut.
   std::function<bool(T...)> lambda_; /// function used to evaluate the cut.
 };
 
@@ -105,7 +105,7 @@ template<std::size_t>
 using TypeCut = double &;
 template<std::size_t N, typename FUNC, std::size_t... Is>
 std::unique_ptr<VariableCutNDim<TypeCut<Is>...>> CreateNDimCutImpl(std::index_sequence<Is...>,
-                                                                Variable const (&arr)[N],
+                                                                InputVariableD const (&arr)[N],
                                                                 FUNC &&func) {
   auto pp = std::make_unique<VariableCutNDim<TypeCut<Is>...>>(arr, std::forward<FUNC>(func));
   return pp;
@@ -120,7 +120,7 @@ std::unique_ptr<VariableCutNDim<TypeCut<Is>...>> CreateNDimCutImpl(std::index_se
  * @return Returns a unique pointer to the cut.
  */
 template<std::size_t N, typename FUNC>
-std::unique_ptr<VariableCutBase> MakeUniqueNDimCut(Variable const (&arr)[N], FUNC &&func) {
+std::unique_ptr<VariableCutBase> MakeUniqueNDimCut(InputVariableD const (&arr)[N], FUNC &&func) {
   return Details::CreateNDimCutImpl(std::make_index_sequence<N>{}, arr, std::forward<FUNC>(func));
 }
 
@@ -186,9 +186,9 @@ class Cuts {
     if (!cuts_.empty()) {
       nchannels_ = nchannels;
       auto offset = nchannels*(cuts_.size() + 1);
-      cut_i_ = Variable(0, offset);
-      cut_channel_ = Variable(offset, offset);
-      cut_weight_ = Variable(2*offset, offset);
+      cut_i_ = InputVariableD(0, offset);
+      cut_channel_ = InputVariableD(offset, offset);
+      cut_weight_ = InputVariableD(2*offset, offset);
       var_values_ = new double[3*offset];
       cut_weight_.var_container = var_values_;
       cut_i_.var_container = var_values_;
@@ -213,7 +213,7 @@ class Cuts {
           histo->GetXaxis()->SetBinLabel(icut, cut->Name().data());
           ++icut;
         }
-        std::array<Variable, 2> arr = {{cut_i_, cut_weight_}};
+        std::array<InputVariableD, 2> arr = {{cut_i_, cut_weight_}};
         report_ = std::make_unique<QAHisto1DPtr>(arr, histo);
       } else {
         std::string name = detname + "Cut_Report";
@@ -230,7 +230,7 @@ class Cuts {
           histo->GetXaxis()->SetBinLabel(icut, cut->Name().data());
           ++icut;
         }
-        std::array<Variable, 3> arr = {{cut_i_, cut_channel_, cut_weight_}};
+        std::array<InputVariableD, 3> arr = {{cut_i_, cut_channel_, cut_weight_}};
         report_ = std::make_unique<QAHisto2DPtr>(arr, histo);
       }
     }
@@ -248,9 +248,9 @@ class Cuts {
  private:
   std::size_t nchannels_ = 0; /// number of channels is zero in case of no report
   double *var_values_ = nullptr; /// pointer to the values which are filled to the histogram.
-  Variable cut_i_; /// Variable of saving cut number
-  Variable cut_weight_; /// Variable saving a weight used for filling the cut histogram
-  Variable cut_channel_; /// Variable saving the channel number
+  InputVariableD cut_i_; /// Variable of saving cut number
+  InputVariableD cut_weight_; /// Variable saving a weight used for filling the cut histogram
+  InputVariableD cut_channel_; /// Variable saving the channel number
   std::vector<std::unique_ptr<VariableCutBase>> cuts_; /// vector of cuts which are applied
   std::unique_ptr<QAHistoBase> report_ = nullptr; /// histogram of the cut report.
 
