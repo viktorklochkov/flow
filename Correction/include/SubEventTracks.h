@@ -41,33 +41,32 @@ class SubEventTracks : public SubEvent {
   friend class SubEvent;
   SubEventTracks() = default;
   SubEventTracks(unsigned int bin_id,
-                              const EventClassVariablesSet *eventClassesVariables,
-                              std::bitset<QVector::kmaxharmonics> harmonics);
-  virtual ~SubEventTracks() = default;
+                 const CorrectionAxisSet *eventClassesVariables,
+                 std::bitset<QVector::kmaxharmonics> harmonics);
 
   /// Get if the detector configuration is own by a tracking detector
   /// \return TRUE, this is tracking detector configuration
-  virtual Bool_t GetIsTrackingDetector() const { return kTRUE; }
+  virtual Bool_t GetIsTrackingDetector() const  { return kTRUE; }
 
-  virtual void CreateSupportDataStructures();
-  virtual void AttachSupportHistograms(TList *list);
-  virtual void AttachQAHistograms(TList *list);
-  virtual void AttachNveQAHistograms(TList *list);
-  virtual void AttachCorrectionInputs(TList *list);
-  virtual void AfterInputsAttachActions();
+  virtual void CreateSupportQVectors() ;
+  virtual void CreateCorrectionHistograms(TList *list) ;
+  virtual void AttachQAHistograms(TList *list) ;
+  virtual void AttachNveQAHistograms(TList *list) ;
+  virtual void AttachCorrectionInput(TList *list) ;
+  virtual void AfterInputAttachAction() ;
 
-  virtual Bool_t ProcessCorrections(const double *variableContainer);
-  virtual Bool_t ProcessDataCollection(const double *variableContainer);
+  virtual Bool_t ProcessCorrections() ;
+  virtual Bool_t ProcessDataCollection() ;
 
-  virtual void IncludeQnVectors();
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*> &set) const;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*> &set) const;
-  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
-  virtual void Clear();
+  virtual void IncludeQnVectors() ;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const ;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const ;
+  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const ;
+  virtual void Clear() ;
 
  private:
   /* QA section */
-  void FillQAHistograms(const double *variableContainer);
+  void FillQAHistograms();
 
 /// \cond CLASSIMP
  ClassDef(SubEventTracks, 2);
@@ -98,14 +97,13 @@ inline void SubEventTracks::Clear() {
 /// The request is transmitted to the Q vector correction steps.
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t SubEventTracks::ProcessCorrections(const double *variableContainer) {
+inline Bool_t SubEventTracks::ProcessCorrections() {
   /* first we build the Q vector with the chosen calibration */
   BuildQnVector();
-
   /* then we transfer the request to the Q vector correction steps */
   /* the loop is broken when a correction step has not been applied */
   for (auto &correction : fQnVectorCorrections) {
-    if (correction->ProcessCorrections(variableContainer))
+    if (correction->ProcessCorrections())
       continue;
     else
       return kFALSE;
@@ -119,13 +117,12 @@ inline Bool_t SubEventTracks::ProcessCorrections(const double *variableContainer
 /// the request is transmitted to the Q vector correction steps.
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t SubEventTracks::ProcessDataCollection(const double *variableContainer) {
-  /* fill QA information */
-  FillQAHistograms(variableContainer);
+inline Bool_t SubEventTracks::ProcessDataCollection() {
+  FillQAHistograms();
   /* we transfer the request to the Q vector correction steps */
   /* the loop is broken when a correction step has not been applied */
   for (auto &correction : fQnVectorCorrections) {
-    if (correction->ProcessDataCollection(variableContainer))
+    if (correction->ProcessDataCollection())
       continue;
     else
       return kFALSE;

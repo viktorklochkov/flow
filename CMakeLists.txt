@@ -36,12 +36,12 @@ set(CORRECTION_SOURCES
         Correction/Recentering.cpp
         Correction/TwistAndRescale.cpp
         Correction/CorrectionManager.cpp
-        )
+        Correction/Detector.cpp)
 
 set(CORRECTION_HEADERS
         CorrectionOnInputData.h
-        EventClassVariable.h
-        EventClassVariablesSet.h
+        CorrectionAxis.h
+        CorrectionAxisSet.h
         CorrectionStep.h
         CorrectionHistogramBase.h
         CorrectionsSet.h
@@ -82,6 +82,7 @@ set(BASE_HEADERS DataContainer.h
         SubSamples.h
         Product.h
         Stats.h
+        Cuts.h
         )
 
 set(CORRELATION_HEADERS
@@ -93,7 +94,7 @@ set(CORRELATION_HEADERS
         EseHandler.h
         EseSubEvent.h
         EventAxes.h
-        EventCuts.h
+        CorrelationEventCuts.h
         )
 
 set(CORRELATION_SOURCES

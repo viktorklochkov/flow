@@ -50,7 +50,7 @@ namespace Qn {
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
 SubEventTracks::SubEventTracks(unsigned int bin_id,
-                               const EventClassVariablesSet *eventClassesVariables,
+                               const CorrectionAxisSet *eventClassesVariables,
                                std::bitset<QVector::kmaxharmonics> harmonics) :
     SubEvent(bin_id, eventClassesVariables, harmonics) {
 }
@@ -59,12 +59,12 @@ SubEventTracks::SubEventTracks(unsigned int bin_id,
 ///
 /// The input data vector bank is allocated and the request is
 /// transmitted to the Q vector corrections.
-void SubEventTracks::CreateSupportDataStructures() {
+void SubEventTracks::CreateSupportQVectors() {
 
   /* this is executed in the remote node so, allocate the data bank */
   fDataVectorBank.reserve(Qn::SubEvent::INITIALSIZE);
   for (auto &correction : fQnVectorCorrections) {
-    correction->CreateSupportDataStructures();
+    correction->CreateSupportQVectors();
   }
 }
 
@@ -76,12 +76,12 @@ void SubEventTracks::CreateSupportDataStructures() {
 /// to the passed list. Then the new list is passed to the corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void SubEventTracks::AttachSupportHistograms(TList *list) {
+void SubEventTracks::CreateCorrectionHistograms(TList *list) {
   auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(GetName().data());
   detectorConfigurationList->SetOwner(kTRUE);
   for (auto &correction : fQnVectorCorrections) {
-    correction->AttachSupportHistograms(detectorConfigurationList);
+    correction->CreateCorrectionHistograms(detectorConfigurationList);
   }
   /* if list is empty delete it if not incorporate it */
   if (!detectorConfigurationList->IsEmpty()) {
@@ -100,12 +100,17 @@ void SubEventTracks::AttachSupportHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 void SubEventTracks::AttachQAHistograms(TList *list) {
-  auto detectorConfigurationList = new TList();
-  detectorConfigurationList->SetName(GetName().data());
-  detectorConfigurationList->SetOwner(kTRUE);
+  TList *detectorConfigurationList;
+  if (GetName().empty()) {
+    detectorConfigurationList = list;
+  } else {
+    detectorConfigurationList = new TList();
+    detectorConfigurationList->SetName(GetName().data());
+    detectorConfigurationList->SetOwner(kTRUE);
+  }
   /* the own QA average Qn vector components histogram */
-  auto qaname = std::string(szQAQnAverageHistogramName) + " " + GetName();
-  fQAQnAverageHistogram = std::make_unique<CorrectionProfileComponents>(qaname,qaname,GetEventClassVariablesSet());
+  auto name = std::string(szQAQnAverageHistogramName) + " " + GetName();
+  fQAQnAverageHistogram = std::make_unique<CorrectionProfileComponents>(name, GetEventClassVariablesSet());
   /* get information about the configured harmonics to pass it for histogram creation */
   Int_t nNoOfHarmonics = this->GetNoOfHarmonics();
   auto harmonicsMap = new Int_t[nNoOfHarmonics];
@@ -152,7 +157,7 @@ void SubEventTracks::AttachNveQAHistograms(TList *list) {
 /// the request is transmitted to the Q vector corrections with the found list.
 /// \param list list where the input information should be found
 /// \return kTRUE if everything went OK
-void SubEventTracks::AttachCorrectionInputs(TList *list) {
+void SubEventTracks::AttachCorrectionInput(TList *list) {
   auto detectorConfigurationList = (TList *) list->FindObject(GetName().data());
   if (detectorConfigurationList) {
     for (auto &correction : fQnVectorCorrections) {
@@ -167,21 +172,21 @@ void SubEventTracks::AttachCorrectionInputs(TList *list) {
 /// it is time to check if their requirements are satisfied
 ///
 /// The request is transmitted to the Q vector corrections
-void SubEventTracks::AfterInputsAttachActions() {
+void SubEventTracks::AfterInputAttachAction() {
   /* now propagate it to Q vector corrections */
   for (auto &correction : fQnVectorCorrections) {
-    correction->AfterInputsAttachActions();
+    correction->AfterInputAttachAction();
   }
 }
 
 /// Fills the QA plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
-void SubEventTracks::FillQAHistograms(const double *variableContainer) {
+void SubEventTracks::FillQAHistograms() {
   if (fQAQnAverageHistogram) {
     Int_t harmonic = fPlainQnVector.GetFirstHarmonic();
     while (harmonic!=-1) {
-      fQAQnAverageHistogram->FillX(harmonic, variableContainer, fPlainQnVector.Qx(harmonic));
-      fQAQnAverageHistogram->FillY(harmonic, variableContainer, fPlainQnVector.Qy(harmonic));
+      fQAQnAverageHistogram->FillX(harmonic, fPlainQnVector.x(harmonic));
+      fQAQnAverageHistogram->FillY(harmonic, fPlainQnVector.y(harmonic));
       harmonic = fPlainQnVector.GetNextHarmonic(harmonic);
     }
   }
@@ -201,7 +206,7 @@ void SubEventTracks::FillQAHistograms(const double *variableContainer) {
 /// be attached and the constructed list does not contain the final Qn vectors.
 /// \param list list where the corrected Qn vector should be added
 void SubEventTracks::IncludeQnVectors() {
-  qvectors_.emplace(QVector::CorrectionStep::PLAIN,&fPlainQnVector);
+  qvectors_.emplace(QVector::CorrectionStep::PLAIN, &fPlainQnVector);
   for (auto &correction : fQnVectorCorrections) {
     correction->IncludeCorrectedQnVector(qvectors_);
   }

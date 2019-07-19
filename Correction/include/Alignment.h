@@ -104,29 +104,21 @@ class Alignment : public CorrectionOnQvector {
   /// Set the minimum number of entries for calibration histogram bin content validation
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
-
   virtual void AttachInput(TList *list);
-  /// Perform after calibration histograms attach actions
-  /// It is used to inform the different correction step that
-  /// all conditions for running the network are in place so
-  /// it is time to check if their requirements are satisfied
-  ///
-  /// Does nothing for the time being
-  virtual void AfterInputsAttachActions() {}
-  virtual void CreateSupportDataStructures();
-  virtual void AttachSupportHistograms(TList *list);
+  virtual void AfterInputAttachAction() {}
+  virtual void CreateSupportQVectors();
+  virtual void CreateCorrectionHistograms(TList *list);
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
 
-  virtual Bool_t ProcessCorrections(const double *variableContainer);
-  virtual Bool_t ProcessDataCollection(const double *variableContainer);
+  virtual Bool_t ProcessCorrections();
+  virtual Bool_t ProcessDataCollection();
   virtual void ClearCorrectionStep();
-  virtual Bool_t IsBeingApplied() const;
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
   using State = Qn::CorrectionStep::State;
-  static constexpr const unsigned int szPriority = CorrectionOnQvector::Priority::kAlignment; ///< the key of the correction step for ordering purpose
+  static constexpr const unsigned int szPriority = CorrectionOnQvector::Step::kAlignment; ///< the key of the correction step for ordering purpose
   static constexpr const char *szCorrectionName = "Alignment"; ///< the name of the correction step
   static constexpr const char *szSupportHistogramName = "QnQn"; ///< the name and title for support histograms
   static constexpr const char *szCorrectedQnVectorName = "align"; ///< the name of the Qn vector after applying the correction

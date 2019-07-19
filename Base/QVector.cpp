@@ -64,11 +64,11 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
       break;
     }
     case (Normalization::M): {
-      auto add = [this](const QVec q) {
+      auto norm = [this](const QVec q) {
         if (sum_weights_!=0) return q/sum_weights_;
         return QVec{0., 0.};
       };
-      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
+      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), norm);
       break;
     }
     case (Normalization::SQRT_M): {

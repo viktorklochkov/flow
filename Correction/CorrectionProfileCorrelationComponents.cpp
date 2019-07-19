@@ -3,7 +3,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileCorrelationComponents.h"
 
 /// \cond CLASSIMP
@@ -28,12 +28,12 @@ namespace Qn {
 ///     's'            the bin are the standard deviation of of the bin values
 CorrectionProfileCorrelationComponents::CorrectionProfileCorrelationComponents(std::string name,
                                                                                std::string title,
-                                                                               const EventClassVariablesSet &ecvs,
+                                                                               const CorrectionAxisSet &ecvs,
                                                                                ErrorMode mode) :
     CorrectionHistogramBase(name, title, ecvs, mode) {}
 
 CorrectionProfileCorrelationComponents::CorrectionProfileCorrelationComponents(std::string name,
-                                                                               const EventClassVariablesSet &ecvs,
+                                                                               const CorrectionAxisSet &ecvs,
                                                                                ErrorMode mode) :
     CorrectionHistogramBase(name, name, ecvs, mode) {}
 
@@ -82,7 +82,7 @@ Bool_t CorrectionProfileCorrelationComponents::CreateCorrelationComponentsProfil
   entriesHistoTitle += szYYCorrelationComponentSuffix;
   entriesHistoTitle += szEntriesHistoSuffix;
   /* now prepare the construction of the histograms */
-  Int_t nVariables = fEventClassVariables.size();
+  Int_t nVariables = fEventClassVariables.GetSize();
   auto *minvals = new Double_t[nVariables];
   auto *maxvals = new Double_t[nVariables];
   auto *nbins = new Int_t[nVariables];
@@ -100,22 +100,22 @@ Bool_t CorrectionProfileCorrelationComponents::CreateCorrelationComponentsProfil
                        nVariables, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fXXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fXXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fXYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fXYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fYXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fYXValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fYYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fYYValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+    fXXValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fXXValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fXXValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fXYValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fXYValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fXYValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fYXValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fYXValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fYXValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fYYValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fYYValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fYYValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
   }
   /* ask for square sum accumulation */
   fXXValues->Sumw2();
@@ -135,8 +135,8 @@ Bool_t CorrectionProfileCorrelationComponents::CreateCorrelationComponentsProfil
       new THnI((const char *) entriesHistoName, (const char *) entriesHistoTitle, nVariables, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+    fEntries->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
   }
   /* and finally add the entries histogram to the list */
   histogramList->Add(fEntries);
@@ -204,8 +204,8 @@ Bool_t CorrectionProfileCorrelationComponents::AttachHistograms(TList *histogram
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t CorrectionProfileCorrelationComponents::GetBin(const double *variableContainer) {
-  FillBinAxesValues(variableContainer);
+Long64_t CorrectionProfileCorrelationComponents::GetBin() {
+  FillBinAxesValues();
   return fEntries->GetBin(fBinAxesValues);
 }
 
@@ -416,13 +416,13 @@ Float_t CorrectionProfileCorrelationComponents::GetYYBinError(Long64_t bin) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionProfileCorrelationComponents::FillXX(const double *variableContainer, Float_t weight) {
+void CorrectionProfileCorrelationComponents::FillXX(Float_t weight) {
   /* first the sanity checks */
   if (!(fXXXYYXYYFillMask & correlationXXmask)) {
     /* now it's safe to continue */
     /* keep total entries in fValues updated */
     Double_t nEntries = fXXValues->GetEntries();
-    FillBinAxesValues(variableContainer);
+    FillBinAxesValues();
     fXXValues->Fill(fBinAxesValues, weight);
     fXXValues->SetEntries(nEntries + 1);
     /* update fill mask */
@@ -445,13 +445,13 @@ void CorrectionProfileCorrelationComponents::FillXX(const double *variableContai
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionProfileCorrelationComponents::FillXY(const double *variableContainer, Float_t weight) {
+void CorrectionProfileCorrelationComponents::FillXY(Float_t weight) {
   /* first the sanity checks */
   if (!(fXXXYYXYYFillMask & correlationXYmask)) {
     /* now it's safe to continue */
     /* keep total entries in fValues updated */
     Double_t nEntries = fXYValues->GetEntries();
-    FillBinAxesValues(variableContainer);
+    FillBinAxesValues();
     fXYValues->Fill(fBinAxesValues, weight);
     fXYValues->SetEntries(nEntries + 1);
     /* update fill mask */
@@ -474,14 +474,14 @@ void CorrectionProfileCorrelationComponents::FillXY(const double *variableContai
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionProfileCorrelationComponents::FillYX(const double *variableContainer, Float_t weight) {
+void CorrectionProfileCorrelationComponents::FillYX(Float_t weight) {
   /* first the sanity checks */
   if (!(fXXXYYXYYFillMask & correlationYXmask)) {
     /* now it's safe to continue */
     /* keep total entries in fValues updated */
     Double_t nEntries = fYXValues->GetEntries();
 
-    FillBinAxesValues(variableContainer);
+    FillBinAxesValues();
     fYXValues->Fill(fBinAxesValues, weight);
     fYXValues->SetEntries(nEntries + 1);
 
@@ -506,13 +506,13 @@ void CorrectionProfileCorrelationComponents::FillYX(const double *variableContai
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionProfileCorrelationComponents::FillYY(const double *variableContainer, Float_t weight) {
+void CorrectionProfileCorrelationComponents::FillYY(Float_t weight) {
   /* first the sanity checks */
   if (!(fXXXYYXYYFillMask & correlationYYmask)) {
     /* now it's safe to continue */
     /* keep total entries in fValues updated */
     Double_t nEntries = fYYValues->GetEntries();
-    FillBinAxesValues(variableContainer);
+    FillBinAxesValues();
     fYYValues->Fill(fBinAxesValues, weight);
     fYYValues->SetEntries(nEntries + 1);
     /* update harmonic fill mask */

@@ -30,7 +30,7 @@
 namespace Qn {
 class CorrectionOnQvector : public CorrectionStep {
  public:
-  enum Priority {
+  enum Step {
     kRecentering,
     kAlignment,
     kTwistAndRescale
@@ -48,7 +48,7 @@ class CorrectionOnQvector : public CorrectionStep {
   /// it is time to check if their requirements are satisfied
   ///
   /// Pure virtual function
-  virtual void AfterInputsAttachActions() = 0;
+  virtual void AfterInputAttachAction() = 0;
   /// Gets the corrected Qn vector
   /// \return the corrected Qn vector
   const QVector *GetCorrectedQnVector() const { return fCorrectedQnVector.get(); }
@@ -70,6 +70,18 @@ class CorrectionOnQvector : public CorrectionStep {
         qvectors.emplace(fCorrectedQnVector->GetCorrectionStep(), fCorrectedQnVector.get());
         break;
       default:break;
+    }
+  }
+  /// Reports if the correction step is being applied
+  /// Pure virutal function
+  /// \return TRUE if the correction step is being applied
+  virtual Bool_t IsBeingApplied() const {
+    switch (fState) {
+      case State::CALIBRATION: return false;
+      case State::APPLYCOLLECT:
+        /* FALLTHRU */
+      case State::APPLY: return true;
+      case State::PASSIVE: return false;
     }
   }
  protected:

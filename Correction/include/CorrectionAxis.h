@@ -30,38 +30,36 @@
 #include "InputVariable.h"
 
 namespace Qn {
-class EventClassVariable {
+class CorrectionAxis {
  public:
-  EventClassVariable() = default;
-  EventClassVariable(InputVariableD variable, AxisD axis) : variable_(variable), axis_(axis) {}
-  virtual ~EventClassVariable() = default;
-  EventClassVariable &operator=(const EventClassVariable &) = delete;
+  CorrectionAxis() = default;
+  CorrectionAxis(InputVariable variable, const AxisD &axis) : variable_(variable), axis_(axis) {}
+  virtual ~CorrectionAxis() = default;
   /// Gets the variable unique Id
-  Int_t GetId() const { return variable_.id(); }
+  int GetId() const { return variable_.GetID(); }
   /// Gets the value of the variable
-  double GetValue() const {return *variable_.begin();}
+  double GetValue() const { return *variable_.begin(); }
   /// Gets the variable name / label
   std::string GetLabel() const { return axis_.Name(); }
   /// Gets the number of bins
   Int_t GetNBins() const { return axis_.GetNBins(); }
   /// Gets the actual bins edges array
-  const Double_t *GetBins() const { return axis_.GetPtr(); }
+  const double *GetBins() const { return axis_.GetPtr(); }
   /// Gets the lower edge for the passed bin number
   /// \param bin bin number starting from one
-  Double_t GetBinLowerEdge(Int_t bin) const { return axis_.GetLowerBinEdge(bin); }
+  double GetBinLowerEdge(const unsigned long bin) const { return axis_.GetLowerBinEdge(bin); }
   /// Gets the upper edge for the passed bin number
   /// \param bin bin number starting from one
-  Double_t GetBinUpperEdge(Int_t bin) const { return axis_.GetUpperBinEdge(bin); }
+  double GetBinUpperEdge(const unsigned long bin) const { return axis_.GetUpperBinEdge(bin); }
   /// Gets the lowest variable value considered
-  Double_t GetLowerEdge() const { return axis_.GetFirstBinEdge(); }
+  double GetLowerEdge() const { return axis_.GetFirstBinEdge(); }
   /// Gets the highest variabel value considered
-  Double_t GetUpperEdge() const { return axis_.GetLastBinEdge(); }
+  double GetUpperEdge() const { return axis_.GetLastBinEdge(); }
  private:
-  InputVariableD variable_;
+  InputVariable variable_;
   AxisD axis_;
-
 /// \cond CLASSIMP
- ClassDef(EventClassVariable, 1);
+ ClassDef(CorrectionAxis, 1);
 /// \endcond
 };
 }

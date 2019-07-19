@@ -29,7 +29,7 @@
 #include "ROOT/RIntegerSequence.hxx"
 
 #include "Axis.h"
-#include "VariableManager.h"
+#include "InputVariableManager.h"
 
 namespace Qn {
 /**
@@ -50,7 +50,7 @@ struct QAHistoBase {
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisF> axis, Qn::InputVariableD axisvar) :
+  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisD> axis, Qn::InputVariable axisvar) :
       vars_(std::move(vec)),
       axis_(std::move(axis)),
       axisvar_(axisvar) {
@@ -84,9 +84,9 @@ class QAHisto : public QAHistoBase {
     auto bin = 0;
     if (axis_) {
       bin = axis_->FindBin(*axisvar_.begin());
-      if (bin > -1) ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
+      if (bin > -1) ptr(histo_.at(bin))->FillN(a[0].GetSize(), (a[I].begin())...);
     } else {
-      ptr(histo_.at(bin))->FillN(a[0].length(), (a[I].begin())...);
+      ptr(histo_.at(bin))->FillN(a[0].GetSize(), (a[I].begin())...);
     }
   }
 
@@ -132,14 +132,14 @@ class QAHisto : public QAHistoBase {
 
   std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
   std::vector<HISTO> histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
-  std::unique_ptr<Qn::AxisF> axis_ = nullptr; // Creates a histogram for each bin of the axis
+  std::unique_ptr<Qn::AxisD> axis_ = nullptr; // Creates a histogram for each bin of the axis
   VAR axisvar_;
   std::string name_;
 };
 
 /// specializations used in the framework
-using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::InputVariableD>;
-using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::InputVariableD>;
+using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::InputVariable>;
+using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::InputVariable>;
 
 }
 

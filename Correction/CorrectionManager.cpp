@@ -18,129 +18,100 @@
 #include "CorrectionManager.h"
 #include "TList.h"
 
-void Qn::CorrectionManager::SetCorrectionSteps(const std::string &name, std::function<void(SubEvent *config)> config) {
-  detectors_.FindDetector(name).SetConfig(std::move(config));
-}
+namespace Qn {
 
-void Qn::CorrectionManager::AddHisto1D(const std::string &name, const Qn::AxisF &axis, const std::string &weightname) {
-  detectors_.FindDetector(name).AddHistogram(Create1DHisto(name, axis, weightname));
-}
-
-void Qn::CorrectionManager::AddHisto2D(const std::string &name,
-                                       const std::vector<Qn::AxisF> &axes,
-                                       const std::string &weightname) {
-  detectors_.FindDetector(name).AddHistogram(Create2DHisto(name, axes, weightname));
-}
-
-void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::AxisF> &axes,
-                                            const Qn::AxisF &axis,
-                                            const std::string &weightname) {
-  event_histograms_.push_back(Create2DHisto("Ev", axes, weightname, axis));
-}
-
-void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::AxisF> &axes, const std::string &weightname) {
-  event_histograms_.push_back(Create2DHisto("Ev", axes, weightname));
-}
-
-void Qn::CorrectionManager::AddEventHisto1D(const Qn::AxisF &axes, const std::string &weightname) {
-  event_histograms_.push_back(Create1DHisto("Ev", axes, weightname));
-}
-
-void Qn::CorrectionManager::Initialize() {
-  if (out_tree_) {
-//    for (auto &pair : detectors_track_) {
-//      out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
-//    }
-//    for (auto &pair : detectors_channel_) {
-//      out_tree_->Branch(pair.first.data(), pair.second->GetQnDataContainer().get());
-//    }
-    variable_manager_.SetOutputToTree(out_tree_);
+void CorrectionManager::InitializeCorrections() {
+  // Connects the correction histogram list
+  correction_input_file_ = std::make_unique<TFile>(correction_input_file_name_.data(), "READ");
+  if (correction_input_file_ && !correction_input_file_->IsZombie()) {
+    auto input = dynamic_cast<TList *>(correction_input_file_->FindObjectAny(kCorrectionListName));
+    correction_input_.reset(input);
+    correction_input_->SetOwner(kTRUE);
   }
-  CreateDetectors();
-//  for (auto &det : detectors_track_) {
-//    det.second.InitializeCutReports();
-//  }
-//  for (auto &det : detectors_channel_) {
-//    det.second.InitializeCutReports();
-//  }
-  event_cuts_->CreateCutReport("Event", 1);
-//  qnc_calculator_.InitializeQnCorrectionsFramework();
-//  unsigned nbinsrunning = 0;
-//  for (auto &pair : detectors_track_) {
-//    int ibin = 0;
-//    for (auto &bin : *pair.second->GetDataContainer()) {
-//      auto detectorid = nbinsrunning + ibin;
-//      ++ibin;
-//      bin.array = &qnc_calculator_.FindDetector(detectorid)->GetInputDataBank();
-//    }
-//    pair.second->FillReport();
-//    nbinsrunning += pair.second->GetDataContainer()->size();
-//  }
-//  for (auto &pair : detectors_channel_) {
-//    int ibin = 0;
-//    for (auto &bin : *pair.second->GetDataContainer()) {
-//      auto detectorid = nbinsrunning + ibin;
-//      ++ibin;
-//      bin.array = &qnc_calculator_.FindDetector(detectorid)->GetInputDataBank();
-//    }
-//    pair.second->FillReport();
-//    nbinsrunning += pair.second->GetDataContainer()->size();
-//  }
+  // Prepares the correctionsteps
+  detectors_.CreateSupportQVectors();
+  correction_output = std::make_unique<TList>();
+  correction_output->SetName(kCorrectionListName);
+  correction_output->SetOwner(kTRUE);
+  if (!runs_.empty()) {
+    auto current_run = new TList();
+    current_run->SetName(runs_.GetCurrent().data());
+    current_run->SetOwner(true);
+    correction_output->Add(current_run);
+    detectors_.CreateCorrectionHistograms(current_run);
+  }
+  if (correction_input_) {
+    auto current_run = (TList *) correction_input_->FindObject(runs_.GetCurrent().data());
+    if (current_run) {
+      detectors_.AttachCorrectionInput(current_run);
+    }
+  }
+  detectors_.IncludeQnVectors();
 }
 
-void Qn::CorrectionManager::ProcessEvent() {
-  if (event_cuts_->CheckCuts(0)) event_passed_cuts_ = true;
+void CorrectionManager::AttachQAHistograms() {
+  correction_qa_histos_ = std::make_unique<TList>();
+  correction_qa_histos_->SetName("QA_histograms");
+  correction_qa_histos_->SetOwner(true);
+  detectors_.AttachQAHistograms(correction_qa_histos_.get(), fill_qa_histos_, fill_validation_qa_histos_, &variable_manager_);
+  auto event_qa_list = new TList();
+  event_qa_list->SetName("event_QA");
+  event_cuts_.AddToList(event_qa_list);
+  for (auto &histo : event_histograms_) {
+    histo->AddToList(event_qa_list);
+  }
+  correction_qa_histos_->Add(event_qa_list);
+}
+
+void CorrectionManager::InitializeOnNode() {
+  variable_manager_.InitializeOnNode();
+  for (const auto &axis : correction_axes_callback_) {
+    correction_axes_.Add(axis(&variable_manager_));
+  }
+  // Creates histograms
+  for (const auto &callback : event_histograms_callback_) {
+    event_histograms_.push_back(callback(&variable_manager_));
+  }
+  detectors_.InitializeOnNode(this);
+  event_cuts_.CreateCutReport("Event Cut Report");
+  InitializeCorrections();
+  AttachQAHistograms();
+  if (fill_output_tree_ && out_tree_) {
+    detectors_.SetOutputTree(out_tree_);
+    variable_manager_.SetOutputTree(out_tree_);
+  }
+}
+
+bool CorrectionManager::ProcessEvent() {
+  event_passed_cuts_ = event_cuts_.CheckCuts(0);
   if (event_passed_cuts_) {
-    event_cuts_->FillReport();
+    event_cuts_.FillReport();
     variable_manager_.UpdateOutVariables();
+    for (auto &histo : event_histograms_) {
+      histo->Fill();
+    }
+  }
+  return event_passed_cuts_;
+}
+
+void CorrectionManager::ProcessCorrections() {
+  if (event_passed_cuts_) {
+    detectors_.ProcessCorrections();
+    detectors_.FillReport();
+    if (fill_output_tree_) out_tree_->Fill();
   }
 }
 
-void Qn::CorrectionManager::ProcessQnVectors() {
-//  if (event_passed_cuts_) {
-//    for (auto &histo : event_histograms_) {
-//      histo->Fill();
-//    }
-//    var_manager_->FillToQnCorrections(qnc_calculator_.GetDataPointer());
-//    qnc_calculator_.ProcessEvent();
-//    for (auto &pair : detectors_track_) {
-//      pair.second->GetCorrectedQVectors();
-//      pair.second->FillReport();
-//    }
-//    for (auto &pair : detectors_channel_) {
-//      pair.second->GetCorrectedQVectors();
-//      pair.second->FillReport();
-//    }
-//    if (out_tree_) out_tree_->Fill();
-//  }
-}
-
-void Qn::CorrectionManager::Reset() {
+void CorrectionManager::Reset() {
   event_passed_cuts_ = false;
   detectors_.ResetDetectors();
 }
 
-void Qn::CorrectionManager::Finalize() {
-// qnc_calculator_.FinalizeQnCorrectionsFramework();
-}
-
-TList *Qn::CorrectionManager::GetEventAndDetectorQAList() {
-  det_qa_histos_ = new TList();
-  det_qa_histos_->SetOwner(kTRUE);
-  det_qa_histos_->SetName("QA");
-  detectors_.AddQAHistograms(det_qa_histos_);
-  auto evlist = new TList();
-  evlist->SetName("Event Histograms");
-  event_cuts_->AddToList(evlist);
-  for (auto &histo : event_histograms_) {
-    histo->AddToList(evlist);
+void CorrectionManager::Finalize() {
+  auto calibration_list = (TList *) correction_output->FindObject(kCorrectionListName);
+  if (calibration_list) {
+    correction_output->Add(calibration_list->Clone("all"));
   }
-  det_qa_histos_->Add(evlist);
-  return det_qa_histos_;
-}
-
-void Qn::CorrectionManager::CreateDetectors() {
-  detectors_.CreateSubEvents(correction_axes_);
 }
 
 /**
@@ -150,58 +121,28 @@ void Qn::CorrectionManager::CreateDetectors() {
  * @param weightname name of the weight
  * @return unique pointer to the histogram
  */
-std::unique_ptr<Qn::QAHisto1DPtr> Qn::CorrectionManager::Create1DHisto(const std::string &name,
-                                                                       const Qn::AxisF axis,
-                                                                       const std::string &weightname) {
-  auto hist_name = name + "_" + axis.Name() + "_" + weightname;
-  auto axisname = std::string(";") + axis.Name();
-  auto size = static_cast<const int>(axis.size());
-  try { variable_manager_.FindVariable(axis.Name()); }
-  catch (std::out_of_range &) {
-    std::cout << "QAHistogram " << name << ": Variable " << axis.Name() << " not found. Creating new channel variable."
-              << std::endl;
-    variable_manager_.CreateChannelVariable(axis.Name(), axis.size());
-  }
-  float upper_edge = axis.GetLastBinEdge();
-  float lower_edge = axis.GetFirstBinEdge();
-  std::array<InputVariableD, 2>
-      arr = {{variable_manager_.FindVariable(axis.Name()), variable_manager_.FindVariable(weightname)}};
-  return std::make_unique<QAHisto1DPtr>(arr, new TH1F(hist_name.data(), axisname.data(), size, lower_edge, upper_edge));
-}
-
-/**
- * Helper function to create the QA histograms
- * @param name name of the histogram
- * @param axes axes used for the histogram
- * @param weightname name of the weight
- * @return unique pointer to the histogram
- */
-std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std::string &name,
-                                                                       const std::vector<Qn::AxisF> axes,
-                                                                       const std::string &weightname) {
-  auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weightname;
-  auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
-  auto size_x = static_cast<const int>(axes[0].size());
-  auto size_y = static_cast<const int>(axes[1].size());
-  for (const auto &axis : axes) {
-    try { variable_manager_.FindVariable(axis.Name()); }
+CorrectionManager::HistogramCallBack CorrectionManager::Create1DHisto(const std::string &name,
+                                                                      const AxisD axis,
+                                                                      const std::string &weight) {
+  auto callback = [&name, axis, weight](InputVariableManager *var) {
+    auto hist_name = name + "_" + axis.Name() + "_" + weight;
+    auto axisname = std::string(";") + axis.Name();
+    auto size = static_cast<const int>(axis.size());
+    try { var->FindVariable(axis.Name()); }
     catch (std::out_of_range &) {
       std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
-                << " not found. Creating new channel variable." << std::endl;
-      variable_manager_.CreateChannelVariable(axis.Name(), axis.size());
+                << " not found. Creating new channel variable."
+                << std::endl;
+      var->CreateChannelVariable(axis.Name(), axis.size());
     }
-  }
-  auto upper_edge_x = axes[0].GetLastBinEdge();
-  auto lower_edge_x = axes[0].GetFirstBinEdge();
-  auto upper_edge_y = axes[1].GetLastBinEdge();
-  auto lower_edge_y = axes[1].GetFirstBinEdge();
-  std::array<InputVariableD, 3>
-      arr = {{variable_manager_.FindVariable(axes[0].Name()), variable_manager_.FindVariable(axes[1].Name()),
-              variable_manager_.FindVariable(weightname)}};
-  auto histo = new TH2F(hist_name.data(), axisname.data(),
-                        size_x, lower_edge_x, upper_edge_x,
-                        size_y, lower_edge_y, upper_edge_y);
-  return std::make_unique<QAHisto2DPtr>(arr, histo);
+    float upper_edge = axis.GetLastBinEdge();
+    float lower_edge = axis.GetFirstBinEdge();
+    std::array<InputVariable, 2>
+        arr = {{var->FindVariable(axis.Name()), var->FindVariable(weight)}};
+    return std::make_unique<QAHisto1DPtr>(arr,
+                                          new TH1F(hist_name.data(), axisname.data(), size, lower_edge, upper_edge));
+  };
+  return callback;
 }
 
 /**
@@ -211,40 +152,81 @@ std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std
  * @param weightname name of the weight
  * @return unique pointer to the histogram
  */
-std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std::string &name,
-                                                                       const std::vector<Qn::AxisF> axes,
-                                                                       const std::string &weightname,
-                                                                       const Qn::AxisF &histaxis) {
-  auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weightname;
-  auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
-  auto size_x = static_cast<const int>(axes[0].size());
-  auto size_y = static_cast<const int>(axes[1].size());
-  for (const auto &axis : axes) {
-    try { variable_manager_.FindVariable(axis.Name()); }
-    catch (std::out_of_range &) {
-      std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
-                << " not found. Creating new channel variable." << std::endl;
-      variable_manager_.CreateChannelVariable(axis.Name(), axis.size());
+CorrectionManager::HistogramCallBack CorrectionManager::Create2DHisto(const std::string &name,
+                                                                      const std::vector<AxisD> axes,
+                                                                      const std::string &weight) {
+  auto callback = [&name, axes, weight](InputVariableManager *var) {
+    auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weight;
+    auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
+    auto size_x = static_cast<const int>(axes[0].size());
+    auto size_y = static_cast<const int>(axes[1].size());
+    for (const auto &axis : axes) {
+      try { var->FindVariable(axis.Name()); }
+      catch (std::out_of_range &) {
+        std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
+                  << " not found. Creating new channel variable." << std::endl;
+        var->CreateChannelVariable(axis.Name(), axis.size());
+      }
     }
-  }
-  auto upper_edge_x = axes[0].GetLastBinEdge();
-  auto lower_edge_x = axes[0].GetFirstBinEdge();
-  auto upper_edge_y = axes[1].GetLastBinEdge();
-  auto lower_edge_y = axes[1].GetFirstBinEdge();
-  std::array<InputVariableD, 3>
-      arr = {{variable_manager_.FindVariable(axes[0].Name()), variable_manager_.FindVariable(axes[1].Name()),
-              variable_manager_.FindVariable(weightname)}};
-  auto histo = new TH2F(hist_name.data(),
-                        axisname.data(),
-                        size_x,
-                        lower_edge_x,
-                        upper_edge_x,
-                        size_y,
-                        lower_edge_y,
-                        upper_edge_y);
-  auto haxis = std::make_unique<Qn::AxisF>(histaxis);
-  auto haxisvar = variable_manager_.FindVariable(histaxis.Name());
-  return std::make_unique<QAHisto2DPtr>(arr, histo, std::move(haxis), haxisvar);
+    auto upper_edge_x = axes[0].GetLastBinEdge();
+    auto lower_edge_x = axes[0].GetFirstBinEdge();
+    auto upper_edge_y = axes[1].GetLastBinEdge();
+    auto lower_edge_y = axes[1].GetFirstBinEdge();
+    std::array<InputVariable, 3>
+        arr = {{var->FindVariable(axes[0].Name()), var->FindVariable(axes[1].Name()),
+                var->FindVariable(weight)}};
+    auto histo = new TH2F(hist_name.data(), axisname.data(),
+                          size_x, lower_edge_x, upper_edge_x,
+                          size_y, lower_edge_y, upper_edge_y);
+    return std::make_unique<QAHisto2DPtr>(arr, histo);
+  };
+  return callback;
 }
 
+/**
+ * Helper function to create the QA histograms
+ * @param name name of the histogram
+ * @param axes axes used for the histogram
+ * @param weightname name of the weight
+ * @return unique pointer to the histogram
+ */
+CorrectionManager::HistogramCallBack CorrectionManager::Create2DHistoArray(const std::string &name,
+                                                                           const std::vector<AxisD> axes,
+                                                                           const std::string &weight,
+                                                                           const AxisD &histaxis) {
+  auto callback = [&name, histaxis, axes, weight](InputVariableManager *var) {
+    auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weight;
+    auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
+    auto size_x = static_cast<const int>(axes[0].size());
+    auto size_y = static_cast<const int>(axes[1].size());
+    for (const auto &axis : axes) {
+      try { var->FindVariable(axis.Name()); }
+      catch (std::out_of_range &) {
+        std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
+                  << " not found. Creating new channel variable." << std::endl;
+        var->CreateChannelVariable(axis.Name(), axis.size());
+      }
+    }
+    auto upper_edge_x = axes[0].GetLastBinEdge();
+    auto lower_edge_x = axes[0].GetFirstBinEdge();
+    auto upper_edge_y = axes[1].GetLastBinEdge();
+    auto lower_edge_y = axes[1].GetFirstBinEdge();
+    std::array<InputVariable, 3>
+        arr = {{var->FindVariable(axes[0].Name()), var->FindVariable(axes[1].Name()),
+                var->FindVariable(weight)}};
+    auto histo = new TH2F(hist_name.data(),
+                          axisname.data(),
+                          size_x,
+                          lower_edge_x,
+                          upper_edge_x,
+                          size_y,
+                          lower_edge_y,
+                          upper_edge_y);
+    auto haxis = std::make_unique<Qn::AxisD>(histaxis);
+    auto haxisvar = var->FindVariable(histaxis.Name());
+    return std::make_unique<QAHisto2DPtr>(arr, histo, std::move(haxis), haxisvar);
+  };
+  return callback;
+}
 
+}

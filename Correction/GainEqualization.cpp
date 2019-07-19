@@ -31,7 +31,7 @@
 
 /// \file QnCorrectionsInputGainEqualization.cxx
 /// \brief Implementation of procedures for gain equalization on input data.
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileChannelizedIngress.h"
 #include "CorrectionProfileChannelized.h"
 #include "CorrectionHistogramChannelizedSparse.h"
@@ -66,7 +66,7 @@ void GainEqualization::AttachInput(TList *list) {
 /// Asks for support data structures creation
 ///
 /// Does nothing for the time being
-void GainEqualization::CreateSupportDataStructures() {
+void GainEqualization::CreateSupportQVectors() {
 
 }
 
@@ -81,7 +81,7 @@ void GainEqualization::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void GainEqualization::AttachSupportHistograms(TList *list) {
+void GainEqualization::CreateCorrectionHistograms(TList *list) {
   std::string name = std::string(szSupportHistogramName) + "_" + fSubEvent->GetName();
   auto *sub_event = dynamic_cast<SubEventChannels *>(fSubEvent);
   fInputHistograms = std::make_unique<CorrectionProfileChannelizedIngress>(name,
@@ -145,18 +145,18 @@ void GainEqualization::AttachNveQAHistograms(TList *list) {
 /// from correction processing. If so is required probably multiple equalization
 /// structures should be included.
 /// \return kTRUE if the correction step was applied
-bool GainEqualization::ProcessCorrections(const double *variableContainer) {
+bool GainEqualization::ProcessCorrections() {
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce equalization parameters */
       for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
-        fCalibrationHistograms->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
+        fCalibrationHistograms->Fill( dataVector.GetId(), dataVector.EqualizedWeight());
       }
       return false;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce equalization parameters */
       for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
-        fCalibrationHistograms->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
+        fCalibrationHistograms->Fill(dataVector.GetId(), dataVector.EqualizedWeight());
       }
       /* and proceed to ... */
       /* FALLTHRU */
@@ -164,7 +164,7 @@ bool GainEqualization::ProcessCorrections(const double *variableContainer) {
       /* collect QA data if asked */
       if (fQAMultiplicityBefore) {
         for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
-          fQAMultiplicityBefore->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
+          fQAMultiplicityBefore->Fill(dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }
       /* store the equalized weights in the data vector bank according to equalization method */
@@ -176,14 +176,13 @@ bool GainEqualization::ProcessCorrections(const double *variableContainer) {
           break;
         case Method::AVERAGE:
           for (auto &dataVector : fSubEvent->GetInputDataBank()) {
-            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector.GetId());
+            Long64_t bin = fInputHistograms->GetBin(dataVector.GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average = fInputHistograms->GetBinContent(bin);
               /* let's handle the potential group weights usage */
               Float_t groupweight = 1.0;
               if (fUseChannelGroupsWeights) {
-                groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
-                                                                                             dataVector.GetId()));
+                groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(dataVector.GetId()));
               } else {
                 if (fHardCodedWeights) {
                   groupweight = fHardCodedWeights[dataVector.GetId()];
@@ -194,23 +193,22 @@ bool GainEqualization::ProcessCorrections(const double *variableContainer) {
               else
                 dataVector.SetEqualizedWeight(0.0);
             } else {
-              if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
+              if (fQANotValidatedBin) fQANotValidatedBin->Fill(dataVector.GetId(), 1.0);
             }
           }
           break;
         case Method::WIDTH:
           for (auto &dataVector : fSubEvent->GetInputDataBank()) {
-            Long64_t bin = fInputHistograms->GetBin(variableContainer, dataVector.GetId());
+            Long64_t bin = fInputHistograms->GetBin(dataVector.GetId());
             if (fInputHistograms->BinContentValidated(bin)) {
               Float_t average =
-                  fInputHistograms->GetBinContent(fInputHistograms->GetBin(variableContainer, dataVector.GetId()));
+                  fInputHistograms->GetBinContent(fInputHistograms->GetBin(dataVector.GetId()));
               Float_t width =
-                  fInputHistograms->GetBinError(fInputHistograms->GetBin(variableContainer, dataVector.GetId()));
+                  fInputHistograms->GetBinError(fInputHistograms->GetBin(dataVector.GetId()));
               /* let's handle the potential group weights usage */
               Float_t groupweight = 1.0;
               if (fUseChannelGroupsWeights) {
-                groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(variableContainer,
-                                                                                             dataVector.GetId()));
+                groupweight = fInputHistograms->GetGrpBinContent(fInputHistograms->GetGrpBin(dataVector.GetId()));
               } else {
                 if (fHardCodedWeights) {
                   groupweight = fHardCodedWeights[dataVector.GetId()];
@@ -222,7 +220,7 @@ bool GainEqualization::ProcessCorrections(const double *variableContainer) {
               else
                 dataVector.SetEqualizedWeight(0.0);
             } else {
-              if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, dataVector.GetId(), 1.0);
+              if (fQANotValidatedBin) fQANotValidatedBin->Fill(dataVector.GetId(), 1.0);
             }
           }
           break;
@@ -230,7 +228,7 @@ bool GainEqualization::ProcessCorrections(const double *variableContainer) {
       /* collect QA data if asked */
       if (fQAMultiplicityAfter) {
         for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
-          fQAMultiplicityAfter->Fill(variableContainer, dataVector.GetId(), dataVector.EqualizedWeight());
+          fQAMultiplicityAfter->Fill(dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }
       return true;;
@@ -250,8 +248,7 @@ bool GainEqualization::ProcessCorrections(const double *variableContainer) {
 /// structures should be included.
 /// So this function only retures the proper value according to the status.
 /// \return kTRUE if the correction step was applied
-Bool_t GainEqualization::ProcessDataCollection(const double *variableContainer) {
-  (void) variableContainer;
+Bool_t GainEqualization::ProcessDataCollection() {
   switch (fState) {
     case State::CALIBRATION:return false;
     case State::APPLYCOLLECT:

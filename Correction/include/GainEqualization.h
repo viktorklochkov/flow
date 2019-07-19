@@ -140,13 +140,13 @@ class GainEqualization : public CorrectionOnInputData {
   /// No action for input gain equalization
   virtual void AttachedToFrameworkManager() {}
   virtual void AttachInput(TList *list);
-  virtual void CreateSupportDataStructures();
-  virtual void AttachSupportHistograms(TList *list);
+  virtual void CreateSupportQVectors();
+  virtual void CreateCorrectionHistograms(TList *list);
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
 
-  virtual Bool_t ProcessCorrections(const double *variableContainer);
-  virtual Bool_t ProcessDataCollection(const double *variableContainer);
+  virtual Bool_t ProcessCorrections();
+  virtual Bool_t ProcessDataCollection();
   /// Clean the correction to accept a new event
   /// Does nothing for the time being
   virtual void ClearCorrectionStep() {}

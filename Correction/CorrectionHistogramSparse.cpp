@@ -3,7 +3,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionHistogramSparse.h"
 
 /// \cond CLASSIMP
@@ -24,10 +24,10 @@ namespace Qn {
 /// \param ecvs the event classes variables set
 CorrectionHistogramSparse::CorrectionHistogramSparse(std::string name,
                                                            std::string title,
-                                                           const EventClassVariablesSet &ecvs) :
+                                                           const CorrectionAxisSet &ecvs) :
     CorrectionHistogramBase(name, title, ecvs) {}
 
-CorrectionHistogramSparse::CorrectionHistogramSparse(std::string name, const EventClassVariablesSet &ecvs) :
+CorrectionHistogramSparse::CorrectionHistogramSparse(std::string name, const CorrectionAxisSet &ecvs) :
     CorrectionHistogramBase(name, name, ecvs) {}
 
 /// Creates the support histogram for the histogram function
@@ -44,7 +44,7 @@ Bool_t CorrectionHistogramSparse::CreateHistogram(TList *histogramList) {
   TString histoName = GetName();
   TString histoTitle = GetTitle();
   /* we open space for channel for event class variables */
-  Int_t nVariables = fEventClassVariables.size();
+  Int_t nVariables = fEventClassVariables.GetSize();
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
@@ -54,8 +54,8 @@ Bool_t CorrectionHistogramSparse::CreateHistogram(TList *histogramList) {
   fValues = new THnSparseF(histoName, histoTitle, nVariables, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+    fValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
   }
   fValues->Sumw2();
   histogramList->Add(fValues);
@@ -72,8 +72,8 @@ Bool_t CorrectionHistogramSparse::CreateHistogram(TList *histogramList) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t CorrectionHistogramSparse::GetBin(const double *variableContainer) {
-  FillBinAxesValues(variableContainer);
+Long64_t CorrectionHistogramSparse::GetBin() {
+  FillBinAxesValues();
   /* store the channel number */
   return fValues->GetBin(fBinAxesValues);
 }
@@ -117,10 +117,10 @@ Float_t CorrectionHistogramSparse::GetBinError(Long64_t bin) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionHistogramSparse::Fill(const double *variableContainer, Float_t weight) {
+void CorrectionHistogramSparse::Fill(Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
-  FillBinAxesValues(variableContainer);
+  FillBinAxesValues();
   /* and now update the bin */
   fValues->Fill(fBinAxesValues, weight);
   fValues->SetEntries(nEntries + 1);

@@ -25,35 +25,7 @@
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 
-//#pragma link C++ class Qn::CorrectionOnInputData+;
-//#pragma link C++ class Qn::CorrectionOnQvector+;
-//#pragma link C++ class Qn::CorrectionsSetOnInputData+;
-//#pragma link C++ class Qn::CorrectionsSetOnQvector+;
-//#pragma link C++ class Qn::CorrectionStep+;
-//#pragma link C++ class Qn::SubEvent+;
-//#pragma link C++ class Qn::SubEventChannels+;
-//#pragma link C++ class Qn::SubEventTracks+;
-//#pragma link C++ class Qn::EventClassVariable+;
-//#pragma link C++ class Qn::EventClassVariablesSet+;
-//#pragma link C++ class Qn::CorrectionHistogram+;
-//#pragma link C++ class Qn::CorrectionHistogramBase+;
-//#pragma link C++ class Qn::CorrectionHistogramChannelized+;
-//#pragma link C++ class Qn::CorrectionHistogramChannelizedSparse+;
-//#pragma link C++ class Qn::CorrectionHistogramSparse+;
-//#pragma link C++ class Qn::GainEqualization+;
-//#pragma link C++ class Qn::CorrectionCalculator+;
-//#pragma link C++ class Qn::CorrectionProfile+;
-//#pragma link C++ class Qn::CorrectionProfile3DCorrelations+;
-//#pragma link C++ class Qn::CorrectionProfileChannelized+;
-//#pragma link C++ class Qn::CorrectionProfileChannelizedIngress+;
-//#pragma link C++ class Qn::CorrectionProfileComponents+;
-//#pragma link C++ class Qn::CorrectionProfileCorrelationComponents+;
-//#pragma link C++ class Qn::CorrectionProfileCorrelationComponentsHarmonics+;
-//#pragma link C++ class Qn::Alignment+;
-//#pragma link C++ class Qn::Recentering+;
-//#pragma link C++ class Qn::TwistAndRescale+;
-
-#pragma link C++ class Qn::Axis<float>+;
+#pragma link C++ class Qn::Axis<double>+;
 #pragma link C++ class Qn::Axis<double>+;
 #pragma link C++ typedef Qn::AxisF;
 #pragma link C++ typedef Qn::AxisD;
@@ -66,13 +38,13 @@
 #pragma link C++ class Qn::SubSamples+;
 #pragma link C++ class Qn::Stats+;
 #pragma link C++ class Qn::EventShape+;
-#pragma link C++ class Qn::DataContainer<Qn::EventShape,Qn::Axis<float>>+;
-#pragma link C++ class Qn::DataContainer<Qn::Product,Qn::Axis<float>>+;
-#pragma link C++ class Qn::DataContainer<Qn::Stats,Qn::Axis<float>>+;
-#pragma link C++ class Qn::DataContainer<Qn::QVector,Qn::Axis<float>>+;
-//#pragma link C++ class Qn::DataContainer<std::shared_ptr<Qn::SubEvent>,Qn::Axis<float>>+;
-#pragma link C++ class Qn::DataContainer<float,Qn::Axis<float>>+;
-#pragma link C++ class Qn::DataContainer<TH1F, Qn::Axis<float>>+;
+#pragma link C++ class Qn::Cuts+;
+#pragma link C++ class Qn::DataContainer<Qn::EventShape,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::Product,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::Stats,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::QVector,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<double,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<TH1F, Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainerHelper+;
 
 #pragma link C++ typedef Qn::DataContainerProduct;

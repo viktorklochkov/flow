@@ -125,7 +125,7 @@ class EseHandler {
 
   Qn::Correlation *RequestCorrelation(const SubEventPrototype &prototype);
 
-  void RequestEventAxis(const Qn::AxisF &axis);
+  void RequestEventAxis(const Qn::AxisD &axis);
 
   void FillTree() {
     if (iscalib_) {

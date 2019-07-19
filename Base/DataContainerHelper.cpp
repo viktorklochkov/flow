@@ -35,11 +35,11 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
   auto graph = new TGraphAsymmErrors((int) data.size());
   unsigned int ibin = 0;
   for (auto &bin : data) {
-    float xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
-    float xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
-    float x = xlo + ((xhi - xlo)*static_cast<float>(i)/maxi);
-    float exl = 0;
-    float exh = 0;
+    auto xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
+    auto xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
+    auto x = xlo + ((xhi - xlo)*static_cast<double>(i)/maxi);
+    double exl = 0;
+    double exh = 0;
     if (drawerrors==Errors::XandY) {
       exl = x - xlo;
       exh = xhi - x;
@@ -71,7 +71,7 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
     std::cout << "Data Container dimension has wrong dimension " << data.GetAxes().size() << "\n";
     return nullptr;
   }
-  AxisF axis;
+  AxisD axis;
   try { axis = data.GetAxis(axisname); }
   catch (std::exception &) {
     throw std::logic_error("axis not found");
@@ -137,14 +137,14 @@ void DataContainerHelper::EventShapeBrowse(DataContainerEventShape *data, TBrows
   ilist->SetName("integrals");
   for (auto &bin : *data) {
     auto name = data->GetBinDescription(i);
-    auto histo  = dynamic_cast<TH1F*>(bin.histo_->Clone((std::string("H_") + (name)).data()));
+    auto histo = dynamic_cast<TH1F *>(bin.histo_->Clone((std::string("H_") + (name)).data()));
     histo->SetTitle((std::string("H_") + (name)).data());
     histo->GetXaxis()->SetTitle("|Q|^{2}");
     hlist->Add(histo);
-    auto spline  = dynamic_cast<TSpline3*>(bin.spline_->Clone((std::string("S_") + (name)).data()));
+    auto spline = dynamic_cast<TSpline3 *>(bin.spline_->Clone((std::string("S_") + (name)).data()));
     spline->SetTitle((std::string("S_") + (name)).data());
     slist->Add(spline);
-    auto integral  = dynamic_cast<TH1F*>(bin.integral_->Clone((std::string("I_") + (name)).data()));
+    auto integral = dynamic_cast<TH1F *>(bin.integral_->Clone((std::string("I_") + (name)).data()));
     integral->SetTitle((std::string("I_") + (name)).data());
     integral->GetXaxis()->SetTitle("|Q|^{2}");
     ilist->Add(integral);

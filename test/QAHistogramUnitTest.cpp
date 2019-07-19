@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 
 #include "QAHistogram.h"
-#include "VariableManager.h"
+#include "InputVariableManager.h"
 #include <random>
 
 TEST(QAHistogramUnitTest, ptrtest) {

@@ -4,7 +4,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "QVector.h"
 
 #include "CorrectionProfile3DCorrelations.h"
@@ -38,7 +38,7 @@ CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations(std::string nam
                                                                  std::string nameA,
                                                                  std::string nameB,
                                                                  std::string nameC,
-                                                                 const EventClassVariablesSet &ecvs,
+                                                                 const CorrectionAxisSet &ecvs,
                                                                  ErrorMode mode) :
     CorrectionHistogramBase(name, title, ecvs, mode), fNameA(nameA), fNameB(nameB), fNameC(nameC) {
 }
@@ -47,7 +47,7 @@ CorrectionProfile3DCorrelations::CorrectionProfile3DCorrelations(std::string nam
                                                                  std::string nameA,
                                                                  std::string nameB,
                                                                  std::string nameC,
-                                                                 const EventClassVariablesSet &ecvs,
+                                                                 const CorrectionAxisSet &ecvs,
                                                                  ErrorMode mode) :
     CorrectionHistogramBase(name, name, ecvs, mode), fNameA(nameA), fNameB(nameB), fNameC(nameC) {
 }
@@ -157,7 +157,7 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
     }
   }
   /* now prepare the construction of the histograms */
-  Int_t nVariables = fEventClassVariables.size();
+  Int_t nVariables = fEventClassVariables.GetSize();
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
@@ -213,30 +213,30 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
                    nVariables, nbins, minvals, maxvals);
       /* now let's set the proper binning and label on each axis */
       for (Int_t var = 0; var < nVariables; var++) {
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                              fEventClassVariables.At(var).GetBins());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fXXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fXYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fYXValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                              fEventClassVariables[var].GetBins());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+        fYYValues[ixComb][currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
       }
       /* ask for square sum accumulation */
       fXXValues[ixComb][currentHarmonic]->Sumw2();
@@ -270,8 +270,8 @@ Bool_t CorrectionProfile3DCorrelations::CreateCorrelationComponentsProfileHistog
       new THnI((const char *) entriesHistoName, (const char *) entriesHistoTitle, nVariables, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+    fEntries->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
   }
   /* and finally add the entries histogram to the list */
   histogramList->Add(fEntries);
@@ -406,8 +406,8 @@ Bool_t CorrectionProfile3DCorrelations::AttachHistograms(TList *histogramList) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t CorrectionProfile3DCorrelations::GetBin(const double *variableContainer) {
-  FillBinAxesValues(variableContainer);
+Long64_t CorrectionProfile3DCorrelations::GetBin() {
+  FillBinAxesValues();
   return fEntries->GetBin(fBinAxesValues);
 }
 
@@ -742,8 +742,7 @@ Float_t CorrectionProfile3DCorrelations::GetYYBinError(const char *comb, Int_t h
 /// \param variableContainer the current variables content addressed by var Id
 void CorrectionProfile3DCorrelations::Fill(const QVector *QnA,
                                            const QVector *QnB,
-                                           const QVector *QnC,
-                                           const double *variableContainer) {
+                                           const QVector *QnC) {
   /* first the sanity checks */
   if (!((QnA->IsGoodQuality()) && (QnB->IsGoodQuality()) && (QnC->IsGoodQuality()))) return;
   if ((QnA->GetHarmonicMultiplier()!=QnB->GetHarmonicMultiplier())
@@ -751,7 +750,7 @@ void CorrectionProfile3DCorrelations::Fill(const QVector *QnA,
     return;
   }
   /* let's get the axis information */
-  FillBinAxesValues(variableContainer);
+  FillBinAxesValues();
   /* consider all combinations */
   const QVector *combQn[CORRELATIONSNOOFQNVECTORS] = {QnA, QnB, QnC};
   for (Int_t ixComb = 0; ixComb < CORRELATIONSNOOFQNVECTORS; ixComb++) {
@@ -768,17 +767,17 @@ void CorrectionProfile3DCorrelations::Fill(const QVector *QnA,
       Double_t nYXEntries = fYXValues[ixComb][nCurrentHarmonic]->GetEntries();
       Double_t nYYEntries = fYYValues[ixComb][nCurrentHarmonic]->GetEntries();
       fXXValues[ixComb][nCurrentHarmonic]->Fill(fBinAxesValues,
-                                                combQn[ixComb]->Qx(nCurrentHarmonic)*combQn[(ixComb + 1)
-                                                    %CORRELATIONSNOOFQNVECTORS]->Qx(nCurrentHarmonic));
+                                                combQn[ixComb]->x(nCurrentHarmonic)*combQn[(ixComb + 1)
+                                                    %CORRELATIONSNOOFQNVECTORS]->x(nCurrentHarmonic));
       fXYValues[ixComb][nCurrentHarmonic]->Fill(fBinAxesValues,
-                                                combQn[ixComb]->Qx(nCurrentHarmonic)*combQn[(ixComb + 1)
-                                                    %CORRELATIONSNOOFQNVECTORS]->Qy(nCurrentHarmonic));
+                                                combQn[ixComb]->x(nCurrentHarmonic)*combQn[(ixComb + 1)
+                                                    %CORRELATIONSNOOFQNVECTORS]->y(nCurrentHarmonic));
       fYXValues[ixComb][nCurrentHarmonic]->Fill(fBinAxesValues,
-                                                combQn[ixComb]->Qy(nCurrentHarmonic)*combQn[(ixComb + 1)
-                                                    %CORRELATIONSNOOFQNVECTORS]->Qx(nCurrentHarmonic));
+                                                combQn[ixComb]->y(nCurrentHarmonic)*combQn[(ixComb + 1)
+                                                    %CORRELATIONSNOOFQNVECTORS]->x(nCurrentHarmonic));
       fYYValues[ixComb][nCurrentHarmonic]->Fill(fBinAxesValues,
-                                                combQn[ixComb]->Qy(nCurrentHarmonic)*combQn[(ixComb + 1)
-                                                    %CORRELATIONSNOOFQNVECTORS]->Qy(nCurrentHarmonic));
+                                                combQn[ixComb]->y(nCurrentHarmonic)*combQn[(ixComb + 1)
+                                                    %CORRELATIONSNOOFQNVECTORS]->y(nCurrentHarmonic));
       fXXValues[ixComb][nCurrentHarmonic]->SetEntries(nXXEntries + 1);
       fXYValues[ixComb][nCurrentHarmonic]->SetEntries(nXYEntries + 1);
       fYXValues[ixComb][nCurrentHarmonic]->SetEntries(nYXEntries + 1);

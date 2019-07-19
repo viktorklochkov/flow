@@ -44,20 +44,20 @@ class CorrectionProfileComponents : public CorrectionHistogramBase {
   CorrectionProfileComponents() = default;
   CorrectionProfileComponents(std::string name,
                               std::string title,
-                              const EventClassVariablesSet &ecvs,
+                              const CorrectionAxisSet &ecvs,
                               ErrorMode mode = ErrorMode::MEAN);
-  CorrectionProfileComponents(std::string name, const EventClassVariablesSet &ecvs, ErrorMode mode = ErrorMode::MEAN);
+  CorrectionProfileComponents(std::string name, const CorrectionAxisSet &ecvs, ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfileComponents();
   Bool_t CreateComponentsProfileHistograms(TList *histogramList, Int_t nNoOfHarmonics, Int_t *harmonicMap = NULL);
   Bool_t AttachHistograms(TList *histogramList);
-  Long64_t GetBin(const double *variableContainer);
+  Long64_t GetBin();
   Bool_t BinContentValidated(Long64_t bin);
   Float_t GetXBinContent(Int_t harmonic, Long64_t bin);
   Float_t GetYBinContent(Int_t harmonic, Long64_t bin);
   Float_t GetXBinError(Int_t harmonic, Long64_t bin);
   Float_t GetYBinError(Int_t harmonic, Long64_t bin);
-  void FillX(Int_t harmonic, const double *variableContainer, Float_t weight);
-  void FillY(Int_t harmonic, const double *variableContainer, Float_t weight);
+  void FillX(Int_t harmonic, Float_t weight);
+  void FillY(Int_t harmonic, Float_t weight);
  private:
   THnF **fXValues = nullptr;            //!<! X component histogram for each requested harmonic
   THnF **fYValues = nullptr;            //!<! Y component histogram for each requested harmonic

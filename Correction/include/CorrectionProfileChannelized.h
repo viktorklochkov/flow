@@ -56,21 +56,21 @@ class CorrectionProfileChannelized : public CorrectionHistogramBase {
   CorrectionProfileChannelized() = default;
   CorrectionProfileChannelized(std::string name,
                                std::string title,
-                               const EventClassVariablesSet &ecvs,
+                               const CorrectionAxisSet &ecvs,
                                Int_t nNoOfChannels,
                                ErrorMode mode = ErrorMode::MEAN);
   CorrectionProfileChannelized(std::string name,
-                               const EventClassVariablesSet &ecvs,
+                               const CorrectionAxisSet &ecvs,
                                Int_t nNoOfChannels,
                                ErrorMode mode = ErrorMode::MEAN);
 
   virtual ~CorrectionProfileChannelized();
   Bool_t CreateProfileHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
-  Long64_t GetBin(const double *variableContainer, Int_t nChannel);
+  Long64_t GetBin(Int_t nChannel);
   Bool_t BinContentValidated(Long64_t bin);
   Float_t GetBinContent(Long64_t bin);
   Float_t GetBinError(Long64_t bin);
-  void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
+  void Fill(Int_t nChannel, Float_t weight);
  private:
   THnF *fValues = nullptr;              //!<! Cumulates values for each of the event classes
   THnI *fEntries = nullptr;             //!<! Cumulates the number on each of the event classes

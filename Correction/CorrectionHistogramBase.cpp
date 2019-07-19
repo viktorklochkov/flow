@@ -1,18 +1,8 @@
-#include <utility>
-
-#include <utility>
-
-/// \file QnCorrectionsHistogramBase.cxx
+/// file QnCorrectionsHistogramBase.cxx
 /// \brief Implementation of the multidimensional profile base class
-
+#include <utility>
 #include "TList.h"
-
-#include "EventClassVariablesSet.h"
 #include "CorrectionHistogramBase.h"
-
-/// \cond CLASSIMP
-ClassImp(Qn::CorrectionHistogramBase);
-/// \endcond
 
 namespace Qn {
 const char *CorrectionHistogramBase::szChannelAxisTitle = "Channel number";
@@ -61,21 +51,21 @@ CorrectionHistogramBase::~CorrectionHistogramBase() {
 ///     's'            the bin are the standard deviation of of the bin values
 CorrectionHistogramBase::CorrectionHistogramBase(std::string name,
                                                  std::string title,
-                                                 const EventClassVariablesSet &ecvs,
+                                                 const CorrectionAxisSet &ecvs,
                                                  ErrorMode mode) :
     fName(std::move(name)),
     fTitle(std::move(title)),
     fEventClassVariables(ecvs),
-    fBinAxesValues(new Double_t[fEventClassVariables.size() + 1]),
+    fBinAxesValues(new Double_t[fEventClassVariables.GetSize() + 1]),
     fErrorMode(mode) {}
 
 CorrectionHistogramBase::CorrectionHistogramBase(std::string name,
                                                  std::string title,
-                                                 const EventClassVariablesSet &ecvs) :
+                                                 const CorrectionAxisSet &ecvs) :
     fName(std::move(name)),
     fTitle(std::move(title)),
     fEventClassVariables(ecvs),
-    fBinAxesValues(new Double_t[fEventClassVariables.size() + 1]) {}
+    fBinAxesValues(new Double_t[fEventClassVariables.GetSize() + 1]) {}
 
 /// Divide two THn histograms
 ///
@@ -151,7 +141,7 @@ void CorrectionHistogramBase::CopyTHnF(THnF *hDest, THnF *hSource, Int_t *binsAr
 /// \param dimension the current dimension being handled
 void CorrectionHistogramBase::CopyTHnFDimension(THnF *hDest, THnF *hSource, Int_t *binsArray, Int_t dimension) {
   /* are all variables settled */
-  if ((unsigned long) dimension < fEventClassVariables.size()) {
+  if ((unsigned long) dimension < fEventClassVariables.GetSize()) {
     /* no then, scan this dimension and move to the next one */
     for (Long64_t bin = 0; bin < hSource->GetAxis(dimension)->GetNbins(); bin++) {
       binsArray[dimension] = bin + 1;

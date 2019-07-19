@@ -25,7 +25,7 @@
 #include "TObjString.h"
 
 #include "CorrectionsSet.h"
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "QVector.h"
 #include "CorrectionDataVector.h"
 #include "CorrectionProfileComponents.h"
@@ -65,7 +65,7 @@ class SubEvent {
   friend class CorrectionStep;
   SubEvent() = default;
   SubEvent(unsigned int bin_id,
-           const EventClassVariablesSet *eventClassesVariables,
+           const CorrectionAxisSet *eventClassesVariables,
            std::bitset<QVector::kmaxharmonics> harmonics) :
       binid_(bin_id),
       fPlainQnVector(harmonics, QVector::CorrectionStep::PLAIN),
@@ -86,8 +86,6 @@ class SubEvent {
   SubEvent &operator=(const SubEvent &) = delete;
 
   std::string GetName() const;
-  void SetNormalization(QVector::Normalization method) { fNormalizationMethod = method; }
-  QVector::Normalization GetQVectorNormalizationMethod() const { return fNormalizationMethod; }
   /// Get the input data bank.
   /// Makes it available for input corrections steps.
   /// \return pointer to the input data bank
@@ -95,7 +93,7 @@ class SubEvent {
   /// Get the event class variables set
   /// Makes it available for corrections steps
   /// \return pointer to the event class variables set
-  const EventClassVariablesSet &GetEventClassVariablesSet() { return *fEventClassVariables; }
+  const CorrectionAxisSet &GetEventClassVariablesSet() { return *fEventClassVariables; }
   /// Get the current Qn vector
   /// Makes it available for subsequent correction steps.
   /// It could have already supported previous correction steps
@@ -153,7 +151,7 @@ class SubEvent {
   ///
   /// The request is transmitted to the different corrections.
   /// Pure virtual function
-  virtual void CreateSupportDataStructures() = 0;
+  virtual void CreateSupportQVectors() = 0;
 
   /// Asks for support histograms creation
   ///
@@ -161,7 +159,7 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual void AttachSupportHistograms(TList *list) = 0;
+  virtual void CreateCorrectionHistograms(TList *list) = 0;
 
   /// Asks for QA histograms creation
   ///
@@ -185,26 +183,26 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the input information should be found
   /// \return kTRUE if everything went OK
-  virtual void AttachCorrectionInputs(TList *list) = 0;
+  virtual void AttachCorrectionInput(TList *list) = 0;
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
   /// it is time to check if their requirements are satisfied
   ///
   /// Pure virtual function
-  virtual void AfterInputsAttachActions() = 0;
+  virtual void AfterInputAttachAction() = 0;
   /// Ask for processing corrections for the involved detector configuration
   ///
   /// Pure virtual function.
   /// The request is transmitted to the correction steps
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessCorrections(const double *variableContainer) = 0;
+  virtual Bool_t ProcessCorrections() = 0;
   /// Ask for processing corrections data collection for the involved detector configuration
   ///
   /// Pure virtual function.
   /// The request is transmitted to the correction steps
   /// \return kTRUE if everything went OK
-  virtual Bool_t ProcessDataCollection(const double *variableContainer) = 0;
+  virtual Bool_t ProcessDataCollection() = 0;
   virtual void ActivateHarmonic(Int_t harmonic);
   virtual void AddCorrectionOnQnVector(CorrectionOnQvector *correctionOnQn);
   virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
@@ -214,19 +212,7 @@ class SubEvent {
   /// Remember, this configuration does not have a channelized
   /// approach so, the built Q vectors are the ones to be used for
   /// subsequent corrections.
-  inline void BuildQnVector() {
-    for (const auto &dataVector : fDataVectorBank) {
-      fPlainQnVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
-      fPlainQ2nVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
-    }
-    /* check the quality of the Qn vector */
-    fPlainQnVector.CheckQuality();
-    fPlainQ2nVector.CheckQuality();
-    fPlainQnVector.Normal(fNormalizationMethod);
-    fPlainQ2nVector.Normal(fNormalizationMethod);
-    fCorrectedQnVector = fPlainQnVector;
-    fCorrectedQ2nVector = fPlainQ2nVector;
-  }
+  void BuildQnVector();
 //  /// Include the list of associated Qn vectors into the passed list
 //  ///
 //  /// Pure virtual function
@@ -269,10 +255,33 @@ class SubEvent {
     (void) nChannelGroup;
     (void) hardCodedGroupWeights;
   }
-//  void FillDetectorConfigurationNameList(std::vector<std::string> &vec) const { vec.emplace_back(fName); }
+  QVector *GetQVector(Qn::QVector::CorrectionStep step) { return qvectors_.at(step); }
+
+  Qn::QVector::CorrectionStep GetLatestCorrectionStep() {
+    Qn::QVector::CorrectionStep latest = Qn::QVector::CorrectionStep::PLAIN;
+    for (auto &correction_step : fQnVectorCorrections) {
+      if (correction_step->GetState() >= Qn::CorrectionStep::State::APPLY) {
+        auto temp = correction_step->GetCorrectedQnVector()->GetCorrectionStep();
+        if (latest < temp) latest = temp;
+      }
+    }
+    return latest;
+  }
+
+  std::vector<QVector::CorrectionStep> GetCorrectionSteps() {
+    std::vector<QVector::CorrectionStep> steps;
+    steps.emplace_back(QVector::CorrectionStep::PLAIN);
+    for (auto &correction_step : fQnVectorCorrections) {
+      if (correction_step->GetState() >= CorrectionStep::State::APPLY) {
+        steps.push_back(correction_step->GetCorrectedQnVector()->GetCorrectionStep());
+      }
+    }
+    return steps;
+  }
+
  protected:
   unsigned int binid_;
-  Detector *fDetector = nullptr; /// the framework manager pointer
+  Detector *fDetector = nullptr;
   std::vector<Qn::CorrectionDataVector> fDataVectorBank; //!<! input data for the current process / event
   QVector fPlainQnVector;      ///< Qn vector from the post processed input data
   QVector fPlainQ2nVector;     ///< Q2n vector from the post processed input data
@@ -281,9 +290,8 @@ class SubEvent {
   QVector fTempQnVector;  ///< temporary Qn vector for efficient Q vector building
   QVector fTempQ2nVector; ///< temporary Qn vector for efficient Q vector building
   std::map<QVector::CorrectionStep, QVector *> qvectors_;
-  QVector::Normalization fNormalizationMethod = QVector::Normalization::NONE; ///< the method for Q vector normalization
   CorrectionsSetOnQvector fQnVectorCorrections; ///< set of corrections to apply on Q vectors
-  const EventClassVariablesSet *fEventClassVariables = nullptr; //-> /// set of variables that define event classes
+  const CorrectionAxisSet *fEventClassVariables = nullptr; //-> /// set of variables that define event classes
   std::unique_ptr<CorrectionProfileComponents> fQAQnAverageHistogram; //!<! the plain average Qn components QA histogram
   static const char *szPlainQnVectorName; ///< the name of the Qn plain, not corrected Qn vectors
   static const char *szQAQnAverageHistogramName; ///< name and title for plain Qn vector average QA histograms

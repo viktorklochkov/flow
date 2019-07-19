@@ -170,33 +170,41 @@ class DataContainer : public TObject {
     return data_.at(GetLinearIndex(coords));
   }
 
-/**
- * Get element in the specified bin
- * @param bins Vector of bin indices of the desired element
- * @return     Element
- */
-  T const &At(const std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+  constexpr T const &operator[](unsigned int i) const noexcept {
+    return data_[i];
+  }
+
+  constexpr T &operator[](unsigned int i) noexcept {
+    return data_[i];
+  }
 
 /**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  T &At(const std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
+  constexpr T const &At(const std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+
+/**
+ * Get element in the specified bin
+ * @param bins Vector of bin indices of the desired element
+ * @return     Element
+ */
+  constexpr T &At(const std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
-  T &At(size_type index) noexcept { return data_.at(index); }
+  constexpr T &At(size_type index) noexcept { return data_.at(index); }
 
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
-  T const &At(size_type index) const noexcept { return data_.at(index); }
+  constexpr T const &At(size_type index) const noexcept { return data_.at(index); }
 
   template<typename TT>
   constexpr long FindBin(const std::vector<TT> &coords) const {
@@ -319,7 +327,7 @@ class DataContainer : public TObject {
     if (indices.empty()) return "invalid offset";
     std::string outstring;
     if (integrated_) {
-      return outstring;
+      return "";
     } else {
       int i = 0;
       for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
@@ -330,8 +338,8 @@ class DataContainer : public TObject {
         if (it + 1!=axes_.cend()) outstring += "; ";
         ++i;
       }
-      outstring.erase(outstring.find_last_not_of('0') + 1, std::string::npos );
-      outstring.erase(outstring.find_last_not_of('.') + 1, std::string::npos );
+      outstring.erase(outstring.find_last_not_of('0') + 1, std::string::npos);
+      outstring.erase(outstring.find_last_not_of('.') + 1, std::string::npos);
       return outstring;
     }
   }
@@ -812,26 +820,26 @@ class DataContainer : public TObject {
 // needed for ROOT IO                      //
 //-----------------------------------------//
 template<typename T>
-using DataF = DataContainer<T, AxisF>;
-using DataContainerProduct = DataContainer<Qn::Product, AxisF>;
-using DataContainerStats = DataContainer<Qn::Stats, AxisF>;
-using DataContainerQVector = DataContainer<Qn::QVector, AxisF>;
-using DataContainerEventShape = DataContainer<Qn::EventShape, AxisF>;
+using DataD = DataContainer<T, AxisD>;
+using DataContainerProduct = DataContainer<Qn::Product, AxisD>;
+using DataContainerStats = DataContainer<Qn::Stats, AxisD>;
+using DataContainerQVector = DataContainer<Qn::QVector, AxisD>;
+using DataContainerEventShape = DataContainer<Qn::EventShape, AxisD>;
 
 //--------------------------------------------//
 // Template specializations for visualisation //
 //--------------------------------------------//
 
 template<>
-inline void DataContainer<Stats, AxisF>::Browse(TBrowser *b) {
+inline void DataContainer<Stats, AxisD>::Browse(TBrowser *b) {
   DataContainerHelper::StatsBrowse(this, b);
 }
 template<>
-inline void DataContainer<EventShape, AxisF>::Browse(TBrowser *b) {
+inline void DataContainer<EventShape, AxisD>::Browse(TBrowser *b) {
   DataContainerHelper::EventShapeBrowse(this, b);
 }
 template<>
-inline void DataContainer<Stats, AxisF>::NDraw(Option_t *option, const std::string &axis_name) {
+inline void DataContainer<Stats, AxisD>::NDraw(Option_t *option, const std::string &axis_name) {
   DataContainerHelper::NDraw(*this, option, axis_name);
 }
 

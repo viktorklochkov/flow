@@ -32,8 +32,7 @@
 /// \file QnCorrectionsQnVectorAlignment.cxx
 /// \brief Implementation of procedures for Qn vector alignment correction.
 #include "ROOT/RMakeUnique.hxx"
-#include "EventClassVariablesSet.h"
-#include "CorrectionCalculator.h"
+#include "CorrectionAxisSet.h"
 #include "Alignment.h"
 #include "DetectorList.h"
 
@@ -57,7 +56,7 @@ void Alignment::SetReferenceConfigurationForAlignment(const char *name) {
 ///
 /// Locates the reference detector configuration for alignment if its name has been previously stored
 /// Creates the recentered Qn vector
-void Alignment::CreateSupportDataStructures() {
+void Alignment::CreateSupportQVectors() {
   /* now, definitely, we should have the reference detector configurations */
   if (!fDetectorForAlignmentName.empty()) {
     auto &aligndetector = fSubEvent->GetDetector()->GetDetectors()->FindDetector(fDetectorForAlignmentName);
@@ -85,7 +84,7 @@ void Alignment::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void Alignment::AttachSupportHistograms(TList *list) {
+void Alignment::CreateCorrectionHistograms(TList *list) {
   auto hname = std::string(szSupportHistogramName) + "_" + fSubEvent->GetName() + "#times"
       + fDetectorForAlignment->GetName();
   fInputHistograms =
@@ -138,7 +137,7 @@ void Alignment::AttachNveQAHistograms(TList *list) {
 ///
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
-bool Alignment::ProcessCorrections(const double *variableContainer) {
+bool Alignment::ProcessCorrections() {
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -156,7 +155,7 @@ bool Alignment::ProcessCorrections(const double *variableContainer) {
         /* we get the properties of the current Qn vector but its name */
         fCorrectedQnVector->SetCurrentEvent(*fSubEvent->GetCurrentQnVector());
         /* let's check the correction histograms */
-        Long64_t bin = fInputHistograms->GetBin(variableContainer);
+        Long64_t bin = fInputHistograms->GetBin();
         if (fInputHistograms->BinContentValidated(bin)) {
           /* the bin content is validated so, apply the correction */
           Double_t XX = fInputHistograms->GetXXBinContent(bin);
@@ -170,22 +169,22 @@ bool Alignment::ProcessCorrections(const double *variableContainer) {
           if (!(TMath::Sqrt((XY - YX)*(XY - YX)/(eXY*eXY + eYX*eYX)) < 2.0)) {
             Int_t harmonic = fSubEvent->GetCurrentQnVector()->GetFirstHarmonic();
             while (harmonic!=-1) {
-              fCorrectedQnVector->SetQx(harmonic,
-                                        fSubEvent->GetCurrentQnVector()->Qx(harmonic)
-                                            *TMath::Cos(((Double_t) harmonic)*deltaPhi)
-                                            + fSubEvent->GetCurrentQnVector()->Qy(harmonic)
-                                                *TMath::Sin(((Double_t) harmonic)*deltaPhi));
-              fCorrectedQnVector->SetQy(harmonic,
-                                        fSubEvent->GetCurrentQnVector()->Qy(harmonic)
-                                            *TMath::Cos(((Double_t) harmonic)*deltaPhi)
-                                            - fSubEvent->GetCurrentQnVector()->Qx(harmonic)
-                                                *TMath::Sin(((Double_t) harmonic)*deltaPhi));
+              fCorrectedQnVector->SetX(harmonic,
+                                       fSubEvent->GetCurrentQnVector()->x(harmonic)
+                                           *TMath::Cos(((Double_t) harmonic)*deltaPhi)
+                                           + fSubEvent->GetCurrentQnVector()->y(harmonic)
+                                               *TMath::Sin(((Double_t) harmonic)*deltaPhi));
+              fCorrectedQnVector->SetY(harmonic,
+                                       fSubEvent->GetCurrentQnVector()->y(harmonic)
+                                           *TMath::Cos(((Double_t) harmonic)*deltaPhi)
+                                           - fSubEvent->GetCurrentQnVector()->x(harmonic)
+                                               *TMath::Sin(((Double_t) harmonic)*deltaPhi));
               harmonic = fSubEvent->GetCurrentQnVector()->GetNextHarmonic(harmonic);
             }
           } /* if the correction is not significant we leave the Q vector untouched */
         } /* if the correction bin is not validated we leave the Q vector untouched */
         else {
-          if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, 1.0);
+          if (fQANotValidatedBin) fQANotValidatedBin->Fill(1.0);
         }
       } else {
         /* not done! input Q vector with bad quality */
@@ -204,27 +203,23 @@ bool Alignment::ProcessCorrections(const double *variableContainer) {
 ///
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
-Bool_t Alignment::ProcessDataCollection(const double *variableContainer) {
+Bool_t Alignment::ProcessDataCollection() {
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
       if ((fInputQnVector->IsGoodQuality()) &&
           (fDetectorForAlignment->GetCurrentQnVector()->IsGoodQuality())) {
-        fCalibrationHistograms->FillXX(variableContainer,
-                                       fInputQnVector->Qx(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qx(
+        fCalibrationHistograms->FillXX(fInputQnVector->x(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->x(
                                                fHarmonicForAlignment));
-        fCalibrationHistograms->FillXY(variableContainer,
-                                       fInputQnVector->Qx(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qy(
+        fCalibrationHistograms->FillXY(fInputQnVector->x(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->y(
                                                fHarmonicForAlignment));
-        fCalibrationHistograms->FillYX(variableContainer,
-                                       fInputQnVector->Qy(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qx(
+        fCalibrationHistograms->FillYX(fInputQnVector->y(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->x(
                                                fHarmonicForAlignment));
-        fCalibrationHistograms->FillYY(variableContainer,
-                                       fInputQnVector->Qy(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qy(
+        fCalibrationHistograms->FillYY(fInputQnVector->y(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->y(
                                                fHarmonicForAlignment));
       }
       /* we have not perform any correction yet */
@@ -233,21 +228,17 @@ Bool_t Alignment::ProcessDataCollection(const double *variableContainer) {
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
       if ((fInputQnVector->IsGoodQuality()) &&
           (fDetectorForAlignment->GetCurrentQnVector()->IsGoodQuality())) {
-        fCalibrationHistograms->FillXX(variableContainer,
-                                       fInputQnVector->Qx(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qx(
+        fCalibrationHistograms->FillXX(fInputQnVector->x(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->x(
                                                fHarmonicForAlignment));
-        fCalibrationHistograms->FillXY(variableContainer,
-                                       fInputQnVector->Qx(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qy(
+        fCalibrationHistograms->FillXY(fInputQnVector->x(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->y(
                                                fHarmonicForAlignment));
-        fCalibrationHistograms->FillYX(variableContainer,
-                                       fInputQnVector->Qy(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qx(
+        fCalibrationHistograms->FillYX(fInputQnVector->y(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->x(
                                                fHarmonicForAlignment));
-        fCalibrationHistograms->FillYY(variableContainer,
-                                       fInputQnVector->Qy(fHarmonicForAlignment)
-                                           *fDetectorForAlignment->GetCurrentQnVector()->Qy(
+        fCalibrationHistograms->FillYY(fInputQnVector->y(fHarmonicForAlignment)
+                                           *fDetectorForAlignment->GetCurrentQnVector()->y(
                                                fHarmonicForAlignment));
       }
       /* and proceed to ... */
@@ -257,8 +248,8 @@ Bool_t Alignment::ProcessDataCollection(const double *variableContainer) {
       if (fQAQnAverageHistogram) {
         Int_t harmonic = fCorrectedQnVector->GetFirstHarmonic();
         while (harmonic!=-1) {
-          fQAQnAverageHistogram->FillX(harmonic, variableContainer, fCorrectedQnVector->Qx(harmonic));
-          fQAQnAverageHistogram->FillY(harmonic, variableContainer, fCorrectedQnVector->Qy(harmonic));
+          fQAQnAverageHistogram->FillX(harmonic, fCorrectedQnVector->x(harmonic));
+          fQAQnAverageHistogram->FillY(harmonic, fCorrectedQnVector->y(harmonic));
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
@@ -272,19 +263,6 @@ Bool_t Alignment::ProcessDataCollection(const double *variableContainer) {
 /// Clean the correction to accept a new event
 void Alignment::ClearCorrectionStep() {
   fCorrectedQnVector->Reset();
-}
-
-/// Reports if the correction step is being applied
-/// Returns TRUE if in the proper state for applying the correction step
-/// \return TRUE if the correction step is being applied
-Bool_t Alignment::IsBeingApplied() const {
-  switch (fState) {
-    case State::CALIBRATION: return false;
-    case State::APPLYCOLLECT:
-      /* FALLTHRU */
-    case State::APPLY: return true;
-    case State::PASSIVE: return false;
-  }
 }
 
 /// Report on correction usage

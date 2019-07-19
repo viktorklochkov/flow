@@ -5,7 +5,7 @@
 /// \brief Multidimensional profile histograms base class for the Q vector correction framework
 
 #include <THn.h>
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 namespace Qn {
 /// \class QnCorrectionsHistogramBase
 /// \brief Base class for the Q vector correction histograms
@@ -45,8 +45,8 @@ class CorrectionHistogramBase {
   };
  public:
   CorrectionHistogramBase() = default;
-  CorrectionHistogramBase(std::string name, std::string title, const EventClassVariablesSet &ecvs, ErrorMode mode);
-  CorrectionHistogramBase(std::string name, std::string title, const EventClassVariablesSet &ecvs);
+  CorrectionHistogramBase(std::string name, std::string title, const CorrectionAxisSet &ecvs, ErrorMode mode);
+  CorrectionHistogramBase(std::string name, std::string title, const CorrectionAxisSet &ecvs);
   virtual ~CorrectionHistogramBase();
   /// Set the minimum number of entries needed to validate the bin content
   /// \param nNoOfEntries the number of entries threshold
@@ -55,14 +55,14 @@ class CorrectionHistogramBase {
   std::string GetTitle() const { return fTitle;}
 
  protected:
-  void FillBinAxesValues(const double *variableContainer, Int_t chgrpId = -1);
+  void FillBinAxesValues(Int_t chgrpId = -1);
   THnF *DivideTHnF(THnF *values, THnI *entries, THnC *valid = nullptr);
   void CopyTHnF(THnF *hDest, THnF *hSource, Int_t *binsArray);
   void CopyTHnFDimension(THnF *hDest, THnF *hSource, Int_t *binsArray, Int_t dimension);
 
   std::string fName;
   std::string fTitle;
-  const EventClassVariablesSet fEventClassVariables{};  //!<! The variables set that determines the event classes
+  CorrectionAxisSet fEventClassVariables;  //!<! The variables set that determines the event classes
   Double_t *fBinAxesValues = nullptr;                                  //!<! Runtime place holder for computing bin number
   ErrorMode fErrorMode = ErrorMode::MEAN;                 //!<! The error type for the current instance
   Int_t fMinNoOfEntriesToValidate = nDefaultMinNoOfEntriesValidated;     ///< the minimum number of entries for validating a bin content
@@ -96,14 +96,13 @@ class CorrectionHistogramBase {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \param chgrpId additional optional channel or group Id
-inline void CorrectionHistogramBase::FillBinAxesValues(const double *variableContainer, Int_t chgrpId) {
-  (void) variableContainer;
+inline void CorrectionHistogramBase::FillBinAxesValues(Int_t chgrpId) {
   unsigned int ivar = 0;
     for (const auto &var : fEventClassVariables) {
     fBinAxesValues[ivar] = var.GetValue();//variableContainer[var.GetId()];
     ++ivar;
   }
-  fBinAxesValues[fEventClassVariables.size()] = chgrpId;
+  fBinAxesValues[fEventClassVariables.GetSize()] = chgrpId;
 }
 
 }

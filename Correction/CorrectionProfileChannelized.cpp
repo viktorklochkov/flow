@@ -3,7 +3,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileChannelized.h"
 
 /// \cond CLASSIMP
@@ -28,14 +28,14 @@ namespace Qn {
 ///     's'            the bin are the standard deviation of of the bin values
 CorrectionProfileChannelized::CorrectionProfileChannelized(std::string name,
                                                            std::string title,
-                                                           const EventClassVariablesSet &ecvs,
+                                                           const CorrectionAxisSet &ecvs,
                                                            Int_t nNoOfChannels,
                                                            ErrorMode mode) :
     CorrectionHistogramBase(name, title, ecvs, mode),
     fNoOfChannels(nNoOfChannels) {}
 
 CorrectionProfileChannelized::CorrectionProfileChannelized(std::string name,
-                                                           const EventClassVariablesSet &ecvs,
+                                                           const CorrectionAxisSet &ecvs,
                                                            Int_t nNoOfChannels,
                                                            ErrorMode mode) :
     CorrectionHistogramBase(name, name, ecvs, mode),
@@ -79,7 +79,7 @@ Bool_t CorrectionProfileChannelized::CreateProfileHistograms(TList *histogramLis
   TString entriesHistoTitle = GetTitle();
   entriesHistoTitle += szEntriesHistoSuffix;
   /* we open space for channel variable as well */
-  Int_t nVariables = fEventClassVariables.size();
+  Int_t nVariables = fEventClassVariables.GetSize();
   Double_t *minvals = new Double_t[nVariables + 1];
   Double_t *maxvals = new Double_t[nVariables + 1];
   Int_t *nbins = new Int_t[nVariables + 1];
@@ -124,10 +124,10 @@ Bool_t CorrectionProfileChannelized::CreateProfileHistograms(TList *histogramLis
                       maxvals);
   /* now let's set the proper binning and label on each axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+    fValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fEntries->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
   }
   /* and now the channel axis */
   fValues->GetAxis(nVariables)->SetTitle(szChannelAxisTitle);
@@ -158,8 +158,8 @@ Bool_t CorrectionProfileChannelized::CreateProfileHistograms(TList *histogramLis
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
-Long64_t CorrectionProfileChannelized::GetBin(const double *variableContainer, Int_t nChannel) {
-  FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
+Long64_t CorrectionProfileChannelized::GetBin(Int_t nChannel) {
+  FillBinAxesValues(fChannelMap[nChannel]);
   /* store the channel number */
   return fEntries->GetBin(fBinAxesValues);
 }
@@ -228,9 +228,9 @@ Float_t CorrectionProfileChannelized::GetBinError(Long64_t bin) {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \param weight the increment in the bin content
-void CorrectionProfileChannelized::Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
+void CorrectionProfileChannelized::Fill(Int_t nChannel, Float_t weight) {
   Double_t nEntries = fValues->GetEntries();
-  FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
+  FillBinAxesValues(fChannelMap[nChannel]);
   fValues->Fill(fBinAxesValues, weight);
   fValues->SetEntries(nEntries + 1);
   fEntries->Fill(fBinAxesValues, 1.0);

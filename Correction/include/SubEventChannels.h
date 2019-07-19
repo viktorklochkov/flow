@@ -43,8 +43,7 @@ class SubEventChannels : public SubEvent {
   friend class SubEvent;
   SubEventChannels() = default;
   SubEventChannels(unsigned int bin_id,
-                                const EventClassVariablesSet *eventClassesVariables,
-                                Int_t nNoOfChannels, std::bitset<QVector::kmaxharmonics> harmonics);
+                   const CorrectionAxisSet *axes,Int_t nNoOfChannels, std::bitset<QVector::kmaxharmonics> harmonics);
   virtual ~SubEventChannels();
   SubEventChannels(const SubEventChannels &) = delete;
   SubEventChannels &operator=(const SubEventChannels &) = delete;
@@ -63,11 +62,9 @@ class SubEventChannels : public SubEvent {
   const Float_t *GetHardCodedGroupWeights() const { return fHardCodedGroupWeights; }
   /// Get if the detector configuration is own by a tracking detector
   /// \return FALSE, this is a hit / channel detector configuration
-  virtual Bool_t GetIsTrackingDetector() const { return kFALSE; }
+  Bool_t GetIsTrackingDetector() const  { return kFALSE; }
 
-  virtual void SetChannelsScheme(Bool_t *bUsedChannel,
-                                 Int_t *nChannelGroup = nullptr,
-                                 Float_t *hardCodedGroupWeights = nullptr);
+  void SetChannelsScheme(Bool_t *bUsedChannel,Int_t *nChannelGroup = nullptr, Float_t *hardCodedGroupWeights = nullptr) ;
 
   /* QA section */
   /// Sets the variable id used for centrality in QA histograms.
@@ -84,41 +81,46 @@ class SubEventChannels : public SubEvent {
     fQAMultiplicityMax = max;
   }
 
-  virtual void CreateSupportDataStructures();
-  virtual void AttachSupportHistograms(TList *list);
-  virtual void AttachQAHistograms(TList *list);
-  virtual void AttachNveQAHistograms(TList *list);
+  void BuildRawQnVector();
+
+  virtual void CreateSupportQVectors() ;
+  virtual void CreateCorrectionHistograms(TList *list) ;
+  virtual void AttachQAHistograms(TList *list) ;
+  virtual void AttachNveQAHistograms(TList *list) ;
 
   /// Activate the processing for the passed harmonic
   /// \param harmonic the desired harmonic number to activate
-  virtual void ActivateHarmonic(Int_t harmonic) {
+  virtual void ActivateHarmonic(Int_t harmonic)  {
     SubEvent::ActivateHarmonic(harmonic);
     fRawQnVector.ActivateHarmonic(harmonic);
   }
-  virtual void AttachCorrectionInputs(TList *list);
-  virtual void AfterInputsAttachActions();
-  virtual Bool_t ProcessCorrections(const double *variableContainer);
-  virtual Bool_t ProcessDataCollection(const double *variableContainer);
-  virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
-  void BuildRawQnVector();
-  virtual void IncludeQnVectors();
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep*> &set) const;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep*> &set) const;
-  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const;
-  virtual void Clear();
+  virtual void AttachCorrectionInput(TList *list) ;
+  virtual void AfterInputAttachAction() ;
+  virtual Bool_t ProcessCorrections() ;
+  virtual Bool_t ProcessDataCollection() ;
+  virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData) ;
+  virtual void IncludeQnVectors() ;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const ;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const ;
+  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const ;
+  virtual void Clear() ;
 
  private:
-  static const char *szRawQnVectorName;   ///< the name of the raw Qn vector from raw data without input data corrections
+  static const char
+      *szRawQnVectorName;   ///< the name of the raw Qn vector from raw data without input data corrections
   QVector fRawQnVector;                       ///< Q vector from input data before pre-processing
   Int_t fNoOfChannels = 0;                    ///< The number of channels associated
-  Bool_t *fUsedChannel = nullptr;                   //[fNoOfChannels]   /// array, which of the detector channels is used for this configuration
-  Int_t *fChannelMap = nullptr;                     //[fNoOfChannels]   /// array, mapping external to internal channel id.
-  Int_t *fChannelGroup = nullptr;                   //[fNoOfChannels]   /// array, the group to which the channel pertains
+  Bool_t *fUsedChannel =
+      nullptr;                   //[fNoOfChannels]   /// array, which of the detector channels is used for this configuration
+  Int_t *fChannelMap =
+      nullptr;                     //[fNoOfChannels]   /// array, mapping external to internal channel id.
+  Int_t
+      *fChannelGroup = nullptr;                   //[fNoOfChannels]   /// array, the group to which the channel pertains
   Float_t *fHardCodedGroupWeights = nullptr;         //[fNoOfChannels]  /// array, group hard coded weight
   CorrectionsSetOnInputData fInputDataCorrections; ///< set of corrections to apply on input data vectors
 
   /* QA section */
-  void FillQAHistograms(const double *variableContainer);
+  void FillQAHistograms();
   static const char *szQAMultiplicityHistoName; ///< QA multiplicity histograms name
   Int_t fQACentralityVarId = -1;   ///< the id of the variable used for centrality in QA histograms
   Int_t fQAnBinsMultiplicity = 100; ///< number of bins for multiplicity in QA histograms
@@ -132,30 +134,18 @@ class SubEventChannels : public SubEvent {
 /// \endcond
 };
 
-/// Builds raw Qn vector before Q vector corrections and before input
-/// data corrections but considering the chosen calibration method.
-/// This is a channelized configuration so this Q vector will NOT be
-/// the one to be used for subsequent Q vector corrections.
-inline void SubEventChannels::BuildRawQnVector() {
-  for (const auto &dataVector : fDataVectorBank) {
-    fRawQnVector.Add(dataVector.Phi(), dataVector.Weight());
-  }
-  fRawQnVector.CheckQuality();
-  fRawQnVector.Normal(fNormalizationMethod);
-}
-
 /// Ask for processing corrections for the involved detector configuration
 ///
 /// The request is transmitted to the incoming data correction steps
 /// and then to Q vector correction steps.
 /// The first not applied correction step breaks the loop and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t SubEventChannels::ProcessCorrections(const double *variableContainer) {
+inline Bool_t SubEventChannels::ProcessCorrections() {
   /* first we build the raw Q vector with the chosen calibration */
   BuildRawQnVector();
   /* then we transfer the request to the input data correction steps */
   for (auto &correction : fInputDataCorrections) {
-    if (correction->ProcessCorrections(variableContainer)) {
+    if (correction->ProcessCorrections()) {
       continue;
     } else {
       return kFALSE;
@@ -165,7 +155,7 @@ inline Bool_t SubEventChannels::ProcessCorrections(const double *variableContain
   BuildQnVector();
   /* now let's propagate it to Q vector corrections */
   for (auto &correction : fQnVectorCorrections) {
-    if (correction->ProcessCorrections(variableContainer))
+    if (correction->ProcessCorrections())
       continue;
     else
       return kFALSE;
@@ -180,20 +170,20 @@ inline Bool_t SubEventChannels::ProcessCorrections(const double *variableContain
 /// and then to Q vector correction steps.
 /// The first not applied correction step should break the loop after collecting the data and kFALSE is returned
 /// \return kTRUE if all correction steps were applied
-inline Bool_t SubEventChannels::ProcessDataCollection(const double *variableContainer) {
+inline Bool_t SubEventChannels::ProcessDataCollection() {
   /* we transfer the request to the input data correction steps */
   for (auto &correction : fInputDataCorrections) {
-    if (correction->ProcessDataCollection(variableContainer)) {
+    if (correction->ProcessDataCollection()) {
       continue;
     } else {
       return kFALSE;
     }
   }
   /* check whether QA histograms must be filled */
-  FillQAHistograms(variableContainer);
+  FillQAHistograms();
   /* now let's propagate it to Q vector corrections */
   for (auto &correction : fQnVectorCorrections) {
-    if (correction->ProcessDataCollection(variableContainer))
+    if (correction->ProcessDataCollection())
       continue;
     else
       return kFALSE;

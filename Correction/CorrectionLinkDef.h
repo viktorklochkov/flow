@@ -33,8 +33,8 @@
 #pragma link C++ class Qn::SubEvent+;
 #pragma link C++ class Qn::SubEventChannels+;
 #pragma link C++ class Qn::SubEventTracks+;
-#pragma link C++ class Qn::EventClassVariable+;
-#pragma link C++ class Qn::EventClassVariablesSet+;
+#pragma link C++ class Qn::CorrectionAxis+;
+#pragma link C++ class Qn::CorrectionAxisSet+;
 #pragma link C++ class Qn::CorrectionHistogram+;
 #pragma link C++ class Qn::CorrectionHistogramBase+;
 #pragma link C++ class Qn::CorrectionHistogramChannelized+;
@@ -52,5 +52,5 @@
 #pragma link C++ class Qn::Alignment+;
 #pragma link C++ class Qn::Recentering+;
 #pragma link C++ class Qn::TwistAndRescale+;
-#pragma link C++ class Qn::DataContainer<std::shared_ptr<Qn::SubEvent>,Qn::Axis<float>>+;
+#pragma link C++ class Qn::DataContainer<std::unique_ptr<Qn::SubEvent>,Qn::Axis<double>>+;
 #endif

@@ -3,7 +3,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileComponents.h"
 
 /// \cond CLASSIMP
@@ -27,14 +27,14 @@ namespace Qn {
 ///     's'            the bin are the standard deviation of of the bin values
 CorrectionProfileComponents::CorrectionProfileComponents(std::string name,
                                                          std::string title,
-                                                         const EventClassVariablesSet &ecvs,
+                                                         const CorrectionAxisSet &ecvs,
                                                          ErrorMode mode) :
     CorrectionHistogramBase(name, title, ecvs, mode) {
 }
 
 
 CorrectionProfileComponents::CorrectionProfileComponents(std::string name,
-                                                         const EventClassVariablesSet &ecvs,
+                                                         const CorrectionAxisSet &ecvs,
                                                          ErrorMode mode) :
     CorrectionHistogramBase(name, name, ecvs, mode) {
 }
@@ -116,7 +116,7 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
     fYValues[i] = nullptr;
   }
   /* now prepare the construction of the histograms */
-  Int_t nVariables = fEventClassVariables.size();
+  Int_t nVariables = fEventClassVariables.GetSize();
   Double_t *minvals = new Double_t[nVariables];
   Double_t *maxvals = new Double_t[nVariables];
   Int_t *nbins = new Int_t[nVariables];
@@ -139,14 +139,14 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
                                          nVariables, nbins, minvals, maxvals);
     /* now let's set the proper binning and label on each axis */
     for (Int_t var = 0; var < nVariables; var++) {
-      fXValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                   fEventClassVariables.At(var).GetBins());
-      fXValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-      fXValues[currentHarmonic]->GetAxis(var)->SetName(fEventClassVariables.At(var).GetLabel().data());
-      fYValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                                   fEventClassVariables.At(var).GetBins());
-      fYValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-      fYValues[currentHarmonic]->GetAxis(var)->SetName(fEventClassVariables.At(var).GetLabel().data());
+      fXValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                   fEventClassVariables[var].GetBins());
+      fXValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+      fXValues[currentHarmonic]->GetAxis(var)->SetName(fEventClassVariables[var].GetLabel().data());
+      fYValues[currentHarmonic]->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                                   fEventClassVariables[var].GetBins());
+      fYValues[currentHarmonic]->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+      fYValues[currentHarmonic]->GetAxis(var)->SetName(fEventClassVariables[var].GetLabel().data());
 
     }
     /* ask for square sum accumulation */
@@ -163,9 +163,9 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
       new THnI((const char *) entriesHistoName, (const char *) entriesHistoTitle, nVariables, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each entries histogram axis */
   for (Int_t var = 0; var < nVariables; var++) {
-    fEntries->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fEntries->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
-    fEntries->GetAxis(var)->SetName(fEventClassVariables.At(var).GetLabel().data());
+    fEntries->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fEntries->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
+    fEntries->GetAxis(var)->SetName(fEventClassVariables[var].GetLabel().data());
   }
   /* and finally add the entries histogram to the list */
   histogramList->Add(fEntries);
@@ -240,8 +240,8 @@ Bool_t CorrectionProfileComponents::AttachHistograms(TList *histogramList) {
 ///
 /// \param variableContainer the current variables content addressed by var Id
 /// \return the associated bin to the current variables content
-Long64_t CorrectionProfileComponents::GetBin(const double *variableContainer) {
-  FillBinAxesValues(variableContainer);
+Long64_t CorrectionProfileComponents::GetBin() {
+  FillBinAxesValues();
   return fEntries->GetBin(fBinAxesValues);
 }
 
@@ -379,7 +379,7 @@ Float_t CorrectionProfileComponents::GetYBinError(Int_t harmonic, Long64_t bin) 
 /// \param harmonic the interested external harmonic number
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionProfileComponents::FillX(Int_t harmonic, const double *variableContainer, Float_t weight) {
+void CorrectionProfileComponents::FillX(Int_t harmonic, Float_t weight) {
   /* first the sanity checks */
   if (fXValues[harmonic]==nullptr) {
     return;
@@ -389,7 +389,7 @@ void CorrectionProfileComponents::FillX(Int_t harmonic, const double *variableCo
   /* now it's safe to continue */
   /* keep total entries in fValues updated */
   Double_t nEntries = fXValues[harmonic]->GetEntries();
-  FillBinAxesValues(variableContainer);
+  FillBinAxesValues();
   fXValues[harmonic]->Fill(fBinAxesValues, weight);
   fXValues[harmonic]->SetEntries(nEntries + 1);
   /* update harmonic fill mask */
@@ -414,7 +414,7 @@ void CorrectionProfileComponents::FillX(Int_t harmonic, const double *variableCo
 /// \param harmonic the interested external harmonic number
 /// \param variableContainer the current variables content addressed by var Id
 /// \param weight the increment in the bin content
-void CorrectionProfileComponents::FillY(Int_t harmonic, const double *variableContainer, Float_t weight) {
+void CorrectionProfileComponents::FillY(Int_t harmonic, Float_t weight) {
   /* first the sanity checks */
   if (fYValues[harmonic]==nullptr) {
     return;
@@ -425,7 +425,7 @@ void CorrectionProfileComponents::FillY(Int_t harmonic, const double *variableCo
   /* now it's safe to continue */
   /* keep total entries in fValues updated */
   Double_t nEntries = fYValues[harmonic]->GetEntries();
-  FillBinAxesValues(variableContainer);
+  FillBinAxesValues();
   fYValues[harmonic]->Fill(fBinAxesValues, weight);
   fYValues[harmonic]->SetEntries(nEntries + 1);
   /* update harmonic fill mask */

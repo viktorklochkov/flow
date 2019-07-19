@@ -90,7 +90,7 @@ class Correlation {
    * @param qvectors map of qvector inputs
    * @param eventaxes vector of event axes
    */
-  void Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::AxisF> &eventaxes);
+  void Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::AxisD> &eventaxes);
 
   /**
    * Returns the name of the correlation.

@@ -86,7 +86,7 @@ void Qn::Correlation::Fill(const std::vector<unsigned long> &eventindices) {
 }
 
 void Qn::Correlation::Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors,
-                                const std::vector<Qn::AxisF> &event_axes) {
+                                const std::vector<Qn::AxisD> &event_axes) {
   for (const auto &cname : names_) {
     inputs_.push_back(&qvectors->at(cname));
   }

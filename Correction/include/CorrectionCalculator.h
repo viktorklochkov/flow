@@ -169,7 +169,7 @@ class CorrectionCalculator : public TObject {
 /// have been incorporated to the framework.
 inline void CorrectionCalculator::ProcessEvent() {
   for (auto &detector : fSubEvents) {
-    detector->ProcessCorrections(fDataContainer);
+    detector->ProcessCorrections();
   }
   for (auto &detector : fSubEvents) {
     detector->ProcessDataCollection(fDataContainer);

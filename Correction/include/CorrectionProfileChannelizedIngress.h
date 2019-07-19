@@ -42,17 +42,17 @@ class CorrectionProfileChannelizedIngress : public CorrectionHistogramBase {
  public:
   CorrectionProfileChannelizedIngress();
   CorrectionProfileChannelizedIngress(std::string name, std::string title,
-                                      const EventClassVariablesSet &ecvs,
+                                      const CorrectionAxisSet &ecvs,
                                       Int_t nNoOfChannels,
                                       ErrorMode mode);
   CorrectionProfileChannelizedIngress(std::string name,
-                                      const EventClassVariablesSet &ecvs,
+                                      const CorrectionAxisSet &ecvs,
                                       Int_t nNoOfChannels,
                                       ErrorMode mode);
   virtual ~CorrectionProfileChannelizedIngress();
   Bool_t AttachHistograms(TList *histogramList, const Bool_t *bUsedChannel, const Int_t *nChannelGroup);
-  Long64_t GetBin(const double *variableContainer, Int_t nChannel);
-  Long64_t GetGrpBin(const double *variableContainer, Int_t nChannel);
+  Long64_t GetBin(Int_t nChannel);
+  Long64_t GetGrpBin(Int_t nChannel);
   Bool_t BinContentValidated(Long64_t bin);
   Float_t GetBinContent(Long64_t bin);
   Float_t GetGrpBinContent(Long64_t bin);

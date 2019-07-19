@@ -38,7 +38,6 @@ void StatsResult::Fill(const size_type event_id) {
   }
 
 void StatsResult::ConfigureStats(Qn::Sampler *sampler) {
-
   const auto &current_event_result = correlation_current_event->GetResult();
   // configure the result datacontainer
   result_.AddAxes(current_event_result.GetAxes());

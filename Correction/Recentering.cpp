@@ -33,7 +33,7 @@
 
 /// \file QnCorrectionsQnVectorRecentering.cxx
 /// \brief Implementation of procedures for Qn vector recentering.
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileComponents.h"
 #include "CorrectionHistogramSparse.h"
 #include "Recentering.h"
@@ -54,7 +54,7 @@ const char *Recentering::szQAQnAverageHistogramName = "Rec Qn avg ";
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
 Recentering::Recentering() :
-    CorrectionOnQvector(szCorrectionName, szPriority) {
+    CorrectionOnQvector(szCorrectionName, CorrectionOnQvector::Step::kRecentering) {
   fApplyWidthEqualization = kFALSE;
   fMinNoOfEntriesToValidate = fDefaultMinNoOfEntries;
 }
@@ -62,7 +62,7 @@ Recentering::Recentering() :
 /// Asks for support data structures creation
 ///
 /// Creates the recentered Qn vector
-void Recentering::CreateSupportDataStructures() {
+void Recentering::CreateSupportQVectors() {
   fInputQnVector = fSubEvent->GetPreviousCorrectedQnVector(this);
   fCorrectedQnVector = std::make_unique<QVector>(*fInputQnVector);
   fCorrectedQnVector->SetCorrectionStep(QVector::RECENTERED);
@@ -79,7 +79,7 @@ void Recentering::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void Recentering::AttachSupportHistograms(TList *list) {
+void Recentering::CreateCorrectionHistograms(TList *list) {
   auto hname = std::string(szSupportHistogramName) + "_" + fSubEvent->GetName();
   fInputHistograms = std::make_unique<CorrectionProfileComponents>(hname, fSubEvent->GetEventClassVariablesSet(),
                                                                    CorrectionHistogramBase::ErrorMode::SPREAD);
@@ -134,7 +134,7 @@ void Recentering::AttachNveQAHistograms(TList *list) {
 ///
 /// Pure virtual function
 /// \return kTRUE if the correction step was applied
-bool Recentering::ProcessCorrections(const double *variableContainer) {
+bool Recentering::ProcessCorrections() {
   int harmonic;
   switch (fState) {
     case State::CALIBRATION:
@@ -150,7 +150,7 @@ bool Recentering::ProcessCorrections(const double *variableContainer) {
         fCorrectedQnVector->SetCurrentEvent(*fSubEvent->GetCurrentQnVector());
         harmonic = fSubEvent->GetCurrentQnVector()->GetFirstHarmonic();
         /* let's check the correction histograms */
-        Long64_t bin = fInputHistograms->GetBin(variableContainer);
+        Long64_t bin = fInputHistograms->GetBin();
         if (fInputHistograms->BinContentValidated(bin)) {
           /* correction information validated */
           while (harmonic!=-1) {
@@ -160,17 +160,17 @@ bool Recentering::ProcessCorrections(const double *variableContainer) {
               widthX = fInputHistograms->GetXBinError(harmonic, bin);
               widthY = fInputHistograms->GetYBinError(harmonic, bin);
             }
-            fCorrectedQnVector->SetQx(harmonic, (fSubEvent->GetCurrentQnVector()->Qx(harmonic)
+            fCorrectedQnVector->SetX(harmonic, (fSubEvent->GetCurrentQnVector()->x(harmonic)
                 - fInputHistograms->GetXBinContent(harmonic, bin))
                 /widthX);
-            fCorrectedQnVector->SetQy(harmonic, (fSubEvent->GetCurrentQnVector()->Qy(harmonic)
+            fCorrectedQnVector->SetY(harmonic, (fSubEvent->GetCurrentQnVector()->y(harmonic)
                 - fInputHistograms->GetYBinContent(harmonic, bin))
                 /widthY);
             harmonic = fSubEvent->GetCurrentQnVector()->GetNextHarmonic(harmonic);
           }
         } /* correction information not validated, we leave the Q vector untouched */
         else {
-          if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, 1.0);
+          if (fQANotValidatedBin) fQANotValidatedBin->Fill(1.0);
         }
       } else {
         /* not done! input vector with bad quality */
@@ -189,16 +189,17 @@ bool Recentering::ProcessCorrections(const double *variableContainer) {
 ///
 /// Pure virtual function
 /// \return kTRUE if the correction step was applied
-bool Recentering::ProcessDataCollection(const double *variableContainer) {
+bool Recentering::ProcessDataCollection() {
   int harmonic;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
       if (fInputQnVector->IsGoodQuality()) {
+
         harmonic = fInputQnVector->GetFirstHarmonic();
         while (harmonic!=-1) {
-          fCalibrationHistograms->FillX(harmonic, variableContainer, fInputQnVector->Qx(harmonic));
-          fCalibrationHistograms->FillY(harmonic, variableContainer, fInputQnVector->Qy(harmonic));
+          fCalibrationHistograms->FillX(harmonic, fInputQnVector->x(harmonic));
+          fCalibrationHistograms->FillY(harmonic, fInputQnVector->y(harmonic));
           harmonic = fInputQnVector->GetNextHarmonic(harmonic);
         }
       }
@@ -209,8 +210,8 @@ bool Recentering::ProcessDataCollection(const double *variableContainer) {
       if (fInputQnVector->IsGoodQuality()) {
         harmonic = fInputQnVector->GetFirstHarmonic();
         while (harmonic!=-1) {
-          fCalibrationHistograms->FillX(harmonic, variableContainer, fInputQnVector->Qx(harmonic));
-          fCalibrationHistograms->FillY(harmonic, variableContainer, fInputQnVector->Qy(harmonic));
+          fCalibrationHistograms->FillX(harmonic, fInputQnVector->x(harmonic));
+          fCalibrationHistograms->FillY(harmonic, fInputQnVector->y(harmonic));
           harmonic = fInputQnVector->GetNextHarmonic(harmonic);
         }
       }
@@ -221,8 +222,8 @@ bool Recentering::ProcessDataCollection(const double *variableContainer) {
       if (fQAQnAverageHistogram) {
         harmonic = fCorrectedQnVector->GetFirstHarmonic();
         while (harmonic!=-1) {
-          fQAQnAverageHistogram->FillX(harmonic, variableContainer, fCorrectedQnVector->Qx(harmonic));
-          fQAQnAverageHistogram->FillY(harmonic, variableContainer, fCorrectedQnVector->Qy(harmonic));
+          fQAQnAverageHistogram->FillX(harmonic, fCorrectedQnVector->x(harmonic));
+          fQAQnAverageHistogram->FillY(harmonic, fCorrectedQnVector->y(harmonic));
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
@@ -236,19 +237,6 @@ bool Recentering::ProcessDataCollection(const double *variableContainer) {
 /// Clean the correction to accept a new event
 void Recentering::ClearCorrectionStep() {
   fCorrectedQnVector->Reset();
-}
-
-/// Reports if the correction step is being applied
-/// Returns TRUE if in the proper state for applying the correction step
-/// \return TRUE if the correction step is being applied
-bool Recentering::IsBeingApplied() const {
-  switch (fState) {
-    case State::CALIBRATION: return false;
-    case State::APPLYCOLLECT:
-      /* FALLTHRU */
-    case State::APPLY: return true;
-    case State::PASSIVE: return false;
-  }
 }
 
 /// Report on correction usage

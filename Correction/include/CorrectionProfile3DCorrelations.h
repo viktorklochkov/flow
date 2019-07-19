@@ -52,14 +52,14 @@ class CorrectionProfile3DCorrelations : public CorrectionHistogramBase {
       std::string nameA,
       std::string nameB,
       std::string nameC,
-      const EventClassVariablesSet &ecvs,
+      const CorrectionAxisSet &ecvs,
       ErrorMode mode = ErrorMode::MEAN);
   CorrectionProfile3DCorrelations(
       std::string name,
       std::string nameA,
       std::string nameB,
       std::string nameC,
-      const EventClassVariablesSet &ecvs,
+      const CorrectionAxisSet &ecvs,
       ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfile3DCorrelations();
   Bool_t CreateCorrelationComponentsProfileHistograms(TList *histogramList,
@@ -67,7 +67,7 @@ class CorrectionProfile3DCorrelations : public CorrectionHistogramBase {
                                                       Int_t nHarmonicMultiplier = 1,
                                                       Int_t *harmonicMap = NULL);
   virtual Bool_t AttachHistograms(TList *histogramList);
-  virtual Long64_t GetBin(const double *variableContainer);
+  virtual Long64_t GetBin();
   virtual Bool_t BinContentValidated(Long64_t bin);
   virtual Float_t GetXXBinContent(const char *comb, Int_t harmonic, Long64_t bin);
   virtual Float_t GetXYBinContent(const char *comb, Int_t harmonic, Long64_t bin);
@@ -78,7 +78,7 @@ class CorrectionProfile3DCorrelations : public CorrectionHistogramBase {
   virtual Float_t GetYXBinError(const char *comb, Int_t harmonic, Long64_t bin);
   virtual Float_t GetYYBinError(const char *comb, Int_t harmonic, Long64_t bin);
   void Fill(const QVector *QnA, const QVector *QnB,
-            const QVector *QnC, const double *variableContainer);
+            const QVector *QnC);
  private:
   THnF ***fXXValues = nullptr;            //!<! XX component histogram for each requested harmonic
   THnF ***fXYValues = nullptr;            //!<! XY component histogram for each requested harmonic

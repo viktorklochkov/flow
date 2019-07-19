@@ -74,7 +74,7 @@ const QVector *SubEvent::GetPreviousCorrectedQnVector(CorrectionOnQvector *corre
   }
 }
 
-/// Check if a concrete correction step is bein applied on this detector configuration
+/// Check if a concrete correction step is being applied on this detector configuration
 /// It is not enough having the correction step configured or collecting data. To
 /// get an affirmative answer the correction step must be being applied.
 /// Transfers the request to the set of Qn vector corrections.
@@ -96,7 +96,26 @@ void SubEvent::ActivateHarmonic(Int_t harmonic) {
 }
 
 std::string SubEvent::GetName() const {
-  return fDetector->GetBinName(binid_);
+  if (fDetector->GetBinName(binid_).empty()) {return fDetector->GetName();}
+  else {
+    return fDetector->GetName()+"_"+fDetector->GetBinName(binid_);
+  }
+}
+
+void SubEvent::BuildQnVector() {
+  fPlainQnVector.SetNormalization(QVector::Normalization::NONE);
+  fPlainQ2nVector.SetNormalization(QVector::Normalization::NONE);
+  for (const auto &dataVector : fDataVectorBank) {
+    fPlainQnVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
+    fPlainQ2nVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
+  }
+  /* check the quality of the Qn vector */
+  fPlainQnVector.CheckQuality();
+  fPlainQ2nVector.CheckQuality();
+  fPlainQnVector = fPlainQnVector.Normal(fDetector->GetNormalizationMethod());
+  fPlainQ2nVector = fPlainQ2nVector.Normal(fDetector->GetNormalizationMethod());
+  fCorrectedQnVector = fPlainQnVector;
+  fCorrectedQ2nVector = fPlainQ2nVector;
 }
 
 }

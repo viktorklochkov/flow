@@ -44,7 +44,7 @@ class CorrectionOnInputData : public CorrectionStep {
   /// all conditions for running the network are in place so
   /// it is time to check if their requirements are satisfied
   /// Does nothing for the time being
-  virtual void AfterInputsAttachActions() {}
+  virtual void AfterInputAttachAction() {}
   /// Reports if the correction step is being applied
   /// \return FALSE, input data correction step dont make use of this service, yet
   virtual Bool_t IsBeingApplied() const { return kFALSE; }

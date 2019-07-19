@@ -37,18 +37,18 @@ class CorrectionHistogramChannelizedSparse : public CorrectionHistogramBase {
   CorrectionHistogramChannelizedSparse() = default;
   CorrectionHistogramChannelizedSparse(std::string name,
                                           std::string title,
-                                          const EventClassVariablesSet &ecvs,
+                                          const CorrectionAxisSet &ecvs,
                                           Int_t nNoOfChannels);
   CorrectionHistogramChannelizedSparse(std::string name,
-                                       const EventClassVariablesSet &ecvs,
+                                       const CorrectionAxisSet &ecvs,
                                        Int_t nNoOfChannels);
   virtual ~CorrectionHistogramChannelizedSparse();
   Bool_t CreateChannelizedHistogram(TList *histogramList, const Bool_t *bUsedChannel);
-  Long64_t GetBin(const double *variableContainer, Int_t nChannel);
+  Long64_t GetBin(Int_t nChannel);
   Bool_t BinContentValidated(Long64_t bin);
   Float_t GetBinContent(Long64_t bin);
   Float_t GetBinError(Long64_t bin);
-  void Fill(const double *variableContainer, Int_t nChannel, Float_t weight);
+  void Fill(Int_t nChannel, Float_t weight);
  private:
   THnSparseF *fValues = nullptr;              //!<! Cumulates values for each of the event classes
   Bool_t *fUsedChannel = nullptr;       //!<! array, which of the detector channels is used for this configuration

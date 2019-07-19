@@ -31,11 +31,10 @@
 
 /// \file QnCorrectionsQnVectorTwistAndRescale.cxx
 /// \brief Implementation of procedures for Qn vector twist and rescale corrections.
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileComponents.h"
 #include "CorrectionProfile3DCorrelations.h"
 #include "CorrectionHistogramSparse.h"
-#include "CorrectionCalculator.h"
 #include "TwistAndRescale.h"
 #include "ROOT/RMakeUnique.hxx"
 #include "Detector.h"
@@ -85,7 +84,7 @@ void TwistAndRescale::SetReferenceConfigurationsForTwistAndRescale(const char *n
 /// Asks for support data structures creation
 /// Creates the corrected Qn vectors
 /// Locates the reference detector configurations for twist and rescaling if their names have been previously stored
-void TwistAndRescale::CreateSupportDataStructures() {
+void TwistAndRescale::CreateSupportQVectors() {
   auto harmonics = fSubEvent->GetHarmonics();
   /* now create the corrected Qn vectors */
   fCorrectedQnVector = std::make_unique<QVector>(harmonics, QVector::CorrectionStep::TWIST);
@@ -134,7 +133,7 @@ void TwistAndRescale::CreateSupportDataStructures() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void TwistAndRescale::AttachSupportHistograms(TList *list) {
+void TwistAndRescale::CreateCorrectionHistograms(TList *list) {
   Int_t *harmonicsMap;
   auto event_variables = fSubEvent->GetEventClassVariablesSet();
   std::string name;
@@ -206,7 +205,7 @@ void TwistAndRescale::AttachInput(TList *list) {
 /// A check is done to confirm that \f$ B \f$ is applying
 /// twist to correct its Qn vectors. If not the correction
 /// step is set to passive
-void TwistAndRescale::AfterInputsAttachActions() {
+void TwistAndRescale::AfterInputAttachAction() {
   switch (fTwistAndRescaleMethod) {
     case Method::DOUBLE_HARMONIC:
       /* nothing required */
@@ -276,7 +275,7 @@ void TwistAndRescale::AttachNveQAHistograms(TList *list) {
 ///
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
-bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
+bool TwistAndRescale::ProcessCorrections() {
   Int_t harmonic;
   switch (fState) {
     case State::CALIBRATION:
@@ -298,7 +297,7 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
             fTwistCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
             fRescaleCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
             /* let's check the correction histograms */
-            Long64_t bin = fDoubleHarmonicInputHistograms->GetBin(variableContainer);
+            Long64_t bin = fDoubleHarmonicInputHistograms->GetBin();
             if (fDoubleHarmonicInputHistograms->BinContentValidated(bin)) {
               /* remember we store the profile information on a twice the harmonic number base */
               harmonic = fCorrectedQnVector->GetFirstHarmonic();
@@ -327,17 +326,17 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
                   harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
                   continue;
                 }
-                Double_t Qx = fTwistCorrectedQnVector->Qx(harmonic);
-                Double_t Qy = fTwistCorrectedQnVector->Qy(harmonic);
+                Double_t Qx = fTwistCorrectedQnVector->x(harmonic);
+                Double_t Qy = fTwistCorrectedQnVector->y(harmonic);
                 Double_t newQx = (Qx - LambdaMinus*Qy)/(1 - LambdaMinus*LambdaPlus);
                 Double_t newQy = (Qy - LambdaPlus*Qx)/(1 - LambdaMinus*LambdaPlus);
                 if (fApplyTwist) {
-                  fCorrectedQnVector->SetQx(harmonic, newQx);
-                  fCorrectedQnVector->SetQy(harmonic, newQy);
-                  fTwistCorrectedQnVector->SetQx(harmonic, newQx);
-                  fTwistCorrectedQnVector->SetQy(harmonic, newQy);
-                  fRescaleCorrectedQnVector->SetQx(harmonic, newQx);
-                  fRescaleCorrectedQnVector->SetQy(harmonic, newQy);
+                  fCorrectedQnVector->SetX(harmonic, newQx);
+                  fCorrectedQnVector->SetY(harmonic, newQy);
+                  fTwistCorrectedQnVector->SetX(harmonic, newQx);
+                  fTwistCorrectedQnVector->SetY(harmonic, newQy);
+                  fRescaleCorrectedQnVector->SetX(harmonic, newQx);
+                  fRescaleCorrectedQnVector->SetY(harmonic, newQy);
                 }
                 newQx = newQx/Aplus;
                 newQy = newQy/Aminus;
@@ -350,15 +349,15 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
                   continue;
                 }
                 if (fApplyRescale) {
-                  fCorrectedQnVector->SetQx(harmonic, newQx);
-                  fCorrectedQnVector->SetQy(harmonic, newQy);
-                  fRescaleCorrectedQnVector->SetQx(harmonic, newQx);
-                  fRescaleCorrectedQnVector->SetQy(harmonic, newQy);
+                  fCorrectedQnVector->SetX(harmonic, newQx);
+                  fCorrectedQnVector->SetY(harmonic, newQy);
+                  fRescaleCorrectedQnVector->SetX(harmonic, newQx);
+                  fRescaleCorrectedQnVector->SetY(harmonic, newQy);
                 }
                 harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
               }
             } else {
-              if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, 1.0);
+              if (fQANotValidatedBin) fQANotValidatedBin->Fill(1.0);
             }
           } else {
             /* not done! input Q vector with bad quality */
@@ -372,7 +371,7 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
             fTwistCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
             fRescaleCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
             /* let's check the correction histograms */
-            Long64_t bin = fCorrelationsInputHistograms->GetBin(variableContainer);
+            Long64_t bin = fCorrelationsInputHistograms->GetBin();
             if (fCorrelationsInputHistograms->BinContentValidated(bin)) {
               harmonic = fCorrectedQnVector->GetFirstHarmonic();
               while (harmonic!=-1) {
@@ -404,17 +403,17 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
                   harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
                   continue;
                 }
-                Double_t Qx = fTwistCorrectedQnVector->Qx(harmonic);
-                Double_t Qy = fTwistCorrectedQnVector->Qy(harmonic);
+                Double_t Qx = fTwistCorrectedQnVector->x(harmonic);
+                Double_t Qy = fTwistCorrectedQnVector->y(harmonic);
                 Double_t newQx = (Qx - LambdaMinus*Qy)/(1 - LambdaMinus*LambdaPlus);
                 Double_t newQy = (Qy - LambdaPlus*Qx)/(1 - LambdaMinus*LambdaPlus);
                 if (fApplyTwist) {
-                  fCorrectedQnVector->SetQx(harmonic, newQx);
-                  fCorrectedQnVector->SetQy(harmonic, newQy);
-                  fTwistCorrectedQnVector->SetQx(harmonic, newQx);
-                  fTwistCorrectedQnVector->SetQy(harmonic, newQy);
-                  fRescaleCorrectedQnVector->SetQx(harmonic, newQx);
-                  fRescaleCorrectedQnVector->SetQy(harmonic, newQy);
+                  fCorrectedQnVector->SetX(harmonic, newQx);
+                  fCorrectedQnVector->SetY(harmonic, newQy);
+                  fTwistCorrectedQnVector->SetX(harmonic, newQx);
+                  fTwistCorrectedQnVector->SetY(harmonic, newQy);
+                  fRescaleCorrectedQnVector->SetX(harmonic, newQx);
+                  fRescaleCorrectedQnVector->SetY(harmonic, newQy);
                 }
                 newQx = newQx/Aplus;
                 newQy = newQy/Aminus;
@@ -427,15 +426,15 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
                   continue;
                 }
                 if (fApplyRescale) {
-                  fCorrectedQnVector->SetQx(harmonic, newQx);
-                  fCorrectedQnVector->SetQy(harmonic, newQy);
-                  fRescaleCorrectedQnVector->SetQx(harmonic, newQx);
-                  fRescaleCorrectedQnVector->SetQy(harmonic, newQy);
+                  fCorrectedQnVector->SetX(harmonic, newQx);
+                  fCorrectedQnVector->SetY(harmonic, newQy);
+                  fRescaleCorrectedQnVector->SetX(harmonic, newQx);
+                  fRescaleCorrectedQnVector->SetY(harmonic, newQy);
                 }
                 harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
               }
             } else {
-              if (fQANotValidatedBin) fQANotValidatedBin->Fill(variableContainer, 1.0);
+              if (fQANotValidatedBin) fQANotValidatedBin->Fill(1.0);
             }
           } else {
             /* not done! input Q vector with bad quality */
@@ -463,7 +462,7 @@ bool TwistAndRescale::ProcessCorrections(const double *variableContainer) {
 ///
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
-Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
+Bool_t TwistAndRescale::ProcessDataCollection() {
   switch (fState) {
     case State::CALIBRATION: {
       /* logging */
@@ -474,8 +473,8 @@ Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
           Int_t harmonic = fCorrectedQnVector->GetFirstHarmonic();
           if (plainQ2nVector.IsGoodQuality()) {
             while (harmonic!=-1) {
-              fDoubleHarmonicCalibrationHistograms->FillX(harmonic*2, variableContainer, plainQ2nVector.Qx(harmonic));
-              fDoubleHarmonicCalibrationHistograms->FillY(harmonic*2, variableContainer, plainQ2nVector.Qy(harmonic));
+              fDoubleHarmonicCalibrationHistograms->FillX(harmonic*2, plainQ2nVector.x(harmonic));
+              fDoubleHarmonicCalibrationHistograms->FillY(harmonic*2, plainQ2nVector.y(harmonic));
               harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
             }
           }
@@ -488,8 +487,7 @@ Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
               (fSubEventC->GetCurrentQnVector()->IsGoodQuality())) {
             fCorrelationsCalibrationHistograms->Fill(fInputQnVector,
                                                      fSubEventB->GetCurrentQnVector(),
-                                                     fSubEventC->GetCurrentQnVector(),
-                                                     variableContainer);
+                                                     fSubEventC->GetCurrentQnVector());
           }
         }
           break;
@@ -506,8 +504,8 @@ Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
           Int_t harmonic = fCorrectedQnVector->GetFirstHarmonic();
           if (plainQ2nVector.IsGoodQuality()) {
             while (harmonic!=-1) {
-              fDoubleHarmonicCalibrationHistograms->FillX(harmonic*2, variableContainer, plainQ2nVector.Qx(harmonic));
-              fDoubleHarmonicCalibrationHistograms->FillY(harmonic*2, variableContainer, plainQ2nVector.Qy(harmonic));
+              fDoubleHarmonicCalibrationHistograms->FillX(harmonic*2, plainQ2nVector.x(harmonic));
+              fDoubleHarmonicCalibrationHistograms->FillY(harmonic*2, plainQ2nVector.y(harmonic));
               harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
             }
           }
@@ -520,8 +518,7 @@ Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
               (fSubEventC->GetCurrentQnVector()->IsGoodQuality())) {
             fCorrelationsCalibrationHistograms->Fill(fInputQnVector,
                                                      fSubEventB->GetCurrentQnVector(),
-                                                     fSubEventC->GetCurrentQnVector(),
-                                                     variableContainer);
+                                                     fSubEventC->GetCurrentQnVector());
           }
         }
           break;
@@ -533,16 +530,16 @@ Bool_t TwistAndRescale::ProcessDataCollection(const double *variableContainer) {
       if (fQATwistQnAverageHistogram) {
         Int_t harmonic = fCorrectedQnVector->GetFirstHarmonic();
         while (harmonic!=-1) {
-          fQATwistQnAverageHistogram->FillX(harmonic, variableContainer, fTwistCorrectedQnVector->Qx(harmonic));
-          fQATwistQnAverageHistogram->FillY(harmonic, variableContainer, fTwistCorrectedQnVector->Qy(harmonic));
+          fQATwistQnAverageHistogram->FillX(harmonic, fTwistCorrectedQnVector->x(harmonic));
+          fQATwistQnAverageHistogram->FillY(harmonic, fTwistCorrectedQnVector->y(harmonic));
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
       if (fQARescaleQnAverageHistogram) {
         Int_t harmonic = fCorrectedQnVector->GetFirstHarmonic();
         while (harmonic!=-1) {
-          fQARescaleQnAverageHistogram->FillX(harmonic, variableContainer, fRescaleCorrectedQnVector->Qx(harmonic));
-          fQARescaleQnAverageHistogram->FillY(harmonic, variableContainer, fRescaleCorrectedQnVector->Qy(harmonic));
+          fQARescaleQnAverageHistogram->FillX(harmonic, fRescaleCorrectedQnVector->x(harmonic));
+          fQARescaleQnAverageHistogram->FillY(harmonic, fRescaleCorrectedQnVector->y(harmonic));
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
@@ -582,25 +579,6 @@ void TwistAndRescale::IncludeCorrectedQnVector(std::map<QVector::CorrectionStep,
       break;
     default:break;
   }
-}
-
-/// Reports if the correction step is being applied
-/// Returns TRUE if in the proper state for applying the correction step
-/// \return TRUE if the correction step is being applied
-Bool_t TwistAndRescale::IsBeingApplied() const {
-  switch (fState) {
-    case State::CALIBRATION:
-      /* we are collecting */
-      /* but not applying */
-      break;
-    case State::APPLYCOLLECT:
-      /* we are collecting */
-    case State::APPLY:
-      /* and applying */
-      return kTRUE;
-    default:break;
-  }
-  return kFALSE;
 }
 
 /// Report on correction usage

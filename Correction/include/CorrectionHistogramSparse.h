@@ -26,15 +26,15 @@ namespace Qn {
 class CorrectionHistogramSparse : public CorrectionHistogramBase {
  public:
   CorrectionHistogramSparse() = default;
-  CorrectionHistogramSparse(const std::string name, const std::string title, const EventClassVariablesSet &ecvs);
-  CorrectionHistogramSparse(const std::string name, const EventClassVariablesSet &ecvs);
+  CorrectionHistogramSparse(const std::string name, const std::string title, const CorrectionAxisSet &ecvs);
+  CorrectionHistogramSparse(const std::string name, const CorrectionAxisSet &ecvs);
   virtual ~CorrectionHistogramSparse() = default;
   Bool_t CreateHistogram(TList *histogramList);
-  Long64_t GetBin(const double *variableContainer);
+  Long64_t GetBin();
   Bool_t BinContentValidated(Long64_t bin);
   Float_t GetBinContent(Long64_t bin);
   Float_t GetBinError(Long64_t bin);
-  virtual void Fill(const double *variableContainer, Float_t weight);
+  virtual void Fill(Float_t weight);
  private:
   THnSparseF *fValues = nullptr; //!<! Cumulates values for each of the event classes
   /// \cond CLASSIMP

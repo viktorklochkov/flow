@@ -36,6 +36,9 @@
 
 #include "CorrectionProfileComponents.h"
 #include "SubEventChannels.h"
+
+#include "Detector.h"
+
 #include "ROOT/RMakeUnique.hxx"
 
 /// \cond CLASSIMP
@@ -53,7 +56,7 @@ const char *SubEventChannels::szQAMultiplicityHistoName = "Multiplicity";
 /// \param nNoOfHarmonics the number of harmonics that must be handled
 /// \param harmonicMap an optional ordered array with the harmonic numbers
 SubEventChannels::SubEventChannels(unsigned int bin_id,
-                                   const EventClassVariablesSet *eventClassesVariables,
+                                   const CorrectionAxisSet *eventClassesVariables,
                                    Int_t nNoOfChannels, std::bitset<QVector::kmaxharmonics> harmonics) :
     SubEvent(bin_id, eventClassesVariables, harmonics),
     fRawQnVector(harmonics, QVector::CorrectionStep::RAW),
@@ -127,14 +130,14 @@ void SubEventChannels::SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGr
 ///
 /// The input data vector bank is allocated and the request is
 /// transmitted to the input data corrections and then to the Q vector corrections.
-void SubEventChannels::CreateSupportDataStructures() {
+void SubEventChannels::CreateSupportQVectors() {
   /* this is executed in the remote node so, allocate the data bank */
   fDataVectorBank.reserve(Qn::SubEvent::INITIALSIZE);
   for (auto &correction : fInputDataCorrections) {
-    correction->CreateSupportDataStructures();
+    correction->CreateSupportQVectors();
   }
   for (auto &correction : fQnVectorCorrections) {
-    correction->CreateSupportDataStructures();
+    correction->CreateSupportQVectors();
   }
 }
 
@@ -145,16 +148,16 @@ void SubEventChannels::CreateSupportDataStructures() {
 /// and then to the Q vector corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void SubEventChannels::AttachSupportHistograms(TList *list) {
+void SubEventChannels::CreateCorrectionHistograms(TList *list) {
   auto detectorConfigurationList = new TList();
   detectorConfigurationList->SetName(GetName().data());
   detectorConfigurationList->SetOwner(kTRUE);
   for (auto &correction : fInputDataCorrections) {
-    correction->AttachSupportHistograms(detectorConfigurationList);
+    correction->CreateCorrectionHistograms(detectorConfigurationList);
   }
   /* if everything right propagate it to Q vector corrections */
   for (auto &correction : fQnVectorCorrections) {
-    correction->AttachSupportHistograms(detectorConfigurationList);
+    correction->CreateCorrectionHistograms(detectorConfigurationList);
   }
   /* if list is empty delete it if not incorporate it */
   if (!detectorConfigurationList->IsEmpty()) {
@@ -173,9 +176,14 @@ void SubEventChannels::AttachSupportHistograms(TList *list) {
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
 void SubEventChannels::AttachQAHistograms(TList *list) {
-  auto detectorConfigurationList = new TList();
-  detectorConfigurationList->SetName(GetName().data());
-  detectorConfigurationList->SetOwner(kTRUE);
+  TList *detectorConfigurationList;
+  if (GetName().empty()) {
+    detectorConfigurationList = list;
+  } else {
+    detectorConfigurationList = new TList();
+    detectorConfigurationList->SetName(GetName().data());
+    detectorConfigurationList->SetOwner(kTRUE);
+  }
   /* first create our own QA histograms */
   std::string beforeName{GetName() + szQAMultiplicityHistoName + "Before"};
   std::string beforeTitle{GetName() + " " + szQAMultiplicityHistoName + " before input equalization"};
@@ -300,7 +308,7 @@ void SubEventChannels::AttachNveQAHistograms(TList *list) {
 /// and then propagated to the Q vector corrections
 /// \param list list where the input information should be found
 /// \return kTRUE if everything went OK
-void SubEventChannels::AttachCorrectionInputs(TList *list) {
+void SubEventChannels::AttachCorrectionInput(TList *list) {
   auto detectorConfigurationList = (TList *) list->FindObject(GetName().data());
   if (detectorConfigurationList) {
     for (auto &correction : fInputDataCorrections) {
@@ -319,12 +327,12 @@ void SubEventChannels::AttachCorrectionInputs(TList *list) {
 ///
 /// The request is transmitted to the input data corrections
 /// and then propagated to the Q vector corrections
-void SubEventChannels::AfterInputsAttachActions() {
+void SubEventChannels::AfterInputAttachAction() {
   for (auto &correction : fInputDataCorrections) {
-    correction->AfterInputsAttachActions();
+    correction->AfterInputAttachAction();
   }
   for (auto &correction : fQnVectorCorrections) {
-    correction->AfterInputsAttachActions();
+    correction->AfterInputAttachAction();
   }
 }
 
@@ -338,18 +346,18 @@ void SubEventChannels::AddCorrectionOnInputData(CorrectionOnInputData *correctio
 /// Fills the QA multiplicity histograms before and after input equalization
 /// and the plain Qn vector average components histogram
 /// \param variableContainer pointer to the variable content bank
-void SubEventChannels::FillQAHistograms(const double *variableContainer) {
+void SubEventChannels::FillQAHistograms() {
   if (fQAMultiplicityBefore3D && fQAMultiplicityAfter3D) {
     for (const auto &dataVector : fDataVectorBank) {
-      fQAMultiplicityBefore3D->Fill(variableContainer[fQACentralityVarId],fChannelMap[dataVector.GetId()],dataVector.Weight());
-      fQAMultiplicityAfter3D->Fill(variableContainer[fQACentralityVarId],fChannelMap[dataVector.GetId()],dataVector.EqualizedWeight());
+      fQAMultiplicityBefore3D->Fill(fEventClassVariables->At(fQACentralityVarId).GetValue(),fChannelMap[dataVector.GetId()],dataVector.Weight());
+      fQAMultiplicityAfter3D->Fill(fEventClassVariables->At(fQACentralityVarId).GetValue(),fChannelMap[dataVector.GetId()],dataVector.EqualizedWeight());
     }
   }
   if (fQAQnAverageHistogram) {
     Int_t harmonic = fPlainQnVector.GetFirstHarmonic();
     while (harmonic!=-1) {
-      fQAQnAverageHistogram->FillX(harmonic, variableContainer, fPlainQnVector.Qx(harmonic));
-      fQAQnAverageHistogram->FillY(harmonic, variableContainer, fPlainQnVector.Qy(harmonic));
+      fQAQnAverageHistogram->FillX(harmonic, fPlainQnVector.x(harmonic));
+      fQAQnAverageHistogram->FillY(harmonic, fPlainQnVector.y(harmonic));
       harmonic = fPlainQnVector.GetNextHarmonic(harmonic);
     }
   }
@@ -432,4 +440,17 @@ void SubEventChannels::ReportOnCorrections(TList *steps, TList *calib, TList *ap
   calib->Add(mycalib);
   apply->Add(myapply);
 }
+
+/// Builds raw Qn vector before Q vector corrections and before input
+/// data corrections but considering the chosen calibration method.
+/// This is a channelized configuration so this Q vector will NOT be
+/// the one to be used for subsequent Q vector corrections.
+void SubEventChannels::BuildRawQnVector() {
+  for (const auto &dataVector : fDataVectorBank) {
+    fRawQnVector.Add(dataVector.Phi(), dataVector.Weight());
+  }
+  fRawQnVector.CheckQuality();
+  fRawQnVector.Normal(fDetector->GetNormalizationMethod());
 }
+}
+

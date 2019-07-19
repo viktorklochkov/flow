@@ -70,7 +70,7 @@ class StatsResult {
 
 struct NoResamplerException : public std::exception {
   const char *what() const noexcept override {
-    return "correlation requested resampling, but it has not been configured. Resampling DISABLED!";
+    return "Correlation requested resampling, but it has not been configured. Resampling DISABLED!";
   }
 };
 

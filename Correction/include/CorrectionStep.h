@@ -46,10 +46,10 @@ class CorrectionStep {
   /// for producing new correction parameters are being collected.
 
   enum class State {
+    PASSIVE,             ///< the correction step is waiting for external conditions fulfillment
     CALIBRATION,         ///< the correction step is in calibration mode collecting data
     APPLY,               ///< the correction step is being applied
     APPLYCOLLECT,        ///< the correction step is being applied and data are being collected
-    PASSIVE,             ///< the correction step is waiting for external conditions fulfillment
   };
 
   friend class SubEvent;
@@ -74,17 +74,17 @@ class CorrectionStep {
   /// it is time to check if their requirements are satisfied
   ///
   /// Pure virtual function
-  virtual void AfterInputsAttachActions() = 0;
+  virtual void AfterInputAttachAction() = 0;
   /// Asks for support data structures creation
   ///
   /// Pure virtual function
-  virtual void CreateSupportDataStructures() = 0;
+  virtual void CreateSupportQVectors() = 0;
   /// Asks for support histograms creation
   ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual void AttachSupportHistograms(TList *list) = 0;
+  virtual void CreateCorrectionHistograms(TList *list) = 0;
   /// Asks for QA histograms creation
   ///
   /// Pure virtual function
@@ -102,12 +102,12 @@ class CorrectionStep {
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual bool ProcessCorrections(const double *variableContainer) = 0;
+  virtual bool ProcessCorrections() = 0;
   /// Processes the correction step data collection
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual bool ProcessDataCollection(const double *variableContainer) = 0;
+  virtual bool ProcessDataCollection() = 0;
   /// Clean the correction to accept a new event
   /// Pure virtual function
   virtual void ClearCorrectionStep() = 0;
@@ -125,6 +125,7 @@ class CorrectionStep {
   /// \param applyList list containing the correction steps applying corrections
   /// \return kTRUE if the correction step is being applied
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) = 0;
+  State GetState() {return fState;}
  protected:
   /// Stores the detector configuration owner
   /// \param subevent the detector configuration owner

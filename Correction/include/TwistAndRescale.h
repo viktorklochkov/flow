@@ -164,21 +164,20 @@ class TwistAndRescale : public CorrectionOnQvector {
   /// \param nNoOfEntries the number of entries threshold
   void SetNoOfEntriesThreshold(Int_t nNoOfEntries) { fMinNoOfEntriesToValidate = nNoOfEntries; }
   virtual void AttachInput(TList *list);
-  virtual void AfterInputsAttachActions();
-  virtual void CreateSupportDataStructures();
-  virtual void AttachSupportHistograms(TList *list);
+  virtual void AfterInputAttachAction();
+  virtual void CreateSupportQVectors();
+  virtual void CreateCorrectionHistograms(TList *list);
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
-  virtual Bool_t ProcessCorrections(const double *variableContainer);
-  virtual Bool_t ProcessDataCollection(const double *variableContainer);
+  virtual Bool_t ProcessCorrections();
+  virtual Bool_t ProcessDataCollection();
   virtual void ClearCorrectionStep();
   virtual void IncludeCorrectedQnVector(std::map<QVector::CorrectionStep, QVector *> &qvectors) const;
-  virtual Bool_t IsBeingApplied() const;
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
   using State = Qn::CorrectionStep::State;
-  static constexpr const unsigned int szPriority = CorrectionOnQvector::Priority::kTwistAndRescale; ///< the key of the correction step for ordering purpose
+  static constexpr const unsigned int szPriority = CorrectionOnQvector::Step::kTwistAndRescale; ///< the key of the correction step for ordering purpose
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const Double_t fMaxThreshold;               ///< highest absolute value for meaningful results
   static const char *szTwistCorrectionName;          ///< the name of the twist correction step

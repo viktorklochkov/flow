@@ -26,16 +26,16 @@ class CorrectionProfileCorrelationComponents : public CorrectionHistogramBase {
  public:
   CorrectionProfileCorrelationComponents() = default;
   CorrectionProfileCorrelationComponents(const std::string name,
-                                         const EventClassVariablesSet &ecvs,
+                                         const CorrectionAxisSet &ecvs,
                                          ErrorMode mode = ErrorMode::MEAN);
   CorrectionProfileCorrelationComponents(std::string name,
                                          std::string title,
-                                         const EventClassVariablesSet &ecvs,
+                                         const CorrectionAxisSet &ecvs,
                                          ErrorMode mode = ErrorMode::MEAN);
   virtual ~CorrectionProfileCorrelationComponents() = default;
   Bool_t CreateCorrelationComponentsProfileHistograms(TList *histogramList);
   Bool_t AttachHistograms(TList *histogramList);
-  Long64_t GetBin(const double *variableContainer);
+  Long64_t GetBin();
   Bool_t BinContentValidated(Long64_t bin);
   Float_t GetXXBinContent(Long64_t bin);
   Float_t GetXYBinContent(Long64_t bin);
@@ -45,10 +45,10 @@ class CorrectionProfileCorrelationComponents : public CorrectionHistogramBase {
   Float_t GetXYBinError(Long64_t bin);
   Float_t GetYXBinError(Long64_t bin);
   Float_t GetYYBinError(Long64_t bin);
-  void FillXX(const double *variableContainer, Float_t weight);
-  void FillXY(const double *variableContainer, Float_t weight);
-  void FillYX(const double *variableContainer, Float_t weight);
-  void FillYY(const double *variableContainer, Float_t weight);
+  void FillXX(Float_t weight);
+  void FillXY(Float_t weight);
+  void FillYX(Float_t weight);
+  void FillYY(Float_t weight);
  private:
   THnF *fXXValues = nullptr;           //!<! XX component histogram
   THnF *fXYValues = nullptr;           //!<! XY component histogram

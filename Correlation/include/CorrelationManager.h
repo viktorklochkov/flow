@@ -31,7 +31,7 @@
 #include "DataContainer.h"
 #include "EseHandler.h"
 #include "EventAxes.h"
-#include "EventCuts.h"
+#include "CorrelationEventCuts.h"
 
 #include "ROOT/RMakeUnique.hxx"
 
@@ -52,7 +52,7 @@ class CorrelationManager {
   }
 
   void AddProjection(const std::string &name, const std::string &input, const std::vector<std::string> &axes);
-  void AddEventAxis(const AxisF &eventaxis);
+  void AddEventAxis(const AxisD &eventaxis);
   void AddCorrelation(std::string name, const std::vector<std::string> &input, function_t lambda,
                       const std::vector<Weight> &use_weights, Sampler::Resample resample = Sampler::Resample::ON);
   void AddEventShape(const std::string &name,
@@ -91,14 +91,14 @@ class CorrelationManager {
    *             The number of double& corresponds to the number of variables
    */
   template<std::size_t N, typename FUNCTION>
-  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func) {
+  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func, const std::string &cut_description) {
     std::unique_ptr<TTreeReaderValue<float>> arr[N];
     int i = 0;
     for (auto &name : name_arr) {
       arr[i] = std::make_unique<TTreeReaderValue<float>>(*reader_, name);
       ++i;
     }
-    event_cuts_.AddCut(MakeUniqueEventCut(arr, func));
+    event_cuts_.AddCut(MakeUniqueEventCut(arr, func, cut_description));
   }
 
 
@@ -138,7 +138,7 @@ class CorrelationManager {
   std::unique_ptr<Qn::Sampler> sampler_ = nullptr;
   Qn::EseHandler ese_handler_;
   Qn::EventAxes event_axes_;
-  Qn::EventCuts event_cuts_;
+  Qn::CorrelationEventCuts event_cuts_;
   std::string correlation_file_name_;
   TTree *tree_;
   std::shared_ptr<TTreeReader> reader_;

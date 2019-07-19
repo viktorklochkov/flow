@@ -3,7 +3,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionProfileChannelizedIngress.h"
 
 /// \cond CLASSIMP
@@ -33,14 +33,14 @@ CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress() :
 ///     's'            the bin are the standard deviation of of the bin values
 CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress(std::string name,
                                                                          std::string title,
-                                                                         const EventClassVariablesSet &ecvs,
+                                                                         const CorrectionAxisSet &ecvs,
                                                                          Int_t nNoOfChannels,
                                                                          ErrorMode mode)
     : CorrectionHistogramBase(name, title, ecvs, mode),
       fNoOfChannels(nNoOfChannels) {}
 
 CorrectionProfileChannelizedIngress::CorrectionProfileChannelizedIngress(std::string name,
-                                                                         const EventClassVariablesSet &ecvs,
+                                                                         const CorrectionAxisSet &ecvs,
                                                                          Int_t nNoOfChannels,
                                                                          ErrorMode mode)
     : CorrectionHistogramBase(name, name, ecvs, mode),
@@ -162,13 +162,13 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
   if (origEntries && origEntries->GetEntries()!=0) {
     /* so we get it! */
     /* let's check the channel axis */
-    if (fActualNoOfChannels!=origEntries->GetAxis(fEventClassVariables.size())->GetNbins())
+    if (fActualNoOfChannels!=origEntries->GetAxis(fEventClassVariables.GetSize())->GetNbins())
       return kFALSE;
     THnF *origValues = (THnF *) histogramList->FindObject((const char *) histoName);
     if (!origValues)
       return kFALSE;
     /* let's check the channel axis */
-    if (fActualNoOfChannels!=origValues->GetAxis(fEventClassVariables.size())->GetNbins())
+    if (fActualNoOfChannels!=origValues->GetAxis(fEventClassVariables.GetSize())->GetNbins())
       return kFALSE;
 
     /* so we got the original histograms */
@@ -177,7 +177,7 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
 
     /* let's first prepare the bin validation information */
     /* we open space for channel variable as well */
-    Int_t nVariables = fEventClassVariables.size();
+    Int_t nVariables = fEventClassVariables.GetSize();
     Double_t *minvals = new Double_t[nVariables + 1];
     Double_t *maxvals = new Double_t[nVariables + 1];
     Int_t *nbins = new Int_t[nVariables + 1];
@@ -218,9 +218,9 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
 
       /* now let's set the proper binning and label on each axis */
       for (Int_t var = 0; var < nVariables; var++) {
-        fGroupValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(),
-                                        fEventClassVariables.At(var).GetBins());
-        fGroupValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+        fGroupValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(),
+                                        fEventClassVariables[var].GetBins());
+        fGroupValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
       }
 
       /* and now the channel axis */
@@ -310,8 +310,8 @@ Bool_t CorrectionProfileChannelizedIngress::AttachHistograms(TList *histogramLis
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
-Long64_t CorrectionProfileChannelizedIngress::GetBin(const double *variableContainer, Int_t nChannel) {
-  FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
+Long64_t CorrectionProfileChannelizedIngress::GetBin(Int_t nChannel) {
+  FillBinAxesValues(fChannelMap[nChannel]);
   return fValues->GetBin(fBinAxesValues);
 }
 
@@ -354,10 +354,10 @@ Float_t CorrectionProfileChannelizedIngress::GetBinError(Long64_t bin) {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number which group number is asked
 /// \return the associated bin to the current variables content
-Long64_t CorrectionProfileChannelizedIngress::GetGrpBin(const double *variableContainer, Int_t nChannel) {
+Long64_t CorrectionProfileChannelizedIngress::GetGrpBin(Int_t nChannel) {
   if (fUseGroups) {
     /* store also the group number */
-    FillBinAxesValues(variableContainer, fGroupMap[fChannelGroup[nChannel]]);
+    FillBinAxesValues(fGroupMap[fChannelGroup[nChannel]]);
     return fGroupValues->GetBin(fBinAxesValues);
   }
   return -1;

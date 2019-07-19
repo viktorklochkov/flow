@@ -3,7 +3,7 @@
 
 #include "TList.h"
 
-#include "EventClassVariablesSet.h"
+#include "CorrectionAxisSet.h"
 #include "CorrectionHistogramChannelizedSparse.h"
 
 /// \cond CLASSIMP
@@ -23,13 +23,12 @@ namespace Qn {
 /// \param nNoOfChannels the number of channels associated
 CorrectionHistogramChannelizedSparse::CorrectionHistogramChannelizedSparse(std::string name,
                                                                            std::string title,
-                                                                           const EventClassVariablesSet &ecvs,
+                                                                           const CorrectionAxisSet &ecvs,
                                                                            Int_t nNoOfChannels) :
     CorrectionHistogramBase(name, title, ecvs), fNoOfChannels(nNoOfChannels) {}
 
-
 CorrectionHistogramChannelizedSparse::CorrectionHistogramChannelizedSparse(std::string name,
-                                                                           const EventClassVariablesSet &ecvs,
+                                                                           const CorrectionAxisSet &ecvs,
                                                                            Int_t nNoOfChannels) :
     CorrectionHistogramBase(name, name, ecvs), fNoOfChannels(nNoOfChannels) {}
 /// Default destructor
@@ -65,7 +64,7 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
   TString entriesHistoTitle = GetTitle();
   entriesHistoTitle += szEntriesHistoSuffix;
   /* we open space for channel variable as well */
-  Int_t nVariables = fEventClassVariables.size();
+  unsigned int nVariables = fEventClassVariables.GetSize();
   auto *minvals = new Double_t[nVariables + 1];
   auto *maxvals = new Double_t[nVariables + 1];
   auto *nbins = new Int_t[nVariables + 1];
@@ -96,9 +95,9 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
   /* create the values multidimensional histogram */
   fValues = new THnSparseF(histoName, histoTitle, nVariables + 1, nbins, minvals, maxvals);
   /* now let's set the proper binning and label on each axis */
-  for (Int_t var = 0; var < nVariables; var++) {
-    fValues->GetAxis(var)->Set(fEventClassVariables.At(var).GetNBins(), fEventClassVariables.At(var).GetBins());
-    fValues->GetAxis(var)->SetTitle(fEventClassVariables.At(var).GetLabel().data());
+  for (unsigned int var = 0; var < nVariables; var++) {
+    fValues->GetAxis(var)->Set(fEventClassVariables[var].GetNBins(), fEventClassVariables[var].GetBins());
+    fValues->GetAxis(var)->SetTitle(fEventClassVariables[var].GetLabel().data());
   }
   /* and now the channel axis */
   fValues->GetAxis(nVariables)->SetTitle(szChannelAxisTitle);
@@ -126,8 +125,8 @@ Bool_t CorrectionHistogramChannelizedSparse::CreateChannelizedHistogram(TList *h
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \return the associated bin to the current variables content
-Long64_t CorrectionHistogramChannelizedSparse::GetBin(const double *variableContainer, Int_t nChannel) {
-  FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
+Long64_t CorrectionHistogramChannelizedSparse::GetBin(Int_t nChannel) {
+  FillBinAxesValues(fChannelMap[nChannel]);
   /* store the channel number */
   return fValues->GetBin(fBinAxesValues);
 }
@@ -172,10 +171,10 @@ Float_t CorrectionHistogramChannelizedSparse::GetBinError(Long64_t bin) {
 /// \param variableContainer the current variables content addressed by var Id
 /// \param nChannel the interested external channel number
 /// \param weight the increment in the bin content
-void CorrectionHistogramChannelizedSparse::Fill(const double *variableContainer, Int_t nChannel, Float_t weight) {
+void CorrectionHistogramChannelizedSparse::Fill(Int_t nChannel, Float_t weight) {
   /* keep the total entries in fValues updated */
   Double_t nEntries = fValues->GetEntries();
-  FillBinAxesValues(variableContainer, fChannelMap[nChannel]);
+  FillBinAxesValues(fChannelMap[nChannel]);
   /* and now update the bin */
   fValues->Fill(fBinAxesValues, weight);
   fValues->SetEntries(nEntries + 1);

@@ -80,6 +80,7 @@ class QVector {
     sum_weights_ = 0.;
     quality_ = false;
   }
+
   void GetHarmonicsMap(Int_t *store) const {
     unsigned int iharmonics = 0;
     for (unsigned char h = 1; h <= maxharmonic_; h++) {
@@ -107,25 +108,29 @@ class QVector {
   void SetNormalization(Normalization norm) { norm_ = norm; }
   void SetCorrectionStep(CorrectionStep step) { correction_step_ = step; }
   CorrectionStep GetCorrectionStep() const { return correction_step_; }
-  inline float Qx(const unsigned int i) const {
+  inline float x(const unsigned int i) const {
     if (bits_.test(i - 1)) {
-      return q_[std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i + 1)) - 1)).count() - 1].x;
+      auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
+      return q_[position].x;
     } else {
       throw std::out_of_range("harmonic not in range.");
     }
   }
-  inline float Qy(const unsigned int i) const {
+  inline float y(const unsigned int i) const {
     if (bits_.test(i - 1)) {
-      return q_[std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i + 1)) - 1)).count() - 1].y;
+      auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
+      return q_[position].y;
     } else {
       throw std::out_of_range("harmonic not in range.");
     }
   }
-  inline void SetQx(const unsigned int i, double x) {
-    q_[std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i + 1)) - 1)).count() - 1].x = x;
+  inline void SetX(const unsigned int i, double x) {
+    auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
+    q_[position].x = x;
   }
-  inline void SetQy(const unsigned int i, double y) {
-    q_[std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i + 1)) - 1)).count() - 1].y = y;
+  inline void SetY(const unsigned int i, double y) {
+    auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
+    q_[position].y = y;
   }
   void SetCurrentEvent(const QVector &qvec) {
     norm_ = qvec.norm_;
@@ -151,9 +156,10 @@ class QVector {
     return -1;
   }
 
-  inline float mag(const unsigned int i) const { return sqrt(Qx(i)*Qx(i) + Qy(i)*Qy(i)); }
+  inline float mag(const unsigned int i) const { return sqrt(x(i)*x(i) + y(i)*y(i)); }
   inline float sumweights() const { return sum_weights_; }
   inline float n() const { return n_; }
+  inline float psi(const unsigned int i) const { return std::atan2(y(i),x(i));}
   inline Normalization GetNorm() const { return norm_; }
   friend QVector operator+(QVector a, QVector b);
   inline void Add(const QVector &a) { *this + a; }
@@ -219,8 +225,8 @@ class QVectorPtr {
   // assignment
   QVectorPtr &operator=(const QVectorPtr &x) noexcept = default;
 
-  inline float x(const unsigned int i) const { return qvector_->Qx(i); }
-  inline float y(const unsigned int i) const { return qvector_->Qy(i); }
+  inline float x(const unsigned int i) const { return qvector_->x(i); }
+  inline float y(const unsigned int i) const { return qvector_->y(i); }
   inline float mag(const unsigned int i) const { return qvector_->mag(i); }
   inline float sumweights() const { return qvector_->sumweights(); }
   inline float n() const { return qvector_->n(); }
@@ -230,6 +236,24 @@ class QVectorPtr {
   inline QVector DeNormal() const { return qvector_->DeNormal(); }
  private:
   const QVector *qvector_ = nullptr;
+};
+
+static constexpr std::array<QVector::CorrectionStep, 6> kCorrectionStepsArray = {
+    QVector::CorrectionStep::RAW,
+    QVector::CorrectionStep::PLAIN,
+    QVector::CorrectionStep::RECENTERED,
+    QVector::CorrectionStep::TWIST,
+    QVector::CorrectionStep::RESCALED,
+    QVector::CorrectionStep::ALIGNED
+};
+
+static constexpr std::array<const char*, 6> kCorrectionStepNamesArray = {
+    "RAW",
+    "PLAIN",
+    "RECENTERED",
+    "TWIST",
+    "RESCALED"
+    "ALIGNED"
 };
 
 }

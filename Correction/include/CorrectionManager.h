@@ -25,12 +25,11 @@
 
 #include "ROOT/RMakeUnique.hxx"
 #include "ROOT/RIntegerSequence.hxx"
-#include "ROOT/RStringView.hxx"
 
 #include <utility>
 #include "Detector.h"
-#include "VariableManager.h"
-#include "VariableCutBase.h"
+#include "InputVariableManager.h"
+#include "Cuts.h"
 #include "CorrectionProfile3DCorrelations.h"
 #include "CorrectionProfileCorrelationComponents.h"
 #include "SubEventChannels.h"
@@ -41,22 +40,17 @@
 
 #include "GainEqualization.h"
 #include "Alignment.h"
-#include "CorrectionCalculator.h"
 #include "DataContainer.h"
 #include "RunList.h"
 #include "DetectorList.h"
 
 namespace Qn {
 class CorrectionManager {
+  using ConfigurationFunction = std::function<void(SubEvent *config)>;
+  using CutCallBack =  std::function<std::unique_ptr<CutBase>(Qn::InputVariableManager *)>;
+  using HistogramCallBack =  std::function<std::unique_ptr<QAHistoBase>(Qn::InputVariableManager *)>;
+  using CorrectionAxisCallBack = std::function<CorrectionAxis(Qn::InputVariableManager *)>;
  public:
-
-  using MapDetectors = std::map<std::string, std::unique_ptr<Detector>>;
-
-  CorrectionManager() :
-      event_cuts_(new Cuts()) {
-    variable_manager_.CreateVariableOnes();
-  }
-
   /**
    * Add a variable to the variable manager
    * @param name Name of the variable
@@ -71,24 +65,25 @@ class CorrectionManager {
    * Adds a axis used for correction.
    * @param axis Axis used for correction. The name of the axis corresponds to the name of a variable.
    */
-  void AddCorrectionAxis(const Qn::AxisD &axis) { correction_axes_.Add(variable_manager_.FindVariable(axis.Name()), axis); }
+  void AddCorrectionAxis(Qn::AxisD axis) {
+    auto callback = [axis](InputVariableManager *var) {
+      return CorrectionAxis(var->FindVariable(axis.Name()), axis);
+    };
+    correction_axes_callback_.emplace_back(callback);
+  }
 
   /**
    * Adds a event variable, which will be saved to the output tree.
    * @param name Name corresponds to a variable defined in the variable manager.
    */
-  void AddEventVariable(const std::string &name) {
-    variable_manager_.RegisterOutputF(name);
-  }
+  void AddEventVariable(const std::string &name) { variable_manager_.RegisterOutputF(name); }
 
   /**
    * Adds a event variable, which will be saved to the output tree.
    * Remember to add them as a variable first.
    * @param name Name corresponds to a variable defined in the variable manager.
    */
-  void AddEventVariableInt(const std::string &name) {
-    variable_manager_.RegisterOutputL(name);
-  }
+  void AddEventVariableInt(const std::string &name) { variable_manager_.RegisterOutputL(name); }
 
   /**
    * Adds a detector to the correction framework.
@@ -104,373 +99,215 @@ class CorrectionManager {
                    Qn::DetectorType type,
                    const std::string &phi_name,
                    const std::string &weight_name,
-                   const std::vector<Qn::AxisF> &axes,
-                   int const(&harmo)[N]) {
-    InputVariableD phi = variable_manager_.FindVariable(phi_name);
-    InputVariableD weight = variable_manager_.FindVariable(weight_name);
-    std::vector<InputVariableD> vars;
+                   const std::vector<Qn::AxisD> &axes,
+                   int const(&harmo)[N],
+                   QVector::Normalization norm = QVector::Normalization::M) {
+    InputVariable phi = variable_manager_.FindVariable(phi_name);
+    InputVariable weight = variable_manager_.FindVariable(weight_name);
+    std::vector<InputVariable> vars;
     vars.reserve(axes.size());
     for (const auto &axis : axes) {
       vars.push_back(variable_manager_.FindVariable(axis.Name()));
     }
     std::bitset<Qn::QVector::kmaxharmonics> harmonics;
-    for (int i = 0; i < N; ++i) {
-      harmonics.set(harmo[N] - 1);
+    for (std::size_t i = 0; i < N; ++i) {
+      harmonics.set(harmo[i] - 1);
     }
-    auto det = std::make_unique<Detector>(std::move(name), type, axes, phi, weight, vars, harmonics);
+    auto det = std::make_unique<Detector>(std::move(name),
+                                          type,
+                                          axes,
+                                          phi_name,
+                                          weight_name,
+                                          vars,
+                                          harmonics,
+                                          norm,
+                                          &variable_manager_);
     detectors_.AddDetector(std::move(det));
   }
 
-  /**
-   * @brief Adds a cut to a detector.
-   * Template parameters are automatically deduced.
-   * @tparam N number of variables used in the cut
-   * @tparam FUNCTION type of function
-   * @param name name of the detector
-   * @param names array of names of the cut variables
-   * @param lambda function used to evaluate the cut condition
-   */
-//  template<std::size_t N, typename FUNCTION>
-//  void AddCut(const std::string &name, const char *const (&names)[N], FUNCTION lambda) {
-//    InputVariable arr[N];
-//    int i = 0;
-//    for (auto &n : names) {
-//      arr[i] = variable_manager_.FindVariable(n);
-//      ++i;
-//    }
-//    auto cut = MakeUniqueNDimCut(arr, lambda);
-//    if (detectors_track_.find(name)!=detectors_track_.end()) {
-//      detectors_track_.at(name).AddCut(std::move(cut));
-//    } else if (detectors_channel_.find(name)!=detectors_channel_.end()) {
-//      detectors_channel_.at(name).AddCut(std::move(cut));
-//    } else {
-//      std::cout << "Detector" + name + "not found. Cut not Added." << std::endl;
-//    }
-//  }
-
-  /**
-   * @brief Adds a cut based on event variables.
-   * Only events which pass the cuts are used for the corrections.
-   * Template parameters are automatically deduced.
-   * @tparam N number of variables used in the cut.
-   * @tparam FUNCTION type of function
-   * @param name_arr Array of variable names used for the cuts.
-   * @param func C-callable describing the cut of signature bool(double &...).
-   *             The number of double& corresponds to the number of variables
-   */
   template<std::size_t N, typename FUNCTION>
-  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func) {
-    InputVariableD arr[N];
-    int i = 0;
-    for (auto &name : name_arr) {
-      arr[i] = variable_manager_.FindVariable(name);
-      ++i;
-    }
-    event_cuts_->AddCut(MakeUniqueNDimCut(arr, func));
+  void AddCutOnDetector(const std::string &detector_name,
+                        const char *const (&variable_names)[N],
+                        FUNCTION cut_function,
+                        const std::string &cut_description) {
+    detectors_.AddCutCallBack(detector_name, CreateCutCallBack(variable_names, cut_function, cut_description));
+  }
+
+  template<std::size_t N, typename FUNCTION>
+  void AddEventCut(const char *const (&variable_names)[N],
+                   FUNCTION &&cut_function,
+                   const std::string &cut_description) {
+    event_cuts_.AddCutCallBack(CreateCutCallBack(variable_names, cut_function, cut_description));
   }
 
   /**
    * @brief Adds a one dimensional event histogram
    * @param axes axis of the histogram. Name corresponds to the axis.
-   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
+   * @param weight Name of the weights used when filling. Standard is "Ones" (1).
    */
-  void AddEventHisto1D(const Qn::AxisF &axes, const std::string &weightname = "Ones");
+  void AddEventHisto1D(const Qn::AxisD &axes, const std::string &weight = "Ones") {
+    event_histograms_callback_.push_back(Create1DHisto("Event", axes, weight));
+  }
 
   /**
    * @brief Adds a two n event histogram
    * @param axes axes of the histogram. Name corresponds to the axes.
-   * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
+   * @param weight Name of the weights used when filling. Standard is "Ones" (1).
    */
-  void AddEventHisto2D(const std::vector<Qn::AxisF> &axes, const std::string &weightname = "Ones");
+  void AddEventHisto2D(const std::vector<Qn::AxisD> &axes, const std::string &weight = "Ones") {
+    event_histograms_callback_.push_back(Create2DHisto("Event", axes, weight));
+  }
 
-  void AddEventHisto2D(const std::vector<Qn::AxisF> &axes,
-                       const Qn::AxisF &axis,
-                       const std::string &weightname = "Ones");
+  void AddEventHisto2DArray(const std::vector<Qn::AxisD> &axes,
+                            const Qn::AxisD &axis,
+                            const std::string &weight = "Ones") {
+    event_histograms_callback_.push_back(Create2DHistoArray("Event", axes, weight, axis));
+  }
 
   /**
   * @brief Adds a one dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
-  * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
+  * @param weight Name of the weights used when filling. Standard is "Ones" (1).
   */
-  void AddHisto1D(const std::string &name, const Qn::AxisF &axis, const std::string &weightname = "Ones");
+  void AddHisto1D(const std::string &detector, const Qn::AxisD &axis, const std::string &weight = "Ones") {
+    detectors_.FindDetector(detector).AddHistogramCallBack(Create1DHisto(detector, axis, weight));
+  }
 
   /**
   * Adds a two dimensional histogram to a detector.
   * @param Name name of the detector
   * @param axes axis of the histogram. Name corresponds to the axis.
-  * @param weightname Name of the weights used when filling. Standard is "Ones" (1).
+  * @param weight Name of the weights used when filling. Standard is "Ones" (1).
   */
-  void AddHisto2D(const std::string &name, const std::vector<Qn::AxisF> &axes, const std::string &weightname = "Ones");
-
+  void AddHisto2D(const std::string &detector,
+                  const std::vector<Qn::AxisD> &axes,
+                  const std::string &weight = "Ones") {
+    detectors_.FindDetector(detector).AddHistogramCallBack(Create2DHisto(detector, axes, weight));
+  }
   /**
    * @brief Adds correction steps to a detector.
    * @param name Name of the detector.
    * @param config function configuring the correction framework.
    * C-callable of signature void(DetectorConfiguration *config) config.
    */
-  void SetCorrectionSteps(const std::string &name, std::function<void(SubEvent *config)> config);
+  void SetCorrectionSteps(const std::string &name, ConfigurationFunction config) {
+    detectors_.FindDetector(name).SetConfig(std::move(config));
+  }
+  void SetOutputQVectors(const std::string &name, const std::vector<Qn::QVector::CorrectionStep> &steps) {
+    auto &detector = detectors_.FindDetector(name);
+    for (auto &step : steps) {
+      detector.SetOutputQVector(step);
+    }
+  }
+  void SetFillOutputTree(bool tree) { fill_output_tree_ = tree; }
+  void SetFillCalibrationQA(bool calibration) { fill_qa_histos_ = calibration; }
+  void SetFillValidationQA(bool validation) { fill_validation_qa_histos_ = validation; }
+  void SetRunName(const std::string &name) { runs_.SetCurrentRun(name); }
+  void SetCalibrationInputFile(const std::string &file_name) { correction_input_file_name_ = file_name; }
 
   /**
    * @brief Set output tree.
    * Lifetime of the tree is managed by the user.
    * @param tree non-owning pointer to the tree.
    */
-  void SetTree(TTree *tree) { out_tree_ = tree; }
+  void ConnectOutputTree(TTree *tree) { if (fill_output_tree_) out_tree_ = tree; }
 
   /**
    * @brief Initializes the correction framework
    * @param in_calibration_file_ non-owning pointer to the calibration file.
    * Lifetime of the file has to be managed by the user.
    */
-  void Initialize();
+  void InitializeOnNode();
 
-  /**
-   * @brief Process the event variables
-   */
-  void ProcessEvent();
+  bool ProcessEvent();
 
-  /**
-   * @brief Process the Qn vector corrections
-   */
-  void ProcessQnVectors();
+  double *GetVariableContainer() { return variable_manager_.GetVariableContainer(); }
 
-  /**
-   * @brief Finalizes the correction framework. To be called after all events are processed.
-   */
-  void Finalize();
+  inline void FillTrackingDetectors() { if (event_passed_cuts_) detectors_.FillTracking(); }
+  inline void FillChannelDetectors() { if (event_passed_cuts_) detectors_.FillChannel(); }
 
+  void ProcessCorrections();
   /**
    * @brief Resets the correction framework. To be called before a new event is processed.
    */
   void Reset();
 
   /**
-   * @brief Get the variable container to be able to fill the variables to the framework.
-   * @return pointer to the variable container
-   */
-  double *GetVariableContainer() { return variable_manager_.GetVariableContainer(); }
+ * @brief Finalizes the correction framework. To be called after all events are processed.
+ */
+  void Finalize();
 
   /**
    * @brief Get the list containing the calibration histograms.
    * @return A pointer of the list to which the calibration histograms will be saved.
    */
-  TList *GetCalibrationList() { return output_calibration_runs_.get(); }
+  TList *GetCorrectionList() { return correction_output.get(); }
 
   /**
    * @brief Get the list containing the calibration QA histograms.
    * @return A pointer of the list to which the calibration QA histograms will be saved.
    */
-  TList *GetCalibrationQAList() { return calib_qa_histos_.get(); }
-
-  /**
-   * @brief Get the list containing the event and detector QA histograms.
-   * @return A pointer of the list to which the event and detector QA histograms will be saved.
-   */
-  TList *GetEventAndDetectorQAList();
-
-  /**
-   * @brief Sets the name of the current correction period (e.g. run number).
-   * @param name Name of the current correction period
-   */
-  void SetRunName(const std::string& name) {
-    runs_.SetCurrentRun(name);
-  }
-
-  void SetCalibrationInputFile(const std::string &file_name) {
-    calibration_input_file_name_ = file_name;
-  }
+  TList *GetCorrectionQAList() { return correction_qa_histos_.get(); }
 
  private:
+  template<std::size_t N, typename FUNCTION>
+  CutCallBack CreateCutCallBack(const char *const (&names)[N], FUNCTION lambda, const std::string &cut_description) {
+    auto callback = [&names, lambda, cut_description](Qn::InputVariableManager *var) {
+      InputVariable arr[N];
+      int i = 0;
+      for (auto &name : names) {
+        arr[i] = var->FindVariable(name);
+        ++i;
+      }
+      return MakeUniqueNDimCut(arr, lambda, cut_description, arr[0].GetSize() > 1);
+    };
+    return callback;
+  };
 
-  void AttachCalibrationInputs() {
-    calibration_input_file_ = std::make_unique<TFile>(calibration_input_file_name_.data(), "READ");
-    if (calibration_input_file_ && !calibration_input_file_->IsZombie()) {
-      input_calibration_runs_ =
-          std::make_unique<TList>(dynamic_cast<TList *>(calibration_input_file_->FindObject(kCalibListName))->Clone());
-      input_calibration_runs_->SetOwner(kTRUE);
-    }
-  }
+  void InitializeCorrections();
 
-  void InitializeQnCorrectionsFramework() {
-    detectors_.CreateSupportStructures();
-    output_calibration_runs_ = std::make_unique<TList>();
-    output_calibration_runs_->SetName(kCalibListName);
-    output_calibration_runs_->SetOwner(kTRUE);
+  void AttachQAHistograms();
 
+  HistogramCallBack Create1DHisto(const std::string &name, Qn::AxisD axis,
+                                                  const std::string &weight);
 
-//    if (!runs_.empty()) {
-//      auto current_run = new TList();
-//      current_run->SetName(runs_.GetCurrent().data());
-//      current_run->SetOwner(true);
-//      output_calibration_runs_->Add(current_run);
-//      detectors_.AttachSupportHistograms(current_run);
-//    }
-//    if (input_calibration_runs_) {
-//      auto current_run = (TList *) input_calibration_runs_->FindObject(runs_.GetCurrent().data());
-//      if (current_run) {
-//        detectors_.AttachCorrectionInputs(current_run);
-//      } else {
-//        current_run = new TList();
-//        current_run->SetName((const char *) fProcessListName);
-//        current_run->SetOwner(kTRUE);
-//        /* we add it but probably temporarily */
-//        fSupportHistogramsList->Add(current_run);
-//      }
-//    }
+  HistogramCallBack Create2DHisto(const std::string &name, std::vector<Qn::AxisD> axes,
+                                                  const std::string &weight);
 
-    if (fill_qa_histos_) {
-    }
+  HistogramCallBack Create2DHistoArray(const std::string &name, std::vector<Qn::AxisD> axes,
+                                                       const std::string &weight, const Qn::AxisD &histogram_axis);
 
-    if (fill_validation_qa_histos_) {
-    }
-    detectors_.IncludeQnVectors();
-  }
+  InputVariableManager *GetVariableManager() { return &variable_manager_; }
+  DetectorList *GetDetectors() { return &detectors_; }
+  CorrectionAxisSet *GetCorrectionAxes() { return &correction_axes_; }
 
-//  void InitializeQnCorrectionsFramework() {
-//    /* the data bank */
-//    fDataContainer = new double[nMaxNoOfDataVariables];
-//    for (auto &det : fSubEvents) {
-//      det->CreateSupportDataStructures();
-//    }
-//    /* build the support histograms list */
-//    fSupportHistogramsList = new TList();
-//    fSupportHistogramsList->SetName(szCalibrationHistogramsKeyName);
-//    fSupportHistogramsList->SetOwner(kTRUE);
-//    /* build the support histograms lists for the list of concurrent processes */
-//    /* the QA histograms are no longer rooted on a per process basis */
-//    if (fProcessesNames && fProcessesNames->GetEntries()!=0) {
-//      for (Int_t i = 0; i < fProcessesNames->GetEntries(); i++) {
-//        /* the support histgrams list */
-//        auto newList = new TList();
-//        newList->SetName(((TObjString *) fProcessesNames->At(i))->GetName());
-//        newList->SetOwner(kTRUE);
-//        fSupportHistogramsList->Add(newList);
-//        /* leave the selected process list name for a latter time */
-//        if (!fProcessListName.EqualTo(fProcessesNames->At(i)->GetName())) {
-//          /* build the support histograms list associated to the process */
-//          for (auto &det : fSubEvents) {
-//            det->CreateSupportHistograms(newList);
-//          }
-//        }
-//      }
-//    }
-//    /* build the support histograms list associated to this process */
-//    /* and pass it to the detectors for support histograms creation */
-//    if (fProcessListName.Length()!=0) {
-//      /* let's see first whether we have the current process name within the processes names list */
-//      TList *processList;
-//      if (fProcessesNames && fProcessesNames->GetEntries()!=0
-//          && fSupportHistogramsList->FindObject(fProcessListName)) {
-//        processList = (TList *) fSupportHistogramsList->FindObject(fProcessListName);
-//      } else {
-//        processList = new TList();
-//        processList->SetName((const char *) fProcessListName);
-//        processList->SetOwner(kTRUE);
-//        /* we add it but probably temporarily */
-//        fSupportHistogramsList->Add(processList);
-//      }
-//      /* now transfer the order to the defined detectors */
-//      /* so, we always create the histograms to use the last ones */
-//      Bool_t retvalue = kTRUE;
-//      for (auto &det : fSubEvents) {
-//        retvalue = retvalue && det->CreateSupportHistograms(processList);
-//        if (!retvalue)
-//          break;
-//      }
-//      if (!retvalue) {
-//        std::clog << "Failed to build the necessary support histograms." << std::endl;
-//      }
-//    } else {
-//      std::clog << "process label is missing." << std::endl;
-//    }
-//    /* now get the process list on the calibration histograms list if any */
-//    /* and pass it to the detectors for input calibration histograms attachment, */
-//    if (fCalibrationHistogramsList) {
-//      auto processList = (TList *) fCalibrationHistogramsList->FindObject((const char *) fProcessListName);
-//      if (processList) {
-//
-//        /* now transfer the order to the defined detectors */
-//        for (auto &det : fSubEvents) {
-//          det->AttachCorrectionInputs(processList);
-//        }
-//        for (auto &det : fSubEvents) {
-//          det->AfterInputsAttachActions();
-//        }
-//      }
-//    }
-//    /* now build the QA histograms list if needed */
-//    /* QA histograms are no longer stored on a per run basis */
-//    if (GetShouldFillQAHistograms()) {
-//      fQAHistogramsList = new TList();
-//      fQAHistogramsList->SetName(szCalibrationQAHistogramsKeyName);
-//      fQAHistogramsList->SetOwner(kTRUE);
-//      if (GetShouldFillNveQAHistograms()) {
-//        fNveQAHistogramsList = new TList();
-//        fNveQAHistogramsList->SetName(szCalibrationNveQAHistogramsKeyName);
-//        fNveQAHistogramsList->SetOwner(kTRUE);
-//      }
-//    }
-//    /* pass the list to the detectors for QA histograms creation */
-//    /* the QA histograms list if needed */
-//    if (GetShouldFillQAHistograms()) {
-//      /* pass it to the detectors for QA histograms creation */
-//      for (auto &det : fSubEvents) {
-//        det->CreateQAHistograms(fQAHistogramsList);
-//      }
-//
-//    }
-//    /* the non validated QA histograms list if needed */
-//    if (GetShouldFillNveQAHistograms()) {
-//      /* pass it to the detectors for non validated entries QA histograms creation */
-//      for (auto &det : fSubEvents) {
-//        det->CreateNveQAHistograms(fNveQAHistogramsList);
-//      }
-//    }
-//    /* build the Qn vectors list */
-//    fQnVectorList = new TList();
-//    /* the list does not own the Qn vectors */
-//    fQnVectorList->SetOwner(kFALSE);
-//    /* pass it to the detectors for Qn vector creation and attachment */
-//
-//  }
-
-
+ private:
+  friend class Detector;
 
   static constexpr int kMaxCorrectionArrayLength = 1000;
-  static constexpr auto kCalibListName = "CalibrationHistograms";
-  static constexpr auto kQACalibListName = "CalibrationQAHistograms";
-
-  std::unique_ptr<Qn::QAHisto1DPtr> Create1DHisto(const std::string &name, const Qn::AxisF axis,
-                                                  const std::string &weightname);
-
-  std::unique_ptr<Qn::QAHisto2DPtr> Create2DHisto(const std::string &name, const std::vector<Qn::AxisF> axes,
-                                                  const std::string &weightname);
-
-  std::unique_ptr<Qn::QAHisto2DPtr> Create2DHisto(const std::string &name, const std::vector<Qn::AxisF> axes,
-                                                  const std::string &weightname,
-                                                  const Qn::AxisF &histaxis);
-
-  void CreateDetectors();
+  static constexpr auto kCorrectionListName = "CorrectionHistograms";
 
   RunList runs_;
   DetectorList detectors_;
-  VariableManager variable_manager_; ///< manager of the variables
+  InputVariableManager variable_manager_; ///< manager of the variables
 
-  std::string calibration_input_file_name_; ///< name of the calibration input file
+  std::string correction_input_file_name_; ///< name of the calibration input file
 
-  std::unique_ptr<TList> input_calibration_runs_;   //!<! the list of the input calibration histograms
-  std::unique_ptr<TList> output_calibration_runs_;  //!<! the list of the support histograms
-  std::unique_ptr<TList> calib_qa_histos_;          //!<! the list of QA histograms
-  std::unique_ptr<TFile> calibration_input_file_;               //!<! input calibration file
+  std::unique_ptr<TList> correction_input_;   //!<! the list of the input calibration histograms
+  std::unique_ptr<TList> correction_output;  //!<! the list of the support histograms
+  std::unique_ptr<TList> correction_qa_histos_;          //!<! the list of QA histograms
+  std::unique_ptr<TFile> correction_input_file_;               //!<! input calibration file
 //  TList *validation_histos_ = nullptr;     //!<! the list of not validated entries QA histograms
   bool fill_qa_histos_ = true;
   bool fill_validation_qa_histos_ = true;
-  EventClassVariablesSet correction_axes_; /// CorrectionCalculator correction axes
-
-  std::unique_ptr<Cuts> event_cuts_; ///< Pointer to the event cuts
+  bool fill_output_tree_ = false;
+  std::vector<CorrectionAxisCallBack> correction_axes_callback_;
+  CorrectionAxisSet correction_axes_; /// CorrectionCalculator correction axes
+  CorrectionCuts event_cuts_; ///< Pointer to the event cuts
   TList *det_qa_histos_ = nullptr; //!<! List holding the Detector QA histograms. Lifetime is managed by the user.
 //  CorrectionCalculator qnc_calculator_; ///< calculator of the corrections
+  std::vector<HistogramCallBack> event_histograms_callback_; ///< event QA histograms
   std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_; ///< event QA histograms
   TTree *out_tree_ = nullptr;  //!<! Tree of Qn Vectors and event variables. Lifetime is managed by the user.
   bool event_passed_cuts_ = false; ///< variable holding status if an event passed the cuts.
