@@ -102,7 +102,7 @@ class Axis {
     return bin;
   };
 
-  inline std::string GetBinName(unsigned int i) const {return name_+std::to_string(GetLowerBinEdge(i));}
+  inline std::string GetBinName(unsigned int i) const {return name_+":"+std::to_string(GetLowerBinEdge(i));}
   /**
  * Finds bin iterator for a given value
  * if value is smaller than lowest bin returns end().

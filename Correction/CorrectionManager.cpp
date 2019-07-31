@@ -20,13 +20,14 @@
 
 void Qn::CorrectionManager::SetCorrectionSteps(const std::string &name,
                                                std::function<void(DetectorConfiguration *config)> config) {
-  try { detectors_track_.at(name)->SetConfig(std::move(config)); }
-  catch (std::out_of_range &) {
-    try { detectors_channel_.at(name)->SetConfig(std::move(config)); }
-    catch (std::out_of_range &) {
-      throw std::out_of_range(
-          name + " was not found in the list of detectors. It needs to be created before it can be configured.");
-    }
+
+  if (detectors_track_.find(name)!=detectors_track_.end()) {
+    detectors_track_.at(name)->SetConfig(std::move(config));
+  } else if (detectors_channel_.find(name)!=detectors_channel_.end()) {
+    detectors_channel_.at(name)->SetConfig(std::move(config));
+  } else {
+    throw std::out_of_range(
+        name + " was not found in the list of detectors. It needs to be created before it can be configured.");
   }
 }
 
@@ -34,13 +35,13 @@ void Qn::CorrectionManager::AddHisto1D(const std::string &name,
                                        const Qn::Axis &axis,
                                        const std::string &weightname) {
   auto histo = Create1DHisto(name, axis, weightname);
-  try { detectors_track_.at(name)->AddHistogram(std::move(histo));}
-  catch (std::out_of_range &) {
-    try { detectors_channel_.at(name)->AddHistogram(std::move(histo)); }
-    catch (std::out_of_range &) {
-      throw std::out_of_range(
-          name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
-    }
+  if (detectors_track_.find(name)!=detectors_track_.end()) {
+    detectors_track_.at(name)->AddHistogram(std::move(histo));
+  } else if (detectors_channel_.find(name)!=detectors_channel_.end()) {
+    detectors_channel_.at(name)->AddHistogram(std::move(histo));
+  } else {
+    throw std::out_of_range(
+        name + " was not found in the list of detectors. It needs to be created before it can be configured.");
   }
 }
 
@@ -48,17 +49,19 @@ void Qn::CorrectionManager::AddHisto2D(const std::string &name,
                                        const std::vector<Qn::Axis> &axes,
                                        const std::string &weightname) {
   auto histo = Create2DHisto(name, axes, weightname);
-  try { detectors_track_.at(name)->AddHistogram(std::move(histo));}
-  catch (std::out_of_range &) {
-    try { detectors_channel_.at(name)->AddHistogram(std::move(histo)); }
-    catch (std::out_of_range &) {
-      throw std::out_of_range(
-          name + " was not found in the list of detectors. It needs to be created before a histogram can be added.");
-    }
+  if (detectors_track_.find(name)!=detectors_track_.end()) {
+    detectors_track_.at(name)->AddHistogram(std::move(histo));
+  } else if (detectors_channel_.find(name)!=detectors_channel_.end()) {
+    detectors_channel_.at(name)->AddHistogram(std::move(histo));
+  } else {
+    throw std::out_of_range(
+        name + " was not found in the list of detectors. It needs to be created before it can be configured.");
   }
 }
 
-void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::Axis> &axes, const Qn::Axis &axis, const std::string &weightname) {
+void Qn::CorrectionManager::AddEventHisto2D(const std::vector<Qn::Axis> &axes,
+                                            const Qn::Axis &axis,
+                                            const std::string &weightname) {
   event_histograms_.push_back(Create2DHisto("Ev", axes, weightname, axis));
 }
 
@@ -279,10 +282,16 @@ std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std
   std::array<Variable, 3>
       arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(axes[1].Name()),
               var_manager_->FindVariable(weightname)}};
-  auto histo = new TH2F(hist_name.data(), axisname.data(), size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
+  auto histo = new TH2F(hist_name.data(),
+                        axisname.data(),
+                        size_x,
+                        lower_edge_x,
+                        upper_edge_x,
+                        size_y,
+                        lower_edge_y,
+                        upper_edge_y);
   return std::make_unique<QAHisto2DPtr>(arr, histo);
 }
-
 
 /**
  * Helper function to create the QA histograms
@@ -314,10 +323,17 @@ std::unique_ptr<Qn::QAHisto2DPtr> Qn::CorrectionManager::Create2DHisto(const std
   std::array<Variable, 3>
       arr = {{var_manager_->FindVariable(axes[0].Name()), var_manager_->FindVariable(axes[1].Name()),
               var_manager_->FindVariable(weightname)}};
-  auto histo = new TH2F(hist_name.data(), axisname.data(), size_x, lower_edge_x, upper_edge_x, size_y, lower_edge_y, upper_edge_y);
+  auto histo = new TH2F(hist_name.data(),
+                        axisname.data(),
+                        size_x,
+                        lower_edge_x,
+                        upper_edge_x,
+                        size_y,
+                        lower_edge_y,
+                        upper_edge_y);
   auto haxis = std::make_unique<Qn::Axis>(histaxis);
   auto haxisvar = var_manager_->FindVariable(histaxis.Name());
-  return std::make_unique<QAHisto2DPtr>(arr, histo,std::move(haxis),haxisvar);
+  return std::make_unique<QAHisto2DPtr>(arr, histo, std::move(haxis), haxisvar);
 }
 
 

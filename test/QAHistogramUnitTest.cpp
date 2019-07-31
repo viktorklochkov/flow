@@ -5,6 +5,7 @@
 
 #include "QAHistogram.h"
 #include "VariableManager.h"
+#include <random>
 
 TEST(QAHistogramUnitTest, ptrtest) {
 
@@ -22,7 +23,7 @@ TEST(QAHistogramUnitTest, ptrtest) {
 
   Qn::QAHisto2DPtr hist2dptr({manager.FindVariable("a"),manager.FindVariable("a"), manager.FindVariable("Ones")}, new TH2F("t2d", "", 10, 0, 10,10,0,10));
 
-  auto listaxis = std::make_unique<Qn::Axis>("b",2,0,3);
+  auto listaxis = std::make_unique<Qn::Axis>("b",std::vector<float>{0.6666900, 1.2340,4.,33.,345023.23453453000,345345.00000343});
   Qn::QAHisto2DPtr hist2dptrlist({manager.FindVariable("a"),manager.FindVariable("a"), manager.FindVariable("Ones")},
       new TH2F("t2dd", "", 10, 0, 10,10,0,10),std::move(listaxis),manager.FindVariable("b"));
 
@@ -41,6 +42,14 @@ TEST(QAHistogramUnitTest, ptrtest) {
   histptr.Fill();
   hist2dptr.Fill();
   hist2dptrlist.Fill();
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<std::mt19937::result_type> dist2(1,10); // distribution in range [1, 6]
+  for (int i =0; i< 1000000; ++i) {
+    vars[0] = dist2(rng);
+    vars[1] = dist2(rng);
+    hist2dptrlist.Fill();
+  }
   list->Write("qalist", TObject::kSingleKey);
   file->Close();
 }

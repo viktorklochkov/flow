@@ -684,7 +684,7 @@ class DataContainer : public TObject {
   std::vector<T> data_;         ///< linearized vector of data
   QnAxes axes_;                 ///< Vector of axes
   std::vector<long> stride_;    ///< Offset for conversion into one dimensional vector.
-  TList *list_ = nullptr;       ///!<! List to temporarily hold histograms when accessing with the TBrowser.
+  TList *list_ = nullptr;       //!<! List to temporarily hold histograms when accessing with the TBrowser.
   friend Qn::DataContainerHelper;
 
   void Reset() {
@@ -789,7 +789,7 @@ class DataContainer : public TObject {
   virtual void Browse(TBrowser *b) { (void) b; }
 
 /// \cond CLASSIMP
- ClassDef(DataContainer, 12);
+ ClassDef(DataContainer, 13);
 /// \endcond
 };
 

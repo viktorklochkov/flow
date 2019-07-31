@@ -112,6 +112,7 @@ void CorrelationManager::Initialize() {
 
   ese_handler_.Initialize();
   ConfigureCorrelations();
+  event_cuts_.CreateReport();
   std::cout << ese_handler_.Report() << std::endl;
 // reset to the first event before the processing step.
   if (event_axes_.GetAxes().empty()) {
@@ -132,6 +133,7 @@ void CorrelationManager::Finalize() {
     for (const auto &stats : stats_results_) {
       stats.second.GetResult().Write(stats.first.data());
     }
+    event_cuts_.GetReport()->Write("CutReport");
     outputfile->Close();
   }
 }
