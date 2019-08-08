@@ -114,7 +114,6 @@ class Alignment : public CorrectionOnQvector {
   virtual Bool_t ProcessCorrections();
   virtual Bool_t ProcessDataCollection();
   virtual void ClearCorrectionStep();
-  virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
   using State = Qn::CorrectionStep::State;

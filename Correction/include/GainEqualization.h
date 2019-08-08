@@ -150,7 +150,6 @@ class GainEqualization : public CorrectionOnInputData {
   /// Clean the correction to accept a new event
   /// Does nothing for the time being
   virtual void ClearCorrectionStep() {}
-  virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
   using State = Qn::CorrectionStep::State;

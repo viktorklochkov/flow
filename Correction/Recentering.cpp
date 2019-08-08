@@ -136,11 +136,13 @@ void Recentering::AttachNveQAHistograms(TList *list) {
 /// \return kTRUE if the correction step was applied
 bool Recentering::ProcessCorrections() {
   int harmonic;
+  bool applied;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
       /* we have not perform any correction yet */
-      return false;
+      applied = false;
+      break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
       /* and proceed to ... */
@@ -178,11 +180,14 @@ bool Recentering::ProcessCorrections() {
       }
       /* and update the current Qn vector */
       fSubEvent->UpdateCurrentQnVector(*fCorrectedQnVector, QVector::CorrectionStep::RECENTERED);
-      return true;
+      applied =  true;
+      break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied = false;
+      break;
   }
+  return applied;
 }
 
 /// Processes the correction step data collection
@@ -191,6 +196,7 @@ bool Recentering::ProcessCorrections() {
 /// \return kTRUE if the correction step was applied
 bool Recentering::ProcessDataCollection() {
   int harmonic;
+  bool applied;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
@@ -204,7 +210,8 @@ bool Recentering::ProcessDataCollection() {
         }
       }
       /* we have not perform any correction yet */
-      return false;
+      applied = false;
+      break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
       if (fInputQnVector->IsGoodQuality()) {
@@ -227,36 +234,19 @@ bool Recentering::ProcessDataCollection() {
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
-      return true;
+      applied =  true;
+      break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied =  false;
+      break;
   }
+  return applied;
 }
 
 /// Clean the correction to accept a new event
 void Recentering::ClearCorrectionStep() {
   fCorrectedQnVector->Reset();
-}
-
-/// Report on correction usage
-/// Correction step should incorporate its name in calibration
-/// list if it is producing information calibration in the ongoing
-/// step and in the apply list if it is applying correction in
-/// the ongoing step.
-/// \param calibrationList list containing the correction steps producing calibration information
-/// \param applyList list containing the correction steps applying corrections
-/// \return kTRUE if the correction step is being applied
-Bool_t Recentering::ReportUsage(TList *calibrationList, TList *applyList) {
-  switch (fState) {
-    case State::CALIBRATION:calibrationList->Add(new TObjString(szCorrectionName));
-      return false;
-    case State::APPLYCOLLECT:calibrationList->Add(new TObjString(szCorrectionName));
-      /* FALLTHRU */
-    case State::APPLY:applyList->Add(new TObjString(szCorrectionName));
-      return true;
-    case State::PASSIVE: return false;
-  }
 }
 
 }

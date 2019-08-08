@@ -146,13 +146,15 @@ void GainEqualization::AttachNveQAHistograms(TList *list) {
 /// structures should be included.
 /// \return kTRUE if the correction step was applied
 bool GainEqualization::ProcessCorrections() {
+  bool applied;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce equalization parameters */
       for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
-        fCalibrationHistograms->Fill( dataVector.GetId(), dataVector.EqualizedWeight());
+        fCalibrationHistograms->Fill(dataVector.GetId(), dataVector.EqualizedWeight());
       }
-      return false;
+      applied = false;
+      break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce equalization parameters */
       for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
@@ -231,11 +233,14 @@ bool GainEqualization::ProcessCorrections() {
           fQAMultiplicityAfter->Fill(dataVector.GetId(), dataVector.EqualizedWeight());
         }
       }
-      return true;;
+      applied = true;
+      break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied = false;
+      break;
   }
+  return applied;
 }
 
 /// Processes the correction data collection step
@@ -249,42 +254,18 @@ bool GainEqualization::ProcessCorrections() {
 /// So this function only retures the proper value according to the status.
 /// \return kTRUE if the correction step was applied
 Bool_t GainEqualization::ProcessDataCollection() {
+  bool applied;
   switch (fState) {
-    case State::CALIBRATION:return false;
-    case State::APPLYCOLLECT:
-      /* FALLTHRU */
-    case State::APPLY:return true;
-    case State::PASSIVE:return false;
-  }
-
-}
-
-/// Report on correction usage
-/// Correction step should incorporate its name in calibration
-/// list if it is producing information calibration in the ongoing
-/// step and in the apply list if it is applying correction in
-/// the ongoing step.
-/// \param calibrationList list containing the correction steps producing calibration information
-/// \param applyList list containing the correction steps applying corrections
-/// \return kTRUE if the correction step is being applied
-Bool_t GainEqualization::ReportUsage(TList *calibrationList, TList *applyList) {
-  switch (fState) {
-    case State::CALIBRATION:
-      /* we are collecting */
-      calibrationList->Add(new TObjString(szCorrectionName));
-      /* but not applying */
-      return kFALSE;
+    case State::CALIBRATION: applied = false;
       break;
     case State::APPLYCOLLECT:
-      /* we are collecting */
-      calibrationList->Add(new TObjString(szCorrectionName));
       /* FALLTHRU */
-    case State::APPLY:
-      /* and applying */
-      applyList->Add(new TObjString(szCorrectionName));
+    case State::APPLY: applied = true;
       break;
-    default:return kFALSE;
+    case State::PASSIVE: applied = false;
+      break;
   }
-  return kTRUE;
+  return applied;
 }
+
 }

@@ -277,12 +277,14 @@ void TwistAndRescale::AttachNveQAHistograms(TList *list) {
 /// \return kTRUE if the correction step was applied
 bool TwistAndRescale::ProcessCorrections() {
   Int_t harmonic;
+  bool applied;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if Qn vectors are good enough */
       /* we have not perform any correction yet */
       /* we check if detector B is in its proper correction step */
-      return false;
+      applied = false;
+      break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if Qn vectors are good enough */
       /* and proceed to ... */
@@ -451,11 +453,14 @@ bool TwistAndRescale::ProcessCorrections() {
         fSubEvent->UpdateCurrentQnVector(*fRescaleCorrectedQnVector, QVector::CorrectionStep::RESCALED);
       }
     }
-      return true;
+      applied = true;
+    break;
     default:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied = false;
+      break;
   }
+  return applied;
 }
 
 /// Processes the correction step data collection
@@ -463,6 +468,7 @@ bool TwistAndRescale::ProcessCorrections() {
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
 Bool_t TwistAndRescale::ProcessDataCollection() {
+  bool applied;
   switch (fState) {
     case State::CALIBRATION: {
       /* logging */
@@ -493,7 +499,8 @@ Bool_t TwistAndRescale::ProcessDataCollection() {
           break;
       }
       /* we have not perform any correction yet */
-      return false;
+      applied = false;
+      break;
     }
     case State::APPLYCOLLECT: {
       /* logging */
@@ -544,11 +551,14 @@ Bool_t TwistAndRescale::ProcessDataCollection() {
         }
       }
     }
-      return true;
+      applied = true;
+      break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied = false;
+      break;
   }
+  return applied;
 }
 
 /// Clean the correction to accept a new event
@@ -581,31 +591,4 @@ void TwistAndRescale::IncludeCorrectedQnVector(std::map<QVector::CorrectionStep,
   }
 }
 
-/// Report on correction usage
-/// Correction step should incorporate its name in calibration
-/// list if it is producing information calibration in the ongoing
-/// step and in the apply list if it is applying correction in
-/// the ongoing step.
-/// \param calibrationList list containing the correction steps producing calibration information
-/// \param applyList list containing the correction steps applying corrections
-/// \return kTRUE if the correction step is being applied
-Bool_t TwistAndRescale::ReportUsage(TList *calibrationList, TList *applyList) {
-  switch (fState) {
-    case State::CALIBRATION:
-      /* we are collecting */
-      calibrationList->Add(new TObjString(GetName()));
-      /* but not applying */
-      return kFALSE;
-    case State::APPLYCOLLECT:
-      /* we are collecting */
-      calibrationList->Add(new TObjString(GetName()));
-      /* FALLTHRU */
-    case State::APPLY:
-      /* and applying */
-      applyList->Add(new TObjString(GetName()));
-      return kTRUE;
-    default:break;
-  }
-  return kFALSE;
-}
 }

@@ -173,7 +173,6 @@ class TwistAndRescale : public CorrectionOnQvector {
   virtual Bool_t ProcessDataCollection();
   virtual void ClearCorrectionStep();
   virtual void IncludeCorrectedQnVector(std::map<QVector::CorrectionStep, QVector *> &qvectors) const;
-  virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList);
 
  private:
   using State = Qn::CorrectionStep::State;

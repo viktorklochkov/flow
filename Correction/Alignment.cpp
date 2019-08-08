@@ -138,14 +138,17 @@ void Alignment::AttachNveQAHistograms(TList *list) {
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
 bool Alignment::ProcessCorrections() {
+  bool applied;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
       /* we have not perform any correction yet */
-      return false;
+      applied = false;
+      break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
       /* and proceed to ... */
+      /* FALLTHRU */
     case State::APPLY: /* apply the correction if the current Qn vector is good enough */
       /* logging */
 //      QnCorrectionsInfo(Form("Alignment process in detector %s with reference %s: applying correction.",
@@ -192,11 +195,14 @@ bool Alignment::ProcessCorrections() {
       }
       /* and update the current Qn vector */
       fSubEvent->UpdateCurrentQnVector(*fCorrectedQnVector, QVector::CorrectionStep::ALIGNED);
-      return true;
+      applied = true;
+      break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied = false;
+      break;
   }
+  return applied;
 }
 
 /// Processes the correction step data collection
@@ -204,6 +210,7 @@ bool Alignment::ProcessCorrections() {
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
 Bool_t Alignment::ProcessDataCollection() {
+  bool applied;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -223,7 +230,8 @@ Bool_t Alignment::ProcessDataCollection() {
                                                fHarmonicForAlignment));
       }
       /* we have not perform any correction yet */
-      return false;
+      applied =  false;
+      break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
       if ((fInputQnVector->IsGoodQuality()) &&
@@ -253,11 +261,14 @@ Bool_t Alignment::ProcessDataCollection() {
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
-      return true;
+      applied =  true;
+      break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      return false;
+      applied = false;
+      break;
   }
+  return applied;
 }
 
 /// Clean the correction to accept a new event
@@ -265,31 +276,4 @@ void Alignment::ClearCorrectionStep() {
   fCorrectedQnVector->Reset();
 }
 
-/// Report on correction usage
-/// Correction step should incorporate its name in calibration
-/// list if it is producing information calibration in the ongoing
-/// step and in the apply list if it is applying correction in
-/// the ongoing step.
-/// \param calibrationList list containing the correction steps producing calibration information
-/// \param applyList list containing the correction steps applying corrections
-/// \return kTRUE if the correction step is being applied
-Bool_t Alignment::ReportUsage(TList *calibrationList, TList *applyList) {
-  switch (fState) {
-    case State::CALIBRATION:
-      /* we are collecting */
-      calibrationList->Add(new TObjString(szCorrectionName));
-      /* but not applying */
-      return kFALSE;
-    case State::APPLYCOLLECT:
-      /* we are collecting */
-      calibrationList->Add(new TObjString(szCorrectionName));
-      /* FALLTHRU */
-    case State::APPLY:
-      /* and applying */
-      applyList->Add(new TObjString(szCorrectionName));
-      break;
-    default:return kFALSE;
-  }
-  return kTRUE;
-}
 }

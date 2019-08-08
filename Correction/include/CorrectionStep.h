@@ -16,6 +16,7 @@
 ///
 
 #include "TList.h"
+#include "TObjString.h"
 
 namespace Qn {
 class SubEvent;
@@ -124,11 +125,26 @@ class CorrectionStep {
   /// \param calibrationList list containing the correction steps producing calibration information
   /// \param applyList list containing the correction steps applying corrections
   /// \return kTRUE if the correction step is being applied
-  virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) = 0;
-  State GetState() {return fState;}
+  virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) {
+    bool returnvalue;
+    switch (fState) {
+      case State::CALIBRATION:calibrationList->Add(new TObjString(GetName()));
+        returnvalue = false;
+        break;
+      case State::APPLYCOLLECT:calibrationList->Add(new TObjString(GetName()));
+        /* FALLTHRU */
+      case State::APPLY:applyList->Add(new TObjString(GetName()));
+        returnvalue = true;
+        break;
+      case State::PASSIVE:returnvalue = false;
+        break;
+    }
+    return returnvalue;
+  }
+  State GetState() { return fState; }
  protected:
-  /// Stores the detector configuration owner
-  /// \param subevent the detector configuration owner
+/// Stores the detector configuration owner
+/// \param subevent the detector configuration owner
   void SetOwner(SubEvent *subevent) { fSubEvent = subevent; }
   unsigned int fPriority = 0; ///< the correction key that codifies order information
   std::string fName;
@@ -153,7 +169,7 @@ namespace std {
  * std::less specialization for the Qn::CorrectionStep
  */
 template<>
-struct less<Qn::CorrectionStep*> {
+struct less<Qn::CorrectionStep *> {
   bool operator()(Qn::CorrectionStep *lhs, Qn::CorrectionStep *rhs) const {
     return *lhs < *rhs;
   }
