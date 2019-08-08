@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-#include "ROOT/RStringView.hxx"
 namespace Qn {
 class RunList {
  public:
@@ -8,7 +7,7 @@ class RunList {
   RunList() = default;
   std::vector<std::string>::const_iterator begin() const { return run_list_.begin(); }
   std::vector<std::string>::const_iterator end() const { return run_list_.end(); }
-  void SetCurrentRun(std::string_view name) {
+  void SetCurrentRun(std::string name) {
     current_run_name_ = name;
     if (std::find(run_list_.begin(), run_list_.end(), current_run_name_)==run_list_.end()) {
       run_list_.emplace_back(current_run_name_);

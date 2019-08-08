@@ -244,7 +244,7 @@ class SubEvent {
   /// \param weight the weight of the data vector
   /// \param channelId the channel Id that originates the data vector
   /// \return kTRUE if the data vector was accepted and stored
-  constexpr void AddDataVector(const Double_t phi, const Double_t weight, const Int_t channelId) {
+  void AddDataVector(const Double_t phi, const Double_t weight, const Int_t channelId) {
     fDataVectorBank.emplace_back(channelId, phi, weight);
   }
   /// Clean the configuration to accept a new event
