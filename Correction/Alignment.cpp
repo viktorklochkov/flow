@@ -138,12 +138,11 @@ void Alignment::AttachNveQAHistograms(TList *list) {
 /// Apply the correction step
 /// \return kTRUE if the correction step was applied
 bool Alignment::ProcessCorrections() {
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
       /* we have not perform any correction yet */
-      applied = false;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -199,7 +198,6 @@ bool Alignment::ProcessCorrections() {
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied = false;
       break;
   }
   return applied;
@@ -210,7 +208,7 @@ bool Alignment::ProcessCorrections() {
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
 Bool_t Alignment::ProcessDataCollection() {
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -230,7 +228,6 @@ Bool_t Alignment::ProcessDataCollection() {
                                                fHarmonicForAlignment));
       }
       /* we have not perform any correction yet */
-      applied =  false;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if both current Qn vectors are good enough */
@@ -261,11 +258,10 @@ Bool_t Alignment::ProcessDataCollection() {
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
-      applied =  true;
+      applied = true;
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied = false;
       break;
   }
   return applied;

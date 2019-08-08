@@ -277,13 +277,12 @@ void TwistAndRescale::AttachNveQAHistograms(TList *list) {
 /// \return kTRUE if the correction step was applied
 bool TwistAndRescale::ProcessCorrections() {
   Int_t harmonic;
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if Qn vectors are good enough */
       /* we have not perform any correction yet */
       /* we check if detector B is in its proper correction step */
-      applied = false;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if Qn vectors are good enough */
@@ -457,7 +456,6 @@ bool TwistAndRescale::ProcessCorrections() {
     break;
     default:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied = false;
       break;
   }
   return applied;
@@ -468,7 +466,7 @@ bool TwistAndRescale::ProcessCorrections() {
 /// Collect data for the correction step.
 /// \return kTRUE if the correction step was applied
 Bool_t TwistAndRescale::ProcessDataCollection() {
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION: {
       /* logging */
@@ -499,7 +497,6 @@ Bool_t TwistAndRescale::ProcessDataCollection() {
           break;
       }
       /* we have not perform any correction yet */
-      applied = false;
       break;
     }
     case State::APPLYCOLLECT: {
@@ -555,7 +552,6 @@ Bool_t TwistAndRescale::ProcessDataCollection() {
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied = false;
       break;
   }
   return applied;

@@ -146,14 +146,13 @@ void GainEqualization::AttachNveQAHistograms(TList *list) {
 /// structures should be included.
 /// \return kTRUE if the correction step was applied
 bool GainEqualization::ProcessCorrections() {
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce equalization parameters */
       for (const auto &dataVector : fSubEvent->GetInputDataBank()) {
         fCalibrationHistograms->Fill(dataVector.GetId(), dataVector.EqualizedWeight());
       }
-      applied = false;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce equalization parameters */
@@ -237,7 +236,6 @@ bool GainEqualization::ProcessCorrections() {
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied = false;
       break;
   }
   return applied;
@@ -254,16 +252,14 @@ bool GainEqualization::ProcessCorrections() {
 /// So this function only retures the proper value according to the status.
 /// \return kTRUE if the correction step was applied
 Bool_t GainEqualization::ProcessDataCollection() {
-  bool applied;
+  bool applied = false;
   switch (fState) {
-    case State::CALIBRATION: applied = false;
-      break;
+    case State::CALIBRATION: break;
     case State::APPLYCOLLECT:
       /* FALLTHRU */
     case State::APPLY: applied = true;
       break;
-    case State::PASSIVE: applied = false;
-      break;
+    case State::PASSIVE: break;
   }
   return applied;
 }

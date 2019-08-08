@@ -136,12 +136,11 @@ void Recentering::AttachNveQAHistograms(TList *list) {
 /// \return kTRUE if the correction step was applied
 bool Recentering::ProcessCorrections() {
   int harmonic;
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
       /* we have not perform any correction yet */
-      applied = false;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
@@ -184,7 +183,6 @@ bool Recentering::ProcessCorrections() {
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied = false;
       break;
   }
   return applied;
@@ -196,7 +194,7 @@ bool Recentering::ProcessCorrections() {
 /// \return kTRUE if the correction step was applied
 bool Recentering::ProcessDataCollection() {
   int harmonic;
-  bool applied;
+  bool applied = false;
   switch (fState) {
     case State::CALIBRATION:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
@@ -210,7 +208,6 @@ bool Recentering::ProcessDataCollection() {
         }
       }
       /* we have not perform any correction yet */
-      applied = false;
       break;
     case State::APPLYCOLLECT:
       /* collect the data needed to further produce correction parameters if the current Qn vector is good enough */
@@ -238,7 +235,6 @@ bool Recentering::ProcessDataCollection() {
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
-      applied =  false;
       break;
   }
   return applied;

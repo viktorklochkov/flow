@@ -76,13 +76,15 @@ class CorrectionOnQvector : public CorrectionStep {
   /// Pure virutal function
   /// \return TRUE if the correction step is being applied
   virtual Bool_t IsBeingApplied() const {
+    bool applied = false;
     switch (fState) {
-      case State::CALIBRATION: return false;
+      case State::CALIBRATION: break;
       case State::APPLYCOLLECT:
         /* FALLTHRU */
-      case State::APPLY: return true;
-      case State::PASSIVE: return false;
+      case State::APPLY: applied = true; break;
+      case State::PASSIVE: break;
     }
+    return applied;
   }
  protected:
   std::unique_ptr<QVector> fCorrectedQnVector; //!<! the step corrected Qn vector

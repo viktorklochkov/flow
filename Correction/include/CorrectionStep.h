@@ -126,20 +126,20 @@ class CorrectionStep {
   /// \param applyList list containing the correction steps applying corrections
   /// \return kTRUE if the correction step is being applied
   virtual Bool_t ReportUsage(TList *calibrationList, TList *applyList) {
-    bool returnvalue;
+    bool applied = false;
     switch (fState) {
       case State::CALIBRATION:calibrationList->Add(new TObjString(GetName()));
-        returnvalue = false;
+        applied = false;
         break;
       case State::APPLYCOLLECT:calibrationList->Add(new TObjString(GetName()));
         /* FALLTHRU */
       case State::APPLY:applyList->Add(new TObjString(GetName()));
-        returnvalue = true;
+        applied = true;
         break;
-      case State::PASSIVE:returnvalue = false;
+      case State::PASSIVE:applied = false;
         break;
     }
-    return returnvalue;
+    return applied;
   }
   State GetState() { return fState; }
  protected:
