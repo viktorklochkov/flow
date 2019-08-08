@@ -250,7 +250,7 @@ class SubEvent {
   /// Clean the configuration to accept a new event
   /// Pure virtual function
   virtual void Clear() = 0;
-  virtual void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup, Float_t *hardCodedGroupWeights) {
+  virtual void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup = nullptr, Float_t *hardCodedGroupWeights = nullptr) {
     (void) bUsedChannel;
     (void) nChannelGroup;
     (void) hardCodedGroupWeights;

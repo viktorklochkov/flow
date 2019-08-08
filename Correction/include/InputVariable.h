@@ -25,10 +25,10 @@ class InputVariable {
   InputVariable() = default;
   inline double *begin() noexcept { return &values_container_[id_]; } /// implements begin for iteration
   inline double *end() noexcept { return &values_container_[id_ + size_]; } /// implements end for iteration
-  constexpr double *begin() const noexcept { return &values_container_[id_]; }  /// implements begin for iteration
+  const double *begin() const noexcept { return &values_container_[id_]; }  /// implements begin for iteration
   inline double *end() const noexcept { return &values_container_[id_ + size_]; }  /// implements end for iteration
   inline double *at(int i) noexcept { return &values_container_[id_ + i]; }
-  inline double *Get() noexcept { return &values_container_[id_]; }
+  const inline double *Get() const noexcept { return &values_container_[id_]; }
   inline int GetSize() const noexcept { return size_; }
   inline int GetID() const noexcept { return id_; }
   std::string GetName() const { return name_; }

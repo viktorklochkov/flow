@@ -53,6 +53,10 @@ void CorrectionManager::SetCurrentRunName(const std::string &name) {
     }
   }
   detectors_.IncludeQnVectors();
+  if (fill_output_tree_ && out_tree_) {
+    detectors_.SetOutputTree(out_tree_);
+    variable_manager_.SetOutputTree(out_tree_);
+  }
 }
 
 void CorrectionManager::AttachQAHistograms() {
@@ -64,6 +68,7 @@ void CorrectionManager::AttachQAHistograms() {
                                 fill_validation_qa_histos_,
                                 &variable_manager_);
   auto event_qa_list = new TList();
+  event_qa_list->SetOwner(true);
   event_qa_list->SetName("event_QA");
   event_cuts_.AddToList(event_qa_list);
   for (auto &histo : event_histograms_) {
@@ -82,13 +87,10 @@ void CorrectionManager::InitializeOnNode() {
     event_histograms_.push_back(callback(&variable_manager_));
   }
   detectors_.InitializeOnNode(this);
+  event_cuts_.InitializeCuts(&variable_manager_);
   event_cuts_.CreateCutReport("Event Cut Report");
   InitializeCorrections();
   AttachQAHistograms();
-  if (fill_output_tree_ && out_tree_) {
-    detectors_.SetOutputTree(out_tree_);
-    variable_manager_.SetOutputTree(out_tree_);
-  }
 }
 
 bool CorrectionManager::ProcessEvent() {

@@ -91,14 +91,14 @@ class CorrelationManager {
    *             The number of double& corresponds to the number of variables
    */
   template<std::size_t N, typename FUNCTION>
-  void AddEventCut(const char *const (&name_arr)[N], FUNCTION &&func, const std::string &cut_description) {
-    std::unique_ptr<TTreeReaderValue<float>> arr[N];
+  void AddEventCut(const char *const (&name_arr)[N], FUNCTION func, const std::string &cut_description) {
+    TTreeReaderValue<float> arr[N];
     int i = 0;
     for (auto &name : name_arr) {
-      arr[i] = std::make_unique<TTreeReaderValue<float>>(*reader_, name);
+      arr[i] = TTreeReaderValue<float>(*reader_, name);
       ++i;
     }
-    event_cuts_.AddCut(MakeUniqueEventCut(arr, func, cut_description));
+    event_cuts_.AddCut(MakeUniqueCut<const double>(arr, func, cut_description, false));
   }
 
 

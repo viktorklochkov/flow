@@ -135,7 +135,7 @@ class CorrectionManager {
 
   template<std::size_t N, typename FUNCTION>
   void AddEventCut(const char *const (&variable_names)[N],
-                   FUNCTION &&cut_function,
+                   FUNCTION cut_function,
                    const std::string &cut_description) {
     event_cuts_.AddCutCallBack(CreateCutCallBack(variable_names, cut_function, cut_description));
   }
@@ -261,7 +261,7 @@ class CorrectionManager {
         arr[i] = var->FindVariable(name);
         ++i;
       }
-      return MakeUniqueNDimCut(arr, lambda, cut_description, arr[0].GetSize() > 1);
+      return MakeUniqueCut<const double>(arr, lambda, cut_description, arr[0].GetSize() > 1);
     };
     return callback;
   };
