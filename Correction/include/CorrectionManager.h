@@ -203,7 +203,7 @@ class CorrectionManager {
   void SetFillOutputTree(bool tree) { fill_output_tree_ = tree; }
   void SetFillCalibrationQA(bool calibration) { fill_qa_histos_ = calibration; }
   void SetFillValidationQA(bool validation) { fill_validation_qa_histos_ = validation; }
-  void SetRunName(const std::string &name) { runs_.SetCurrentRun(name); }
+  void SetCurrentRunName(const std::string &name);
   void SetCalibrationInputFile(const std::string &file_name) { correction_input_file_name_ = file_name; }
 
   /**

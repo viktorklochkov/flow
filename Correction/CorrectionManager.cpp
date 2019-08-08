@@ -33,6 +33,10 @@ void CorrectionManager::InitializeCorrections() {
   correction_output = std::make_unique<TList>();
   correction_output->SetName(kCorrectionListName);
   correction_output->SetOwner(kTRUE);
+}
+
+void CorrectionManager::SetCurrentRunName(const std::string &name) {
+  runs_.SetCurrentRun(name);
   if (!runs_.empty()) {
     auto current_run = new TList();
     current_run->SetName(runs_.GetCurrent().data());

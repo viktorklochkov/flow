@@ -37,7 +37,7 @@ TEST(CorrectionUnitTest, Correction) {
   manager.SetCorrectionSteps("TEST",test_configuration);
   manager.SetOutputQVectors("TEST",{Qn::QVector::CorrectionStep::PLAIN, Qn::QVector::CorrectionStep::RECENTERED});
 
-  manager.SetRunName("run1");
+  manager.SetCurrentRunName("run1");
   manager.SetCalibrationInputFile("correctionfile.root");
   manager.ConnectOutputTree(tree);
   manager.InitializeOnNode();
