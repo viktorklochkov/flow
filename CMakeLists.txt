@@ -256,5 +256,5 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/QnConfigVersion.cmake
         DESTINATION ${INSTALL_CONFIGDIR})
 
-export(TARGETS Base Correlation NAMESPACE Qn:: FILE QnTargets.cmake)
+export(TARGETS Base Correction Correlation NAMESPACE Qn:: FILE QnTargets.cmake)
 export(PACKAGE Qn)
