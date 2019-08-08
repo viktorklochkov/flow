@@ -22,7 +22,9 @@ namespace Qn {
 
 void CorrectionManager::InitializeCorrections() {
   // Connects the correction histogram list
-  correction_input_file_ = std::make_unique<TFile>(correction_input_file_name_.data(), "READ");
+  if (!correction_input_file_) {
+    correction_input_file_ = std::make_unique<TFile>(correction_input_file_name_.data(), "READ");
+  }
   if (correction_input_file_ && !correction_input_file_->IsZombie()) {
     auto input = dynamic_cast<TList *>(correction_input_file_->FindObjectAny(kCorrectionListName));
     correction_input_.reset(input);
@@ -57,7 +59,10 @@ void CorrectionManager::AttachQAHistograms() {
   correction_qa_histos_ = std::make_unique<TList>();
   correction_qa_histos_->SetName("QA_histograms");
   correction_qa_histos_->SetOwner(true);
-  detectors_.AttachQAHistograms(correction_qa_histos_.get(), fill_qa_histos_, fill_validation_qa_histos_, &variable_manager_);
+  detectors_.AttachQAHistograms(correction_qa_histos_.get(),
+                                fill_qa_histos_,
+                                fill_validation_qa_histos_,
+                                &variable_manager_);
   auto event_qa_list = new TList();
   event_qa_list->SetName("event_QA");
   event_cuts_.AddToList(event_qa_list);

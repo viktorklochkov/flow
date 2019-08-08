@@ -204,7 +204,8 @@ class CorrectionManager {
   void SetFillCalibrationQA(bool calibration) { fill_qa_histos_ = calibration; }
   void SetFillValidationQA(bool validation) { fill_validation_qa_histos_ = validation; }
   void SetCurrentRunName(const std::string &name);
-  void SetCalibrationInputFile(const std::string &file_name) { correction_input_file_name_ = file_name; }
+  void SetCalibrationInputFileName(const std::string &file_name) { correction_input_file_name_ = file_name; }
+  void SetCalibrationInputFile(TFile *file) { correction_input_file_.reset(file); }
 
   /**
    * @brief Set output tree.
@@ -270,13 +271,13 @@ class CorrectionManager {
   void AttachQAHistograms();
 
   HistogramCallBack Create1DHisto(const std::string &name, Qn::AxisD axis,
-                                                  const std::string &weight);
+                                  const std::string &weight);
 
   HistogramCallBack Create2DHisto(const std::string &name, std::vector<Qn::AxisD> axes,
-                                                  const std::string &weight);
+                                  const std::string &weight);
 
   HistogramCallBack Create2DHistoArray(const std::string &name, std::vector<Qn::AxisD> axes,
-                                                       const std::string &weight, const Qn::AxisD &histogram_axis);
+                                       const std::string &weight, const Qn::AxisD &histogram_axis);
 
   InputVariableManager *GetVariableManager() { return &variable_manager_; }
   DetectorList *GetDetectors() { return &detectors_; }
