@@ -170,11 +170,11 @@ class DataContainer : public TObject {
     return data_.at(GetLinearIndex(coords));
   }
 
-  constexpr T const &operator[](unsigned int i) const noexcept {
+  T const &operator[](unsigned int i) const noexcept {
     return data_[i];
   }
 
-  constexpr T &operator[](unsigned int i) noexcept {
+  T &operator[](unsigned int i) noexcept {
     return data_[i];
   }
 
@@ -183,31 +183,31 @@ class DataContainer : public TObject {
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  constexpr T const &At(const std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
+  T const &At(const std::vector<size_type> &bins) const { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param bins Vector of bin indices of the desired element
  * @return     Element
  */
-  constexpr T &At(const std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
+  T &At(const std::vector<size_type> &bins) { return data_.at(GetLinearIndex(bins)); }
 
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
-  constexpr T &At(size_type index) noexcept { return data_.at(index); }
+  T &At(size_type index) noexcept { return data_.at(index); }
 
 /**
  * Get element in the specified bin
  * @param index index of element
  * @return      Element
  */
-  constexpr T const &At(size_type index) const noexcept { return data_.at(index); }
+  T const &At(size_type index) const noexcept { return data_.at(index); }
 
   template<typename TT>
-  constexpr long FindBin(const std::vector<TT> &coords) const {
+  long FindBin(const std::vector<TT> &coords) const {
     return GetLinearIndex<TT>(coords);
   }
 /**

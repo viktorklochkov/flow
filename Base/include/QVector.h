@@ -182,7 +182,7 @@ class QVector {
 
   inline unsigned int highestharmonic() const {
     unsigned char val = bits_.to_ulong();
-    if (val==0) return UCHAR_MAX;
+    if (val==0) return 255;
     if (val==1) return 0 + 1;
     unsigned char ret = 0;
     while (val > 1) {
