@@ -27,11 +27,12 @@ void Detector::InitializeOnNode(CorrectionManager *manager) {
     configuration_(ev.get());
     ++ibin;
   }
-  for (const auto& axis : sub_events_.GetAxes()) {
-    vars_.push_back(var->FindVariable(axis.Name()));
+  if (!sub_events_.IsIntegrated()) {
+    for (const auto &axis : sub_events_.GetAxes()) {
+      vars_.push_back(var->FindVariable(axis.Name()));
+    }
+    coordinates_.resize(vars_.size());
   }
-  coordinates_.resize(vars_.size());
-
   // Initialize the cuts
   CreateCuts(var);
   int_cuts_.CreateCutReport(name_, 1);
