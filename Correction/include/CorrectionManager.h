@@ -102,13 +102,6 @@ class CorrectionManager {
                    const std::vector<Qn::AxisD> &axes,
                    int const(&harmo)[N],
                    QVector::Normalization norm = QVector::Normalization::M) {
-    InputVariable phi = variable_manager_.FindVariable(phi_name);
-    InputVariable weight = variable_manager_.FindVariable(weight_name);
-    std::vector<InputVariable> vars;
-    vars.reserve(axes.size());
-    for (const auto &axis : axes) {
-      vars.push_back(variable_manager_.FindVariable(axis.Name()));
-    }
     std::bitset<Qn::QVector::kmaxharmonics> harmonics;
     for (std::size_t i = 0; i < N; ++i) {
       harmonics.set(harmo[i] - 1);
@@ -118,7 +111,6 @@ class CorrectionManager {
                                           axes,
                                           phi_name,
                                           weight_name,
-                                          vars,
                                           harmonics,
                                           norm,
                                           &variable_manager_);
@@ -254,7 +246,7 @@ class CorrectionManager {
  private:
   template<std::size_t N, typename FUNCTION>
   CutCallBack CreateCutCallBack(const char *const (&names)[N], FUNCTION lambda, const std::string &cut_description) {
-    auto callback = [&names, lambda, cut_description](Qn::InputVariableManager *var) {
+    return CutCallBack([names, lambda, cut_description](Qn::InputVariableManager *var) {
       InputVariable arr[N];
       int i = 0;
       for (auto &name : names) {
@@ -262,8 +254,7 @@ class CorrectionManager {
         ++i;
       }
       return MakeUniqueCut<const double>(arr, lambda, cut_description, arr[0].GetSize() > 1);
-    };
-    return callback;
+    });
   };
 
   void InitializeCorrections();

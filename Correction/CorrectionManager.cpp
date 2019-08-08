@@ -28,13 +28,13 @@ void CorrectionManager::InitializeCorrections() {
   if (correction_input_file_ && !correction_input_file_->IsZombie()) {
     auto input = dynamic_cast<TList *>(correction_input_file_->FindObjectAny(kCorrectionListName));
     correction_input_.reset(input);
-    correction_input_->SetOwner(kTRUE);
+    if (input) correction_input_->SetOwner(true);
   }
   // Prepares the correctionsteps
   detectors_.CreateSupportQVectors();
   correction_output = std::make_unique<TList>();
   correction_output->SetName(kCorrectionListName);
-  correction_output->SetOwner(kTRUE);
+  correction_output->SetOwner(true);
 }
 
 void CorrectionManager::SetCurrentRunName(const std::string &name) {
@@ -135,7 +135,7 @@ void CorrectionManager::Finalize() {
 CorrectionManager::HistogramCallBack CorrectionManager::Create1DHisto(const std::string &name,
                                                                       const AxisD axis,
                                                                       const std::string &weight) {
-  auto callback = [&name, axis, weight](InputVariableManager *var) {
+  return CorrectionManager::HistogramCallBack([name, axis, weight](InputVariableManager *var) {
     auto hist_name = name + "_" + axis.Name() + "_" + weight;
     auto axisname = std::string(";") + axis.Name();
     auto size = static_cast<const int>(axis.size());
@@ -152,8 +152,7 @@ CorrectionManager::HistogramCallBack CorrectionManager::Create1DHisto(const std:
         arr = {{var->FindVariable(axis.Name()), var->FindVariable(weight)}};
     return std::make_unique<QAHisto1DPtr>(arr,
                                           new TH1F(hist_name.data(), axisname.data(), size, lower_edge, upper_edge));
-  };
-  return callback;
+  });
 }
 
 /**
@@ -166,7 +165,7 @@ CorrectionManager::HistogramCallBack CorrectionManager::Create1DHisto(const std:
 CorrectionManager::HistogramCallBack CorrectionManager::Create2DHisto(const std::string &name,
                                                                       const std::vector<AxisD> axes,
                                                                       const std::string &weight) {
-  auto callback = [&name, axes, weight](InputVariableManager *var) {
+  return CorrectionManager::HistogramCallBack([name, axes, weight](InputVariableManager *var) {
     auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weight;
     auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
     auto size_x = static_cast<const int>(axes[0].size());
@@ -190,8 +189,7 @@ CorrectionManager::HistogramCallBack CorrectionManager::Create2DHisto(const std:
                           size_x, lower_edge_x, upper_edge_x,
                           size_y, lower_edge_y, upper_edge_y);
     return std::make_unique<QAHisto2DPtr>(arr, histo);
-  };
-  return callback;
+  });
 }
 
 /**
@@ -205,7 +203,7 @@ CorrectionManager::HistogramCallBack CorrectionManager::Create2DHistoArray(const
                                                                            const std::vector<AxisD> axes,
                                                                            const std::string &weight,
                                                                            const AxisD &histaxis) {
-  auto callback = [&name, histaxis, axes, weight](InputVariableManager *var) {
+  return CorrectionManager::HistogramCallBack([name, histaxis, axes, weight](InputVariableManager *var) {
     auto hist_name = name + "_" + axes[0].Name() + "_" + axes[1].Name() + "_" + weight;
     auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
     auto size_x = static_cast<const int>(axes[0].size());
@@ -236,8 +234,7 @@ CorrectionManager::HistogramCallBack CorrectionManager::Create2DHistoArray(const
     auto haxis = std::make_unique<Qn::AxisD>(histaxis);
     auto haxisvar = var->FindVariable(histaxis.Name());
     return std::make_unique<QAHisto2DPtr>(arr, histo, std::move(haxis), haxisvar);
-  };
-  return callback;
+  });
 }
 
 }

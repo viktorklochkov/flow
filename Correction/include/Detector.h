@@ -53,7 +53,6 @@ class Detector {
            std::vector<AxisD> axes,
            std::string phi_name_,
            std::string weight_name_,
-           const std::vector<InputVariable> &vars,
            std::bitset<Qn::QVector::kmaxharmonics> harmonics,
            QVector::Normalization norm,
            Qn::InputVariableManager *var)
@@ -64,9 +63,7 @@ class Detector {
       nchannels_(var->FindVariable(phi_name_).GetSize()),
       harmonics_bits_(harmonics),
       q_vector_normalization_method_(norm),
-      vars_(vars),
       type_(type) {
-    coordinates_.resize(vars.size());
     sub_events_.AddAxes(axes);
   }
 
@@ -224,21 +221,22 @@ class Detector {
   int nchannels_ = 0; /// number of channels in case of channel detector
   std::bitset<Qn::QVector::kmaxharmonics> harmonics_bits_; /// bitset of all activated harmonics
   Qn::QVector::Normalization q_vector_normalization_method_ = Qn::QVector::Normalization::NONE;
-  const std::vector<InputVariable> vars_; /// variables used for the binning of the Q vector.
+  std::vector<InputVariable> vars_; /// variables used for the binning of the Q vector.
   std::vector<float> coordinates_;  ///  vector holding the temporary coordinates of one track or channel.
   std::function<void(SubEvent *)> configuration_;
   DetectorType type_;
   std::map<QVector::CorrectionStep, std::unique_ptr<DataContainerQVector>> q_vectors_;
   std::vector<QVector::CorrectionStep> output_tree_q_vectors_;
-  std::vector<CutCallBack> cuts_callback_;
   CorrectionCuts cuts_; /// per channel selection  cuts
   CorrectionCuts int_cuts_; /// integrated selection cuts
-
-  Qn::DetectorList *detectors_ = nullptr;
-
-  std::vector<HistogramCallBack> histograms_callback; /// QA histograms of the detector
   std::vector<std::unique_ptr<QAHistoBase>> histograms_; /// QA histograms of the detector
   Qn::DataContainer<std::unique_ptr<SubEvent>, AxisD> sub_events_;
+  
+  Qn::DetectorList *detectors_ = nullptr;
+
+  std::vector<CutCallBack> cuts_callback_;
+  std::vector<HistogramCallBack> histograms_callback; /// QA histograms of the detector
+
 
 };
 
