@@ -26,8 +26,12 @@ SubSamples SubSamples::MergeBinsNormal(const SubSamples &lhs, const SubSamples &
   subsamples.samples_.resize(rhs.size());
   int i = 0;
   for (auto &sample : subsamples) {
-    sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
-    sample.sumw = sample.sumw + rhs.samples_[i].sumw;
+    if (!sample.IsNan() && !rhs.samples_[i].IsNan()) {
+      sample.sumwy = sample.sumwy + rhs.samples_[i].sumwy;
+      sample.sumw = sample.sumw + rhs.samples_[i].sumw;
+    } else if (sample.IsNan() && !rhs.samples_[i].IsNan()) {
+      sample = rhs.samples_[i];
+    }
     ++i;
   }
   return subsamples;

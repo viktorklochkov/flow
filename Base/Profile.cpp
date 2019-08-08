@@ -21,19 +21,27 @@ namespace Qn {
 
 Profile Profile::MergeNormal(const Profile &lhs, const Profile &rhs) {
   Profile result;
-  result.sumwy_ = lhs.sumwy_ + rhs.sumwy_;
-  result.sumwy2_ = lhs.sumwy2_ + rhs.sumwy2_;
-  result.sumw_ = lhs.sumw_ + rhs.sumw_;
-  result.sumw2_ = lhs.sumw2_ + rhs.sumw2_;
-  result.entries_ = lhs.entries_ + rhs.entries_;
+  if (lhs.IsNan() && !rhs.IsNan()) {
+    result = rhs;
+  } else if (rhs.IsNan() && !lhs.IsNan()) {
+    result = lhs;
+  } else {
+    result.sumwy_ = lhs.sumwy_ + rhs.sumwy_;
+    result.sumwy2_ = lhs.sumwy2_ + rhs.sumwy2_;
+    result.sumw_ = lhs.sumw_ + rhs.sumw_;
+    result.sumw2_ = lhs.sumw2_ + rhs.sumw2_;
+    result.entries_ = lhs.entries_ + rhs.entries_;
+  }
   return result;
 }
+
 Profile Profile::MergePointAverage(const Profile &lhs, const Profile &rhs) {
   Profile result;
   (void)lhs; (void) rhs;
   std::cout << "not mergeable" << std::endl;
   return result;
 }
+
 Profile Profile::AdditionNormal(const Profile &lhs, const Profile &rhs) {
   Profile result;
   result.sumwy_ = lhs.sumwy_ + rhs.sumwy_;
@@ -43,12 +51,14 @@ Profile Profile::AdditionNormal(const Profile &lhs, const Profile &rhs) {
   result.entries_ = lhs.entries_ + rhs.entries_;
   return result;
 }
+
 Profile Profile::AdditionPointAverage(const Profile &lhs, const Profile &rhs) {
   Profile result;
   result.mean_ = lhs.mean_ + rhs.mean_;
   result.var_ =  sqrt(lhs.var_*lhs.var_ + rhs.var_*rhs.var_);
   return result;
 }
+
 Profile Profile::SubtractionNormal(const Profile &lhs, const Profile &rhs) {
   Profile result;
   result.sumwy_ = lhs.sumwy_ - rhs.sumwy_;

@@ -22,6 +22,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 
 #include "Rtypes.h"
 #include "TH1F.h"
@@ -49,6 +50,8 @@ struct Sample {
   }
 
   double Mean() const { if (sumw > 0.) { return sumwy/sumw; } else { return sumwy; }; }
+
+  bool IsNan() const { return std::isnan(sumwy);}
 
   void operator+=(Sample b) {
     sumwy += b.sumwy;

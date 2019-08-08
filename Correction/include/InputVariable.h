@@ -25,7 +25,7 @@ class InputVariable {
   InputVariable() = default;
   inline double *begin() noexcept { return &values_container_[id_]; } /// implements begin for iteration
   inline double *end() noexcept { return &values_container_[id_ + size_]; } /// implements end for iteration
-  inline double *begin() const noexcept { return &values_container_[id_]; }  /// implements begin for iteration
+  constexpr double *begin() const noexcept { return &values_container_[id_]; }  /// implements begin for iteration
   inline double *end() const noexcept { return &values_container_[id_ + size_]; }  /// implements end for iteration
   inline double *at(int i) noexcept { return &values_container_[id_ + i]; }
   inline double *Get() noexcept { return &values_container_[id_]; }

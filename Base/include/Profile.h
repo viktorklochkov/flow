@@ -73,6 +73,8 @@ class Profile {
     } else { return 0.; }
   }
 
+  bool IsNan() const { return std::isnan(sumwy_) || std::isnan(mean_);}
+
   void CalculatePointAverage() {
     mean_ = Mean();
     var_ = Error();

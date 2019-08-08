@@ -75,18 +75,18 @@ class QAHisto : public QAHistoBase {
 
   /**
    * Implementation of the fill function
-   * @tparam array type of array
+   * @tparam VARS type of array
    * @tparam I index sequence
-   * @param a Array of variables used for filling the histogram
+   * @param vars Array of variables used for filling the histogram
    */
-  template<typename array, std::size_t... I>
-  void FillImpl(const array a, std::index_sequence<I...>) {
+  template<typename VARS, std::size_t... I>
+  void FillImpl(const VARS &variables, std::index_sequence<I...>) {
     auto bin = 0;
     if (axis_) {
       bin = axis_->FindBin(*axisvar_.begin());
-      if (bin > -1) ptr(histo_.at(bin))->FillN(a[0].GetSize(), (a[I].begin())...);
+      if (bin > -1) ptr(histo_.at(bin))->FillN(variables[0].GetSize(), (variables[I].begin())...);
     } else {
-      ptr(histo_.at(bin))->FillN(a[0].GetSize(), (a[I].begin())...);
+      ptr(histo_.at(bin))->FillN(variables[0].GetSize(), (variables[I].begin())...);
     }
   }
 

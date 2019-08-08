@@ -203,9 +203,6 @@ class QVector {
   std::vector<QVec> q_;                      ///< array of qvectors for the different harmonics
   bool quality_ = false;                     //!<!
 
-
-
-
   /// \cond CLASSIMP
  ClassDef(QVector, 11);
   /// \endcond
