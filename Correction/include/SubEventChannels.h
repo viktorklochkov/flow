@@ -43,7 +43,7 @@ class SubEventChannels : public SubEvent {
   friend class SubEvent;
   SubEventChannels() = default;
   SubEventChannels(unsigned int bin_id,
-                   const CorrectionAxisSet *axes,Int_t nNoOfChannels, std::bitset<QVector::kmaxharmonics> harmonics);
+                   const CorrectionAxisSet *axes, Int_t nNoOfChannels, std::bitset<QVector::kmaxharmonics> harmonics);
   virtual ~SubEventChannels();
   SubEventChannels(const SubEventChannels &) = delete;
   SubEventChannels &operator=(const SubEventChannels &) = delete;
@@ -62,9 +62,11 @@ class SubEventChannels : public SubEvent {
   const Float_t *GetHardCodedGroupWeights() const { return fHardCodedGroupWeights; }
   /// Get if the detector configuration is own by a tracking detector
   /// \return FALSE, this is a hit / channel detector configuration
-  Bool_t GetIsTrackingDetector() const  { return kFALSE; }
+  Bool_t GetIsTrackingDetector() const { return kFALSE; }
 
-  void SetChannelsScheme(Bool_t *bUsedChannel,Int_t *nChannelGroup = nullptr, Float_t *hardCodedGroupWeights = nullptr) ;
+  void SetChannelsScheme(Bool_t *bUsedChannel,
+                         Int_t *nChannelGroup = nullptr,
+                         Float_t *hardCodedGroupWeights = nullptr);
 
   /* QA section */
   /// Sets the variable id used for centrality in QA histograms.
@@ -83,27 +85,40 @@ class SubEventChannels : public SubEvent {
 
   void BuildRawQnVector();
 
-  virtual void CreateSupportQVectors() ;
-  virtual void CreateCorrectionHistograms(TList *list) ;
-  virtual void AttachQAHistograms(TList *list) ;
-  virtual void AttachNveQAHistograms(TList *list) ;
+  virtual void CreateSupportQVectors();
+  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
 
   /// Activate the processing for the passed harmonic
   /// \param harmonic the desired harmonic number to activate
-  virtual void ActivateHarmonic(Int_t harmonic)  {
+  virtual void ActivateHarmonic(Int_t harmonic) {
     SubEvent::ActivateHarmonic(harmonic);
     fRawQnVector.ActivateHarmonic(harmonic);
   }
-  virtual void AttachCorrectionInput(TList *list) ;
-  virtual void AfterInputAttachAction() ;
-  virtual Bool_t ProcessCorrections() ;
-  virtual Bool_t ProcessDataCollection() ;
-  virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData) ;
-  virtual void IncludeQnVectors() ;
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const ;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const ;
-  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const ;
-  virtual void Clear() ;
+  virtual void AttachCorrectionInput(TList *list);
+  virtual void AfterInputAttachAction();
+  virtual Bool_t ProcessCorrections();
+  virtual Bool_t ProcessDataCollection();
+  virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
+  virtual void IncludeQnVectors();
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const;
+  virtual void Clear();
+
+  virtual std::map<std::string, Report> ReportOnCorrections() const {
+    std::map<std::string, Report> report;
+    for (const auto& correction : fInputDataCorrections) {
+      auto usage = correction->ReportUsage();
+      report.emplace(correction->GetName(),usage);
+    }
+    for (const auto& correction : fQnVectorCorrections) {
+      auto usage = correction->ReportUsage();
+      report.emplace(correction->GetName(),usage);
+    }
+    return report;
+  }
+
 
  private:
   static const char

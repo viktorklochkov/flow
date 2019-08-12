@@ -237,29 +237,32 @@ void SubEventTracks::FillOverallQnVectorCorrectionStepList(std::set<CorrectionSt
 /// \param steps list for incorporating the list of assigned correction steps
 /// \param calib list for incorporating the list of steps in calibrating status
 /// \param apply list for incorporating the list of steps in applying status
-void SubEventTracks::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
-  auto mysteps = new TList();
-  mysteps->SetOwner(kTRUE);
-  mysteps->SetName(GetName().data());
-  auto mycalib = new TList();
-  mycalib->SetOwner(kTRUE);
-  mycalib->SetName(GetName().data());
-  auto myapply = new TList();
-  myapply->SetOwner(kTRUE);
-  myapply->SetName(GetName().data());
-  /* incorporate Qn vector corrections */
-  Bool_t keepIncorporating = kTRUE;
-  for (auto &correction : fQnVectorCorrections) {
-    mysteps->Add(new TObjString(correction->GetName()));
-    /* incorporate additional info if the step will be reached */
-    if (keepIncorporating) {
-      Bool_t keep = correction->ReportUsage(mycalib, myapply);
-      keepIncorporating = keepIncorporating && keep;
-    }
-  }
-  steps->Add(mysteps);
-  calib->Add(mycalib);
-  apply->Add(myapply);
-}
+
+//void SubEventTracks::ReportOnCorrections(std::vector<std::string> steps,
+//                                         std::vector<std::string> calib,
+//                                         std::vector<std::string> apply) const {
+//  auto mysteps = new TList();
+//  mysteps->SetOwner(kTRUE);
+//  mysteps->SetName(GetName().data());
+//  auto mycalib = new TList();
+//  mycalib->SetOwner(kTRUE);
+//  mycalib->SetName(GetName().data());
+//  auto myapply = new TList();
+//  myapply->SetOwner(kTRUE);
+//  myapply->SetName(GetName().data());
+//  /* incorporate Qn vector corrections */
+//  Bool_t keepIncorporating = kTRUE;
+//  for (auto &correction : fQnVectorCorrections) {
+//    mysteps->Add(new TObjString(correction->GetName()));
+//    /* incorporate additional info if the step will be reached */
+//    if (keepIncorporating) {
+//      Bool_t keep = correction->ReportUsage(mycalib, myapply);
+//      keepIncorporating = keepIncorporating && keep;
+//    }
+//  }
+//  steps->Add(mysteps);
+//  calib->Add(mycalib);
+//  apply->Add(myapply);
+//}
 
 }

@@ -85,15 +85,15 @@ void TwistAndRescale::SetReferenceConfigurationsForTwistAndRescale(const char *n
 /// Creates the corrected Qn vectors
 /// Locates the reference detector configurations for twist and rescaling if their names have been previously stored
 void TwistAndRescale::CreateSupportQVectors() {
-  auto harmonics = fSubEvent->GetHarmonics();
-  /* now create the corrected Qn vectors */
-  fCorrectedQnVector = std::make_unique<QVector>(harmonics, QVector::CorrectionStep::TWIST);
-  fTwistCorrectedQnVector =
-      std::make_unique<QVector>(harmonics, QVector::CorrectionStep::TWIST);
-  fRescaleCorrectedQnVector =
-      std::make_unique<QVector>(harmonics, QVector::CorrectionStep::RESCALED);
   /* get the input vectors we need */
   fInputQnVector = fSubEvent->GetPreviousCorrectedQnVector(this);
+  auto harmonics = fSubEvent->GetHarmonics();
+  /* now create the corrected Qn vectors */
+  fCorrectedQnVector = std::make_unique<QVector>(harmonics, QVector::CorrectionStep::TWIST, fInputQnVector->GetNorm());
+  fTwistCorrectedQnVector =
+      std::make_unique<QVector>(harmonics, QVector::CorrectionStep::TWIST, fInputQnVector->GetNorm());
+  fRescaleCorrectedQnVector =
+      std::make_unique<QVector>(harmonics, QVector::CorrectionStep::RESCALED, fInputQnVector->GetNorm());
   /* now, definitely, we should have the reference detector configurations */
   switch (fTwistAndRescaleMethod) {
     case Method::DOUBLE_HARMONIC: break;
@@ -115,10 +115,11 @@ void TwistAndRescale::CreateSupportQVectors() {
         if (!fSubEventC->GetIsTrackingDetector()) {
           throw std::runtime_error(
               std::string(fSubEventC->GetName()) + "Detector is not a tracking detector");
-        } else {
-          throw std::runtime_error(
-              std::string(fSubEventC->GetName()) + "is not configured for twist and rescaling step.");
         }
+      } else {
+        throw std::runtime_error(
+            std::string(fSubEventC->GetName()) + "is not configured for twist and rescaling step.");
+
       }
       break;
   }
@@ -294,9 +295,9 @@ bool TwistAndRescale::ProcessCorrections() {
         case Method::DOUBLE_HARMONIC: {
           /* TODO: basically we are re producing half of the information already produce for recentering correction. Re use it! */
           if (fSubEvent->GetCurrentQnVector()->IsGoodQuality()) {
-            fCorrectedQnVector->SetCurrentEvent(*fSubEvent->GetCurrentQnVector());
-            fTwistCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
-            fRescaleCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
+            fCorrectedQnVector->CopyNumberOfContributors(*fSubEvent->GetCurrentQnVector());
+            fTwistCorrectedQnVector->CopyNumberOfContributors(*fCorrectedQnVector);
+            fRescaleCorrectedQnVector->CopyNumberOfContributors(*fCorrectedQnVector);
             /* let's check the correction histograms */
             Long64_t bin = fDoubleHarmonicInputHistograms->GetBin();
             if (fDoubleHarmonicInputHistograms->BinContentValidated(bin)) {
@@ -368,9 +369,9 @@ bool TwistAndRescale::ProcessCorrections() {
           break;
         case Method::CORRELATIONS: {
           if (fSubEvent->GetCurrentQnVector()->IsGoodQuality()) {
-            fCorrectedQnVector->SetCurrentEvent(*fSubEvent->GetCurrentQnVector());
-            fTwistCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
-            fRescaleCorrectedQnVector->SetCurrentEvent(*fCorrectedQnVector);
+            fCorrectedQnVector->CopyNumberOfContributors(*fSubEvent->GetCurrentQnVector());
+            fTwistCorrectedQnVector->CopyNumberOfContributors(*fCorrectedQnVector);
+            fRescaleCorrectedQnVector->CopyNumberOfContributors(*fCorrectedQnVector);
             /* let's check the correction histograms */
             Long64_t bin = fCorrelationsInputHistograms->GetBin();
             if (fCorrelationsInputHistograms->BinContentValidated(bin)) {
@@ -446,14 +447,14 @@ bool TwistAndRescale::ProcessCorrections() {
       }
       /* and update the current Qn vector */
       if (fApplyTwist) {
-        fSubEvent->UpdateCurrentQnVector(*fTwistCorrectedQnVector, QVector::CorrectionStep::TWIST);
+        fSubEvent->UpdateCurrentQnVector(*fTwistCorrectedQnVector);
       }
       if (fApplyRescale) {
-        fSubEvent->UpdateCurrentQnVector(*fRescaleCorrectedQnVector, QVector::CorrectionStep::RESCALED);
+        fSubEvent->UpdateCurrentQnVector(*fRescaleCorrectedQnVector);
       }
     }
       applied = true;
-    break;
+      break;
     default:
       /* we are in passive state waiting for proper conditions, no corrections applied */
       break;

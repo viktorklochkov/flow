@@ -64,8 +64,9 @@ Recentering::Recentering() :
 /// Creates the recentered Qn vector
 void Recentering::CreateSupportQVectors() {
   fInputQnVector = fSubEvent->GetPreviousCorrectedQnVector(this);
-  fCorrectedQnVector = std::make_unique<QVector>(*fInputQnVector);
-  fCorrectedQnVector->SetCorrectionStep(QVector::RECENTERED);
+  fCorrectedQnVector = std::make_unique<QVector>(fSubEvent->GetHarmonics(),
+                                                 QVector::CorrectionStep::RECENTERED,
+                                                 fInputQnVector->GetNorm());
 }
 
 /// Asks for support histograms creation
@@ -148,7 +149,7 @@ bool Recentering::ProcessCorrections() {
     case State::APPLY: /* apply the correction if the current Qn vector is good enough */
       if (fSubEvent->GetCurrentQnVector()->IsGoodQuality()) {
         /* we get the properties of the current Qn vector but its name */
-        fCorrectedQnVector->SetCurrentEvent(*fSubEvent->GetCurrentQnVector());
+        fCorrectedQnVector->CopyNumberOfContributors(*fSubEvent->GetCurrentQnVector());
         harmonic = fSubEvent->GetCurrentQnVector()->GetFirstHarmonic();
         /* let's check the correction histograms */
         Long64_t bin = fInputHistograms->GetBin();
@@ -178,8 +179,8 @@ bool Recentering::ProcessCorrections() {
         fCorrectedQnVector->SetGood(kFALSE);
       }
       /* and update the current Qn vector */
-      fSubEvent->UpdateCurrentQnVector(*fCorrectedQnVector, QVector::CorrectionStep::RECENTERED);
-      applied =  true;
+      fSubEvent->UpdateCurrentQnVector(*fCorrectedQnVector);
+      applied = true;
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */
@@ -231,7 +232,7 @@ bool Recentering::ProcessDataCollection() {
           harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
         }
       }
-      applied =  true;
+      applied = true;
       break;
     case State::PASSIVE:
       /* we are in passive state waiting for proper conditions, no corrections applied */

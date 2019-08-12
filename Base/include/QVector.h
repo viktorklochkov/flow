@@ -25,7 +25,9 @@
 #include "Rtypes.h"
 
 namespace Qn {
-
+/**
+ * Struct of a Q-vector of a single harmonic with x and y component
+ */
 struct QVec {
   QVec() = default;
   QVec(float x, float y) : x(x), y(y) {}
@@ -33,16 +35,52 @@ struct QVec {
   float y{0.};
 };
 
-inline QVec operator+(QVec a, QVec b) { return {a.x + b.x, a.y + b.y}; }
-inline QVec operator-(QVec a, QVec b) { return {a.x - b.x, a.y - b.y}; }
-inline QVec operator/(QVec a, float s) { return {a.x/s, a.y/s}; }
-inline QVec operator*(QVec a, float s) { return {a.x*s, a.y*s}; }
+/**
+ * Implements vector addition
+ * @param a input Q-vector
+ * @param b input Q-vector
+ * @return sum of Q-vectors
+ */
+inline QVec operator+(const QVec a, const QVec b) { return {a.x + b.x, a.y + b.y}; }
+/**
+ * Implements vector subtraction
+ * @param a input Q-vector
+ * @param b input Q-vector
+ * @return difference of Q-vectors
+ */
+inline QVec operator-(const QVec a, const QVec b) { return {a.x - b.x, a.y - b.y}; }
+/**
+ * Implements scalar division
+ * @param a input Q-vector
+ * @param s scalar divisor
+ * @return divided Q-vector
+ */
+inline QVec operator/(const QVec a, const float s) { return {a.x/s, a.y/s}; }
+/**
+ * Implements scalar multiplication
+ * @param a input Q-vector
+ * @param s input multiplier
+ * @return multiplied Q-vector
+ */
+inline QVec operator*(const QVec a, const float s) { return {a.x*s, a.y*s}; }
+/**
+ * Returns Euclidean norm of the Q-vector
+ * @param a input Q-vector
+ * @return norm of the Q-vector
+ */
 inline float norm(QVec a) { return std::sqrt(a.x*a.x + a.y*a.y); }
 
+/**
+ * @class QVector
+ * @brief It carries the information of multiple harmonics of a specified normalization and correction step.
+ */
 class QVector {
  public:
   static constexpr int kmaxharmonics = 8;
   static constexpr float kminimumweight = 1e-6;
+  /**
+   * @enum available correction steps in the order of application
+   */
   enum CorrectionStep {
     RAW,
     PLAIN,
@@ -51,6 +89,10 @@ class QVector {
     RESCALED,
     ALIGNED
   };
+
+  /**
+   * @enum available normalizations
+   */
   enum class Normalization {
     NONE,       ///< \f$ \mbox{Q'} = \mbox{Q}\f$
     SQRT_M,     ///< \f$ \mbox{Q'} = \frac{\mbox{Q}}{\sqrt{\mbox{M}}} \f$
@@ -59,8 +101,14 @@ class QVector {
   };
 
   QVector() = default;
+
   virtual ~QVector() = default;
 
+  /**
+   * Constructor
+   * @param bits set of activated harmonics
+   * @param step current correction step
+   */
   QVector(std::bitset<kmaxharmonics> bits, CorrectionStep step) :
       correction_step_(step),
       bits_(bits) {
@@ -68,19 +116,49 @@ class QVector {
     maxharmonic_ = highestharmonic();
   }
 
-  QVector(const QVector &ref) = default;
-
-  void CopyHarmonics(const QVector &qvec) {
-    this->bits_ = qvec.bits_;
-    this->q_.resize(qvec.q_.size());
+  /**
+ * Constructor
+ * @param bits set of activated harmonics
+ * @param step current correction step
+ * @param norm normalization of Q-vector
+ */
+  QVector(std::bitset<kmaxharmonics> bits, CorrectionStep step, Qn::QVector::Normalization norm) :
+      norm_(norm),
+      correction_step_(step),
+      bits_(bits) {
+    q_.resize(bits.count());
+    maxharmonic_ = highestharmonic();
   }
 
+  /**
+   * Copy constructor
+   * @param rhs Q-vector to be copied
+   */
+  QVector(const QVector &rhs) = default;
+
+  /**
+   * Copies the harmonics of the other Q-vector
+   * @param other Q-vector whose harmonics are copied to the current Q-vector.
+   */
+  void CopyHarmonics(const QVector &other) {
+    this->bits_ = other.bits_;
+    this->q_.resize(other.q_.size());
+  }
+
+  /**
+   * Reset the Q-vector. Is called before the Q-vector is filled in every event.
+   */
   void Reset() {
     n_ = 0;
     sum_weights_ = 0.;
     quality_ = false;
   }
 
+  /**
+   * Get a c-style array of all activated harmonics. Used to create the correction histograms
+   * @param store Pointer to the first element of the array.
+   *        Array needs to have the exact size given by the number of harmonics.
+   */
   void GetHarmonicsMap(Int_t *store) const {
     unsigned int iharmonics = 0;
     for (unsigned char h = 1; h <= maxharmonic_; h++) {
@@ -90,24 +168,76 @@ class QVector {
       }
     }
   }
+
+  /**
+   * Returns the set of activated harmonics
+   * @return std::bitset with all activaed harmonics set to 1 and the others set to 0.
+   */
   std::bitset<kmaxharmonics> GetHarmonics() const { return bits_; }
+
+  /**
+   * Returns the number of harmonics
+   * @return total count of activated harmonics
+   */
   unsigned int GetNoOfHarmonics() const { return bits_.count(); }
-  void SetHarmonicMultiplier(unsigned char mult) { harmonic_multiplier_ = mult; }
+
+  /**
+   * Sets the harmonic multiplier. Used for some correction steps
+   * @param mult harmonic multiplier
+   */
+  void SetHarmonicMultiplier(const unsigned char mult) { harmonic_multiplier_ = mult; }
+
+  /**
+   * Get the harmonic multiplier
+   * @return the harmonic multiplier of the current Q-vector.
+   */
   unsigned char GetHarmonicMultiplier() const { return harmonic_multiplier_; }
+
+  /**
+   * Sets the quality to good.
+   * @param quality set to true if the Q-vector satisfies the conditions and can be used in the further processing steps.
+   */
   void SetGood(bool quality) { quality_ = quality; }
+
+  /**
+   * Checks the quality of the Q-vector.
+   * @return true if the Q-vector can be used in the further processing steps.
+   */
   bool IsGoodQuality() const { return quality_; }
+
+  /**
+   * Sets the quality of the Q-vector. Is called after the q-vector creation is complete.
+   * Q-vector needs to have at minimum 1 contributor.
+   */
   void CheckQuality() { quality_ = 0 < n_; }
-  void ActivateHarmonic(unsigned int i) {
+
+  /**
+   * Activate a harmonic in the qvector.
+   * @param i specified harmonic. needs to be smaller than the maximum kmaxharmonics.
+   */
+  void ActivateHarmonic(const unsigned int i) {
     bits_.set(i - 1);
     q_.resize(static_cast<size_t>(bits_.count()));
   }
-  void SetHarmonics(std::bitset<kmaxharmonics> bits) {
-    bits_ = bits;
-    q_.resize(static_cast<size_t>(bits.count()));
-  }
-  void SetNormalization(Normalization norm) { norm_ = norm; }
-  void SetCorrectionStep(CorrectionStep step) { correction_step_ = step; }
+
+  /**
+   * Set the normalization of the Q-vector
+   * @param norm normalization
+   */
+  void SetNormalization(const Normalization norm) { norm_ = norm; }
+
+  /**
+   * Get the correction step
+   * @return correction step of the Q-vector
+   */
   CorrectionStep GetCorrectionStep() const { return correction_step_; }
+
+  /**
+   * Returns x-component of Q-vector of the i-th harmonic.
+   * Throws exception, when the harmonic is out of the range.
+   * @param i harmonic i of the Q-vector
+   * @return x-component
+   */
   inline float x(const unsigned int i) const {
     if (bits_.test(i - 1)) {
       auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
@@ -116,6 +246,12 @@ class QVector {
       throw std::out_of_range("harmonic not in range.");
     }
   }
+  /**
+   * Returns y-component of Q-vector of the i-th harmonic
+   * Throws exception, when the harmonic is out of the range.
+   * @param i harmonic i of the Q-vector
+   * @return y-component
+   */
   inline float y(const unsigned int i) const {
     if (bits_.test(i - 1)) {
       auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
@@ -124,20 +260,42 @@ class QVector {
       throw std::out_of_range("harmonic not in range.");
     }
   }
+
+  /**
+   * Sets the x-component of the Q-vector of the i-th harmonic.
+   * @param i harmonic i of the Q-vector
+   * @param x new x component.
+   */
   inline void SetX(const unsigned int i, double x) {
     auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
     q_[position].x = x;
   }
+
+  /**
+   * Sets the y-component of the Q-vector of the i-th harmonic.
+   * @param i harmonic i of the Q-vector
+   * @param y new y component.
+   */
   inline void SetY(const unsigned int i, double y) {
     auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
     q_[position].y = y;
   }
-  void SetCurrentEvent(const QVector &qvec) {
-    norm_ = qvec.norm_;
-    n_ = qvec.n_;
-    sum_weights_ = qvec.sum_weights_;
+
+  /**
+   * Copy the number of contributors of the other Q-vector.
+   * This is used during the construction of the corrected Q-vector.
+   * @param other Q-vector whose properties are being copied.
+   */
+  void CopyNumberOfContributors(const QVector &other) {
+    quality_ = other.quality_;
+    n_ = other.n_;
+    sum_weights_ = other.sum_weights_;
   }
 
+  /**
+   * Gets the first harmonic.
+   * @return first harmonic number. Returns 0 if none are found.
+   */
   int GetFirstHarmonic() const {
     for (Int_t h = 1; h < maxharmonic_ + 1; h++) {
       if (bits_.test(h - 1)) {
@@ -147,7 +305,12 @@ class QVector {
     return -1;
   }
 
-  int GetNextHarmonic(unsigned char harmonic) const {
+  /**
+   * Gets the next harmonic using the current one as imput.
+   * @param harmonic current harmonic.
+   * @return returns the next harmonic. Returns -1 if none are found.
+   */
+  int GetNextHarmonic(const unsigned char harmonic) const {
     for (unsigned char h = harmonic + 1; h < maxharmonic_ + 1; h++) {
       if (bits_.test(h - 1)) {
         return h;
@@ -156,17 +319,51 @@ class QVector {
     return -1;
   }
 
+  /**
+   * Returns the Magnitude or euclidean norm of the Q-vector.
+   * @param i i-th harmonic of the Q-vector.
+   * @return euclidean norm of the Q-vector.
+   */
   inline float mag(const unsigned int i) const { return sqrt(x(i)*x(i) + y(i)*y(i)); }
+  /**
+   * Returns the sum of weights of the Q-Vector.
+   * @return Sum of weights of the Q-Vector.
+   */
   inline float sumweights() const { return sum_weights_; }
+  /**
+   * Returns the number of contributors of the Q-Vector.
+   * @return number of contributors of the Q-Vector.
+   */
   inline float n() const { return n_; }
-  inline float psi(const unsigned int i) const { return std::atan2(y(i),x(i));}
+  /**
+   * Returns the plane angle of the i-th harmonic.
+   * @param i i-th harmonic
+   * @return event plane angle
+   */
+  inline float psi(const unsigned int i) const { return std::atan2(y(i), x(i)); }
+  /**
+   * Get the normalization method. of the Q-vector
+   * @return normalization method
+   */
   inline Normalization GetNorm() const { return norm_; }
+  /**
+   * Qvector addition operator for all harmonics.
+   * @param a input Q-vector
+   * @param b input Q-vector
+   * @return  sum of Q-vectors
+   */
   friend QVector operator+(QVector a, QVector b);
-  inline void Add(const QVector &a) { *this + a; }
-  QVector Normal(Normalization norm) const;
+
+  QVector Normal(const Normalization norm) const;
+
   QVector DeNormal() const;
 
-  inline void Add(double phi, double weight) {
+  /**
+   * Adds a new data vector to the qvector.
+   * @param phi angle of the particle or channel.
+   * @param weight weight of the particle or channel e.g. channel multiplicity.
+   */
+  inline void Add(const double phi, const double weight) {
     if (weight < kminimumweight) return;
     unsigned int pos = 0;
     for (unsigned int h = 1; h <= maxharmonic_; ++h) {
@@ -180,6 +377,10 @@ class QVector {
     n_ += 1;
   }
 
+  /**
+   * Returns the highest harmonic configured in the Q-vector.
+   * @return highest harmonic.
+   */
   inline unsigned int highestharmonic() const {
     unsigned char val = bits_.to_ulong();
     if (val==0) return 255;
@@ -194,17 +395,21 @@ class QVector {
 
  private:
   Normalization norm_ = Normalization::NONE; ///< normalization method
-  unsigned char maxharmonic_ = 0;            ///<
-  unsigned char harmonic_multiplier_ = 1;    ///<
   CorrectionStep correction_step_ = CorrectionStep::RAW; ///< correction step defined by enumerator
   int n_ = 0;                                ///< number of data vectors contributing to the q vector
   float sum_weights_ = 0.0;                  ///< sum of weights
   std::bitset<kmaxharmonics> bits_{};        ///< Bitset for keeping track of the harmonics
   std::vector<QVec> q_;                      ///< array of qvectors for the different harmonics
-  bool quality_ = false;                     //!<!
+  /**
+   * Data members only used during the construction and correction of the Q-vectors.
+   * They are not saved to the root file, as they are not used to read the data.
+   */
+  bool quality_ = false;                     //!<!  quality of the Q-vector (only used during construction)
+  unsigned char maxharmonic_ = 0;            //!<! maximum harmonic
+  unsigned char harmonic_multiplier_ = 1;    //!<! harmonic multiplier (used for some correction steps)
 
   /// \cond CLASSIMP
- ClassDef(QVector, 11);
+ ClassDef(QVector, 12);
   /// \endcond
 };
 
@@ -235,16 +440,7 @@ class QVectorPtr {
   const QVector *qvector_ = nullptr;
 };
 
-static constexpr std::array<QVector::CorrectionStep, 6> kCorrectionStepsArray = {
-    QVector::CorrectionStep::RAW,
-    QVector::CorrectionStep::PLAIN,
-    QVector::CorrectionStep::RECENTERED,
-    QVector::CorrectionStep::TWIST,
-    QVector::CorrectionStep::RESCALED,
-    QVector::CorrectionStep::ALIGNED
-};
-
-static constexpr std::array<const char*, 6> kCorrectionStepNamesArray = {
+static constexpr std::array<const char *, 6> kCorrectionStepNamesArray = {
     "RAW",
     "PLAIN",
     "RECENTERED",

@@ -69,10 +69,10 @@ void Alignment::CreateSupportQVectors() {
   fSubEvent->GetDetector()->ActivateHarmonic(fHarmonicForAlignment);
   /* in both configurations */
   fDetectorForAlignment->GetDetector()->ActivateHarmonic(fHarmonicForAlignment);
-  /* and now create the corrected Qn vector */
-  auto harmonics = fSubEvent->GetHarmonics();
-  fCorrectedQnVector = std::make_unique<QVector>(harmonics, QVector::CorrectionStep::ALIGNED);
   fInputQnVector = fSubEvent->GetPreviousCorrectedQnVector(this);
+  /* and now create the corrected Qn vector */
+  fCorrectedQnVector = std::make_unique<QVector>(fSubEvent->GetHarmonics(), QVector::CorrectionStep::ALIGNED,
+                                                 fInputQnVector->GetNorm());
 }
 
 /// Asks for support histograms creation
@@ -155,7 +155,7 @@ bool Alignment::ProcessCorrections() {
 //                             fDetectorConfigurationForAlignment->GetName()));
       if (fSubEvent->GetCurrentQnVector()->IsGoodQuality()) {
         /* we get the properties of the current Qn vector but its name */
-        fCorrectedQnVector->SetCurrentEvent(*fSubEvent->GetCurrentQnVector());
+        fCorrectedQnVector->CopyNumberOfContributors(*fSubEvent->GetCurrentQnVector());
         /* let's check the correction histograms */
         Long64_t bin = fInputHistograms->GetBin();
         if (fInputHistograms->BinContentValidated(bin)) {
@@ -193,7 +193,7 @@ bool Alignment::ProcessCorrections() {
         fCorrectedQnVector->SetGood(kFALSE);
       }
       /* and update the current Qn vector */
-      fSubEvent->UpdateCurrentQnVector(*fCorrectedQnVector, QVector::CorrectionStep::ALIGNED);
+      fSubEvent->UpdateCurrentQnVector(*fCorrectedQnVector);
       applied = true;
       break;
     case State::PASSIVE:

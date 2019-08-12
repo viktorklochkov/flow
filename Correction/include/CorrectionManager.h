@@ -202,7 +202,7 @@ class CorrectionManager {
   /**
    * @brief Set output tree.
    * Lifetime of the tree is managed by the user.
-   * @param tree non-owning pointer to the tree.
+   * @param tree non-owning pointer to the tree
    */
   void ConnectOutputTree(TTree *tree) { if (fill_output_tree_) out_tree_ = tree; }
 
@@ -230,6 +230,10 @@ class CorrectionManager {
  * @brief Finalizes the correction framework. To be called after all events are processed.
  */
   void Finalize();
+
+  void CreateReport() {
+    detectors_.CreateReport();
+  }
 
   /**
    * @brief Get the list containing the calibration histograms.
@@ -277,7 +281,6 @@ class CorrectionManager {
  private:
   friend class Detector;
 
-  static constexpr int kMaxCorrectionArrayLength = 1000;
   static constexpr auto kCorrectionListName = "CorrectionHistograms";
 
   RunList runs_;

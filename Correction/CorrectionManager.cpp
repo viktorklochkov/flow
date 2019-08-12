@@ -57,6 +57,7 @@ void CorrectionManager::SetCurrentRunName(const std::string &name) {
     detectors_.SetOutputTree(out_tree_);
     variable_manager_.SetOutputTree(out_tree_);
   }
+  detectors_.CreateReport();
 }
 
 void CorrectionManager::AttachQAHistograms() {

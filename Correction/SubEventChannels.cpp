@@ -404,42 +404,7 @@ void SubEventChannels::FillOverallQnVectorCorrectionStepList(std::set<Correction
   fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 
-/// Provide information about assigned corrections
-///
-/// We create three list which items they own, incorporate info from the
-/// correction steps and add them to the passed list
-/// \param steps list for incorporating the list of assigned correction steps
-/// \param calib list for incorporating the list of steps in calibrating status
-/// \param apply list for incorporating the list of steps in applying status
-void SubEventChannels::ReportOnCorrections(TList *steps, TList *calib, TList *apply) const {
-  auto mysteps = new TList();
-  mysteps->SetOwner(kTRUE);
-  mysteps->SetName(GetName().data());
-  auto mycalib = new TList();
-  mycalib->SetOwner(kTRUE);
-  mycalib->SetName(GetName().data());
-  auto myapply = new TList();
-  myapply->SetOwner(kTRUE);
-  myapply->SetName(GetName().data());
-  Bool_t keepIncorporating = kTRUE;
-  for (auto &correction : fInputDataCorrections) {
-    mysteps->Add(new TObjString(correction->GetName()));
-    if (keepIncorporating) {
-      Bool_t keep = correction->ReportUsage(mycalib, myapply);
-      keepIncorporating = keepIncorporating && keep;
-    }
-  }
-  for (auto &correction: fQnVectorCorrections) {
-    mysteps->Add(new TObjString(correction->GetName()));
-    if (keepIncorporating) {
-      Bool_t keep = correction->ReportUsage(mycalib, myapply);
-      keepIncorporating = keepIncorporating && keep;
-    }
-  }
-  steps->Add(mysteps);
-  calib->Add(mycalib);
-  apply->Add(myapply);
-}
+
 
 /// Builds raw Qn vector before Q vector corrections and before input
 /// data corrections but considering the chosen calibration method.

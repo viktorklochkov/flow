@@ -118,20 +118,12 @@ class SubEvent {
   /// Update towards what is the latest values of the Qn vector after executing a
   /// correction step to make it available to further steps.
   /// \param newQnVector the new values for the Qn vector
-  /// \param changename kTRUE by default to keep track of the subsequent Qn vector corrections
-  void UpdateCurrentQnVector(const QVector &newQnVector, QVector::CorrectionStep step) {
-    fCorrectedQnVector = newQnVector;
-    fCorrectedQnVector.SetCorrectionStep(step);
-  }
+  void UpdateCurrentQnVector(const QVector &newQnVector) { fCorrectedQnVector = newQnVector; }
   /// Update the current Q2n vector
   /// Update towards what is the latest values of the Q2n vector after executing a
   /// correction step to make it available to further steps.
   /// \param newQ2nVector the new values for the Q2n vector
-  /// \param changename kTRUE by default to keep track of the subsequent Q2n vector corrections
-  void UpdateCurrentQ2nVector(const QVector &newQ2nVector, QVector::CorrectionStep step) {
-    fCorrectedQ2nVector = newQ2nVector;
-    fCorrectedQ2nVector.SetCorrectionStep(step);
-  }
+  void UpdateCurrentQ2nVector(const QVector &newQ2nVector) { fCorrectedQ2nVector = newQ2nVector; }
   /// Get the number of harmonics handled by the detector configuration
   /// \return the number of handled harmonics
   Int_t GetNoOfHarmonics() const { return fCorrectedQnVector.GetNoOfHarmonics(); }
@@ -231,12 +223,11 @@ class SubEvent {
   /// \param list list where the correction steps should be incorporated
   virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const = 0;
   /// Provide information about assigned corrections
-  ///
-  /// Pure virtual function
-  /// \param steps list for incorporating the list of assigned correction steps
-  /// \param calib list for incorporating the list of steps in calibrating status
-  /// \param apply list for incorporating the list of steps in applying status
-  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const = 0;
+
+  using Report = std::pair<bool, bool>;
+  
+  virtual std::map<std::string, Report> ReportOnCorrections() const = 0;
+  
   /// New data vector for the detector configuration
   /// Pure virtual function
   /// \param variableContainer pointer to the variable content bank
@@ -250,7 +241,9 @@ class SubEvent {
   /// Clean the configuration to accept a new event
   /// Pure virtual function
   virtual void Clear() = 0;
-  virtual void SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup = nullptr, Float_t *hardCodedGroupWeights = nullptr) {
+  virtual void SetChannelsScheme(Bool_t *bUsedChannel,
+                                 Int_t *nChannelGroup = nullptr,
+                                 Float_t *hardCodedGroupWeights = nullptr) {
     (void) bUsedChannel;
     (void) nChannelGroup;
     (void) hardCodedGroupWeights;

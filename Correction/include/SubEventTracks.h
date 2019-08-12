@@ -46,24 +46,31 @@ class SubEventTracks : public SubEvent {
 
   /// Get if the detector configuration is own by a tracking detector
   /// \return TRUE, this is tracking detector configuration
-  virtual Bool_t GetIsTrackingDetector() const  { return kTRUE; }
+  virtual Bool_t GetIsTrackingDetector() const { return kTRUE; }
 
-  virtual void CreateSupportQVectors() ;
-  virtual void CreateCorrectionHistograms(TList *list) ;
-  virtual void AttachQAHistograms(TList *list) ;
-  virtual void AttachNveQAHistograms(TList *list) ;
-  virtual void AttachCorrectionInput(TList *list) ;
-  virtual void AfterInputAttachAction() ;
+  virtual void CreateSupportQVectors();
+  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void AttachQAHistograms(TList *list);
+  virtual void AttachNveQAHistograms(TList *list);
+  virtual void AttachCorrectionInput(TList *list);
+  virtual void AfterInputAttachAction();
 
-  virtual Bool_t ProcessCorrections() ;
-  virtual Bool_t ProcessDataCollection() ;
+  virtual Bool_t ProcessCorrections();
+  virtual Bool_t ProcessDataCollection();
 
-  virtual void IncludeQnVectors() ;
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const ;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const ;
-  virtual void ReportOnCorrections(TList *steps, TList *calib, TList *apply) const ;
-  virtual void Clear() ;
-
+  virtual void IncludeQnVectors();
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const;
+  virtual void Clear();
+  virtual std::map<std::string, Report> ReportOnCorrections() const {
+    std::map<std::string, Report> report;
+    for (const auto& correction : fQnVectorCorrections) {
+      auto usage = correction->ReportUsage();
+      report.emplace(correction->GetName(),usage);
+    }
+    return report;
+  }
+  
  private:
   /* QA section */
   void FillQAHistograms();
