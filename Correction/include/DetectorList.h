@@ -2,17 +2,22 @@
 namespace Qn {
 class DetectorList {
  public:
-  void AddDetector(std::unique_ptr<Detector> det) {
-    auto find = [&det](const std::unique_ptr<Detector> &a) { return det->GetName()==a->GetName(); };
-    if (det->GetType()==Qn::DetectorType::CHANNEL) {
+  void AddDetector(std::string name,
+                   Qn::DetectorType type,
+                   InputVariable phi,
+                   InputVariable weight,
+                   const std::vector<Qn::AxisD> &axes,
+                   std::bitset<Qn::QVector::kmaxharmonics> harmonics,
+                   QVector::Normalization norm) {
+    auto find = [&name](const Detector &a) { return name==a.GetName(); };
+    if (type==Qn::DetectorType::CHANNEL) {
       if (std::find_if(channel_detectors_.begin(), channel_detectors_.end(), find)==channel_detectors_.end()) {
-        channel_detectors_.push_back(std::move(det));
-        all_detectors_.push_back(channel_detectors_.back().get());
+        channel_detectors_.emplace_back(name, type, axes, phi, weight, harmonics, norm);
+
       }
-    } else if (det->GetType()==Qn::DetectorType::TRACK) {
+    } else if (type==Qn::DetectorType::TRACK) {
       if (std::find_if(tracking_detectors_.begin(), tracking_detectors_.end(), find)==tracking_detectors_.end()) {
-        tracking_detectors_.push_back(std::move(det));
-        all_detectors_.push_back(tracking_detectors_.back().get());
+        tracking_detectors_.emplace_back(name, type, axes, phi, weight, harmonics, norm);
       }
     }
   }
@@ -23,14 +28,14 @@ class DetectorList {
     det.AddCutCallBack(std::move(cut));
   }
 
-  Detector &FindDetector(std::string name) {
-    auto find = [&name](const std::unique_ptr<Detector> &a) { return a->GetName()==name; };
+  Detector &FindDetector(const std::string name) {
+    auto find = [&name](const Detector &a) { return a.GetName()==name; };
     auto det_ch = std::find_if(channel_detectors_.begin(), channel_detectors_.end(), find);
     auto det_trk = std::find_if(tracking_detectors_.begin(), tracking_detectors_.end(), find);
     if (det_ch!=channel_detectors_.end()) {
-      return **det_ch;
+      return *det_ch;
     } else if (det_trk!=tracking_detectors_.end()) {
-      return **det_trk;
+      return *det_trk;
     } else {
       throw std::runtime_error("Detector" + name + "not found.");
     }
@@ -39,40 +44,39 @@ class DetectorList {
   void SetOutputTree(TTree *output_tree) {
     if (output_tree) {
       for (auto &detector : tracking_detectors_) {
-        detector->AttachToTree(output_tree);
+        detector.AttachToTree(output_tree);
       }
       for (auto &detector : channel_detectors_) {
-        detector->AttachToTree(output_tree);
+        detector.AttachToTree(output_tree);
       }
     }
   }
 
   void InitializeOnNode(CorrectionManager *manager) {
     for (auto &detector : channel_detectors_) {
-      detector->InitializeOnNode(manager);
+      all_detectors_.push_back(&detector);
+      detector.InitializeOnNode(manager);
     }
     for (auto &detector : tracking_detectors_) {
-      detector->InitializeOnNode(manager);
+      all_detectors_.push_back(&detector);
+      detector.InitializeOnNode(manager);
     }
   }
 
   void FillTracking() {
     for (auto &dp : tracking_detectors_) {
-      dp->FillData();
+      dp.FillData();
     }
   }
 
   void FillChannel() {
     for (auto &dp : channel_detectors_) {
-      dp->FillData();
+      dp.FillData();
     }
   }
 
   void ProcessCorrections() {
-    for (auto &d : channel_detectors_) {
-      d->ProcessCorrections();
-    }
-    for (auto &d : tracking_detectors_) {
+    for (auto &d : all_detectors_) {
       d->ProcessCorrections();
     }
   }
@@ -163,8 +167,8 @@ class DetectorList {
     return {total_iterations_global - remaining_iterations_global + 1, total_iterations_global + 1};
   }
 
-  std::vector<std::unique_ptr<Detector>> tracking_detectors_; ///< map of tracking detectors
-  std::vector<std::unique_ptr<Detector>> channel_detectors_; ///< map of channel detectors
-  std::vector<Detector *> all_detectors_; ///<
+  std::vector<Detector> tracking_detectors_; ///< vector of tracking detectors
+  std::vector<Detector> channel_detectors_; ///< vector of channel detectors
+  std::vector<Detector *> all_detectors_; ///< storing pointers to all detectors
 };
 }

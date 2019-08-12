@@ -77,6 +77,11 @@ class DataContainer : public TObject {
     delete list_;
   };
 
+  DataContainer(DataContainer &&detector) = default;
+  DataContainer(DataContainer &detector) = default;
+  DataContainer(const DataContainer &detector) = default;
+  DataContainer &operator=(DataContainer &&detector) = default;
+
   using QnAxes = std::vector<AxisType>;
   using size_type = std::size_t;
   using iterator = typename std::vector<T>::iterator;

@@ -106,15 +106,9 @@ class CorrectionManager {
     for (std::size_t i = 0; i < N; ++i) {
       harmonics.set(harmo[i] - 1);
     }
-    auto det = std::make_unique<Detector>(std::move(name),
-                                          type,
-                                          axes,
-                                          phi_name,
-                                          weight_name,
-                                          harmonics,
-                                          norm,
-                                          &variable_manager_);
-    detectors_.AddDetector(std::move(det));
+    auto phi = variable_manager_.FindVariable(phi_name);
+    auto weight = variable_manager_.FindVariable(weight_name);
+    detectors_.AddDetector(name, type, phi, weight, axes, harmonics, norm);
   }
 
   template<std::size_t N, typename FUNCTION>

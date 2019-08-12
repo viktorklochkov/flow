@@ -36,6 +36,9 @@ namespace Qn {
 class CorrectionCuts {
  public:
   using CutCallBack = std::function<std::unique_ptr<CutBase>(Qn::InputVariableManager*)>;
+  CorrectionCuts(CorrectionCuts&& cuts) = default;
+  CorrectionCuts & operator=(CorrectionCuts&& cuts) = default;
+  CorrectionCuts() = default;
   ~CorrectionCuts() { delete[] var_values_; }
   /**
    * @brief Adds a cut to the manager.

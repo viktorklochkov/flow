@@ -1,3 +1,5 @@
+#include <utility>
+
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -51,21 +53,23 @@ class Detector {
   Detector(std::string name,
            DetectorType type,
            std::vector<AxisD> axes,
-           std::string phi_name_,
-           std::string weight_name_,
+           InputVariable phi,
+           InputVariable weight,
            std::bitset<Qn::QVector::kmaxharmonics> harmonics,
-           QVector::Normalization norm,
-           Qn::InputVariableManager *var)
+           QVector::Normalization norm)
       :
-      phi_name_(phi_name_),
-      weight_name_(weight_name_),
-      name_(name),
-      nchannels_(var->FindVariable(phi_name_).GetSize()),
+      phi_(std::move(phi)),
+      weight_(std::move(weight)),
+      name_(std::move(name)),
+      nchannels_(phi_.GetSize()),
       harmonics_bits_(harmonics),
       q_vector_normalization_method_(norm),
       type_(type) {
     sub_events_.AddAxes(axes);
   }
+
+  Detector(Detector&& detector) = default;
+  Detector& operator=(Detector && detector) = default;
 
   /**
    * @brief Clears data before filling new event.
@@ -213,11 +217,9 @@ class Detector {
   TList *CreateQAHistogramList(bool fill_qa, bool fill_validation, InputVariableManager *var);
 
  private:
-  std::string phi_name_;
-  std::string weight_name_;
   InputVariable phi_; /// variable holding the azimuthal angle
   InputVariable weight_; /// variable holding the weight which is used for the calculation of the Q vector.
-  const std::string name_; /// name of  the detector
+  std::string name_; /// name of  the detector
   int nchannels_ = 0; /// number of channels in case of channel detector
   std::bitset<Qn::QVector::kmaxharmonics> harmonics_bits_; /// bitset of all activated harmonics
   Qn::QVector::Normalization q_vector_normalization_method_ = Qn::QVector::Normalization::NONE;
@@ -234,9 +236,8 @@ class Detector {
   
   Qn::DetectorList *detectors_ = nullptr;
 
-  std::vector<CutCallBack> cuts_callback_;
-  std::vector<HistogramCallBack> histograms_callback; /// QA histograms of the detector
-
+  std::vector<CutCallBack> cuts_callback_; /// functions creating cuts at initializtion time
+  std::vector<HistogramCallBack> histograms_callback; /// functions creating QA histograms at initialization time
 
 };
 

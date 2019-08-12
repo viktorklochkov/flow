@@ -8,8 +8,8 @@ void Detector::InitializeOnNode(CorrectionManager *manager) {
   auto var = manager->GetVariableManager();
   auto set = manager->GetCorrectionAxes();
   detectors_ = manager->GetDetectors();
-  phi_ = var->FindVariable(phi_name_);
-  weight_ = var->FindVariable(weight_name_);
+  phi_ = var->FindVariable(phi_.GetName());
+  weight_ = var->FindVariable(weight_.GetName());
   //Configure sub events
   if (!configuration_) {
     throw (std::runtime_error("No Qn correction configuration found for " + name_));
