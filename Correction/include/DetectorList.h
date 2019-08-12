@@ -160,7 +160,7 @@ class DetectorList {
       int total_iterations = corrections.size();
       for (auto &c : corrections) { if (c.second.second) performed_iterations++; }
       if (total_iterations - performed_iterations > remaining_iterations_global) {
-        remaining_iterations_global = performed_iterations;
+        remaining_iterations_global = total_iterations - performed_iterations;
       }
       if (total_iterations_global < total_iterations) total_iterations_global = total_iterations;
     }
