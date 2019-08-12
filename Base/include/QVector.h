@@ -113,7 +113,7 @@ class QVector {
       correction_step_(step),
       bits_(bits) {
     q_.resize(bits.count());
-    maxharmonic_ = highestharmonic();
+    maximum_harmonic_ = highestharmonic();
   }
 
   /**
@@ -127,7 +127,7 @@ class QVector {
       correction_step_(step),
       bits_(bits) {
     q_.resize(bits.count());
-    maxharmonic_ = highestharmonic();
+    maximum_harmonic_ = highestharmonic();
   }
 
   /**
@@ -161,7 +161,7 @@ class QVector {
    */
   void GetHarmonicsMap(Int_t *store) const {
     unsigned int iharmonics = 0;
-    for (unsigned char h = 1; h <= maxharmonic_; h++) {
+    for (unsigned char h = 1; h <= maximum_harmonic_; h++) {
       if (bits_.test(h - 1)) {
         store[iharmonics] = h;
         iharmonics++;
@@ -297,7 +297,7 @@ class QVector {
    * @return first harmonic number. Returns 0 if none are found.
    */
   int GetFirstHarmonic() const {
-    for (Int_t h = 1; h < maxharmonic_ + 1; h++) {
+    for (Int_t h = 1; h < maximum_harmonic_ + 1; h++) {
       if (bits_.test(h - 1)) {
         return h;
       }
@@ -311,7 +311,7 @@ class QVector {
    * @return returns the next harmonic. Returns -1 if none are found.
    */
   int GetNextHarmonic(const unsigned char harmonic) const {
-    for (unsigned char h = harmonic + 1; h < maxharmonic_ + 1; h++) {
+    for (unsigned char h = harmonic + 1; h < maximum_harmonic_ + 1; h++) {
       if (bits_.test(h - 1)) {
         return h;
       }
@@ -366,7 +366,7 @@ class QVector {
   inline void Add(const double phi, const double weight) {
     if (weight < kminimumweight) return;
     unsigned int pos = 0;
-    for (unsigned int h = 1; h <= maxharmonic_; ++h) {
+    for (unsigned int h = 1; h <= maximum_harmonic_; ++h) {
       if (bits_.test(h - 1)) {
         q_[pos].x += (weight*std::cos(h*harmonic_multiplier_*phi));
         q_[pos].y += (weight*std::sin(h*harmonic_multiplier_*phi));
@@ -404,8 +404,8 @@ class QVector {
    * Data members only used during the construction and correction of the Q-vectors.
    * They are not saved to the root file, as they are not used to read the data.
    */
-  bool quality_ = false;                     //!<!  quality of the Q-vector (only used during construction)
-  unsigned char maxharmonic_ = 0;            //!<! maximum harmonic
+  bool quality_ = false;                     //!<! quality of the Q-vector (only used during construction)
+  unsigned char maximum_harmonic_ = 0;       //!<! maximum harmonic
   unsigned char harmonic_multiplier_ = 1;    //!<! harmonic multiplier (used for some correction steps)
 
   /// \cond CLASSIMP
