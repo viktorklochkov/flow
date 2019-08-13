@@ -27,7 +27,7 @@ void Qn::EventAxes::RegisterEventAxis(Qn::AxisD axis, Type type) {
   }
   if (type==Type::Float) {
     event_axes_.push_back(
-        std::make_unique<Qn::EventAxis<Float_t>>(axis, TTreeReaderValue<Float_t>(*manager_->GetReader(), name)));
+        std::make_unique<Qn::EventAxis<Double_t >>(axis, TTreeReaderValue<Double_t >(*manager_->GetReader(), name)));
   }
   bin_.emplace_back(-1);
 }
