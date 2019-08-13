@@ -11,7 +11,7 @@ void Detector::InitializeOnNode(CorrectionManager *manager) {
   phi_ = var->FindVariable(phi_.GetName());
   weight_ = var->FindVariable(weight_.GetName());
   //Configure sub events
-  if (!configuration_) {
+  if (!correction_configuration_) {
     throw (std::runtime_error("No Qn correction configuration found for " + name_));
   }
   int ibin = 0;
@@ -24,14 +24,14 @@ void Detector::InitializeOnNode(CorrectionManager *manager) {
       ev = std::make_unique<SubEventTracks>(ibin, set, harmonics_bits_);
     }
     ev->SetDetector(this);
-    configuration_(ev.get());
+    correction_configuration_(ev.get());
     ++ibin;
   }
   if (!sub_events_.IsIntegrated()) {
     for (const auto &axis : sub_events_.GetAxes()) {
-      vars_.push_back(var->FindVariable(axis.Name()));
+      input_variables_.push_back(var->FindVariable(axis.Name()));
     }
-    coordinates_.resize(vars_.size());
+    coordinates_.resize(input_variables_.size());
   }
   // Initialize the cuts
   CreateCuts(var);

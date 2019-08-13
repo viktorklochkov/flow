@@ -103,22 +103,22 @@ void TwistAndRescale::CreateSupportQVectors() {
             fSubEvent->GetDetector()->GetDetectors()->FindDetector(fBDetectorConfigurationName).GetSubEvent(0);
         if (!fSubEventB->GetIsTrackingDetector()) {
           throw std::runtime_error(
-              std::string(fSubEventB->GetName()) + "Detector is not a tracking detector");
+              std::string(fSubEventB->GetName()) + " Detector is not a tracking detector");
         }
       } else {
         throw std::runtime_error(
-            std::string(fSubEventB->GetName()) + "is not configured for twist and rescaling step.");
+            std::string(fSubEventB->GetName()) + " is not configured for twist and rescaling step.");
       }
       if (!fCDetectorConfigurationName.empty()) {
         fSubEventC =
             fSubEvent->GetDetector()->GetDetectors()->FindDetector(fCDetectorConfigurationName).GetSubEvent(0);
         if (!fSubEventC->GetIsTrackingDetector()) {
           throw std::runtime_error(
-              std::string(fSubEventC->GetName()) + "Detector is not a tracking detector");
+              std::string(fSubEventC->GetName()) + " Detector is not a tracking detector");
         }
       } else {
         throw std::runtime_error(
-            std::string(fSubEventC->GetName()) + "is not configured for twist and rescaling step.");
+            std::string(fSubEventC->GetName()) + " is not configured for twist and rescaling step.");
 
       }
       break;

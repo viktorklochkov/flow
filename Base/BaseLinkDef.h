@@ -27,8 +27,6 @@
 
 #pragma link C++ class Qn::Axis<double>+;
 #pragma link C++ class Qn::Axis<double>+;
-#pragma link C++ typedef Qn::AxisF;
-#pragma link C++ typedef Qn::AxisD;
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
@@ -47,6 +45,8 @@
 #pragma link C++ class Qn::DataContainer<TH1F, Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainerHelper+;
 
+#pragma link C++ typedef Qn::AxisF;
+#pragma link C++ typedef Qn::AxisD;
 #pragma link C++ typedef Qn::DataContainerProduct;
 #pragma link C++ typedef Qn::DataContainerStats;
 #pragma link C++ typedef Qn::DataContainerQVector;

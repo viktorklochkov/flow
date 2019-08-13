@@ -61,10 +61,10 @@ class Detector {
       phi_(std::move(phi)),
       weight_(std::move(weight)),
       name_(std::move(name)),
+      type_(type),
       nchannels_(phi_.GetSize()),
       harmonics_bits_(harmonics),
-      q_vector_normalization_method_(norm),
-      type_(type) {
+      q_vector_normalization_method_(norm) {
     sub_events_.AddAxes(axes);
   }
 
@@ -112,7 +112,7 @@ class Detector {
   }
 
   void SetConfig(std::function<void(SubEvent *)> config) {
-    configuration_ = std::move(config);
+    correction_configuration_ = std::move(config);
   }
 
   void InitializeOnNode(CorrectionManager *manager);
@@ -137,11 +137,11 @@ class Detector {
         ++i;
         continue;
       }
-      if (vars_.empty()) {
+      if (input_variables_.empty()) {
         sub_events_.At(0)->AddDataVector(phi, *(weight_.begin() + i), i);
       } else {
         long icoord = 0;
-        for (const auto &var : vars_) {
+        for (const auto &var : input_variables_) {
           coordinates_.at(icoord) = *(var.begin() + i);
           ++icoord;
         }
@@ -186,7 +186,11 @@ class Detector {
     // Adds DataContainerQVector for each of the active correction steps.
     auto correction_steps = sub_events_[0]->GetCorrectionSteps();
     for (auto correction_step : correction_steps) {
-      q_vectors_.emplace(correction_step, std::make_unique<DataContainerQVector>(sub_events_.GetAxes()));
+      if (sub_events_.IsIntegrated()) {
+        q_vectors_.emplace(correction_step, std::make_unique<DataContainerQVector>());
+      } else {
+        q_vectors_.emplace(correction_step, std::make_unique<DataContainerQVector>(sub_events_.GetAxes()));
+      }
     }
   }
 
@@ -212,7 +216,6 @@ class Detector {
   Qn::QVector::Normalization GetNormalizationMethod() const { return q_vector_normalization_method_; }
   std::string GetName() const { return name_; }
   std::string GetBinName(unsigned int id) const { return sub_events_.GetBinDescription(id); }
-  DetectorType GetType() const { return type_; }
   SubEvent *GetSubEvent(unsigned int ibin) { return sub_events_.At(ibin).get(); }
   TList *CreateQAHistogramList(bool fill_qa, bool fill_validation, InputVariableManager *var);
 
@@ -220,13 +223,13 @@ class Detector {
   InputVariable phi_; /// variable holding the azimuthal angle
   InputVariable weight_; /// variable holding the weight which is used for the calculation of the Q vector.
   std::string name_; /// name of  the detector
+  DetectorType type_; /// type of detector
   int nchannels_ = 0; /// number of channels in case of channel detector
   std::bitset<Qn::QVector::kmaxharmonics> harmonics_bits_; /// bitset of all activated harmonics
   Qn::QVector::Normalization q_vector_normalization_method_ = Qn::QVector::Normalization::NONE;
-  std::vector<InputVariable> vars_; /// variables used for the binning of the Q vector.
+  std::vector<InputVariable> input_variables_; /// variables used for the binning of the Q vector.
   std::vector<float> coordinates_;  ///  vector holding the temporary coordinates of one track or channel.
-  std::function<void(SubEvent *)> configuration_;
-  DetectorType type_;
+  std::function<void(SubEvent *)> correction_configuration_; /// configures the correction steps applied in the sub event.
   std::map<QVector::CorrectionStep, std::unique_ptr<DataContainerQVector>> q_vectors_;
   std::vector<QVector::CorrectionStep> output_tree_q_vectors_;
   CorrectionCuts cuts_; /// per channel selection  cuts

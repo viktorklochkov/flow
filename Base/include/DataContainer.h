@@ -338,13 +338,16 @@ class DataContainer : public TObject {
       for (auto it = axes_.cbegin(); it!=axes_.cend(); ++it) {
         const auto &axis = *it;
         outstring += axis.Name();
-        outstring += "(" + std::to_string(axis.GetLowerBinEdge(indices[i])) + ", "
-            + std::to_string(axis.GetUpperBinEdge(indices[i])) + ")";
-        if (it + 1!=axes_.cend()) outstring += "; ";
+        auto lower = std::to_string(axis.GetLowerBinEdge(indices[i]));
+        lower = lower.erase(lower.find_last_not_of('0') + 1, std::string::npos);
+        lower = lower.erase(lower.find_last_not_of('.') + 1, std::string::npos);
+        auto upper = std::to_string(axis.GetUpperBinEdge(indices[i]));
+        upper = upper.erase(upper.find_last_not_of('0') + 1, std::string::npos);
+        upper = upper.erase(upper.find_last_not_of('.') + 1, std::string::npos);
+        outstring += "[" + lower + "," + upper + ")";
+        if (it + 1!=axes_.cend()) outstring += ",";
         ++i;
       }
-      outstring.erase(outstring.find_last_not_of('0') + 1, std::string::npos);
-      outstring.erase(outstring.find_last_not_of('.') + 1, std::string::npos);
       return outstring;
     }
   }
@@ -706,6 +709,16 @@ class DataContainer : public TObject {
       *this = this->Apply(*data, lambda);
     }
     return this->size();
+  }
+
+  virtual void Print(Option_t *option="") const {
+    (void) option;
+    std::cout << "OBJ: "<< IsA()->GetName() << "\n";
+    std::cout << "Dimension: " << dimension_ << "\n";
+    std::cout << "Axes:" << "\n";
+    for (const auto & axis : axes_) {
+      axis.Print();
+    }
   }
 
  private:

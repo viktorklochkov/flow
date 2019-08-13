@@ -18,6 +18,7 @@
 #ifndef FLOW_QNAXIS_H
 #define FLOW_QNAXIS_H
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -155,6 +156,17 @@ class Axis {
    * @return upper edge of bin of interest
    */
   inline T GetLastBinEdge() const { return bin_edges_.back(); }
+
+  void Print() const {
+    std::cout <<"OBJ: Qn::Axis " << name_ <<"\n";
+    std::cout << "number of Bins:" << GetNBins() << "\n";
+    std::cout << "bin edges: ";
+    for (unsigned int i = 0; i < bin_edges_.size() - 1; ++i) {
+      std::cout << bin_edges_[i] << ", ";
+    }
+    std::cout << bin_edges_.back() << "\n";
+  }
+
  private:
   std::string name_;
   std::vector<T> bin_edges_;
