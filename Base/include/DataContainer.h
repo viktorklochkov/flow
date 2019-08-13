@@ -23,6 +23,7 @@
 #include <stdexcept>
 
 #include "TEnv.h"
+#include "TClass.h"
 #include "TObject.h"
 #include "TMath.h"
 #include "Rtypes.h"
