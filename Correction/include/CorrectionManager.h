@@ -101,14 +101,16 @@ class CorrectionManager {
                    const std::string &weight_name,
                    const std::vector<Qn::AxisD> &axes,
                    int const(&harmo)[N],
-                   QVector::Normalization norm = QVector::Normalization::M) {
+                   QVector::Normalization norm = QVector::Normalization::M,
+                   const std::string &radial_offset_name = "Ones") {
     std::bitset<Qn::QVector::kmaxharmonics> harmonics;
     for (std::size_t i = 0; i < N; ++i) {
       harmonics.set(harmo[i] - 1);
     }
     auto phi = variable_manager_.FindVariable(phi_name);
     auto weight = variable_manager_.FindVariable(weight_name);
-    detectors_.AddDetector(name, type, phi, weight, axes, harmonics, norm);
+    auto radial_offset = variable_manager_.FindVariable(radial_offset_name);
+    detectors_.AddDetector(name, type, phi, weight, radial_offset, axes, harmonics, norm);
   }
 
   template<std::size_t N, typename FUNCTION>
@@ -116,14 +118,15 @@ class CorrectionManager {
                         const char *const (&variable_names)[N],
                         FUNCTION cut_function,
                         const std::string &cut_description) {
-    detectors_.AddCutCallBack(detector_name, CreateCutCallBack(variable_names, cut_function, cut_description));
+    bool is_channel_wise = variable_manager_.FindVariable(variable_names[0]).size() > 1;
+    detectors_.AddCut(detector_name, CallBacks::MakeCut(variable_names, cut_function, cut_description), is_channel_wise);
   }
 
   template<std::size_t N, typename FUNCTION>
   void AddEventCut(const char *const (&variable_names)[N],
                    FUNCTION cut_function,
                    const std::string &cut_description) {
-    event_cuts_.AddCutCallBack(CreateCutCallBack(variable_names, cut_function, cut_description));
+    event_cuts_.AddCut(CallBacks::MakeCut(variable_names, cut_function, cut_description));
   }
 
   /**
@@ -132,7 +135,7 @@ class CorrectionManager {
    * @param weight Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto1D(const Qn::AxisD &axes, const std::string &weight = "Ones") {
-    event_histograms_callback_.push_back(Create1DHisto("Event", axes, weight));
+    event_histograms_.Add(CallBacks::MakeHisto1D("Event", axes, weight));
   }
 
   /**
@@ -141,13 +144,13 @@ class CorrectionManager {
    * @param weight Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto2D(const std::vector<Qn::AxisD> &axes, const std::string &weight = "Ones") {
-    event_histograms_callback_.push_back(Create2DHisto("Event", axes, weight));
+    event_histograms_.Add(CallBacks::MakeHisto2D("Event", axes, weight));
   }
 
   void AddEventHisto2DArray(const std::vector<Qn::AxisD> &axes,
                             const Qn::AxisD &axis,
                             const std::string &weight = "Ones") {
-    event_histograms_callback_.push_back(Create2DHistoArray("Event", axes, weight, axis));
+    event_histograms_.Add(CallBacks::MakeHisto2DArray("Event", axes, weight, axis));
   }
 
   /**
@@ -157,7 +160,7 @@ class CorrectionManager {
   * @param weight Name of the weights used when filling. Standard is "Ones" (1).
   */
   void AddHisto1D(const std::string &detector, const Qn::AxisD &axis, const std::string &weight = "Ones") {
-    detectors_.FindDetector(detector).AddHistogramCallBack(Create1DHisto(detector, axis, weight));
+    detectors_.FindDetector(detector).AddHistogramCallBack(CallBacks::MakeHisto1D(detector, axis, weight));
   }
 
   /**
@@ -169,7 +172,7 @@ class CorrectionManager {
   void AddHisto2D(const std::string &detector,
                   const std::vector<Qn::AxisD> &axes,
                   const std::string &weight = "Ones") {
-    detectors_.FindDetector(detector).AddHistogramCallBack(Create2DHisto(detector, axes, weight));
+    detectors_.FindDetector(detector).AddHistogramCallBack(CallBacks::MakeHisto2D(detector, axes, weight));
   }
   /**
    * @brief Adds correction steps to a detector.
@@ -242,31 +245,10 @@ class CorrectionManager {
   TList *GetCorrectionQAList() { return correction_qa_histos_.get(); }
 
  private:
-  template<std::size_t N, typename FUNCTION>
-  CutCallBack CreateCutCallBack(const char *const (&names)[N], FUNCTION lambda, const std::string &cut_description) {
-    return CutCallBack([names, lambda, cut_description](Qn::InputVariableManager *var) {
-      InputVariable arr[N];
-      int i = 0;
-      for (auto &name : names) {
-        arr[i] = var->FindVariable(name);
-        ++i;
-      }
-      return MakeUniqueCut<const double>(arr, lambda, cut_description, arr[0].GetSize() > 1);
-    });
-  };
 
   void InitializeCorrections();
 
   void AttachQAHistograms();
-
-  HistogramCallBack Create1DHisto(const std::string &name, Qn::AxisD axis,
-                                  const std::string &weight);
-
-  HistogramCallBack Create2DHisto(const std::string &name, std::vector<Qn::AxisD> axes,
-                                  const std::string &weight);
-
-  HistogramCallBack Create2DHistoArray(const std::string &name, std::vector<Qn::AxisD> axes,
-                                       const std::string &weight, const Qn::AxisD &histogram_axis);
 
   InputVariableManager *GetVariableManager() { return &variable_manager_; }
   DetectorList *GetDetectors() { return &detectors_; }
@@ -296,8 +278,7 @@ class CorrectionManager {
   CorrectionCuts event_cuts_; ///< Pointer to the event cuts
   TList *det_qa_histos_ = nullptr; //!<! List holding the Detector QA histograms. Lifetime is managed by the user.
 //  CorrectionCalculator qnc_calculator_; ///< calculator of the corrections
-  std::vector<HistogramCallBack> event_histograms_callback_; ///< event QA histograms
-  std::vector<std::unique_ptr<Qn::QAHistoBase>> event_histograms_; ///< event QA histograms
+  QAHistograms event_histograms_; ///< event QA histograms
   TTree *out_tree_ = nullptr;  //!<! Tree of Qn Vectors and event variables. Lifetime is managed by the user.
   bool event_passed_cuts_ = false; ///< variable holding status if an event passed the cuts.
 };

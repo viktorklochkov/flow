@@ -32,6 +32,7 @@
 #include "InputVariableManager.h"
 
 namespace Qn {
+
 /**
  * Base class of a QA histogram
  */
@@ -39,8 +40,60 @@ struct QAHistoBase {
   virtual ~QAHistoBase() = default;
   virtual void Fill() = 0;
   virtual void AddToList(TList *) = 0;
+  static inline void FillHistogram(std::unique_ptr<QAHistoBase> &histo) {histo->Fill();}
+};
+
+class QAHistogram {
+ public:
+  QAHistogram() = default;
+  virtual ~QAHistogram() = default;
+  QAHistogram(QAHistogram &&hist) = default;
+  QAHistogram &operator=(QAHistogram &&hist) = default;
+  using CallBack = std::function<std::unique_ptr<QAHistoBase>(Qn::InputVariableManager *)>;
+  explicit QAHistogram(CallBack callback) : callback_(std::move(callback)) {}
+  void Initialize(InputVariableManager *var) {
+    histogram_ = callback_(var);
+  }
+  void Fill() {histogram_->Fill();}
+  void AddToList(TList *list) {histogram_->AddToList(list);}
+ private:
+  CallBack callback_;
+  std::unique_ptr<QAHistoBase> histogram_; //!<!
 
 };
+
+class QAHistograms {
+ public:
+  QAHistograms() = default;
+  virtual ~QAHistograms() = default;
+  QAHistograms(QAHistograms &&hist) = default;
+  QAHistograms &operator=(QAHistograms &&hist) = default;
+  template<typename... Args>
+  void Add(Args&&... args) {
+    histograms_.emplace_back(std::forward<Args>(args)...);
+  }
+  void AddToList(TList *list) {
+    for (auto &histo : histograms_) {
+      histo.AddToList(list);
+    }
+  }
+
+  void Initialize(InputVariableManager *var) {
+    for (auto &histo : histograms_) {
+      histo.Initialize(var);
+    }
+  }
+
+  void Fill() {
+    for (auto &histo : histograms_) {
+      histo.Fill();
+    }
+  }
+ private:
+  std::vector<QAHistogram> histograms_;
+
+};
+
 /**
  * Wrapper for a ROOT histogram, which allows it to be filled by the correction manager.
  * @tparam HISTO type of histogram.
@@ -57,7 +110,7 @@ class QAHisto : public QAHistoBase {
     if (axis_) {
       for (unsigned int i = 0; i < axis_->size(); ++i) {
         auto histname = histo->GetName();
-        auto binname = std::string(histname) + "-" + TrimString(axis_->GetBinName(i));
+        auto binname = std::string(histname) + "_" + axis_->GetBinName(i);
         auto binhisto = (HISTO) ptr(histo)->Clone(binname.data());
         histo_.push_back(binhisto);
       }
@@ -84,9 +137,9 @@ class QAHisto : public QAHistoBase {
     auto bin = 0;
     if (axis_) {
       bin = axis_->FindBin(*axisvar_.begin());
-      if (bin > -1) ptr(histo_.at(bin))->FillN(variables[0].GetSize(), (variables[I].begin())...);
+      if (bin > -1) ptr(histo_.at(bin))->FillN(variables[0].size(), (variables[I].begin())...);
     } else {
-      ptr(histo_.at(bin))->FillN(variables[0].GetSize(), (variables[I].begin())...);
+      ptr(histo_.at(bin))->FillN(variables[0].size(), (variables[I].begin())...);
     }
   }
 
@@ -118,13 +171,6 @@ class QAHisto : public QAHistoBase {
 
  private:
 
-  std::string TrimString(std::string str) {
-    for (std::string::size_type s = str.length() - 1; s > 0; --s) {
-      if (str[s]=='0') str.erase(s, 1);
-      else break;
-    }
-    return str;
-  }
   template<typename T>
   T *ptr(T &obj) { return &obj; } ///Turns a reference into pointer.
   template<typename T>
@@ -140,6 +186,122 @@ class QAHisto : public QAHistoBase {
 /// specializations used in the framework
 using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::InputVariable>;
 using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::InputVariable>;
+
+
+namespace CallBacks {
+/**
+ * Helper function to create the QA histograms
+ * @param name name of the histogram
+ * @param axes axes used for the histogram
+ * @param weightname name of the weight
+ * @return unique pointer to the histogram
+ */
+inline QAHistogram::CallBack MakeHisto1D(const std::string &name,
+                                           const AxisD axis,
+                                           const std::string &weight) {
+  return QAHistogram::CallBack{[name, axis, weight](InputVariableManager *var) {
+    auto hist_name = name + "_A1_" + axis.Name() + "_W_" + weight;
+    auto axisname = std::string(";") + axis.Name();
+    auto size = static_cast<const int>(axis.size());
+    try { var->FindVariable(axis.Name()); }
+    catch (std::out_of_range &) {
+      std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
+                << " not found. Creating new channel variable."
+                << std::endl;
+      var->CreateChannelVariable(axis.Name(), axis.size());
+    }
+    float upper_edge = axis.GetLastBinEdge();
+    float lower_edge = axis.GetFirstBinEdge();
+    std::array<InputVariable, 2>
+        arr = {{var->FindVariable(axis.Name()), var->FindVariable(weight)}};
+    return std::make_unique<QAHisto1DPtr>(arr,
+                                          new TH1F(hist_name.data(), axisname.data(), size, lower_edge, upper_edge));
+  }};
+}
+
+/**
+ * Helper function to create the QA histograms
+ * @param name name of the histogram
+ * @param axes axes used for the histogram
+ * @param weightname name of the weight
+ * @return unique pointer to the histogram
+ */
+inline QAHistogram::CallBack MakeHisto2D(const std::string &name,
+                                                  const std::vector<AxisD> axes,
+                                                  const std::string &weight) {
+  return QAHistogram::CallBack{[name, axes, weight](InputVariableManager *var) {
+    auto hist_name = name + "_A1_" + axes[0].Name() + "_A2_" + axes[1].Name() + "_W_" + weight;
+    auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
+    auto size_x = static_cast<const int>(axes[0].size());
+    auto size_y = static_cast<const int>(axes[1].size());
+    for (const auto &axis : axes) {
+      try { var->FindVariable(axis.Name()); }
+      catch (std::out_of_range &) {
+        std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
+                  << " not found. Creating new channel variable." << std::endl;
+        var->CreateChannelVariable(axis.Name(), axis.size());
+      }
+    }
+    auto upper_edge_x = axes[0].GetLastBinEdge();
+    auto lower_edge_x = axes[0].GetFirstBinEdge();
+    auto upper_edge_y = axes[1].GetLastBinEdge();
+    auto lower_edge_y = axes[1].GetFirstBinEdge();
+    std::array<InputVariable, 3>
+        arr = {{var->FindVariable(axes[0].Name()), var->FindVariable(axes[1].Name()),
+                var->FindVariable(weight)}};
+    auto histo = new TH2F(hist_name.data(), axisname.data(),
+                          size_x, lower_edge_x, upper_edge_x,
+                          size_y, lower_edge_y, upper_edge_y);
+    return std::make_unique<QAHisto2DPtr>(arr, histo);
+  }};
+}
+
+/**
+ * Helper function to create the QA histograms
+ * @param name name of the histogram
+ * @param axes axes used for the histogram
+ * @param weightname name of the weight
+ * @return unique pointer to the histogram
+ */
+inline QAHistogram::CallBack MakeHisto2DArray(const std::string &name,
+                                                       const std::vector<AxisD> axes,
+                                                       const std::string &weight,
+                                                       const AxisD &histaxis) {
+  return QAHistogram::CallBack{[name, histaxis, axes, weight](InputVariableManager *var) {
+    auto hist_name = name + "_A1_" + axes[0].Name() + "_A2_" + axes[1].Name() + "_W_" + weight;
+    auto axisname = std::string(";") + axes[0].Name() + std::string(";") + axes[1].Name();
+    auto size_x = static_cast<const int>(axes[0].size());
+    auto size_y = static_cast<const int>(axes[1].size());
+    for (const auto &axis : axes) {
+      try { var->FindVariable(axis.Name()); }
+      catch (std::out_of_range &) {
+        std::cout << "QAHistogram " << name << ": Variable " << axis.Name()
+                  << " not found. Creating new channel variable." << std::endl;
+        var->CreateChannelVariable(axis.Name(), axis.size());
+      }
+    }
+    auto upper_edge_x = axes[0].GetLastBinEdge();
+    auto lower_edge_x = axes[0].GetFirstBinEdge();
+    auto upper_edge_y = axes[1].GetLastBinEdge();
+    auto lower_edge_y = axes[1].GetFirstBinEdge();
+    std::array<InputVariable, 3>
+        arr = {{var->FindVariable(axes[0].Name()), var->FindVariable(axes[1].Name()),
+                var->FindVariable(weight)}};
+    auto histo = new TH2F(hist_name.data(),
+                          axisname.data(),
+                          size_x,
+                          lower_edge_x,
+                          upper_edge_x,
+                          size_y,
+                          lower_edge_y,
+                          upper_edge_y);
+    auto haxis = std::make_unique<Qn::AxisD>(histaxis);
+    auto haxisvar = var->FindVariable(histaxis.Name());
+    return std::make_unique<QAHisto2DPtr>(arr, histo, std::move(haxis), haxisvar);
+  }};
+}
+
+}
 
 }
 

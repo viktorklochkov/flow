@@ -255,8 +255,8 @@ void SubEventChannels::AttachQAHistograms(TList *list) {
     correction->AttachQAHistograms(detectorConfigurationList);
   }
   /* the own QA average Qn vector components histogram */
-  const auto qaname = std::string(szQAQnAverageHistogramName) + " " +  GetName();
-  fQAQnAverageHistogram = std::make_unique<CorrectionProfileComponents>(qaname,qaname,GetEventClassVariablesSet());
+  const auto qaname = std::string(szQAQnAverageHistogramName) + " " + GetName();
+  fQAQnAverageHistogram = std::make_unique<CorrectionProfileComponents>(qaname, qaname, GetEventClassVariablesSet());
   /* get information about the configured harmonics to pass it for histogram creation */
   Int_t nNoOfHarmonics = this->GetNoOfHarmonics();
   auto harmonicsMap = new Int_t[nNoOfHarmonics];
@@ -349,8 +349,12 @@ void SubEventChannels::AddCorrectionOnInputData(CorrectionOnInputData *correctio
 void SubEventChannels::FillQAHistograms() {
   if (fQAMultiplicityBefore3D && fQAMultiplicityAfter3D) {
     for (const auto &dataVector : fDataVectorBank) {
-      fQAMultiplicityBefore3D->Fill(fEventClassVariables->At(fQACentralityVarId).GetValue(),fChannelMap[dataVector.GetId()],dataVector.Weight());
-      fQAMultiplicityAfter3D->Fill(fEventClassVariables->At(fQACentralityVarId).GetValue(),fChannelMap[dataVector.GetId()],dataVector.EqualizedWeight());
+      fQAMultiplicityBefore3D->Fill(fEventClassVariables->At(fQACentralityVarId).GetValue(),
+                                    fChannelMap[dataVector.GetId()],
+                                    dataVector.Weight());
+      fQAMultiplicityAfter3D->Fill(fEventClassVariables->At(fQACentralityVarId).GetValue(),
+                                   fChannelMap[dataVector.GetId()],
+                                   dataVector.EqualizedWeight());
     }
   }
   if (fQAQnAverageHistogram) {
@@ -404,15 +408,14 @@ void SubEventChannels::FillOverallQnVectorCorrectionStepList(std::set<Correction
   fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 
-
-
 /// Builds raw Qn vector before Q vector corrections and before input
 /// data corrections but considering the chosen calibration method.
 /// This is a channelized configuration so this Q vector will NOT be
 /// the one to be used for subsequent Q vector corrections.
 void SubEventChannels::BuildRawQnVector() {
+  fRawQnVector.SetNormalization(QVector::Normalization::NONE);
   for (const auto &dataVector : fDataVectorBank) {
-    fRawQnVector.Add(dataVector.Phi(), dataVector.Weight());
+    fRawQnVector.Add(dataVector.Phi(), dataVector.RadialOffset(), dataVector.Weight());
   }
   fRawQnVector.CheckQuality();
   fRawQnVector.Normal(fDetector->GetNormalizationMethod());

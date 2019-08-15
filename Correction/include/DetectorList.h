@@ -6,26 +6,26 @@ class DetectorList {
                    Qn::DetectorType type,
                    InputVariable phi,
                    InputVariable weight,
+                   InputVariable radial_offset,
                    const std::vector<Qn::AxisD> &axes,
                    std::bitset<Qn::QVector::kmaxharmonics> harmonics,
                    QVector::Normalization norm) {
     auto find = [&name](const Detector &a) { return name==a.GetName(); };
     if (type==Qn::DetectorType::CHANNEL) {
       if (std::find_if(channel_detectors_.begin(), channel_detectors_.end(), find)==channel_detectors_.end()) {
-        channel_detectors_.emplace_back(name, type, axes, phi, weight, harmonics, norm);
+        channel_detectors_.emplace_back(name, type, axes, phi, weight, radial_offset, harmonics, norm);
 
       }
     } else if (type==Qn::DetectorType::TRACK) {
       if (std::find_if(tracking_detectors_.begin(), tracking_detectors_.end(), find)==tracking_detectors_.end()) {
-        tracking_detectors_.emplace_back(name, type, axes, phi, weight, harmonics, norm);
+        tracking_detectors_.emplace_back(name, type, axes, phi, weight, radial_offset, harmonics, norm);
       }
     }
   }
 
-  void AddCutCallBack(const std::string &name,
-                      std::function<std::unique_ptr<CutBase>(Qn::InputVariableManager *man)> cut) {
+  void AddCut(const std::string &name, CorrectionCut::CallBack cut, bool is_channel_wise) {
     auto &det = FindDetector(name);
-    det.AddCutCallBack(std::move(cut));
+    det.AddCut(std::move(cut), is_channel_wise);
   }
 
   Detector &FindDetector(const std::string name) {
@@ -52,14 +52,14 @@ class DetectorList {
     }
   }
 
-  void InitializeOnNode(CorrectionManager *manager) {
+  void Initialize(CorrectionManager *manager) {
     for (auto &detector : channel_detectors_) {
       all_detectors_.push_back(&detector);
-      detector.InitializeOnNode(manager);
+      detector.Initialize(manager);
     }
     for (auto &detector : tracking_detectors_) {
       all_detectors_.push_back(&detector);
-      detector.InitializeOnNode(manager);
+      detector.Initialize(manager);
     }
   }
 
@@ -108,9 +108,9 @@ class DetectorList {
     }
   }
 
-  void AttachQAHistograms(TList *list, bool fill_qa, bool fill_validation, InputVariableManager *var) {
+  void AttachQAHistograms(TList *list, bool fill_qa, bool fill_validation) {
     for (auto &detector: all_detectors_) {
-      auto detector_list = detector->CreateQAHistogramList(fill_qa, fill_validation, var);
+      auto detector_list = detector->CreateQAHistogramList(fill_qa, fill_validation);
       list->Add(detector_list);
     }
   }

@@ -1,4 +1,5 @@
-#include <utility>
+#ifndef QN_DETECTOR_H
+#define QN_DETECTOR_H
 
 // Flow Vector Correction Framework
 //
@@ -17,9 +18,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef FLOW_DETECTOR_H
-#define FLOW_DETECTOR_H
-
+#include <utility>
 #include <memory>
 #include <utility>
 
@@ -28,7 +27,6 @@
 #include "CorrectionAxisSet.h"
 #include "SubEventChannels.h"
 #include "SubEventTracks.h"
-
 #include "InputVariableManager.h"
 #include "DataContainer.h"
 #include "QVector.h"
@@ -47,29 +45,29 @@ enum class DetectorType {
 };
 
 class Detector {
-  using CutCallBack = std::function<std::unique_ptr<CutBase>(Qn::InputVariableManager *)>;
-  using HistogramCallBack = std::function<std::unique_ptr<QAHistoBase>(Qn::InputVariableManager *)>;
  public:
   Detector(std::string name,
            DetectorType type,
            std::vector<AxisD> axes,
            InputVariable phi,
            InputVariable weight,
+           InputVariable radial_offset,
            std::bitset<Qn::QVector::kmaxharmonics> harmonics,
            QVector::Normalization norm)
       :
       phi_(std::move(phi)),
       weight_(std::move(weight)),
+      radial_offset_(std::move(radial_offset)),
       name_(std::move(name)),
       type_(type),
-      nchannels_(phi_.GetSize()),
+      nchannels_(phi_.size()),
       harmonics_bits_(harmonics),
       q_vector_normalization_method_(norm) {
     sub_events_.AddAxes(axes);
   }
 
-  Detector(Detector&& detector) = default;
-  Detector& operator=(Detector && detector) = default;
+  Detector(Detector &&detector) = default;
+  Detector &operator=(Detector &&detector) = default;
 
   /**
    * @brief Clears data before filling new event.
@@ -82,20 +80,13 @@ class Detector {
 
   /**
    * @brief Adds a cut to the detector
-   * @param cut unique pointer to the cut. It is moved into the function and cannot be reused!
+   * @param cut unique pointer to the cut.
    */
-  void AddCutCallBack(CutCallBack callback) {
-    cuts_callback_.push_back(std::move(callback));
-  }
-
-  void CreateCuts(Qn::InputVariableManager *variable_manager) {
-    for (auto &proto : cuts_callback_) {
-      auto cut = proto(variable_manager);
-      if (cut->IsChannelWise()) {
-        cuts_.AddCut(std::move(cut));
-      } else {
-        int_cuts_.AddCut(std::move(cut));
-      }
+  void AddCut(CorrectionCut::CallBack callback, bool is_channel_wise) {
+    if (is_channel_wise) {
+      cuts_.AddCut(callback);
+    } else {
+      int_cuts_.AddCut(callback);
     }
   }
 
@@ -103,8 +94,8 @@ class Detector {
    * @brief Adds a QA histogram to the detector.
    * @param histo pointer to the histogram.
    */
-  void AddHistogramCallBack(HistogramCallBack histo) {
-    histograms_callback.push_back(histo);
+  void AddHistogramCallBack(QAHistogram::CallBack histo) {
+    histograms_.Add(std::move(histo));
   }
 
   void SetOutputQVector(QVector::CorrectionStep step) {
@@ -115,40 +106,27 @@ class Detector {
     correction_configuration_ = std::move(config);
   }
 
-  void InitializeOnNode(CorrectionManager *manager);
-
-  void CreateHistograms(InputVariableManager *var) {
-    for (auto &callback : histograms_callback) {
-      histograms_.push_back(callback(var));
-    }
-  }
+  void Initialize(CorrectionManager *manager);
 
   /**
    * @brief Fills the data into the data vectors, histograms and cut reports after the cuts have been checked.
    */
   void FillData() {
-    long i = 0;
     if (!int_cuts_.CheckCuts(0)) return;
-    for (auto &histo : histograms_) {
-      histo->Fill();
-    }
-    for (const auto phi : phi_) {
-      if (!cuts_.CheckCuts(i)) {
-        ++i;
-        continue;
-      }
+    histograms_.Fill();
+    for (unsigned int i = 0; i < phi_.size(); ++i) {
+      if (!cuts_.CheckCuts(i)) continue;
+      /// Integrated case (detector only has one bin)
       if (input_variables_.empty()) {
-        sub_events_.At(0)->AddDataVector(phi, *(weight_.begin() + i), i);
+        sub_events_.At(0)->AddDataVector(i, phi_[i], weight_[i], radial_offset_[i]);
+        /// differential case (detector has more than one bin)
       } else {
-        long icoord = 0;
-        for (const auto &var : input_variables_) {
-          coordinates_.at(icoord) = *(var.begin() + i);
-          ++icoord;
+        for (unsigned int icoord = 0; icoord < input_variables_.size(); ++icoord) {
+          coordinates_.at(icoord) = input_variables_[icoord][i];
         }
         const auto ibin = sub_events_.FindBin(coordinates_);
-        if (ibin > -1) sub_events_.At(ibin)->AddDataVector(phi, *(weight_.begin() + i), i);
+        if (ibin > -1) sub_events_.At(ibin)->AddDataVector(i, phi_[i], weight_[i], radial_offset_[i]);
       }
-      ++i;
     }
   }
 
@@ -196,8 +174,8 @@ class Detector {
 
   void AttachToTree(TTree *tree) {
     for (const auto &qvec : q_vectors_) {
-      auto is_output_variable = std::find(output_tree_q_vectors_.begin(),output_tree_q_vectors_.end(),qvec.first);
-      if (is_output_variable != output_tree_q_vectors_.end()) {
+      auto is_output_variable = std::find(output_tree_q_vectors_.begin(), output_tree_q_vectors_.end(), qvec.first);
+      if (is_output_variable!=output_tree_q_vectors_.end()) {
         auto suffix = kCorrectionStepNamesArray[qvec.first];
         auto name = name_ + "_" + suffix;
         tree->Branch(name.data(), qvec.second.get());
@@ -217,11 +195,12 @@ class Detector {
   std::string GetName() const { return name_; }
   std::string GetBinName(unsigned int id) const { return sub_events_.GetBinDescription(id); }
   SubEvent *GetSubEvent(unsigned int ibin) { return sub_events_.At(ibin).get(); }
-  TList *CreateQAHistogramList(bool fill_qa, bool fill_validation, InputVariableManager *var);
+  TList *CreateQAHistogramList(bool fill_qa, bool fill_validation);
 
  private:
   InputVariable phi_; /// variable holding the azimuthal angle
   InputVariable weight_; /// variable holding the weight which is used for the calculation of the Q vector.
+  InputVariable radial_offset_; /// variable holding the radial offset
   std::string name_; /// name of  the detector
   DetectorType type_; /// type of detector
   int nchannels_ = 0; /// number of channels in case of channel detector
@@ -229,19 +208,15 @@ class Detector {
   Qn::QVector::Normalization q_vector_normalization_method_ = Qn::QVector::Normalization::NONE;
   std::vector<InputVariable> input_variables_; /// variables used for the binning of the Q vector.
   std::vector<float> coordinates_;  ///  vector holding the temporary coordinates of one track or channel.
-  std::function<void(SubEvent *)> correction_configuration_; /// configures the correction steps applied in the sub event.
+  std::function<void(SubEvent *)>
+      correction_configuration_; /// configures the correction steps applied in the sub event.
   std::map<QVector::CorrectionStep, std::unique_ptr<DataContainerQVector>> q_vectors_;
   std::vector<QVector::CorrectionStep> output_tree_q_vectors_;
   CorrectionCuts cuts_; /// per channel selection  cuts
   CorrectionCuts int_cuts_; /// integrated selection cuts
-  std::vector<std::unique_ptr<QAHistoBase>> histograms_; /// QA histograms of the detector
+  QAHistograms histograms_; /// QA histograms of the detector
   Qn::DataContainer<std::unique_ptr<SubEvent>, AxisD> sub_events_;
-  
   Qn::DetectorList *detectors_ = nullptr;
-
-  std::vector<CutCallBack> cuts_callback_; /// functions creating cuts at initializtion time
-  std::vector<HistogramCallBack> histograms_callback; /// functions creating QA histograms at initialization time
-
 };
 
 }

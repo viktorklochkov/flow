@@ -34,7 +34,6 @@ struct CutBase {
   virtual bool Check() const = 0;
   virtual bool Check(unsigned int) const = 0;
   virtual std::string Name() const = 0;
-  virtual bool IsChannelWise() const = 0;
 };
 
 /**
@@ -46,8 +45,8 @@ struct CutBase {
 template<typename VAR, typename... T>
 class Cut : public CutBase {
  public:
-  Cut(VAR (&arr)[sizeof...(T)], std::function<bool(T...)> lambda, std::string name, bool channelwise = false)
-      : lambda_(lambda), name_(std::move(name)), channelwise_(channelwise) {
+  Cut(VAR (&arr)[sizeof...(T)], std::function<bool(T...)> lambda, std::string name)
+      : lambda_(lambda), name_(std::move(name)) {
     int i = 0;
     for (auto &a : arr) {
       variables_.at(i) = std::move(a);
@@ -60,8 +59,6 @@ class Cut : public CutBase {
   bool Check() const override { return CheckImpl(0, std::make_index_sequence<sizeof...(T)>{}); }
 
   std::string Name() const override { return name_; }
-
-  bool IsChannelWise() const override { return channelwise_; }
 
  private:
   /**
@@ -77,7 +74,6 @@ class Cut : public CutBase {
   std::array<VAR, sizeof...(T)> variables_; /// array of the variables used in the cut.
   std::function<bool(T...)> lambda_; /// function used to evaluate the cut.
   std::string name_;
-  bool channelwise_;
 };
 
 namespace Details {
@@ -86,8 +82,8 @@ using CutDataType = T &;
 template<typename T,typename VAR, std::size_t N, typename FUNC, std::size_t... Is>
 std::unique_ptr<Cut<VAR, CutDataType<T, Is>...>> MakeUniqueCutImpl(std::index_sequence<Is...>,
                                                                    VAR (&arr)[N],
-                                                                   FUNC &&func, std::string name, bool ischannelwise) {
-  return std::make_unique<Cut<VAR, CutDataType<T, Is>...>>(arr, std::forward<FUNC>(func), name, ischannelwise);
+                                                                   FUNC &&func, std::string name) {
+  return std::make_unique<Cut<VAR, CutDataType<T, Is>...>>(arr, std::forward<FUNC>(func), name);
 }
 }
 
@@ -100,8 +96,8 @@ std::unique_ptr<Cut<VAR, CutDataType<T, Is>...>> MakeUniqueCutImpl(std::index_se
  * @return Returns a unique pointer to the cut.
  */
 template<typename T, std::size_t N, typename FUNC, typename VAR>
-std::unique_ptr<CutBase> MakeUniqueCut(VAR (&arr)[N], FUNC &&func, std::string name, bool ischannelwise) {
-  return Details::MakeUniqueCutImpl<T>(std::make_index_sequence<N>{}, arr, std::forward<FUNC>(func), name, ischannelwise);
+std::unique_ptr<CutBase> MakeUniqueCut(VAR (&arr)[N], FUNC &&func, std::string name) {
+  return Details::MakeUniqueCutImpl<T>(std::make_index_sequence<N>{}, arr, std::forward<FUNC>(func), name);
 }
 }
 

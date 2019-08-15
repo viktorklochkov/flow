@@ -106,8 +106,8 @@ void SubEvent::BuildQnVector() {
   fPlainQnVector.SetNormalization(QVector::Normalization::NONE);
   fPlainQ2nVector.SetNormalization(QVector::Normalization::NONE);
   for (const auto &dataVector : fDataVectorBank) {
-    fPlainQnVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
-    fPlainQ2nVector.Add(dataVector.Phi(), dataVector.EqualizedWeight());
+    fPlainQnVector.Add(dataVector.Phi(), dataVector.RadialOffset(), dataVector.EqualizedWeight());
+    fPlainQ2nVector.Add(dataVector.Phi(), dataVector.RadialOffset(), dataVector.EqualizedWeight());
   }
   /* check the quality of the Qn vector */
   fPlainQnVector.CheckQuality();

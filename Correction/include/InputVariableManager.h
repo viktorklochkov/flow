@@ -73,7 +73,7 @@ class InputVariableManager {
     }
   }
 
-  void InitializeOnNode() {
+  void Initialize() {
     variable_values_float_ = new f_type[kMaxSize]; /// non-owning pointer to variables
     variable_values_ones_ = new f_type[kMaxSize]; /// values container of ones.
 
@@ -83,7 +83,14 @@ class InputVariableManager {
     variable_map_["Ones"].values_container_ = variable_values_ones_;
     for (int i = 0; i < kMaxSize; ++i) { variable_values_float_[i] = NAN; }
     for (unsigned int i = 0; i < kMaxSize; ++i) { variable_values_ones_[i] = 1.0; }
+  }
 
+  void InitVariable(InputVariable &var) {
+    if (var.name_ == "Ones") {
+      var.values_container_ = variable_values_ones_;
+    } else {
+      var.values_container_ = variable_values_float_;
+    }
   }
 
   /**

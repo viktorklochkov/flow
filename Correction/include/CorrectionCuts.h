@@ -1,3 +1,5 @@
+#include <utility>
+
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -30,33 +32,52 @@
 #include "Cuts.h"
 
 namespace Qn {
+
+class CorrectionCut {
+ public:
+  using CallBack = std::function<std::unique_ptr<Qn::CutBase>(Qn::InputVariableManager *)>;
+  CorrectionCut(CallBack callback) : callback_(callback) {}
+  ~CorrectionCut() = default;
+  CorrectionCut(CorrectionCut &&) = default;
+  void Initialize(Qn::InputVariableManager *var) {
+    cut_ = callback_(var);
+  }
+  std::string Name() const {
+    return cut_->Name();
+  }
+  bool Check(unsigned int i) const {
+    return cut_->Check(i);
+  }
+  bool Check() const {
+    return cut_->Check();
+  }
+ private:
+  std::unique_ptr<CutBase> cut_;
+  CorrectionCut::CallBack callback_;
+};
+
 /**
  * Manages cuts class and allows checking if the current variables passes the cut
  */
 class CorrectionCuts {
  public:
-  using CutCallBack = std::function<std::unique_ptr<CutBase>(Qn::InputVariableManager*)>;
-  CorrectionCuts(CorrectionCuts&& cuts) = default;
-  CorrectionCuts & operator=(CorrectionCuts&& cuts) = default;
   CorrectionCuts() = default;
-  ~CorrectionCuts() { delete[] var_values_; }
-  /**
-   * @brief Adds a cut to the manager.
-   * @param cut pointer to the cut.
-   */
-  void AddCut(std::unique_ptr<CutBase> cut) {
-    cuts_.push_back(std::move(cut));
-  }
-  void AddCutCallBack(CutCallBack callback) {
-    cuts_callback_.push_back(callback);
+  CorrectionCuts(CorrectionCuts &&cuts) = default;
+  CorrectionCuts &operator=(CorrectionCuts &&cuts) = default;
+  virtual ~CorrectionCuts() { delete[] var_values_; }
+//  /**
+//   * @brief Adds a cut to the manager.
+//   * @param cut pointer to the cut.
+//   */
+  void AddCut(CorrectionCut::CallBack callback) {
+    cuts_.emplace_back(callback);
   }
 
-  void InitializeCuts(Qn::InputVariableManager *var) {
-    for (auto & proto : cuts_callback_) {
-      cuts_.push_back(proto(var));
+  void Initialize(Qn::InputVariableManager *var) {
+    for (auto &cut : cuts_) {
+      cut.Initialize(var);
     }
   }
-
 
   /**
    * Checks if the current variables pass the cuts
@@ -70,7 +91,7 @@ class CorrectionCuts {
     ++*((cut_weight_).begin() + i);
     bool passed = true;
     for (auto &cut : cuts_) {
-      bool ipass = cut->Check(i) && passed;
+      bool ipass = cut.Check(i) && passed;
       if (ipass) {
         ++*cut_weight_.at(i + n_channels_*icut);
       }
@@ -101,7 +122,7 @@ class CorrectionCuts {
    * @param report_name name of the histogram.
    * @param n_channels number of channels.
    */
-  void CreateCutReport(const std::string& report_name, std::size_t n_channels = 1) {
+  void CreateCutReport(const std::string &report_name, std::size_t n_channels = 1) {
     if (!cuts_.empty()) {
       n_channels_ = n_channels;
       auto offset = n_channels_*(cuts_.size() + 1);
@@ -129,7 +150,7 @@ class CorrectionCuts {
         int icut = 2;
         histo->GetXaxis()->SetBinLabel(1, "all");
         for (auto &cut : cuts_) {
-          histo->GetXaxis()->SetBinLabel(icut, cut->Name().data());
+          histo->GetXaxis()->SetBinLabel(icut, cut.Name().data());
           ++icut;
         }
         std::array<InputVariable, 2> arr = {{cut_number, cut_weight_}};
@@ -146,7 +167,7 @@ class CorrectionCuts {
         histo->GetXaxis()->SetBinLabel(1, "all");
         int icut = 2;
         for (auto &cut : cuts_) {
-          histo->GetXaxis()->SetBinLabel(icut, cut->Name().data());
+          histo->GetXaxis()->SetBinLabel(icut, cut.Name().data());
           ++icut;
         }
         std::array<InputVariable, 3> arr = {{cut_number, cut_channel_, cut_weight_}};
@@ -170,11 +191,30 @@ class CorrectionCuts {
   InputVariable cut_number; /// Variable of saving cut number
   InputVariable cut_weight_; /// Variable saving a weight used for filling the cut histogram
   InputVariable cut_channel_; /// Variable saving the channel number
-  std::vector<std::unique_ptr<CutBase>> cuts_; /// vector of cuts which are applied
-  std::vector<CutCallBack> cuts_callback_; /// vector of cuts which are applied
-  std::unique_ptr<QAHistoBase> report_; /// histogram of the cut report.
+  std::vector<CorrectionCut> cuts_; /// vector of cuts which are applied
+  std::unique_ptr<QAHistoBase> report_; //!<! histogram of the cut report.
+
+  /// \cond CLASSIMP
+ ClassDef(CorrectionCuts, 1);
+  /// \endcond
 
 };
+
+namespace CallBacks {
+
+template<std::size_t N, typename FUNCTION>
+CorrectionCut::CallBack MakeCut(const char *const (&names)[N], FUNCTION lambda, const std::string &cut_description) {
+  return CorrectionCut::CallBack{[names, lambda, cut_description](Qn::InputVariableManager *var) {
+    InputVariable arr[N];
+    int i = 0;
+    for (auto &name : names) {
+      arr[i] = var->FindVariable(name);
+      ++i;
+    }
+    return MakeUniqueCut<const double>(arr, lambda, cut_description);
+  }};
+}
+}
 
 }
 

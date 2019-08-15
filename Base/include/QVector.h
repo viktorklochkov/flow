@@ -78,6 +78,7 @@ class QVector {
  public:
   static constexpr int kmaxharmonics = 8;
   static constexpr float kminimumweight = 1e-6;
+  static constexpr float kPi = 3.14159265358979323846;
   /**
    * @enum available correction steps in the order of application
    */
@@ -340,7 +341,7 @@ class QVector {
    * @param i i-th harmonic
    * @return event plane angle
    */
-  inline float psi(const unsigned int i) const { return std::atan2(y(i), x(i)); }
+  inline float psi(const unsigned int i) const { return std::atan2(y(i), x(i)) + kPi; }
   /**
    * Get the normalization method. of the Q-vector
    * @return normalization method
@@ -370,6 +371,26 @@ class QVector {
       if (bits_.test(h - 1)) {
         q_[pos].x += (weight*std::cos(h*harmonic_multiplier_*phi));
         q_[pos].y += (weight*std::sin(h*harmonic_multiplier_*phi));
+        ++pos;
+      }
+    }
+    sum_weights_ += weight;
+    n_ += 1;
+  }
+
+  /**
+ * Adds a new data vector to the qvector.
+ * @param phi angle of the particle or channel.
+ * @param offset offset of the phi channel.
+ * @param weight weight of the particle or channel e.g. channel multiplicity.
+ */
+  inline void Add(const double phi, const double offset, const double weight) {
+    if (weight < kminimumweight) return;
+    unsigned int pos = 0;
+    for (unsigned int h = 1; h <= maximum_harmonic_; ++h) {
+      if (bits_.test(h - 1)) {
+        q_[pos].x += (weight*std::cos(h*harmonic_multiplier_*phi)*offset);
+        q_[pos].y += (weight*std::sin(h*harmonic_multiplier_*phi)*offset);
         ++pos;
       }
     }

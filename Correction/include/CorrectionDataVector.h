@@ -1,76 +1,90 @@
-#ifndef QNCORRECTIONS_DATAVECTORS_H
-#define QNCORRECTIONS_DATAVECTORS_H
+#ifndef QN_DATAVECTOR_H
+#define QN_DATAVECTOR_H
 
-/***************************************************************************
- * Package:       FlowVectorCorrections                                    *
- * Authors:       Jaap Onderwaater, GSI, jacobus.onderwaater@cern.ch       *
- *                Ilya Selyuzhenkov, GSI, ilya.selyuzhenkov@gmail.com      *
- *                Víctor González, UCM, victor.gonzalez@cern.ch            *
- *                Contributors are mentioned in the code where appropriate.*
- * Development:   2012-2016                                                *
- * See cxx source for GPL licence et. al.                                  *
- ***************************************************************************/
+// Flow Vector Correction Framework
+//
+// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
+// For a full list of contributors please see docs/Credits
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/// \file QnCorrectionsDataVector.h
-/// \brief Class that model data vectors from detectors within the Q vector correction framework
-///
-/// As it is today, a data vector is just an azimuthal angle. As
-/// it is intended to be incorporated into an array of clones the
-/// constructor is really simple and instead the setters are used
-/// to initialize its members
-///
-
-#include <Rtypes.h>
 namespace Qn {
-/// \class QnCorrectionsDataVector
-/// \brief Class that models and encapsulates a data vector
-///
-/// \author Jaap Onderwaater <jacobus.onderwaater@cern.ch>, GSI
-/// \author Ilya Selyuzhenkov <ilya.selyuzhenkov@gmail.com>, GSI
-/// \author Víctor González <victor.gonzalez@cern.ch>, UCM
-/// \date Feb 01, 2016
-
+/**
+ * @class CorrectionDataVector
+ * @brief Class models a data vector.
+ * It allows to model data vector of different detector types.
+ */
 class CorrectionDataVector {
  public:
+
+  /**
+   * Default constructor
+   */
   CorrectionDataVector() = default;
-  CorrectionDataVector(Int_t id, Float_t phi, Float_t weight) :
-      fId(id),
-      fPhi(phi),
-      fWeight(weight),
-      fEqualizedWeight(weight) {}
+
+  /**
+   * Constructor
+   * @param id id of the channel
+   * @param phi azimuthal angle of the channel or track
+   * @param weight weight applied to the channel or track
+   * @param radial_offset radial offset of the channel is only used for certain detector geometries.
+   */
+  CorrectionDataVector(int id, float phi, float weight, float radial_offset) :
+      id_(id),
+      phi_(phi),
+      radial_offset_(radial_offset),
+      weight_(weight),
+      equalized_weight_(weight) {}
+
   ~CorrectionDataVector() = default;
 
-  /// Sets the data vector azimuthal angle
-  /// \param phi the azimuthal angle
-  inline void SetPhi(const Float_t phi) { fPhi = phi; }
-  /// Sets the channel id associated with the data vector
-  /// \param id channel id
-  inline void SetId(const Int_t id) { fId = id; }
-  /// Sets the raw weight
-  /// \param weight raw weight from the detector channel
-  inline void SetWeight(const Float_t weight) { fWeight = weight; }
-  /// Sets the equalized weight
-  /// \param weight equalized weight after channel equalization
-  inline void SetEqualizedWeight(const Float_t weight) { fEqualizedWeight = weight; }
-  /// Gets the channel id associated with the data vector
-  /// \return the channel id
-  constexpr Int_t GetId() const { return fId; }
-  /// Gets the azimuthal angle for the data vector
-  /// \return phi
-  constexpr Float_t Phi() const { return fPhi; }
-  /// Gets the weight for the data vector
-  /// \return defaults to 1.0
-  constexpr Float_t Weight() const { return fWeight; }
-  /// Gets the equalized weight for the data vector
-  /// \return defaults to weights
-  constexpr Float_t EqualizedWeight() const { return fEqualizedWeight; }
- private:
-  Int_t   fId;                  //!<! the id associated with the data vector
-  Float_t fPhi;                 //!<! the azimuthal angle of the data vector
-  Float_t fWeight;              //!<! raw weight assigned to the data vector
-  Float_t fEqualizedWeight;     //!<! eq weight assigned to the data vector
+  /**
+   * Sets the equalized weight
+   * @param weight equalized weight after channel equalization
+   */
+  inline void SetEqualizedWeight(const float weight) { equalized_weight_ = weight; }
+  /**
+   * Gets the channel id associated with the data vector
+   * @return the channel id
+   */
+  constexpr int GetId() const { return id_; }
 
-  static constexpr Float_t fMinimumSignificantValue = 1.e-6;  ///< the minimum value that will be considered
+  /**
+   * Gets the azimuthal angle for the data vector
+   * @return phi
+   */
+  constexpr float Phi() const { return phi_; }
+  /**
+   * Gets the radial offset of the data vector
+   * @return radial offset
+   */
+  constexpr float RadialOffset() const {return radial_offset_; }
+  /**
+   * Gets the weight for the data vector
+   * @return defaults to 1.0
+   */
+  constexpr float Weight() const { return weight_; }
+  /**
+   * Gets the equalized weight for the data vector
+   * @return defaults to weights
+   */
+  constexpr float EqualizedWeight() const { return equalized_weight_; }
+ private:
+  int   id_;                    //!<! the id associated with the data vector
+  float phi_;                   //!<! the azimuthal angle of the data vector
+  float radial_offset_; //!<! radial offset of the channel represented by the data vector
+  float weight_;                //!<! raw weight assigned to the data vector
+  float equalized_weight_;      //!<! eq weight assigned to the data vector
 };
 }
 #endif /* QNCORRECTIONS_DATAVECTORS_H */

@@ -228,15 +228,14 @@ class SubEvent {
   
   virtual std::map<std::string, Report> ReportOnCorrections() const = 0;
   
-  /// New data vector for the detector configuration
-  /// Pure virtual function
-  /// \param variableContainer pointer to the variable content bank
-  /// \param phi azimuthal angle
-  /// \param weight the weight of the data vector
-  /// \param channelId the channel Id that originates the data vector
-  /// \return kTRUE if the data vector was accepted and stored
-  void AddDataVector(const Double_t phi, const Double_t weight, const Int_t channelId) {
-    fDataVectorBank.emplace_back(channelId, phi, weight);
+  /**
+   * Adds a data vector to the sub event.
+   * @tparam Args type of the arguments of the CorrectionDataVector constructor.
+   * @param args arguments of the CorrectionDataVector constructor.
+   */
+  template<typename... Args>
+  void AddDataVector(Args&&... args) {
+    fDataVectorBank.emplace_back(std::forward<Args>(args)...);
   }
   /// Clean the configuration to accept a new event
   /// Pure virtual function

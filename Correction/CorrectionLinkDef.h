@@ -53,4 +53,6 @@
 #pragma link C++ class Qn::Recentering+;
 #pragma link C++ class Qn::TwistAndRescale+;
 #pragma link C++ class Qn::DataContainer<std::unique_ptr<Qn::SubEvent>,Qn::Axis<double>>+;
+
+
 #endif
