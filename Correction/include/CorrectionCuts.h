@@ -193,11 +193,6 @@ class CorrectionCuts {
   InputVariable cut_channel_; /// Variable saving the channel number
   std::vector<CorrectionCut> cuts_; /// vector of cuts which are applied
   std::unique_ptr<QAHistoBase> report_; //!<! histogram of the cut report.
-
-  /// \cond CLASSIMP
- ClassDef(CorrectionCuts, 1);
-  /// \endcond
-
 };
 
 namespace CallBacks {
