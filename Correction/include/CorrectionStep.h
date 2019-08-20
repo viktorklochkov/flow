@@ -144,7 +144,7 @@ class CorrectionStep {
         applying = false;
         break;
     }
-    return std::make_pair(collecting, applyingA);
+    return std::make_pair(collecting, applying);
   }
   State GetState() { return fState; }
  protected:
