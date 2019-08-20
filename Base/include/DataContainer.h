@@ -866,7 +866,7 @@ inline void DataContainer<Stats, AxisD>::NDraw(Option_t *option, const std::stri
 // Template specializations for bits //
 //-----------------------------------//
 template<>
-inline void DataContainer<Stats, float>::SetSetting(const unsigned int bits) {
+inline void DataContainer<Stats, AxisD>::SetSetting(const unsigned int bits) {
   auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
   SetBit(cleanbits, true);
   for (auto &bin : data_) {
@@ -875,7 +875,7 @@ inline void DataContainer<Stats, float>::SetSetting(const unsigned int bits) {
 }
 
 template<>
-inline void DataContainer<Stats, float>::ResetSetting(const unsigned int bits) {
+inline void DataContainer<Stats, AxisD>::ResetSetting(const unsigned int bits) {
   auto cleanbits = 0x1FFC000 & bits; // 0x1FFC000 bitmask with only bits from 14 - 24 on.
   ResetBit(cleanbits);
   for (auto &bin : data_) {

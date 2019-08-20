@@ -210,7 +210,7 @@ Bool_t CorrectionProfileComponents::AttachHistograms(TList *histogramList) {
   fYharmonicFillMask = 0x0000;
   fFullFilled = 0x0000;
   fEntries = (THnI *) histogramList->FindObject((const char *) entriesHistoName);
-  if (fEntries!=nullptr && fEntries->GetEntries()!=0) {
+  if (fEntries!=nullptr) {
     /* allocate enough space for the supported harmonic numbers */
     fXValues = new THnF *[nMaxHarmonicNumberSupported + 1];
     fYValues = new THnF *[nMaxHarmonicNumberSupported + 1];

@@ -154,7 +154,12 @@ class Detector {
     // passes the corrected Q-vectors to the output container.
     for (auto &pair_step_qvector : q_vectors_) {
       for (unsigned int i = 0; i < sub_events_.size(); ++i) {
-        (*pair_step_qvector.second)[i] = *sub_events_[i]->GetQVector(pair_step_qvector.first);
+        try {
+          (*pair_step_qvector.second)[i] = *sub_events_[i]->GetQVector(pair_step_qvector.first);
+        } catch (std::out_of_range &) {
+          throw std::out_of_range(name_ + " bin " + std::to_string(i) + " correctionstep: " +
+              kCorrectionStepNamesArray[pair_step_qvector.first] + "not found.");
+        }
       }
     }
   }

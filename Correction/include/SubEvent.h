@@ -225,16 +225,16 @@ class SubEvent {
   /// Provide information about assigned corrections
 
   using Report = std::pair<bool, bool>;
-  
+
   virtual std::map<std::string, Report> ReportOnCorrections() const = 0;
-  
+
   /**
    * Adds a data vector to the sub event.
    * @tparam Args type of the arguments of the CorrectionDataVector constructor.
    * @param args arguments of the CorrectionDataVector constructor.
    */
   template<typename... Args>
-  void AddDataVector(Args&&... args) {
+  void AddDataVector(Args &&... args) {
     fDataVectorBank.emplace_back(std::forward<Args>(args)...);
   }
   /// Clean the configuration to accept a new event
