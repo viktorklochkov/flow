@@ -141,8 +141,8 @@ void CorrelationManager::Finalize() {
 void CorrelationManager::Run() {
   Initialize();
   while (reader_->Next()) {
-    UpdateEvent();
-    if (event_axes_.CheckEvent() && event_cuts_.CheckCuts()) {
+    auto valid_event_in_tree = UpdateEvent();
+    if (valid_event_in_tree && event_axes_.CheckEvent() && event_cuts_.CheckCuts()) {
       auto bin = event_axes_.GetBin();
       if (ese_handler_.Process(bin)) {
         for (auto &pair : correlations_) {
@@ -161,12 +161,17 @@ void CorrelationManager::Run() {
   Finalize();
 }
 
-void CorrelationManager::UpdateEvent() {
+bool CorrelationManager::UpdateEvent() {
   for (auto &value : tree_values_) {
-    (*qvectors_)[value.first] = value.second.Get();
+    if (value.second.IsValid()) {
+      (*qvectors_)[value.first] = value.second.Get();
+    } else {
+      return false;
+    }
   }
   MakeProjections();
   ese_handler_.UpdateIDs();
+  return true;
 }
 
 void CorrelationManager::MakeProjections() {

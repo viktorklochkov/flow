@@ -117,7 +117,7 @@ class CorrelationManager {
 
   void ConfigureCorrelations();
 
-  void UpdateEvent();
+  bool UpdateEvent();
 
   Qn::Correlation *RegisterCorrelation(const std::string &name,
                                        const std::vector<std::string> &inputs,
