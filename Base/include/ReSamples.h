@@ -33,8 +33,8 @@
 namespace Qn {
 
 struct SampleMean {
-  double mean = 0.;
-  double weight = 0.;
+  double mean;
+  double weight;
 };
 
 struct ConfidenceInterval {
@@ -93,9 +93,10 @@ class ReSamples {
   void CalculateMeans() {
     unsigned int i = 0;
     for (auto &statistic : statistics_) {
-      auto mean = statistic.Mean();
-      auto weight = statistic.SumWeights();
-      means_.at(i) = {mean, weight};
+      double mean = statistic.Mean();
+      double weight = statistic.SumWeights();
+      SampleMean sm = {mean, weight};
+      means_.at(i) = sm;
       ++i;
     }
   }

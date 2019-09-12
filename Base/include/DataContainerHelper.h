@@ -24,7 +24,6 @@
 #include "TBrowser.h"
 #include "TEnv.h"
 
-#include "Profile.h"
 #include "ReSamples.h"
 #include "Stats.h"
 #include "EventShape.h"

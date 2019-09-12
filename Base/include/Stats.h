@@ -31,9 +31,6 @@
 #include "TGraphAsymmErrors.h"
 #include "TAxis.h"
 
-
-#include "Types.h"
-
 namespace Qn {
 
 class Stats {
@@ -67,25 +64,29 @@ class Stats {
   double SumWeights() const { return statistic_.SumWeights(); }
 
   double Mean() const {
+    double mean = NAN;
     switch (state_) {
-      case State::MOMENTS :return statistic_.Mean();
+      case State::MOMENTS :mean = statistic_.Mean();
         break;
-      case State::MEAN_ERROR :return mean_;
+      case State::MEAN_ERROR :mean = mean_;
         break;
     }
+    return mean;
   }
 
   double Error() const {
+    double error = NAN;
     if (bits_ & Settings::CORRELATEDERRORS) {
-      return resamples_.GetConfidenceInterval(mean_,ReSamples::CIMethod::pivot).Uncertainty();
+      error = resamples_.GetConfidenceInterval(mean_,ReSamples::CIMethod::pivot).Uncertainty();
     } else {
       switch (state_) {
-        case State::MOMENTS :return statistic_.MeanError();
+        case State::MOMENTS :error = statistic_.MeanError();
           break;
-        case State::MEAN_ERROR :return error_;
+        case State::MEAN_ERROR :error = error_;
           break;
       }
     }
+    return error;
   }
 
   void CalculateMeanAndError() {
