@@ -36,6 +36,7 @@ set(CORRECTION_SOURCES
         Correction/Recentering.cpp
         Correction/TwistAndRescale.cpp
         Correction/CorrectionManager.cpp
+        Correction/QAHistogram.cpp
         Correction/Detector.cpp)
 
 set(CORRECTION_HEADERS
@@ -67,22 +68,22 @@ set(CORRECTION_HEADERS
 
 set(BASE_SOURCES
         Base/QVector.cpp
-        Base/Profile.cpp
         Base/DataContainerHelper.cpp
-        Base/SubSamples.cpp
+        Base/ReSamples.cpp
         Base/EventShape.cpp
         Base/Stats.cpp
+        Base/Statistic.cpp
         )
 
 set(BASE_HEADERS DataContainer.h
         DataContainerHelper.h
         Axis.h
-        Profile.h
         QVector.h
-        SubSamples.h
-        Product.h
+        ReSamples.h
+        CorrelationResult.h
         Stats.h
         Cuts.h
+        Statistic.h
         )
 
 set(CORRELATION_HEADERS

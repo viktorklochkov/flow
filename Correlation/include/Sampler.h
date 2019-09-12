@@ -43,7 +43,7 @@ class Sampler {
       n_events_(nevents),
       n_samples_(nsamples) {
     samples_.resize(nevents);
-    if (nevents < nsamples) n_samples_ = 1;
+//    if (nevents < nsamples) n_samples_ = 1;
   }
 
   Sampler(size_type nsamples, Method met) :

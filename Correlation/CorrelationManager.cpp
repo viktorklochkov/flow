@@ -100,9 +100,12 @@ void CorrelationManager::SetResampling(Sampler::Method method,
 void CorrelationManager::Initialize() {
   ese_handler_.Connect();
 // Read in the first event to determine the binning of the Q-vector inputs.
-  reader_->SetEntry(1);
+  reader_->SetLocalEntry(1);
 // initialize values to be able to build the correlations.
-  UpdateEvent();
+  auto check_tree = UpdateEvent();
+  if (!check_tree) {
+    std::cout << "something went wrong with the tree" << std::endl;
+  }
   MakeProjections();
 // configure the resampling using the number of event of the
   if (sampler_) {
@@ -141,8 +144,8 @@ void CorrelationManager::Finalize() {
 void CorrelationManager::Run() {
   Initialize();
   while (reader_->Next()) {
-    auto valid_event_in_tree = UpdateEvent();
-    if (valid_event_in_tree && event_axes_.CheckEvent() && event_cuts_.CheckCuts()) {
+    auto check_tree = UpdateEvent();
+    if (check_tree && event_axes_.CheckEvent() && event_cuts_.CheckCuts()) {
       auto bin = event_axes_.GetBin();
       if (ese_handler_.Process(bin)) {
         for (auto &pair : correlations_) {
@@ -163,9 +166,9 @@ void CorrelationManager::Run() {
 
 bool CorrelationManager::UpdateEvent() {
   for (auto &value : tree_values_) {
-    if (value.second.IsValid()) {
+    if (value.second.GetSetupStatus() >= 0) {
       (*qvectors_)[value.first] = value.second.Get();
-    } else {
+  } else {
       return false;
     }
   }

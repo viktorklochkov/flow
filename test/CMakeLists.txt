@@ -6,7 +6,11 @@ set(CMAKE_MACOSX_RPATH 1)
 include_directories(${gtest_SOURCE_DIR}/include)
 set(TEST_SOURCES
         QVectorUnitTest.cpp
-        CorrectionUnitTest.cpp)
+        CorrectionUnitTest.cpp
+        CorrelationManagerUnitTest.cpp
+        StatisticUnitTest.cpp
+        BootstrapSamplerUnitTest.cpp
+        ReSampleUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})

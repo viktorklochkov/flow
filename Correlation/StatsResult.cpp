@@ -43,9 +43,9 @@ void StatsResult::ConfigureStats(Qn::Sampler *sampler) {
   result_.AddAxes(current_event_result.GetAxes());
   // configure weights
   if (correlation_current_event->UsingWeights()) {
-    std::for_each(result_.begin(), result_.end(), [](Qn::Stats &stats) { stats.SetStatus(Stats::Status::OBSERVABLE); });
+    std::for_each(result_.begin(), result_.end(), [](Qn::Stats &stats) { stats.SetWeights(Stats::Weights::OBSERVABLE); });
   } else {
-    std::for_each(result_.begin(), result_.end(), [](Qn::Stats &stats) { stats.SetStatus(Stats::Status::REFERENCE); });
+    std::for_each(result_.begin(), result_.end(), [](Qn::Stats &stats) { stats.SetWeights(Stats::Weights::REFERENCE); });
   }
   // configure sampler
   if (use_resampling_) {

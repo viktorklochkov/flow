@@ -24,7 +24,7 @@
 #include "TSpline.h"
 #include "TCanvas.h"
 #include "TFile.h"
-#include "Product.h"
+#include "CorrelationResult.h"
 
 namespace Qn {
 /**
@@ -101,7 +101,7 @@ class EventShape : public TObject {
    * Fill the current subevent information to the histogram.
    * @param product
    */
-  void Fill(const Product &product) { if (product.validity) histo_->Fill(product.result); }
+  void Fill(const CorrelationResult &product) { if (product.validity) histo_->Fill(product.result); }
 
   /**
    * Get the histogram.

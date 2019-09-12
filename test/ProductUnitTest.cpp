@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "Product.h"
+#include "CorrelationResult.h"
 #include "DataContainer.h"
 #include "QVector.h"
 #include "StatsResult.h"

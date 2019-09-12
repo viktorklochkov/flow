@@ -34,7 +34,7 @@
 #include "Axis.h"
 #include "QVector.h"
 #include "EventShape.h"
-#include "Product.h"
+#include "CorrelationResult.h"
 #include "Stats.h"
 
 #include "DataContainerHelper.h"
@@ -840,7 +840,7 @@ class DataContainer : public TObject {
 //-----------------------------------------//
 template<typename T>
 using DataD = DataContainer<T, AxisD>;
-using DataContainerProduct = DataContainer<Qn::Product, AxisD>;
+using DataContainerProduct = DataContainer<Qn::CorrelationResult, AxisD>;
 using DataContainerStats = DataContainer<Qn::Stats, AxisD>;
 using DataContainerQVector = DataContainer<Qn::QVector, AxisD>;
 using DataContainerEventShape = DataContainer<Qn::EventShape, AxisD>;
@@ -938,7 +938,7 @@ DataContainer<T, AxisType> ExclusiveSum(const DataContainer<T, AxisType> &input)
 template<>
 Long64_t DataContainer<std::pair<bool, float>, float>::Merge(TCollection *inputlist) = delete;
 template<>
-Long64_t DataContainer<Qn::Product, float>::Merge(TCollection *inputlist) = delete;
+Long64_t DataContainer<Qn::CorrelationResult, float>::Merge(TCollection *inputlist) = delete;
 template<>
 Long64_t DataContainer<Qn::QVector, float>::Merge(TCollection *inputlist) = delete;
 

@@ -3,10 +3,16 @@
 //
 
 #include <gtest/gtest.h>
-#include <Sampler.h>
-#include <TH1F.h>
-#include <DataContainer.h>
-#include "TRandom3.h"
+#include <random>
+#include <array>
+#include <TCanvas.h>
+#include <TStyle.h>
+#include <TText.h>
+#include "TH1D.h"
+#include "Stats.h"
+#include "Sampler.h"
+#include "Statistic.h"
+
 
 TEST(BootStrapSamplerTest, Constructor) {
   const int nsamples = 3000;
@@ -24,6 +30,55 @@ TEST(BootStrapSamplerTest, Constructor) {
   for (int i = 0; i < nsamples; ++i) {
     EXPECT_EQ(nevents, size_of_sample[i]);
   }
+}
+
+TEST(BootStrapSampler, Basic) {
+  const int nsamples = 10000;
+  const int nevents = 10000;
+  Qn::Sampler sampler(nevents, nsamples);
+  sampler.CreateBootstrapSamples();
+  std::mt19937 gen(10);
+  std::normal_distribution<double> d(1., 0.5);
+  Qn::Stats stats;
+  stats.SetNumberOfSubSamples(nsamples);
+  TH1D hdist("dist", "dist", 100, -2, 4);
+  TH1D hboot("boot", "boot", 100, 0.8, 1.2);
+  for (int i = 0; i < nevents; ++i) {
+    const auto &vec = sampler.GetFillVector(i);
+    auto number = d(gen);
+    stats.Fill({number,true,1},vec);
+    hdist.Fill(number);
+  }
+  stats.CalculateMeanAndError();
+  for (int i = 0; i < nsamples; ++i) {
+    hboot.Fill(stats.GetReSamples().GetSampleMean(i).mean);
+  }
+  auto resamples = stats.GetReSamples();
+
+  auto percentile = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::percentile);
+  auto pivot = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::pivot);
+  auto normal = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::normal);
+  std::cout << "percentile  " << percentile.lower_limit << " " << percentile.upper_limit << std::endl;
+  std::cout << "pivot       " << pivot.lower_limit << " " << pivot.upper_limit << std::endl;
+  std::cout << "normal      " << normal.lower_limit << " " << normal.upper_limit << std::endl;
+  auto error = stats.GetStatistic().MeanError();
+  std::cout << "statistical " << stats.Mean() - error << " " << stats.Mean() + error << std::endl;
+  stats.SetBits(Qn::Stats::CORRELATEDERRORS);
+  auto bserr = stats.Error();
+  gStyle->SetOptStat("mMerR");
+  TCanvas c1("BootstrappingUnitTest","test",1200,600);
+  c1.Divide(2);
+  c1.cd(1);
+  hdist.Draw();
+  TText text(0.5,0.8,std::to_string(error).data());
+  text.Draw();
+  c1.cd(2);
+  hboot.Draw();
+    TText text2(1.0,0.8,std::to_string(bserr).data());
+  text2.Draw();
+  auto c2 = stats.CIvsNSamples(100);
+  c1.SaveAs("BootStrapTest.pdf");
+  c2->SaveAs("CIvsNSamples.pdf");
 }
 //
 //TEST(BootStrapSamplerTest, Constructor3) {

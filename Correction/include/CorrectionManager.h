@@ -134,8 +134,8 @@ class CorrectionManager {
    * @param axes axis of the histogram. Name corresponds to the axis.
    * @param weight Name of the weights used when filling. Standard is "Ones" (1).
    */
-  void AddEventHisto1D(const Qn::AxisD &axes, const std::string &weight = "Ones") {
-    event_histograms_.Add(CallBacks::MakeHisto1D("Event", axes, weight));
+  void AddEventHisto1D(const Qn::AxisD &axis, const std::string &weight = "Ones") {
+    event_histograms_.Add("Event", axis, weight);
   }
 
   /**
@@ -144,13 +144,13 @@ class CorrectionManager {
    * @param weight Name of the weights used when filling. Standard is "Ones" (1).
    */
   void AddEventHisto2D(const std::vector<Qn::AxisD> &axes, const std::string &weight = "Ones") {
-    event_histograms_.Add(CallBacks::MakeHisto2D("Event", axes, weight));
+    event_histograms_.Add("Event", axes, weight);
   }
 
   void AddEventHisto2DArray(const std::vector<Qn::AxisD> &axes,
                             const Qn::AxisD &axis,
                             const std::string &weight = "Ones") {
-    event_histograms_.Add(CallBacks::MakeHisto2DArray("Event", axes, weight, axis));
+    event_histograms_.Add("Event", axes, weight, axis);
   }
 
   /**
@@ -160,7 +160,7 @@ class CorrectionManager {
   * @param weight Name of the weights used when filling. Standard is "Ones" (1).
   */
   void AddHisto1D(const std::string &detector, const Qn::AxisD &axis, const std::string &weight = "Ones") {
-    detectors_.FindDetector(detector).AddHistogramCallBack(CallBacks::MakeHisto1D(detector, axis, weight));
+    detectors_.FindDetector(detector).AddHistogram(detector, axis, weight);
   }
 
   /**
@@ -172,7 +172,7 @@ class CorrectionManager {
   void AddHisto2D(const std::string &detector,
                   const std::vector<Qn::AxisD> &axes,
                   const std::string &weight = "Ones") {
-    detectors_.FindDetector(detector).AddHistogramCallBack(CallBacks::MakeHisto2D(detector, axes, weight));
+    detectors_.FindDetector(detector).AddHistogram(detector, axes, weight);
   }
   /**
    * @brief Adds correction steps to a detector.

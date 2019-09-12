@@ -21,11 +21,18 @@
 #include <vector>
 #include <iostream>
 #include <bitset>
+#include <TLegend.h>
 
 #include "Rtypes.h"
 
-#include "Profile.h"
-#include "SubSamples.h"
+#include "Statistic.h"
+#include "ReSamples.h"
+#include "TCanvas.h"
+#include "TGraphAsymmErrors.h"
+#include "TAxis.h"
+
+
+#include "Types.h"
 
 namespace Qn {
 
@@ -34,58 +41,59 @@ class Stats {
 
   enum Settings {
     CORRELATEDERRORS = BIT(16),
-    MERGESUBSAMPLES = BIT(17),
+    CONCATENATE_SUBSAMPLES = BIT(17),
     ASYMMERRORS = BIT(18)
   };
 
-  enum class Status {
+  enum class State {
+    MOMENTS,
+    MEAN_ERROR
+  };
+
+  enum class Weights {
     REFERENCE,
-    OBSERVABLE,
-    POINTAVERAGE,
+    OBSERVABLE
   };
 
   using size_type = std::size_t;
 
   Stats() = default;
-
   virtual ~Stats() = default;
 
-  Stats(const Stats &stats)
-      : subsamples_(stats.subsamples_), profile_(stats.profile_), bits_(stats.bits_), status_(stats.status_) {}
+  double N() const { return statistic_.N(); }
 
-  double Mean() const { if (status_!=Status::POINTAVERAGE) return profile_.Mean(); else return profile_.MeanPA(); }
-  double Entries() const {return profile_.Entries();}
-  double SumOfWeights() const  {return profile_.SumOfWeights();}
-  double BootstrapMean() const { return subsamples_.Mean(); }
-  inline double Error() const {
-    if (status_!=Status::POINTAVERAGE) {
-      if (bits_ & Settings::CORRELATEDERRORS) {
-        return (subsamples_.ErrorHi(Mean()) + subsamples_.ErrorLo(Mean()))/2;
-      } else {
-        return profile_.Error();
-      }
+  double Neff() const { return statistic_.Neff(); }
+
+  double SumWeights() const { return statistic_.SumWeights(); }
+
+  double Mean() const {
+    switch (state_) {
+      case State::MOMENTS :return statistic_.Mean();
+        break;
+      case State::MEAN_ERROR :return mean_;
+        break;
+    }
+  }
+
+  double Error() const {
+    if (bits_ & Settings::CORRELATEDERRORS) {
+      return resamples_.GetConfidenceInterval(mean_,ReSamples::CIMethod::pivot).Uncertainty();
     } else {
-      if (bits_ & Settings::CORRELATEDERRORS) {
-        return (subsamples_.ErrorHi(Mean()) + subsamples_.ErrorLo(Mean()))/2;
-      } else {
-        return profile_.ErrorPA();
+      switch (state_) {
+        case State::MOMENTS :return statistic_.MeanError();
+          break;
+        case State::MEAN_ERROR :return error_;
+          break;
       }
     }
   }
 
-  double ErrorLo() const {
-    if (TestBit(ASYMMERRORS)) {
-      return subsamples_.ErrorLo(Mean());
-    } else {
-      return Error();
-    }
-  }
-  double ErrorHi() const {
-    if (TestBit(ASYMMERRORS)) {
-      return subsamples_.ErrorHi(Mean());
-    } else {
-      return Error();
-    }
+  void CalculateMeanAndError() {
+    state_ = State::MEAN_ERROR;
+    mergeable_ = false;
+    mean_ = statistic_.Mean();
+    error_ = statistic_.MeanError();
+    resamples_.CalculateMeans();
   }
 
   friend Stats Merge(const Stats &, const Stats &);
@@ -94,57 +102,93 @@ class Stats {
   friend Stats operator-(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, double);
+  friend Stats operator/(const Stats &, double);
   friend Stats operator*(double, const Stats &);
   friend Stats operator/(const Stats &, const Stats &);
   friend Stats Sqrt(const Stats &);
 
-  inline void Fill(const Product &product, const std::vector<size_type> &samples) {
+  inline void Fill(const CorrelationResult &product, const std::vector<size_type> &samples) {
     if (product.validity) {
-      subsamples_.Fill(product, samples);
-      profile_.Fill(product);
+      resamples_.Fill(product, samples);
+      statistic_.Fill(product);
     }
   }
 
-  inline void Fill(const Product &product) {
-    profile_.Fill(product);
-  }
-
-  inline void Fill(const double result, const double weight, const std::vector<size_type> &samples) {
-    subsamples_.Fill(result, samples, weight);
-    profile_.Fill(result, weight);
-  }
-
   void SetNumberOfSubSamples(size_type nsamples) {
-    subsamples_.SetNumberOfSamples(nsamples);
+    resamples_.SetNumberOfSamples(nsamples);
   }
 
-  TH1F SampleMeanHisto(const std::string &name) {
-    return subsamples_.SubSampleMeanHisto(name);
-  }
+  void SetWeights(Weights weights) { weights_flag = weights; }
+  State GetWeights() const { return state_; }
 
-  void SetStatus(Stats::Status status) {
-    status_ = status;
-    if (status_==Status::POINTAVERAGE) profile_.CalculatePointAverage();
-  }
-  Status GetStatus() const { return status_; }
   bool TestBit(unsigned int bit) const { return static_cast<bool>(bits_ & bit); }
   void SetBits(unsigned int bits) { bits_ = bits; }
   void ResetBits(unsigned int bits) { bits_ &= ~(bits & 0x00ffffff); }
 
-  void Print();
+  const Statistic &GetStatistic() const {return statistic_;}
 
-  size_type GetNSamples() const { return subsamples_.size(); }
+  size_type GetNSamples() const { return resamples_.size(); }
+  const ReSamples &GetReSamples() const { return resamples_; }
 
-  SubSamples GetSubSamples() const { return subsamples_; }
+  TCanvas* CIvsNSamples(int nsteps = 10) const {
+    auto pivot = resamples_.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::pivot, nsteps);
+    auto percentile = resamples_.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::percentile,nsteps);
+    auto normal = resamples_.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::normal, nsteps);
+    auto statistical = new TGraphAsymmErrors(2);
+    statistical->SetPoint(0, 0, statistic_.Mean());
+    statistical->SetPointError(0, 0, 0, statistic_.MeanError(), statistic_.MeanError());
+    statistical->SetPoint(1, resamples_.size(), statistic_.Mean());
+    statistical->SetPointError(1, 0, 0, statistic_.MeanError(), statistic_.MeanError());
+    auto canvas = new TCanvas("CIvsNSamples", "CI", 600, 400);
+    statistical->Draw("AL3");
+    statistical->SetFillColorAlpha(kBlack, 0.2);
+    statistical->SetLineWidth(2);
+    statistical->SetLineColorAlpha(kBlack, 0.4);
+    statistical->GetYaxis()->SetRangeUser((statistic_.Mean() - statistic_.MeanError()*2), (statistic_.Mean() + statistic_.MeanError()*2));
+    statistical->GetXaxis()->SetRangeUser(0, resamples_.size());
+    statistical->SetNameTitle("", ";number of bootstrap samples; x");
+    auto style = [](std::pair<TGraph*, TGraph*> &pair, int color) {
+      pair.first->SetLineWidth(2);
+      pair.second->SetLineWidth(2);
+      pair.first->SetLineColorAlpha(color, 0.8);
+      pair.second->SetLineColorAlpha(color, 0.8);
+    };
+    style(pivot, kRed);
+    pivot.first->GetYaxis()->SetRangeUser(0.8, 1.2);
+    pivot.first->Draw("L");
+    pivot.second->Draw("L");
+    style(percentile, kGreen + 2);
+    percentile.first->Draw("L");
+    percentile.second->Draw("L");
+    style(normal, kBlue);
+    normal.first->Draw("L");
+    normal.second->Draw("L");
+    auto legend = new TLegend(0.15, 0.15, 0.3, 0.25);
+    legend->AddEntry(statistical, "standard", "AL");
+    legend->AddEntry(pivot.first, "bs pivot", "L");
+    legend->AddEntry(percentile.first, "bs percentile", "L");
+    legend->AddEntry(normal.first, "bs normal", "L");
+    legend->SetFillStyle(4000);
+    legend->SetLineWidth(0);
+    legend->Draw();
+    return canvas;
+  }
+
 
  private:
-  SubSamples subsamples_;
-  Profile profile_;
+  ReSamples resamples_;
+  Statistic statistic_;
   unsigned int bits_ = 0 | Qn::Stats::CORRELATEDERRORS;
-  Status status_ = Status::REFERENCE;
+  State state_ = State::MOMENTS;
+  Weights weights_flag = Weights::REFERENCE;
+  bool mergeable_ = true;
+
+  double mean_ = 0.;
+  double error_ = 0.;
+  double weight_ = 1.;
 
   /// \cond CLASSIMP
- ClassDef(Stats, 1);
+ ClassDef(Stats, 3);
   /// \endcond
 };
 
@@ -154,6 +198,7 @@ Stats operator+(const Stats &, const Stats &);
 Stats operator-(const Stats &, const Stats &);
 Stats operator*(const Stats &, const Stats &);
 Stats operator*(const Stats &, double);
+Stats operator/(const Stats &, double);
 Stats operator*(double, const Stats &);
 Stats operator/(const Stats &, const Stats &);
 Stats Sqrt(const Stats &);

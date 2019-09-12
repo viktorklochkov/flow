@@ -90,12 +90,9 @@ class Detector {
     }
   }
 
-  /**
-   * @brief Adds a QA histogram to the detector.
-   * @param histo pointer to the histogram.
-   */
-  void AddHistogramCallBack(QAHistogram::CallBack histo) {
-    histograms_.Add(std::move(histo));
+  template<typename... Args>
+  void AddHistogram(Args &&... args) {
+    histograms_.Add(std::forward<Args>(args)...);
   }
 
   void SetOutputQVector(QVector::CorrectionStep step) {

@@ -16,224 +16,163 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Stats.h"
+#include "../Correlation/include/Correlation.h"
 
 namespace Qn {
-using STAT = Qn::Stats::Status;
+using STAT = Qn::Stats::State;
 
 Stats MergeBins(const Stats &lhs, const Stats &rhs) {
+  if (!lhs.mergeable_) throw std::logic_error("Cannot merge Stats. Please check prior operations.");
   Stats result;
-  if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-      || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-      (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
-    result.profile_ = Profile::MergeNormal(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MergeBinsNormal(lhs.subsamples_, rhs.subsamples_);
+  auto temp_l = lhs;
+  auto temp_r = rhs;
+  if (lhs.state_==STAT::MOMENTS) {
+    temp_l.CalculateMeanAndError();
+    temp_r.CalculateMeanAndError();
   }
-  if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::MergePointAverage(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MergeBinsPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
-  result.status_ = rhs.status_;
-  result.bits_ = rhs.bits_;
+  result.mean_ = (temp_l.weight_*temp_l.mean_ + temp_r.weight_*temp_r.mean_)/(temp_l.weight_ + temp_r.weight_);
+  result.weight_ = temp_l.weight_ + temp_r.weight_;
+  bool merge_weights = (lhs.weights_flag==Qn::Stats::Weights::OBSERVABLE);
+  result.resamples_ = ReSamples::Merge(temp_l.resamples_, temp_r.resamples_, merge_weights);
+  result.state_ = STAT::MEAN_ERROR;
+  result.bits_ = lhs.bits_;
+  result.weights_flag = lhs.weights_flag;
+  result.mergeable_ = lhs.mergeable_;
   return result;
 }
-
+//
 Stats Merge(const Stats &lhs, const Stats &rhs) {
+  if (!lhs.mergeable_ || !rhs.mergeable_) throw std::logic_error("Cannot merge Stats. Please check prior operations.");
   Stats result;
-  if (lhs.TestBit(Qn::Stats::MERGESUBSAMPLES)) {
-    result.profile_ = lhs.profile_;
-    if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-        || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-        (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-        (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
-      result.subsamples_ = SubSamples::MergeConcat(lhs.subsamples_, rhs.subsamples_);
-    }
-    if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-      result.subsamples_ = SubSamples::MergeConcat(lhs.subsamples_, rhs.subsamples_);
-    }
-    result.status_ = lhs.status_;
-    result.bits_ = lhs.bits_;
-    return result;
+  result.state_ = lhs.state_;
+  result.bits_ = lhs.bits_;
+  result.weights_flag = lhs.weights_flag;
+  result.mergeable_ = lhs.mergeable_;
+  if (lhs.TestBit(Qn::Stats::CONCATENATE_SUBSAMPLES)) {
+    result.statistic_ = lhs.statistic_;
+    result.resamples_ = ReSamples::Concatenate(lhs.resamples_, rhs.resamples_);
   } else {
-    if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-        || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-        (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE) ||
-        (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)) {
-      result.profile_ = Profile::MergeNormal(lhs.profile_, rhs.profile_);
-      result.subsamples_ = SubSamples::MergeBinsNormal(lhs.subsamples_, rhs.subsamples_);
-    }
-    if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-      result.profile_ = Profile::MergePointAverage(lhs.profile_, rhs.profile_);
-      result.subsamples_ = SubSamples::MergeBinsPointAverage(lhs.subsamples_, rhs.subsamples_);
-    }
-    result.status_ = lhs.status_;
-    result.bits_ = lhs.bits_;
-    return result;
+    result.statistic_ = Statistic::Merge(lhs.statistic_, rhs.statistic_);
+    bool merge_weights = (lhs.weights_flag==Qn::Stats::Weights::OBSERVABLE);
+    result.resamples_ = ReSamples::Merge(lhs.resamples_, rhs.resamples_, merge_weights);
   }
+  return result;
 }
 
 Stats operator+(const Stats &lhs, const Stats &rhs) {
   Stats result;
-  result.status_ = lhs.status_;
+  result.state_ = STAT::MEAN_ERROR;
   result.bits_ = lhs.bits_;
-  if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-      || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE)) {
-    result.profile_ = Profile::AdditionNormal(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::AdditionNormal(lhs.subsamples_, rhs.subsamples_);
-  }
-  if ((lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE))  {
-    auto t_lhs =  lhs;
-    auto t_rhs =  rhs;
-    t_lhs.profile_.CalculatePointAverage();
-    t_rhs.profile_.CalculatePointAverage();
-    result.status_ = STAT::POINTAVERAGE;
-    result.profile_ = Profile::AdditionPointAverage(t_lhs.profile_, t_rhs.profile_);
-    result.subsamples_ = SubSamples::AdditionPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
-  if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::AdditionPointAverage(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::AdditionPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
+  auto tlhs = lhs;
+  auto trhs = rhs;
+  if (tlhs.state_!=STAT::MEAN_ERROR) tlhs.CalculateMeanAndError();
+  if (trhs.state_!=STAT::MEAN_ERROR) trhs.CalculateMeanAndError();
+  if (tlhs.weights_flag==Stats::Weights::OBSERVABLE) result.weight_ = tlhs.weight_;
+  if (trhs.weights_flag==Stats::Weights::OBSERVABLE) result.weight_ = trhs.weight_;
+  result.mean_ = tlhs.mean_ + trhs.mean_;
+  result.error_ = std::sqrt(tlhs.error_*tlhs.error_ + trhs.error_*trhs.error_);
+  result.resamples_ = ReSamples::Addition(tlhs.resamples_, trhs.resamples_);
+  result.weights_flag = lhs.weights_flag;
+  result.mergeable_ = false;
   return result;
 }
 
 Stats operator-(const Stats &lhs, const Stats &rhs) {
   Stats result;
-  if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-      || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE)) {
-    result.profile_ = Profile::SubtractionNormal(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::SubtractionNormal(lhs.subsamples_, rhs.subsamples_);
-  }
-  if (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE)  {
-    auto t_lhs =  lhs;
-    auto t_rhs =  rhs;
-    t_lhs.profile_.CalculatePointAverage();
-    t_rhs.profile_.CalculatePointAverage();
-    result.status_ = STAT::POINTAVERAGE;
-    result.profile_ = Profile::SubtractionPointAverage(t_lhs.profile_, t_rhs.profile_);
-    result.subsamples_ = SubSamples::AdditionPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
-  if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::SubtractionPointAverage(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::SubtractionPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
-  result.status_ = lhs.status_;
+  result.state_ = STAT::MEAN_ERROR;
   result.bits_ = lhs.bits_;
+  auto tlhs = lhs;
+  auto trhs = rhs;
+  if (tlhs.state_!=STAT::MEAN_ERROR) tlhs.CalculateMeanAndError();
+  if (trhs.state_!=STAT::MEAN_ERROR) trhs.CalculateMeanAndError();
+  if (tlhs.weights_flag==Stats::Weights::OBSERVABLE) result.weight_ = tlhs.weight_;
+  if (trhs.weights_flag==Stats::Weights::OBSERVABLE) result.weight_ = trhs.weight_;
+  result.mean_ = tlhs.mean_ - trhs.mean_;
+  result.error_ = std::sqrt(tlhs.error_*tlhs.error_ + trhs.error_*trhs.error_);
+  result.resamples_ = ReSamples::Subtraction(tlhs.resamples_, trhs.resamples_);
+  result.weights_flag = lhs.weights_flag;
+  result.mergeable_ = false;
   return result;
 }
 
 Stats operator*(const Stats &lhs, const Stats &rhs) {
   Stats result;
-  result.status_ = lhs.status_;
+  result.state_ = STAT::MEAN_ERROR;
   result.bits_ = lhs.bits_;
-  if (((lhs.status_==STAT::REFERENCE && rhs.status_==STAT::OBSERVABLE)
-      || (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::REFERENCE)) ||
-      (lhs.status_==STAT::REFERENCE && rhs.status_==STAT::REFERENCE)) {
-    result.profile_ = Profile::MultiplicationNormal(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MultiplicationNormal(lhs.subsamples_, rhs.subsamples_);
+  auto tlhs = lhs;
+  auto trhs = rhs;
+  if (tlhs.state_!=STAT::MEAN_ERROR) tlhs.CalculateMeanAndError();
+  if (trhs.state_!=STAT::MEAN_ERROR) trhs.CalculateMeanAndError();
+  if (tlhs.weights_flag==Stats::Weights::OBSERVABLE && trhs.weights_flag==Stats::Weights::REFERENCE) {
+    result.weight_ = tlhs.weight_;
+  } else if (trhs.weights_flag==Stats::Weights::OBSERVABLE && tlhs.weights_flag==Stats::Weights::REFERENCE) {
+    result.weight_ = trhs.weight_;
+  } else if (trhs.weights_flag==Stats::Weights::OBSERVABLE && tlhs.weights_flag==Stats::Weights::OBSERVABLE) {
+    result.mergeable_ = false;
   }
-  if (lhs.status_==STAT::OBSERVABLE && rhs.status_==STAT::OBSERVABLE) {
-    auto t_lhs =  lhs;
-    auto t_rhs =  rhs;
-    t_lhs.profile_.CalculatePointAverage();
-    t_rhs.profile_.CalculatePointAverage();
-    result.status_ = STAT::POINTAVERAGE;
-    result.profile_ = Profile::MultiplicationPointAverage(t_lhs.profile_, t_rhs.profile_);
-    result.subsamples_ = SubSamples::MultiplicationPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
-  if (lhs.status_==STAT::POINTAVERAGE || rhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::MultiplicationPointAverage(lhs.profile_, rhs.profile_);
-    result.subsamples_ = SubSamples::MultiplicationPointAverage(lhs.subsamples_, rhs.subsamples_);
-  }
+  result.mean_ = tlhs.mean_*trhs.mean_;
+  result.error_ = std::sqrt(tlhs.error_*tlhs.error_ + trhs.error_*trhs.error_);
+  result.resamples_ = ReSamples::Multiplication(tlhs.resamples_, trhs.resamples_);
+  return result;
+}
+//
+Stats operator*(const Stats &stat, const double scale) {
+  Stats result = stat;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  result.mean_ *= scale;
+  result.error_ *= scale;
+  result.resamples_ = ReSamples::Scaling(result.resamples_, scale);
   return result;
 }
 
-Stats operator*(const Stats &lhs, double rhs) {
-  Stats result;
-  if (lhs.status_==STAT::REFERENCE || lhs.status_==STAT::OBSERVABLE) {
-    result.profile_ = Profile::ScaleNormal(lhs.profile_, rhs);
-    result.subsamples_ = SubSamples::ScaleNormal(lhs.subsamples_, rhs);
-  }
-  if (lhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::ScalePointAverage(lhs.profile_, rhs);
-    result.subsamples_ = SubSamples::ScalePointAverage(lhs.subsamples_, rhs);
-  }
-  result.status_ = lhs.status_;
-  result.bits_ = lhs.bits_;
+Stats operator*(const double scale, const Stats &stat) {
+  Stats result = stat;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  result.mean_ *= scale;
+  result.error_ *= scale;
+  result.resamples_ = ReSamples::Scaling(result.resamples_, scale);
   return result;
 }
 
-Stats operator*(double lhs, const Stats &rhs) {
-  Stats result;
-  if (rhs.status_==STAT::REFERENCE || rhs.status_==STAT::OBSERVABLE) {
-    result.profile_ = Profile::ScaleNormal(rhs.profile_, lhs);
-    result.subsamples_ = SubSamples::ScaleNormal(rhs.subsamples_, lhs);
-  }
-  if (rhs.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::ScalePointAverage(rhs.profile_, lhs);
-    result.subsamples_ = SubSamples::ScalePointAverage(rhs.subsamples_, lhs);
-  }
-  result.status_ = rhs.status_;
-  result.bits_ = rhs.bits_;
+Stats operator/(const Stats &stat, const double scale) {
+  Stats result = stat;
+  if (scale==0) return result;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  result.mean_ /= scale;
+  result.error_ /= scale;
+  result.resamples_ = ReSamples::Scaling(result.resamples_, 1./scale);
   return result;
 }
 
 Stats operator/(const Stats &num, const Stats &den) {
   Stats result;
-  result.status_ = num.status_;
+  result.state_ = STAT::MEAN_ERROR;
   result.bits_ = num.bits_;
-  if ((num.status_==STAT::OBSERVABLE && den.status_==STAT::REFERENCE) ||
-      (num.status_==STAT::REFERENCE && den.status_==STAT::REFERENCE)) {
-    result.profile_ = Profile::DivisionNormal(num.profile_, den.profile_);
-    result.subsamples_ = SubSamples::DivisionNormal(num.subsamples_, den.subsamples_);
+  auto tlhs = num;
+  auto trhs = den;
+  if (tlhs.state_!=STAT::MEAN_ERROR) tlhs.CalculateMeanAndError();
+  if (trhs.state_!=STAT::MEAN_ERROR) trhs.CalculateMeanAndError();
+  if (tlhs.weights_flag==Stats::Weights::OBSERVABLE && trhs.weights_flag==Stats::Weights::REFERENCE) {
+    result.weight_ = tlhs.weight_;
+  } else if (trhs.weights_flag==Stats::Weights::OBSERVABLE && tlhs.weights_flag==Stats::Weights::REFERENCE) {
+    result.weight_ = trhs.weight_;
+  } else if (trhs.weights_flag==Stats::Weights::OBSERVABLE && tlhs.weights_flag==Stats::Weights::OBSERVABLE) {
+    result.mergeable_ = false;
   }
-  if ((num.status_==STAT::OBSERVABLE && den.status_==STAT::OBSERVABLE) || den.status_==STAT::OBSERVABLE) {
-    auto t_lhs =  num;
-    auto t_rhs =  den;
-    t_lhs.profile_.CalculatePointAverage();
-    t_rhs.profile_.CalculatePointAverage();
-    result.status_ = STAT::POINTAVERAGE;
-    result.profile_ = Profile::DivisionPointAverage(t_lhs.profile_, t_rhs.profile_);
-    result.subsamples_ = SubSamples::DivisionPointAverage(t_lhs.subsamples_, t_rhs.subsamples_);
-  }
-  if (num.status_==STAT::POINTAVERAGE || den.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::DivisionPointAverage(num.profile_, den.profile_);
-    result.subsamples_ = SubSamples::DivisionPointAverage(num.subsamples_, den.subsamples_);
-  }
+  result.mean_ = tlhs.mean_/trhs.mean_;
+  result.error_ = std::sqrt(tlhs.error_*tlhs.error_ + trhs.error_*trhs.error_);
+  result.resamples_ = ReSamples::Division(tlhs.resamples_, trhs.resamples_);
   return result;
 }
 
-Stats Sqrt(const Stats &stats) {
-  Stats result;
-  result.status_ = stats.status_;
-  result.bits_ = stats.bits_;
-  if (stats.status_==STAT::REFERENCE || stats.status_==STAT::OBSERVABLE) {
-    result.profile_ = Profile::SqrtNormal(stats.profile_);
-    result.subsamples_ = SubSamples::SqrtNormal(stats.subsamples_);
-  }
-  if (stats.status_==STAT::POINTAVERAGE) {
-    result.profile_ = Profile::SqrtPointAverage(stats.profile_);
-    result.subsamples_ = SubSamples::SqrtPointAverage(stats.subsamples_);
-  }
+Stats Sqrt(const Stats &stat) {
+  Stats result = stat;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  result.mean_ =
+      std::signbit(result.mean_) ? -1*std::sqrt(std::fabs(result.mean_)) : std::sqrt(std::fabs(result.mean_));
+  result.error_ = stat.error_/(2*std::sqrt(result.mean_));
+  result.resamples_ = ReSamples::Sqrt(result.resamples_);
   return result;
-}
-
-void Stats::Print() {
-  std::cout << std::endl;
-  std::cout << "-----Bits------" << std::endl;
-  std::cout << std::bitset<32>(bits_) << std::endl;
-  std::cout << "CORRELATEDERRORS " << (bits_ & BIT(16) ? 1 : 0) << std::endl;
-  std::cout << "PRODAVGWEIGHTS   " << (bits_ & BIT(17) ? 1 : 0) << std::endl;
-  std::cout << "Status           ";
-  if (status_ == Status::OBSERVABLE){std::cout << "observable" << std::endl;}
-  if (status_ == Status::REFERENCE){std::cout << "reference" << std::endl;}
-  if (status_ == Status::POINTAVERAGE){std::cout << "point average" << std::endl;}
-  std::cout << "--SubSampling--" << std::endl;
-  subsamples_.Print(profile_.Mean());
-  std::cout << "----Profile----" << std::endl;
-  profile_.Print();
 }
 
 }

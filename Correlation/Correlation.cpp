@@ -46,7 +46,7 @@ void Qn::Correlation::FillCorrelation(size_type initial_offset,
       auto valid =
           std::all_of(qvector_ptrs_.begin(), qvector_ptrs_.end(), [](const Qn::QVectorPtr &q) { return q.n() > 0; });
       // Store result of the correlation.
-      if (valid) current_event_result_.At(c_index_) = Qn::Product(function_(qvector_ptrs_), valid, CalculateWeight());
+      if (valid) current_event_result_.At(c_index_) = Qn::CorrelationResult(function_(qvector_ptrs_), valid, CalculateWeight());
       ++ibin;
     }
     // end of recursion
