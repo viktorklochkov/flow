@@ -64,7 +64,7 @@ class Stats {
   double SumWeights() const { return statistic_.SumWeights(); }
 
   double Mean() const {
-    double mean = NAN;
+    double mean;
     switch (state_) {
       case State::MOMENTS :mean = statistic_.Mean();
         break;
@@ -74,10 +74,36 @@ class Stats {
     return mean;
   }
 
-  double Error() const {
-    double error = NAN;
+  double LowerMeanError() const {
+    double lower_error;
+    if (bits_ & Settings::ASYMMERRORS) {
+      double mean = mean_;
+      if (state_!=State::MEAN_ERROR) { mean = statistic_.Mean(); }
+      auto ci = resamples_.GetConfidenceInterval(mean, ReSamples::CIMethod::pivot);
+      lower_error = mean - ci.lower_limit;
+    } else {
+      lower_error = MeanError();
+    }
+    return lower_error;
+  }
+
+  double UpperMeanError() const {
+    double upper_error;
+    if (bits_ & Settings::ASYMMERRORS) {
+      double mean = mean_;
+      if (state_!=State::MEAN_ERROR) { mean = statistic_.Mean(); }
+      auto ci = resamples_.GetConfidenceInterval(mean, ReSamples::CIMethod::pivot);
+      upper_error = ci.upper_limit - mean;
+    } else {
+      upper_error = MeanError();
+    }
+    return upper_error;
+  }
+
+  double MeanError() const {
+    double error;
     if (bits_ & Settings::CORRELATEDERRORS) {
-      error = resamples_.GetConfidenceInterval(mean_,ReSamples::CIMethod::pivot).Uncertainty();
+      error = resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
     } else {
       switch (state_) {
         case State::MOMENTS :error = statistic_.MeanError();
@@ -90,11 +116,12 @@ class Stats {
   }
 
   void CalculateMeanAndError() {
-    state_ = State::MEAN_ERROR;
-    mergeable_ = false;
-    mean_ = statistic_.Mean();
-    error_ = statistic_.MeanError();
-    resamples_.CalculateMeans();
+    if (state_!=State::MEAN_ERROR) {
+      state_ = State::MEAN_ERROR;
+      mean_ = statistic_.Mean();
+      error_ = statistic_.MeanError();
+      resamples_.CalculateMeans();
+    }
   }
 
   friend Stats Merge(const Stats &, const Stats &);
@@ -120,76 +147,34 @@ class Stats {
   }
 
   void SetWeights(Weights weights) { weights_flag = weights; }
-  State GetWeights() const { return state_; }
+  State GetState() const { return state_; }
 
   bool TestBit(unsigned int bit) const { return static_cast<bool>(bits_ & bit); }
   void SetBits(unsigned int bits) { bits_ = bits; }
   void ResetBits(unsigned int bits) { bits_ &= ~(bits & 0x00ffffff); }
 
-  const Statistic &GetStatistic() const {return statistic_;}
+  const Statistic &GetStatistic() const { return statistic_; }
 
   size_type GetNSamples() const { return resamples_.size(); }
   const ReSamples &GetReSamples() const { return resamples_; }
 
-  TCanvas* CIvsNSamples(int nsteps = 10) const {
-    auto pivot = resamples_.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::pivot, nsteps);
-    auto percentile = resamples_.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::percentile,nsteps);
-    auto normal = resamples_.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::normal, nsteps);
-    auto statistical = new TGraphAsymmErrors(2);
-    statistical->SetPoint(0, 0, statistic_.Mean());
-    statistical->SetPointError(0, 0, 0, statistic_.MeanError(), statistic_.MeanError());
-    statistical->SetPoint(1, resamples_.size(), statistic_.Mean());
-    statistical->SetPointError(1, 0, 0, statistic_.MeanError(), statistic_.MeanError());
-    auto canvas = new TCanvas("CIvsNSamples", "CI", 600, 400);
-    statistical->Draw("AL3");
-    statistical->SetFillColorAlpha(kBlack, 0.2);
-    statistical->SetLineWidth(2);
-    statistical->SetLineColorAlpha(kBlack, 0.4);
-    statistical->GetYaxis()->SetRangeUser((statistic_.Mean() - statistic_.MeanError()*2), (statistic_.Mean() + statistic_.MeanError()*2));
-    statistical->GetXaxis()->SetRangeUser(0, resamples_.size());
-    statistical->SetNameTitle("", ";number of bootstrap samples; x");
-    auto style = [](std::pair<TGraph*, TGraph*> &pair, int color) {
-      pair.first->SetLineWidth(2);
-      pair.second->SetLineWidth(2);
-      pair.first->SetLineColorAlpha(color, 0.8);
-      pair.second->SetLineColorAlpha(color, 0.8);
-    };
-    style(pivot, kRed);
-    pivot.first->GetYaxis()->SetRangeUser(0.8, 1.2);
-    pivot.first->Draw("L");
-    pivot.second->Draw("L");
-    style(percentile, kGreen + 2);
-    percentile.first->Draw("L");
-    percentile.second->Draw("L");
-    style(normal, kBlue);
-    normal.first->Draw("L");
-    normal.second->Draw("L");
-    auto legend = new TLegend(0.15, 0.15, 0.3, 0.25);
-    legend->AddEntry(statistical, "standard", "AL");
-    legend->AddEntry(pivot.first, "bs pivot", "L");
-    legend->AddEntry(percentile.first, "bs percentile", "L");
-    legend->AddEntry(normal.first, "bs normal", "L");
-    legend->SetFillStyle(4000);
-    legend->SetLineWidth(0);
-    legend->Draw();
-    return canvas;
-  }
-
+  TCanvas *CIvsNSamples(const int nsteps = 10) const;
 
  private:
   ReSamples resamples_;
   Statistic statistic_;
   unsigned int bits_ = 0 | Qn::Stats::CORRELATEDERRORS;
   State state_ = State::MOMENTS;
-  Weights weights_flag = Weights::REFERENCE;
-  bool mergeable_ = true;
+  Weights weights_flag = Weights::REFERENCE; /// weighting of the Stats
+  bool mergeable_ = true; /// flag is false if an operation leading to undefined weights has been performed
+
 
   double mean_ = 0.;
   double error_ = 0.;
   double weight_ = 1.;
 
   /// \cond CLASSIMP
- ClassDef(Stats, 3);
+ ClassDef(Stats, 4);
   /// \endcond
 };
 

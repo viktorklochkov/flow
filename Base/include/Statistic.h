@@ -41,12 +41,12 @@ class Statistic {
   }
   inline void Fill(const CorrelationResult &product) { Fill(product.result, product.weight); }
   double SumSq() const { return sum_sq_; }
-  double Neff() const { return sum_weights_*sum_weights_/sum_weights2_; }
+  double Neff() const { return sum_weights2_ > 0 ? sum_weights_*sum_weights_/sum_weights2_ : 0.; }
   double N() const { return n_entries_; }
   double Variance() const { return sum_weights_ > 0 ? (n_entries_ > 1 ? (sum_sq_/(sum_weights_ - 1)) : 0) : -1; }
   double SumWeights() const { return sum_weights_; }
-  double Mean() const { return sum_values_/sum_weights_; }
-  double MeanError() const { return std::sqrt(Variance()/Neff()); }
+  double Mean() const { return sum_weights_ > 0 ? sum_values_/sum_weights_ : 0.0; }
+  double MeanError() const { return Neff() > 0 ? std::sqrt(Variance()/Neff()) : 0.0; }
   double Entries() const { return n_entries_; }
   double Min() const { return min_; }
   double Max() const { return max_; }
@@ -59,7 +59,10 @@ class Statistic {
     result.max_ = std::max(result.max_, rhs.max_);
     result.min_ = std::min(result.min_, rhs.min_);
     double num = rhs.sum_weights_*lhs.sum_values_ - lhs.sum_weights_*rhs.sum_values_;
-    result.sum_sq_ = lhs.sum_sq_ + rhs.sum_sq_ + (num*num)/(lhs.sum_weights_*rhs.sum_weights_*result.sum_weights_);
+    result.sum_sq_ = lhs.sum_sq_ + rhs.sum_sq_;
+    if (lhs.sum_weights_!=0. && rhs.sum_weights_!=0. && result.sum_weights_!=0.) {
+      result.sum_sq_ += (num*num)/(lhs.sum_weights_*rhs.sum_weights_*result.sum_weights_);
+    }
     return result;
   }
 

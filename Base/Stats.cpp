@@ -22,22 +22,31 @@ namespace Qn {
 using STAT = Qn::Stats::State;
 
 Stats MergeBins(const Stats &lhs, const Stats &rhs) {
-  if (!lhs.mergeable_) throw std::logic_error("Cannot merge Stats. Please check prior operations.");
+  if (!rhs.mergeable_) throw std::logic_error("Cannot merge Stats. Please check prior operations.");
   Stats result;
-  auto temp_l = lhs;
-  auto temp_r = rhs;
-  if (lhs.state_==STAT::MOMENTS) {
-    temp_l.CalculateMeanAndError();
-    temp_r.CalculateMeanAndError();
+  if ((rhs.state_ == STAT::MEAN_ERROR)) {
+    auto temp_l = lhs;
+    auto temp_r = rhs;
+    auto totalweight = (temp_l.weight_ + temp_r.weight_);
+    result.mean_ = (temp_l.weight_*temp_l.mean_ + temp_r.weight_*temp_r.mean_)/totalweight;
+    auto error_1 = temp_l.weight_/totalweight*temp_l.error_;
+    auto error_2 = temp_r.weight_/totalweight*temp_r.error_;
+    result.error_ = std::sqrt(error_1*error_1 + error_2*error_2);
+    result.weight_ = temp_l.weight_ + temp_r.weight_;
+    bool merge_weights = (rhs.weights_flag==Qn::Stats::Weights::OBSERVABLE);
+    result.resamples_ = ReSamples::Merge(temp_l.resamples_, temp_r.resamples_, merge_weights);
+    result.state_ = STAT::MEAN_ERROR;
+    result.bits_ = rhs.bits_;
+    result.weights_flag = rhs.weights_flag;
+    result.mergeable_ = rhs.mergeable_;
+  } else {
+    result.statistic_ = Statistic::Merge(lhs.statistic_, rhs.statistic_);
+    result.resamples_ = ReSamples::MergeStatistics(lhs.resamples_, rhs.resamples_);
+    result.state_ = STAT::MOMENTS;
+    result.bits_ = rhs.bits_;
+    result.weights_flag = rhs.weights_flag;
+    result.mergeable_ = rhs.mergeable_;
   }
-  result.mean_ = (temp_l.weight_*temp_l.mean_ + temp_r.weight_*temp_r.mean_)/(temp_l.weight_ + temp_r.weight_);
-  result.weight_ = temp_l.weight_ + temp_r.weight_;
-  bool merge_weights = (lhs.weights_flag==Qn::Stats::Weights::OBSERVABLE);
-  result.resamples_ = ReSamples::Merge(temp_l.resamples_, temp_r.resamples_, merge_weights);
-  result.state_ = STAT::MEAN_ERROR;
-  result.bits_ = lhs.bits_;
-  result.weights_flag = lhs.weights_flag;
-  result.mergeable_ = lhs.mergeable_;
   return result;
 }
 //
@@ -53,8 +62,7 @@ Stats Merge(const Stats &lhs, const Stats &rhs) {
     result.resamples_ = ReSamples::Concatenate(lhs.resamples_, rhs.resamples_);
   } else {
     result.statistic_ = Statistic::Merge(lhs.statistic_, rhs.statistic_);
-    bool merge_weights = (lhs.weights_flag==Qn::Stats::Weights::OBSERVABLE);
-    result.resamples_ = ReSamples::Merge(lhs.resamples_, rhs.resamples_, merge_weights);
+    result.resamples_ = ReSamples::MergeStatistics(lhs.resamples_, rhs.resamples_);
   }
   return result;
 }
@@ -173,6 +181,50 @@ Stats Sqrt(const Stats &stat) {
   result.error_ = stat.error_/(2*std::sqrt(result.mean_));
   result.resamples_ = ReSamples::Sqrt(result.resamples_);
   return result;
+}
+
+TCanvas *Stats::CIvsNSamples(const int nsteps) const {
+  auto resamples(resamples_);
+  resamples.CalculateMeans();
+  auto pivot = resamples.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::pivot, nsteps);
+  auto percentile = resamples.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::percentile, nsteps);
+  auto normal = resamples.CIvsNSamples(statistic_.Mean(), Qn::ReSamples::CIMethod::normal, nsteps);
+  auto statistical = new TGraphAsymmErrors(2);
+  statistical->SetPoint(0, 0, statistic_.Mean());
+  statistical->SetPointError(0, 0, 0, statistic_.MeanError(), statistic_.MeanError());
+  statistical->SetPoint(1, resamples.size(), statistic_.Mean());
+  statistical->SetPointError(1, 0, 0, statistic_.MeanError(), statistic_.MeanError());
+  auto canvas = new TCanvas("CIvsNSamples", "CI", 600, 400);
+  statistical->Draw("AL3");
+  statistical->SetFillColorAlpha(kBlack, 0.2);
+  statistical->SetLineWidth(2);
+  statistical->SetLineColorAlpha(kBlack, 0.4);
+  statistical->GetYaxis()->SetRangeUser((statistic_.Mean() - statistic_.MeanError()*2),
+                                        (statistic_.Mean() + statistic_.MeanError()*2));
+  statistical->GetXaxis()->SetRangeUser(0, resamples.size());
+  statistical->SetNameTitle("", ";number of bootstrap samples; x");
+
+  auto draw_ci = [](std::pair<TGraph *, TGraph *> &pair, int color) {
+    pair.first->SetLineWidth(2);
+    pair.second->SetLineWidth(2);
+    pair.first->SetLineColorAlpha(color, 0.8);
+    pair.second->SetLineColorAlpha(color, 0.8);
+    pair.first->Draw("L");
+    pair.second->Draw("L");
+  };
+  draw_ci(pivot, kRed);
+  draw_ci(percentile, kGreen + 2);
+  draw_ci(normal, kBlue);
+
+  auto legend = new TLegend(0.15, 0.15, 0.3, 0.25);
+  legend->AddEntry(statistical, "standard", "AL");
+  legend->AddEntry(pivot.first, "bs pivot", "L");
+  legend->AddEntry(percentile.first, "bs percentile", "L");
+  legend->AddEntry(normal.first, "bs normal", "L");
+  legend->SetFillStyle(4000);
+  legend->SetLineWidth(0);
+  legend->Draw();
+  return canvas;
 }
 
 }

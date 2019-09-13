@@ -582,7 +582,7 @@ class DataContainer : public TObject {
       rebin_ok = rebin_ok && found;
     }
     if (!rebin_ok) {
-      std::string errormsg = "Rebinned axis has overlapping bins." + rebinaxis.Name();
+      std::string errormsg = "Rebinned axis" + rebinaxis.Name() + " has overlapping bins.";
       throw std::logic_error(errormsg);
     }
     unsigned long ibin = 0;

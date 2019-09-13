@@ -209,9 +209,9 @@ IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_subdirectory(test)
 ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
-#add_executable(main main.cpp)
-#target_link_libraries(main ${ROOT_LIBRARIES} Base Correlation)
-
+add_executable(main main.cpp)
+target_link_libraries(main ${ROOT_LIBRARIES} Base Correlation)
+#
 # Install configuration
 
 set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)

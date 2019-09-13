@@ -41,7 +41,7 @@ struct ConfidenceInterval {
   double lower_limit;
   double upper_limit;
   double Uncertainty() const {
-    return (upper_limit - lower_limit) / 2.;
+    return (upper_limit - lower_limit)/2.;
   }
 };
 
@@ -58,6 +58,9 @@ class ReSamples {
   ReSamples() = default;
   explicit ReSamples(unsigned int size) : statistics_(size), means_(size) {}
   virtual ~ReSamples() = default;
+  ReSamples(const ReSamples &sample) : statistics_(sample.statistics_), means_(sample.means_) {}
+  ReSamples(ReSamples &&sample) = default;
+  ReSamples &operator=(const ReSamples &sample) = default;
 
   void SetNumberOfSamples(unsigned int i) {
     statistics_.resize(i);
@@ -68,7 +71,7 @@ class ReSamples {
     return means_.at(i);
   }
 
-  size_type size() const { return statistics_.size(); }
+  size_type size() const { return means_.size(); }
 
   ConfidenceInterval GetConfidenceInterval(const double mean, CIMethod method) const {
     return ConstructConfidenceInterval(means_, mean, method);
@@ -91,13 +94,15 @@ class ReSamples {
   }
 
   void CalculateMeans() {
-    unsigned int i = 0;
-    for (auto &statistic : statistics_) {
-      double mean = statistic.Mean();
-      double weight = statistic.SumWeights();
-      SampleMean sm = {mean, weight};
-      means_.at(i) = sm;
-      ++i;
+    if (!using_means_) {
+      unsigned int i = 0;
+      for (auto &statistic : statistics_) {
+        double mean = statistic.Mean();
+        double weight = statistic.SumWeights();
+        means_.at(i) = {mean, weight};
+        ++i;
+        using_means_ = true;
+      }
     }
   }
 
@@ -107,17 +112,7 @@ class ReSamples {
     return means;
   }
 
-  std::pair<TGraph *, TGraph *> CIvsNSamples(double mean, CIMethod method, unsigned int nsteps = 10) const {
-    auto graphup = new TGraph(nsteps);
-    auto graphlo = new TGraph(nsteps);
-    int step = means_.size()/nsteps;
-    for (unsigned int i = 0; i < nsteps; ++i) {
-      auto ci = ConfidenceIntervalNSamplesMethod(mean, step*(i + 1), method);
-      graphlo->SetPoint(i, (i + 1)*step, ci.lower_limit);
-      graphup->SetPoint(i, (i + 1)*step, ci.upper_limit);
-    }
-    return std::make_pair(graphlo, graphup);
-  }
+  std::pair<TGraph *, TGraph *> CIvsNSamples(double mean, CIMethod method, unsigned int nsteps = 10) const;
 
   void ScatterGraph(TGraph &graph, double offset, double width) {
     std::random_device rd;
@@ -142,6 +137,8 @@ class ReSamples {
 
   static ReSamples Merge(const ReSamples &, const ReSamples &, bool);
 
+  static ReSamples MergeStatistics(const ReSamples &, const ReSamples &);
+
   static ReSamples Concatenate(const ReSamples &, const ReSamples &);
 
  private:
@@ -154,9 +151,9 @@ class ReSamples {
     return ConstructConfidenceInterval(bsmeans, mean, method);
   }
 
-  inline ConfidenceInterval ConstructConfidenceInterval(const std::vector<SampleMean> &means,
-                                                 const double mean,
-                                                 CIMethod method) const {
+  inline ConfidenceInterval ConstructConfidenceInterval(std::vector<SampleMean> means,
+                                                        const double mean,
+                                                        CIMethod method) const {
     ConfidenceInterval interval{};
     switch (method) {
       case CIMethod::percentile :interval = ConfidenceIntervalPercentile(means);
@@ -175,6 +172,7 @@ class ReSamples {
 
   ConfidenceInterval ConfidenceIntervalNormal(std::vector<SampleMean>, double) const;
 
+  bool using_means_ = false;
   std::vector<Statistic> statistics_;
   std::vector<SampleMean> means_;
 

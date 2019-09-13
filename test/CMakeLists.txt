@@ -10,7 +10,8 @@ set(TEST_SOURCES
         CorrelationManagerUnitTest.cpp
         StatisticUnitTest.cpp
         BootstrapSamplerUnitTest.cpp
-        ReSampleUnitTest.cpp)
+        ReSampleUnitTest.cpp
+        StatsUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})

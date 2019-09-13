@@ -34,7 +34,9 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
   }
   auto graph = new TGraphAsymmErrors((int) data.size());
   unsigned int ibin = 0;
-  for (auto &bin : data) {
+  for (const auto &bin : data) {
+    auto tbin = bin;
+    if (tbin.GetState() != Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
     auto xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
     auto xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
     auto x = xlo + ((xhi - xlo)*static_cast<double>(i)/maxi);
@@ -44,8 +46,8 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
       exl = x - xlo;
       exh = xhi - x;
     }
-    graph->SetPoint(ibin, x, bin.Mean());
-    graph->SetPointError(ibin, exl, exh, bin.Error(), bin.Error());
+    graph->SetPoint(ibin, x, tbin.Mean());
+    graph->SetPointError(ibin, exl, exh, tbin.LowerMeanError(), tbin.UpperMeanError());
     graph->SetMarkerStyle(kFullCircle);
     ibin++;
   }

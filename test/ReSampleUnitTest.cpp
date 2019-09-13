@@ -39,6 +39,40 @@ TEST(ReSampleUnitTest, test) {
   std::cout << stats.MeanError() << " " << bserror << std::endl;
 }
 
+TEST(ReSampleUnitTest, merging) {
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+
+  std::normal_distribution<> distribution(1., 1.);
+  //using poissonian sampling
+  std::poisson_distribution<> poisson_bootstrap(1);
+
+  Qn::Statistic stats;
+  const unsigned int nsamples = 1000;
+  Qn::ReSamples samples_a(nsamples);
+  Qn::ReSamples samples_b(nsamples);
+  Qn::ReSamples samples_total(nsamples);
+  std::vector<std::size_t> ids(nsamples);
+  for (int i = 0; i < 10000; ++i) {
+    for (unsigned int j = 0; j < nsamples; ++j) {
+      ids[j] = poisson_bootstrap(gen);
+    }
+    auto value = distribution(gen);
+    stats.Fill(value, 1.0);
+    samples_a.FillPoisson({value, true, 1.0}, ids);
+    samples_b.FillPoisson({value, true, 1.0}, ids);
+    samples_total.FillPoisson({value, true, 1.0}, ids);
+  }
+  auto samples_merged = Qn::ReSamples::MergeStatistics(samples_a, samples_b);
+  samples_total.CalculateMeans();
+  samples_merged.CalculateMeans();
+  auto cit = samples_total.GetConfidenceInterval(1.,Qn::ReSamples::CIMethod::normal);
+  auto cim = samples_merged.GetConfidenceInterval(1.,Qn::ReSamples::CIMethod::normal);
+  EXPECT_FLOAT_EQ(cim.lower_limit,cit.lower_limit);
+  EXPECT_FLOAT_EQ(cim.upper_limit,cit.upper_limit);
+}
+
 TEST(ReSampleUnitTest, vsnsample) {
   std::random_device rd;
   std::mt19937 gen(rd());

@@ -71,7 +71,7 @@ class EventShape : public TObject {
     auto lower = histo->GetXaxis()->GetBinLowEdge(1);
     auto upper = histo->GetXaxis()->GetBinUpEdge(nbins);
     histo_ = new TH1F((std::string("histo") + name).data(), ";ese;counts", nbins, lower, upper);
-    integral_ = new TH1F((std::string("integral") +name).data(), ";ese;counts", nbins, lower, upper);
+    integral_ = new TH1F((std::string("integral") + name).data(), ";ese;counts", nbins, lower, upper);
   }
 
   /**

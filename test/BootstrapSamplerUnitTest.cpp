@@ -33,7 +33,7 @@ TEST(BootStrapSamplerTest, Constructor) {
 }
 
 TEST(BootStrapSampler, Basic) {
-  const int nsamples = 10000;
+  const int nsamples = 20;
   const int nevents = 10000;
   Qn::Sampler sampler(nevents, nsamples);
   sampler.CreateBootstrapSamples();
@@ -58,13 +58,13 @@ TEST(BootStrapSampler, Basic) {
   auto percentile = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::percentile);
   auto pivot = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::pivot);
   auto normal = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::normal);
-  std::cout << "percentile  " << percentile.lower_limit << " " << percentile.upper_limit << std::endl;
-  std::cout << "pivot       " << pivot.lower_limit << " " << pivot.upper_limit << std::endl;
-  std::cout << "normal      " << normal.lower_limit << " " << normal.upper_limit << std::endl;
+  std::cout << "percentile  " << stats.Mean() - percentile.lower_limit << " " << percentile.upper_limit - stats.Mean() << std::endl;
+  std::cout << "pivot       " << stats.Mean() - pivot.lower_limit << " " << pivot.upper_limit - stats.Mean() << std::endl;
+  std::cout << "normal      " << stats.Mean() - normal.lower_limit << " " << normal.upper_limit - stats.Mean() << std::endl;
   auto error = stats.GetStatistic().MeanError();
   std::cout << "statistical " << stats.Mean() - error << " " << stats.Mean() + error << std::endl;
   stats.SetBits(Qn::Stats::CORRELATEDERRORS);
-  auto bserr = stats.Error();
+  auto bserr = stats.MeanError();
   gStyle->SetOptStat("mMerR");
   TCanvas c1("BootstrappingUnitTest","test",1200,600);
   c1.Divide(2);
@@ -76,7 +76,7 @@ TEST(BootStrapSampler, Basic) {
   hboot.Draw();
     TText text2(1.0,0.8,std::to_string(bserr).data());
   text2.Draw();
-  auto c2 = stats.CIvsNSamples(100);
+  auto c2 = stats.CIvsNSamples(10);
   c1.SaveAs("BootStrapTest.pdf");
   c2->SaveAs("CIvsNSamples.pdf");
 }
