@@ -15,12 +15,13 @@
 /// \brief Base class for the support of the different correction steps within Q vector correction framework
 ///
 
+#include "TObject.h"
 #include "TList.h"
-#include "TObjString.h"
 
 namespace Qn {
 class SubEvent;
 class QVector;
+
 
 /// \class QnCorrectionsCorrectionStepBase
 /// \brief Base class for correction steps
@@ -34,7 +35,7 @@ class QVector;
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 05, 2016
 
-class CorrectionStep {
+class CorrectionBase : public TObject {
  public:
   /// \typedef QnCorrectionStepStatus
   /// \brief The class of the id of the correction steps states
@@ -54,68 +55,70 @@ class CorrectionStep {
   };
 
   friend class SubEvent;
-  CorrectionStep() = default;
-  virtual ~CorrectionStep() = default;
-  CorrectionStep(const char *name, unsigned int prio) : fPriority(prio), fName(name) {}
-  /// Copy constructor
-  CorrectionStep(CorrectionStep &) = delete;
-  /// Assignment operator
-  CorrectionStep &operator=(const CorrectionStep &) = delete;
-  const char *GetName() const { return fName.data(); }
+  CorrectionBase() = default;
+  virtual ~CorrectionBase() = default;
+  CorrectionBase(const char *name, unsigned int prio) : fPriority(prio), fName(name) {}
+  virtual const char *GetName() const { return fName.data(); }
+  CorrectionBase(const CorrectionBase &other) {
+    fPriority = other.fPriority;
+    fName = other.fName;
+    fState = other.fState;
+    fSubEvent = other.fSubEvent;
+  }
 
   /// Attaches the needed input information to the correction step
   ///
   /// Pure virtual function
   /// \param list list where the inputs should be found
   /// \return kTRUE if everything went OK
-  virtual void AttachInput(TList *list) = 0;
+  virtual void AttachInput(TList *list) { (void) list; }
   /// Perform after calibration histograms attach actions
   /// It is used to inform the different correction step that
   /// all conditions for running the network are in place so
   /// it is time to check if their requirements are satisfied
   ///
   /// Pure virtual function
-  virtual void AfterInputAttachAction() = 0;
+  virtual void AfterInputAttachAction() {}
   /// Asks for support data structures creation
   ///
   /// Pure virtual function
-  virtual void CreateSupportQVectors() = 0;
+  virtual void CreateSupportQVectors() {}
   /// Asks for support histograms creation
   ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual void CreateCorrectionHistograms(TList *list) = 0;
+  virtual void CreateCorrectionHistograms(TList *list) { (void) list; }
   /// Asks for QA histograms creation
   ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
 
-  virtual void AttachQAHistograms(TList *list) = 0;
+  virtual void AttachQAHistograms(TList *list) { (void) list; }
   /// Asks for non validated entries QA histograms creation
   ///
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual void AttachNveQAHistograms(TList *list) = 0;
+  virtual void AttachNveQAHistograms(TList *list) { (void) list; }
   /// Processes the correction step
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual bool ProcessCorrections() = 0;
+  virtual bool ProcessCorrections() { return false; }
   /// Processes the correction step data collection
   ///
   /// Pure virtual function
   /// \return kTRUE if everything went OK
-  virtual bool ProcessDataCollection() = 0;
+  virtual bool ProcessDataCollection() { return false; }
   /// Clean the correction to accept a new event
   /// Pure virtual function
-  virtual void ClearCorrectionStep() = 0;
+  virtual void ClearCorrectionStep() {}
   /// Reports if the correction step is being applied
   /// Pure virutal function
   /// \return TRUE if the correction step is being applied
-  virtual Bool_t IsBeingApplied() const = 0;
+  virtual Bool_t IsBeingApplied() const { return false; }
   /// Report on correction usage
   /// Pure virtual function
   /// Correction step should incorporate its name in calibration
@@ -129,18 +132,14 @@ class CorrectionStep {
     bool applying = false;
     bool collecting = false;
     switch (fState) {
-      case State::CALIBRATION:
-        collecting = true;
+      case State::CALIBRATION:collecting = true;
         applying = false;
         break;
-      case State::APPLYCOLLECT:
-        collecting = true;
+      case State::APPLYCOLLECT:collecting = true;
         /* FALLTHRU */
-      case State::APPLY:
-        applying = true;
+      case State::APPLY:applying = true;
         break;
-      case State::PASSIVE:
-        collecting = false;
+      case State::PASSIVE:collecting = false;
         applying = false;
         break;
     }
@@ -155,29 +154,15 @@ class CorrectionStep {
   std::string fName;
   State fState = State::CALIBRATION; ///< the state in which the correction step is
   SubEvent *fSubEvent = nullptr; ///< pointer to the detector configuration owner
-  friend bool operator<(const CorrectionStep &lh, const CorrectionStep &rh);
+  friend bool operator<(const CorrectionBase &lh, const CorrectionBase &rh);
 
 /// \cond CLASSIMP
- ClassDef(CorrectionStep, 1);
+ ClassDef(CorrectionBase, 2);
 /// \endcond
 };
-inline bool operator<(const Qn::CorrectionStep &lh, const Qn::CorrectionStep &rh) {
+inline bool operator<(const Qn::CorrectionBase &lh, const Qn::CorrectionBase &rh) {
   return lh.fPriority < rh.fPriority;
 }
-}
 
-/// Checks if should be applied before the one passed as parameter
-/// \param correction correction to check whether to be applied after
-/// \return kTRUE if to apply before the one passed as argument
-namespace std {
-/**
- * std::less specialization for the Qn::CorrectionStep
- */
-template<>
-struct less<Qn::CorrectionStep *> {
-  bool operator()(Qn::CorrectionStep *lhs, Qn::CorrectionStep *rhs) const {
-    return *lhs < *rhs;
-  }
-};
 }
 #endif // QNCORRECTIONS_CORRECTIONSTEPBASE_H

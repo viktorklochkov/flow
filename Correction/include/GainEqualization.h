@@ -117,6 +117,16 @@ class GainEqualization : public CorrectionOnInputData {
 
   GainEqualization();
   ~GainEqualization() = default;
+  GainEqualization(const GainEqualization &other) : CorrectionOnInputData(other),
+                                                    fEqualizationMethod(other.fEqualizationMethod),
+                                                    fShift(other.fShift),
+                                                    fScale(other.fScale),
+                                                    fUseChannelGroupsWeights(other.fUseChannelGroupsWeights),
+                                                    fHardCodedWeights(other.fHardCodedWeights),
+                                                    fMinNoOfEntriesToValidate(other.fMinNoOfEntriesToValidate) {
+  }
+
+  virtual CorrectionOnInputData *MakeCopy() const { return dynamic_cast<CorrectionOnInputData *>(new GainEqualization(*this)); }
 
   /// Stores the passed equalization method
   /// \param method the desired equalization method
@@ -152,23 +162,32 @@ class GainEqualization : public CorrectionOnInputData {
   virtual void ClearCorrectionStep() {}
 
  private:
-  using State = Qn::CorrectionStep::State;
-  static constexpr const unsigned int szPriority = CorrectionOnInputData::Priority::kGainEqualization; ///< the key of the correction step for ordering purpose
-  static constexpr const Float_t fMinimumSignificantValue = 1e-6;     ///< the minimum value that will be considered as meaningful for processing
+  using State = Qn::CorrectionBase::State;
+  static constexpr const unsigned int szPriority =
+      CorrectionOnInputData::Priority::kGainEqualization; ///< the key of the correction step for ordering purpose
+  static constexpr const Float_t
+      fMinimumSignificantValue = 1e-6;     ///< the minimum value that will be considered as meaningful for processing
   static constexpr const char *szCorrectionName = "Gain equalization"; ///< the name of the correction step
   static constexpr const char *szSupportHistogramName = "Multiplicity"; ///< the name and title for support histograms
-  static constexpr const char *szQAHistogramName= "QA Multiplicity"; ///< the name and title for QA histograms
-  static constexpr const char *szQANotValidatedHistogramName  = "GE NvE";  ///< the name and title for bin not validated QA histograms
-  std::unique_ptr<CorrectionProfileChannelizedIngress> fInputHistograms; //!<! the histogram with calibration information
-  std::unique_ptr<CorrectionProfileChannelized> fCalibrationHistograms; //!<! the histogram for building calibration information
-  std::unique_ptr<CorrectionProfileChannelized> fQAMultiplicityBefore;  //!<! the channel multiplicity histogram before gain equalization
-  std::unique_ptr<CorrectionProfileChannelized> fQAMultiplicityAfter;   //!<! the channel multiplicity histogram after gain equalization
-  std::unique_ptr<CorrectionHistogramChannelizedSparse> fQANotValidatedBin ;    //!<! the histogram with non validated bin information
+  static constexpr const char *szQAHistogramName = "QA Multiplicity"; ///< the name and title for QA histograms
+  static constexpr const char
+      *szQANotValidatedHistogramName = "GE NvE";  ///< the name and title for bin not validated QA histograms
+  std::unique_ptr<CorrectionProfileChannelizedIngress>
+      fInputHistograms; //!<! the histogram with calibration information
+  std::unique_ptr<CorrectionProfileChannelized>
+      fCalibrationHistograms; //!<! the histogram for building calibration information
+  std::unique_ptr<CorrectionProfileChannelized>
+      fQAMultiplicityBefore;  //!<! the channel multiplicity histogram before gain equalization
+  std::unique_ptr<CorrectionProfileChannelized>
+      fQAMultiplicityAfter;   //!<! the channel multiplicity histogram after gain equalization
+  std::unique_ptr<CorrectionHistogramChannelizedSparse>
+      fQANotValidatedBin;    //!<! the histogram with non validated bin information
   Method fEqualizationMethod = Method::NONE; ///< the selected equalization method
-  Float_t fShift  = 0.0;                               ///< the shift (A) parameter for width equalization
+  Float_t fShift = 0.0;                               ///< the shift (A) parameter for width equalization
   Float_t fScale = 1.0;                               ///< the scale (B) parameter for width equalization
   Bool_t fUseChannelGroupsWeights = false;              ///< use group weights extracted from channel multiplicity
-  const Float_t *fHardCodedWeights = nullptr;             //!<! group hard coded weights stored in the detector configuration
+  const Float_t
+      *fHardCodedWeights = nullptr;             //!<! group hard coded weights stored in the detector configuration
   Int_t fMinNoOfEntriesToValidate = 2;              ///< number of entries for bin content validation threshold
 
 /// \cond CLASSIMP

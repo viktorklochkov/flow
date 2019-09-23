@@ -27,12 +27,13 @@
 #include "TList.h"
 #include "ROOT/RMakeUnique.hxx"
 #include "ROOT/RIntegerSequence.hxx"
+#include "TROOT.h"
 
 #include "Axis.h"
 #include "InputVariableManager.h"
 
 namespace Qn {
-
+namespace Impl {
 /**
  * Base class of a QA histogram
  */
@@ -42,82 +43,6 @@ struct QAHistoBase {
   virtual void AddToList(TList *) = 0;
   static inline void FillHistogram(std::unique_ptr<QAHistoBase> &histo) { histo->Fill(); }
 };
-
-class QAHistogram {
- public:
-  enum class Type {
-    OneDim,
-    TwoDim,
-    TwoDimArray
-  };
-
-  QAHistogram() = default;
-  virtual ~QAHistogram() = default;
-  QAHistogram(QAHistogram &&hist) = default;
-  QAHistogram &operator=(QAHistogram &&hist) = default;
-  QAHistogram(std::string name, AxisD axis, std::string weight) :
-      name_(name), weight_(weight), type_(Type::OneDim) { axes_.push_back(axis); }
-  QAHistogram(std::string name, std::vector<AxisD> axes, std::string weight) :
-      name_(name), axes_(axes), weight_(weight), type_(Type::TwoDim) {}
-  QAHistogram(std::string name, std::vector<AxisD> axes, std::string weight, Qn::AxisD histoaxis) :
-      name_(name), axes_(axes), weight_(weight), type_(Type::TwoDimArray), histoaxis_(histoaxis) {}
-  void Initialize(InputVariableManager *var) {
-    if (type_==Type::OneDim) {
-      histogram_ = MakeHisto1D(var);
-    } else if (type_==Type::TwoDim) {
-      histogram_ = MakeHisto2D(var);
-    } else if (type_==Type::TwoDimArray) {
-      histogram_ = MakeHisto2DArray(var);
-    }
-  }
-  void Fill() { histogram_->Fill(); }
-  void AddToList(TList *list) { histogram_->AddToList(list); }
- private:
-
-  std::unique_ptr<QAHistoBase> histogram_; //!<!
-  std::string name_;
-  std::vector<AxisD> axes_;
-  std::string weight_;
-  Type type_;
-  AxisD histoaxis_;
-
-  std::unique_ptr<QAHistoBase> MakeHisto1D(InputVariableManager *var);
-  std::unique_ptr<QAHistoBase> MakeHisto2D(InputVariableManager *var);
-  std::unique_ptr<QAHistoBase> MakeHisto2DArray(InputVariableManager *var);
-};
-
-class QAHistograms {
- public:
-  QAHistograms() = default;
-  virtual ~QAHistograms() = default;
-  QAHistograms(QAHistograms &&hist) = default;
-  QAHistograms &operator=(QAHistograms &&hist) = default;
-  template<typename... Args>
-  void Add(Args &&... args) {
-    histograms_.emplace_back(std::forward<Args>(args)...);
-  }
-  void AddToList(TList *list) {
-    for (auto &histo : histograms_) {
-      histo.AddToList(list);
-    }
-  }
-
-  void Initialize(InputVariableManager *var) {
-    for (auto &histo : histograms_) {
-      histo.Initialize(var);
-    }
-  }
-
-  void Fill() {
-    for (auto &histo : histograms_) {
-      histo.Fill();
-    }
-  }
- private:
-  std::vector<QAHistogram> histograms_;
-
-};
-
 /**
  * Wrapper for a ROOT histogram, which allows it to be filled by the correction manager.
  * @tparam HISTO type of histogram.
@@ -127,24 +52,23 @@ class QAHistograms {
 template<typename HISTO, int N, typename VAR>
 class QAHisto : public QAHistoBase {
  public:
-  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisD> axis, Qn::InputVariable axisvar) :
+  QAHisto(std::array<VAR, N> vec, HISTO histo, std::unique_ptr<Qn::AxisD> axis, const Qn::InputVariable &axisvar) :
       vars_(std::move(vec)),
       axis_(std::move(axis)),
       axisvar_(axisvar) {
     if (axis_) {
-      for (unsigned int i = 0; i < axis_->size(); ++i) {
+      for (std::size_t i = 0; i < axis_->size(); ++i) {
         auto histname = histo->GetName();
         auto binname = std::string(histname) + "_" + axis_->GetBinName(i);
-        auto binhisto = (HISTO) ptr(histo)->Clone(binname.data());
+        auto binhisto = dynamic_cast<HISTO>(histo->Clone(binname.data()));
         histo_.push_back(binhisto);
       }
-      name_ = ptr(histo)->GetName();
+      name_ = histo->GetName();
       delete histo;
     } else {
       histo_.push_back(histo);
     }
   }
-
   QAHisto(std::array<VAR, N> vec, HISTO histo) :
       vars_(std::move(vec)) {
     histo_.push_back(histo);
@@ -161,56 +85,115 @@ class QAHisto : public QAHistoBase {
     auto bin = 0;
     if (axis_) {
       bin = axis_->FindBin(*axisvar_.begin());
-      if (bin > -1) ptr(histo_.at(bin))->FillN(variables[0].size(), (variables[I].begin())...);
+      if (bin > -1) histo_.at(bin)->FillN(variables[0].size(), (variables[I].begin())...);
     } else {
-      ptr(histo_.at(bin))->FillN(variables[0].size(), (variables[I].begin())...);
+      histo_.at(bin)->FillN(variables[0].size(), (variables[I].begin())...);
     }
   }
-
   /**
    * Fill function.
    */
   void Fill() override {
     return FillImpl(vars_, std::make_index_sequence<N>{});
   };
-
   /**
    * Add the histogram to the list.
    * @param list pointer to the list. Lifetime of the histogram hast to be managed by the list.
    */
   void AddToList(TList *list) override {
     if (axis_) {
-      auto dir = new TList();
+      auto dir = new ::TList();
       dir->SetName(name_.data());
       for (auto &histo : histo_) {
-        dir->Add(ptr(histo));
+        dir->Add(histo);
       }
       list->Add(dir);
     } else {
       for (auto &histo : histo_) {
-        list->Add(ptr(histo));
+        list->Add(histo);
       }
     }
   }
-
  private:
-
-  template<typename T>
-  T *ptr(T &obj) { return &obj; } ///Turns a reference into pointer.
-  template<typename T>
-  T *ptr(T *obj) { return obj; } /// The Object is already pointer. Returns it.
-
   std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
   std::vector<HISTO> histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
   std::unique_ptr<Qn::AxisD> axis_ = nullptr; // Creates a histogram for each bin of the axis
-  VAR axisvar_;
-  std::string name_;
+  VAR axisvar_;              /// input variable associated with the axis
+  std::string name_;         /// name of the QA histogram
+};
+}
+/// specializations used in the framework
+using QAHisto1DPtr = Impl::QAHisto<TH1F *, 2, Qn::InputVariable>;
+using QAHisto2DPtr = Impl::QAHisto<TH2F *, 3, Qn::InputVariable>;
+
+
+/**
+ * HistogramWrapper for the delayed construction of the histogram.
+ */
+class QAHistogram {
+ public:
+  enum class Type {
+    kUndefined,
+    kOneDim,
+    kTwoDim,
+    kTwoDimArray
+  };
+  QAHistogram() = default;
+  virtual ~QAHistogram() = default;
+  QAHistogram(QAHistogram &&) = default;
+  QAHistogram &operator=(QAHistogram &&) = default;
+  QAHistogram(const QAHistogram &other);
+  QAHistogram(std::string, const AxisD&, std::string);
+  QAHistogram(std::string, std::vector<AxisD>, std::string);
+  QAHistogram(std::string, std::vector<AxisD>, std::string, const Qn::AxisD&);
+  void Initialize(InputVariableManager &var);
+  void Fill() { histogram_->Fill(); }
+  void AddToList(TList *list) { histogram_->AddToList(list); }
+ private:
+  std::unique_ptr<Impl::QAHistoBase> histogram_; //!<! pointer to the QAHisto<>
+  std::string name_; // name of the histogram
+  std::vector<AxisD> axes_; /// vector of histogram axes.
+  std::string weight_; /// name of the weight
+  Type type_ = Type::kUndefined; /// style type of histogram
+  AxisD histoaxis_; /// additional axis used for array-of-2d-histograms style.
+
+  std::unique_ptr<Impl::QAHistoBase> MakeHisto1D(InputVariableManager &var);
+  std::unique_ptr<Impl::QAHistoBase> MakeHisto2D(InputVariableManager &var);
+  std::unique_ptr<Impl::QAHistoBase> MakeHisto2DArray(InputVariableManager &var);
+  /// \cond CLASSIMP
+ ClassDef(QAHistogram, 1);
+/// \endcond
 };
 
-/// specializations used in the framework
-using QAHisto1DPtr = QAHisto<TH1F *, 2, Qn::InputVariable>;
-using QAHisto2DPtr = QAHisto<TH2F *, 3, Qn::InputVariable>;
-
+class QAHistograms {
+ public:
+  QAHistograms() = default;
+  virtual ~QAHistograms() = default;
+  template<typename... Args>
+  void Add(Args &&... args) {
+    histograms_.emplace_back(std::forward<Args>(args)...);
+  }
+  void AddToList(TList *list) {
+    for (auto &histo : histograms_) {
+      histo.AddToList(list);
+    }
+  }
+  void Initialize(InputVariableManager &var) {
+    for (auto &histo : histograms_) {
+      histo.Initialize(var);
+    }
+  }
+  void Fill() {
+    for (auto &histo : histograms_) {
+      histo.Fill();
+    }
+  }
+ private:
+  std::vector<QAHistogram> histograms_;
+  /// \cond CLASSIMP
+ ClassDef(QAHistograms, 1);
+/// \endcond
+};
 }
 
 #endif //FLOW_QAHISTOGRAM_H

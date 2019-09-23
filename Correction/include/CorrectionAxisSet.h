@@ -14,7 +14,8 @@
 /// \brief Class that models the set of variables that define an event class for the Q vector correction framework
 
 #include "CorrectionAxis.h"
-namespace Qn{
+#include "InputVariableManager.h"
+namespace Qn {
 class CorrectionAxisSet {
   using size_type = std::vector<CorrectionAxis>::size_type;
  public:
@@ -31,6 +32,11 @@ class CorrectionAxisSet {
   const CorrectionAxis &At(unsigned int i) const { return axes_.at(i); }
   template<typename... ARGS>
   void Add(ARGS &&... args) { return axes_.emplace_back(std::forward<ARGS>(args)...); }
+  void Initialize(const InputVariableManager &variable_manager) {
+    for (auto &axis : axes_) {
+      axis.Initialize(variable_manager);
+    }
+  }
   std::vector<CorrectionAxis>::size_type GetSize() const { return axes_.size(); }
   void GetMultidimensionalConfiguration(int *nbins, double *minvals, double *maxvals) const {
     unsigned int i = 0;

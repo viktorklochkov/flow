@@ -16,8 +16,9 @@
 ///
 #include <map>
 #include "TList.h"
+#include "TObject.h"
 #include "QVector.h"
-#include "CorrectionStep.h"
+#include "CorrectionBase.h"
 
 /// \class QnCorrectionsCorrectionOnQvector
 /// \brief Base class for correction steps applied to a Q vector
@@ -28,27 +29,23 @@
 /// \date Feb 05, 2016
 
 namespace Qn {
-class CorrectionOnQvector : public CorrectionStep {
+class CorrectionOnQnVector : public CorrectionBase {
  public:
   enum Step {
     kRecentering,
     kAlignment,
     kTwistAndRescale
   };
-  CorrectionOnQvector() = default;
-  CorrectionOnQvector(const char *name, unsigned int prio) : CorrectionStep(name, prio) {}
-  virtual ~CorrectionOnQvector() = default;
-  /// Copy constructor deleted
-  CorrectionOnQvector(CorrectionOnQvector &) = delete;
-  /// Assignment operator deleted
-  CorrectionOnQvector &operator=(const CorrectionOnQvector &) = delete;
-  /// Perform after calibration histograms attach actions
-  /// It is used to inform the different correction step that
-  /// all conditions for running the network are in place so
-  /// it is time to check if their requirements are satisfied
-  ///
-  /// Pure virtual function
-  virtual void AfterInputAttachAction() = 0;
+  CorrectionOnQnVector() = default;
+  CorrectionOnQnVector(const char *name, unsigned int prio) : CorrectionBase(name, prio) {}
+  virtual ~CorrectionOnQnVector() = default;
+  CorrectionOnQnVector(const CorrectionOnQnVector &other) :
+      CorrectionBase(other),
+      fCorrectedQnVector(),
+      fInputQnVector(nullptr) {
+  }
+  virtual CorrectionOnQnVector *MakeCopy() const { return new CorrectionOnQnVector(*this); }
+
   /// Gets the corrected Qn vector
   /// \return the corrected Qn vector
   const QVector *GetCorrectedQnVector() const { return fCorrectedQnVector.get(); }
@@ -81,7 +78,8 @@ class CorrectionOnQvector : public CorrectionStep {
       case State::CALIBRATION: break;
       case State::APPLYCOLLECT:
         /* FALLTHRU */
-      case State::APPLY: applied = true; break;
+      case State::APPLY: applied = true;
+        break;
       case State::PASSIVE: break;
     }
     return applied;
@@ -90,7 +88,7 @@ class CorrectionOnQvector : public CorrectionStep {
   std::unique_ptr<QVector> fCorrectedQnVector; //!<! the step corrected Qn vector
   const QVector *fInputQnVector = nullptr; //!<! the previous step corrected Qn vector
 /// \cond CLASSIMP
- ClassDef(CorrectionOnQvector, 2);
+ ClassDef(CorrectionOnQnVector, 2);
 /// \endcond
 };
 }

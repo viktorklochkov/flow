@@ -62,7 +62,7 @@ class Detector;
 /// \date Feb 08, 2016
 class SubEvent {
  public:
-  friend class CorrectionStep;
+  friend class CorrectionBase;
   SubEvent() = default;
   SubEvent(unsigned int bin_id,
            const CorrectionAxisSet *eventClassesVariables,
@@ -99,7 +99,7 @@ class SubEvent {
   /// It could have already supported previous correction steps
   /// \return pointer to the current Qn vector instance
   QVector *GetCurrentQnVector() { return &fCorrectedQnVector; }
-  const QVector *GetPreviousCorrectedQnVector(CorrectionOnQvector *correctionOnQn) const;
+  const QVector *GetPreviousCorrectedQnVector(CorrectionOnQnVector *correctionOnQn) const;
   Bool_t IsCorrectionStepBeingApplied(const char *step) const;
   /// Get the current Q2n vector
   /// Makes it available for subsequent correction steps.
@@ -196,7 +196,7 @@ class SubEvent {
   /// \return kTRUE if everything went OK
   virtual Bool_t ProcessDataCollection() = 0;
   virtual void ActivateHarmonic(Int_t harmonic);
-  virtual void AddCorrectionOnQnVector(CorrectionOnQvector *correctionOnQn);
+  virtual void AddCorrectionOnQnVector(CorrectionOnQnVector *correctionOnQn);
   virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
 
   /// Builds Qn vectors before Q vector corrections but
@@ -215,13 +215,13 @@ class SubEvent {
   ///
   /// Pure virtual function
   /// \param list list where the correction steps should be incorporated
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const = 0;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionBase *> &set) const = 0;
   /// Include only one instance of each Qn vector correction step
   /// in execution order
   ///
   /// Pure virtual function
   /// \param list list where the correction steps should be incorporated
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const = 0;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionBase *> &set) const = 0;
   /// Provide information about assigned corrections
 
   using Report = std::pair<bool, bool>;
@@ -252,7 +252,7 @@ class SubEvent {
   Qn::QVector::CorrectionStep GetLatestCorrectionStep() {
     Qn::QVector::CorrectionStep latest = Qn::QVector::CorrectionStep::PLAIN;
     for (auto &correction_step : fQnVectorCorrections) {
-      if (correction_step->GetState() >= Qn::CorrectionStep::State::APPLY) {
+      if (correction_step->GetState() >= Qn::CorrectionBase::State::APPLY) {
         auto temp = correction_step->GetCorrectedQnVector()->GetCorrectionStep();
         if (latest < temp) latest = temp;
       }
@@ -264,7 +264,7 @@ class SubEvent {
     std::vector<QVector::CorrectionStep> steps;
     steps.emplace_back(QVector::CorrectionStep::PLAIN);
     for (auto &correction_step : fQnVectorCorrections) {
-      if (correction_step->GetState() >= CorrectionStep::State::APPLY) {
+      if (correction_step->GetState() >= CorrectionBase::State::APPLY) {
         steps.push_back(correction_step->GetCorrectedQnVector()->GetCorrectionStep());
       }
     }

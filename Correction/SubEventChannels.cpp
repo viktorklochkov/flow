@@ -395,7 +395,7 @@ inline void SubEventChannels::IncludeQnVectors() {
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void SubEventChannels::FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const {
+void SubEventChannels::FillOverallInputCorrectionStepList(std::set<CorrectionBase *> &set) const {
   fInputDataCorrections.FillOverallCorrectionsList(set);
 }
 
@@ -404,7 +404,7 @@ void SubEventChannels::FillOverallInputCorrectionStepList(std::set<CorrectionSte
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void SubEventChannels::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const {
+void SubEventChannels::FillOverallQnVectorCorrectionStepList(std::set<CorrectionBase *> &set) const {
   fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 

@@ -18,7 +18,7 @@
 #include <TNamed.h>
 #include <TList.h>
 
-#include "CorrectionStep.h"
+#include "CorrectionBase.h"
 
 namespace Qn {
 
@@ -30,21 +30,17 @@ namespace Qn {
 /// \author Víctor González <victor.gonzalez@cern.ch>, UCM
 /// \date Feb 05, 2016
 
-class CorrectionOnInputData : public CorrectionStep {
+class CorrectionOnInputData : public CorrectionBase {
  public:
   enum Priority {
     kGainEqualization
   };
   friend class SubEventChannels;
   CorrectionOnInputData() = default;
-  CorrectionOnInputData(const char *name, unsigned int prio) : CorrectionStep(name, prio) {}
+  CorrectionOnInputData(const char *name, unsigned int prio) : CorrectionBase(name, prio) {}
   virtual ~CorrectionOnInputData() = default;
-  /// Perform after calibration histograms attach actions
-  /// It is used to inform the different correction step that
-  /// all conditions for running the network are in place so
-  /// it is time to check if their requirements are satisfied
-  /// Does nothing for the time being
-  virtual void AfterInputAttachAction() {}
+  CorrectionOnInputData(const CorrectionOnInputData &other) : CorrectionBase(other) {}
+  virtual CorrectionOnInputData *MakeCopy() const { return new CorrectionOnInputData(*this); }
   /// Reports if the correction step is being applied
   /// \return FALSE, input data correction step dont make use of this service, yet
   virtual Bool_t IsBeingApplied() const { return kFALSE; }

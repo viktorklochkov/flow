@@ -39,7 +39,7 @@ class CorrectionProfileComponents;
 
 class SubEventChannels : public SubEvent {
  public:
-  friend class CorrectionStep;
+  friend class CorrectionBase;
   friend class SubEvent;
   SubEventChannels() = default;
   SubEventChannels(unsigned int bin_id,
@@ -102,8 +102,8 @@ class SubEventChannels : public SubEvent {
   virtual Bool_t ProcessDataCollection();
   virtual void AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInputData);
   virtual void IncludeQnVectors();
-  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const;
-  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const;
+  virtual void FillOverallInputCorrectionStepList(std::set<CorrectionBase *> &set) const;
+  virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionBase *> &set) const;
   virtual void Clear();
 
   virtual std::map<std::string, Report> ReportOnCorrections() const {

@@ -59,7 +59,7 @@ const char *TwistAndRescale::szQARescaleQnAverageHistogramName = "Rescale Qn avg
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
 TwistAndRescale::TwistAndRescale() :
-    CorrectionOnQvector(Form("%s and %s", szTwistCorrectionName, szRescaleCorrectionName), szPriority),
+    CorrectionOnQnVector(Form("%s and %s", szTwistCorrectionName, szRescaleCorrectionName), szPriority),
     fBDetectorConfigurationName(),
     fCDetectorConfigurationName() {
   fTwistAndRescaleMethod = Method::DOUBLE_HARMONIC;

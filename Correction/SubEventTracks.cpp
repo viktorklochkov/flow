@@ -217,7 +217,7 @@ void SubEventTracks::IncludeQnVectors() {
 ///
 /// There are not input correction so we do nothing
 /// \param list list where the correction steps should be incorporated
-void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionStep *> &set) const {
+void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionBase *> &set) const {
   (void) set;
 }
 
@@ -226,7 +226,7 @@ void SubEventTracks::FillOverallInputCorrectionStepList(std::set<CorrectionStep 
 ///
 /// The request is transmitted to the set of Qn vector corrections
 /// \param list list where the correction steps should be incorporated
-void SubEventTracks::FillOverallQnVectorCorrectionStepList(std::set<CorrectionStep *> &set) const {
+void SubEventTracks::FillOverallQnVectorCorrectionStepList(std::set<CorrectionBase *> &set) const {
   fQnVectorCorrections.FillOverallCorrectionsList(set);
 }
 

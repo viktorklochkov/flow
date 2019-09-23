@@ -40,10 +40,12 @@ set(CORRECTION_SOURCES
         Correction/Detector.cpp)
 
 set(CORRECTION_HEADERS
+        CorrectionManager.h
         CorrectionOnInputData.h
+        CorrectionOnQnVector.h
         CorrectionAxis.h
         CorrectionAxisSet.h
-        CorrectionStep.h
+        CorrectionBase.h
         CorrectionHistogramBase.h
         CorrectionsSet.h
         CorrectionHistogramChannelizedSparse.h
@@ -64,6 +66,7 @@ set(CORRECTION_HEADERS
         RunList.h
         DetectorList.h
         InputVariable.h
+        QAHistogram.h
         )
 
 set(BASE_SOURCES

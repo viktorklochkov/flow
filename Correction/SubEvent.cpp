@@ -44,7 +44,7 @@ const char *SubEvent::szQAQnAverageHistogramName = "Plain Qn avg ";
 
 /// Incorporates the passed correction to the set of Q vector corrections
 /// \param correctionOnQn the correction to add
-void SubEvent::AddCorrectionOnQnVector(CorrectionOnQvector *correctionOnQn) {
+void SubEvent::AddCorrectionOnQnVector(CorrectionOnQnVector *correctionOnQn) {
   correctionOnQn->SetOwner(this);
   fQnVectorCorrections.AddCorrection(correctionOnQn);
 }
@@ -65,7 +65,7 @@ void SubEvent::AddCorrectionOnInputData(CorrectionOnInputData *correctionOnInput
 /// The user is not able to modify it.
 /// \param correctionOnQn the correction to find its predecessor corrected Qn vector
 /// \return the corrected Qn vector from the correction step predecessor or the plain Qn vector
-const QVector *SubEvent::GetPreviousCorrectedQnVector(CorrectionOnQvector *correctionOnQn) const {
+const QVector *SubEvent::GetPreviousCorrectedQnVector(CorrectionOnQnVector *correctionOnQn) const {
   if (fQnVectorCorrections.GetPrevious(correctionOnQn)) {
     return fQnVectorCorrections.GetPrevious(correctionOnQn)->GetCorrectedQnVector();
   }

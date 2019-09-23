@@ -78,12 +78,10 @@ void CorrectionManager::AttachQAHistograms() {
 
 void CorrectionManager::InitializeOnNode() {
   variable_manager_.Initialize();
-  for (const auto &axis : correction_axes_callback_) {
-    correction_axes_.Add(axis(&variable_manager_));
-  }
-  event_histograms_.Initialize(&variable_manager_);
-  detectors_.Initialize(this);
-  event_cuts_.Initialize(&variable_manager_);
+  correction_axes_.Initialize(variable_manager_);
+  event_histograms_.Initialize(variable_manager_);
+  detectors_.Initialize(detectors_,variable_manager_, correction_axes_);
+  event_cuts_.Initialize(variable_manager_);
   InitializeCorrections();
   AttachQAHistograms();
 }

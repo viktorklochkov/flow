@@ -51,7 +51,7 @@
 /// Correction and data collecting during calibration is performed for all harmonics
 /// defined within the involved detector configuration
 
-#include "CorrectionOnQvector.h"
+#include "CorrectionOnQnVector.h"
 namespace Qn {
 /// \class QnCorrectionsQnVectorRecentering
 /// \brief Encapsulates recentering and width equalization on Q vector
@@ -100,10 +100,17 @@ namespace Qn {
 
 class CorrectionHistogramSparse;
 
-class Recentering : public CorrectionOnQvector {
+class Recentering : public CorrectionOnQnVector {
  public:
   Recentering();
   virtual ~Recentering() = default;
+  Recentering(const Recentering &other) : CorrectionOnQnVector(other),
+                                          fApplyWidthEqualization(other.fApplyWidthEqualization),
+                                          fMinNoOfEntriesToValidate(other.fMinNoOfEntriesToValidate) {
+  }
+
+  virtual CorrectionOnQnVector *MakeCopy() const { return dynamic_cast<CorrectionOnQnVector *>(new Recentering(*this)); }
+
   /// Controls if width equalization step shall be additionally applied
   /// \param apply kTRUE for applying the width equalization step
   void SetApplyWidthEqualization(Bool_t apply) { fApplyWidthEqualization = apply; }
@@ -129,8 +136,9 @@ class Recentering : public CorrectionOnQvector {
   virtual void ClearCorrectionStep();
 
  private:
-  using State = Qn::CorrectionStep::State;
-  static constexpr const unsigned int szPriority = CorrectionOnQvector::Step::kRecentering; ///< the key of the correction step for ordering purpose
+  using State = Qn::CorrectionBase::State;
+  static constexpr const unsigned int
+      szPriority = CorrectionOnQnVector::Step::kRecentering; ///< the key of the correction step for ordering purpose
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const char *szCorrectionName;               ///< the name of the correction step
   static const char *szSupportHistogramName;         ///< the name and title for support histograms
@@ -138,9 +146,12 @@ class Recentering : public CorrectionOnQvector {
   static const char *szQANotValidatedHistogramName;  ///< the name and title for bin not validated QA histograms
   static const char *szQAQnAverageHistogramName;     ///< the name and title for Qn components average QA histograms
   std::unique_ptr<CorrectionProfileComponents> fInputHistograms;       //!<! the histogram with calibration information
-  std::unique_ptr<CorrectionProfileComponents> fCalibrationHistograms; //!<! the histogram for building calibration information
-  std::unique_ptr<CorrectionHistogramSparse>   fQANotValidatedBin;     //!<! the histogram with non validated bin information
-  std::unique_ptr<CorrectionProfileComponents> fQAQnAverageHistogram;  //!<! the after correction step average Qn components QA histogram
+  std::unique_ptr<CorrectionProfileComponents>
+      fCalibrationHistograms; //!<! the histogram for building calibration information
+  std::unique_ptr<CorrectionHistogramSparse>
+      fQANotValidatedBin;     //!<! the histogram with non validated bin information
+  std::unique_ptr<CorrectionProfileComponents>
+      fQAQnAverageHistogram;  //!<! the after correction step average Qn components QA histogram
   Bool_t fApplyWidthEqualization;               ///< apply the width equalization step
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
 

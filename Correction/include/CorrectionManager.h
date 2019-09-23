@@ -1,5 +1,3 @@
-#include <utility>
-
 // Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
@@ -46,11 +44,10 @@
 
 namespace Qn {
 class CorrectionManager {
-  using ConfigurationFunction = std::function<void(SubEvent *config)>;
   using CutCallBack =  std::function<std::unique_ptr<CutBase>(Qn::InputVariableManager *)>;
-  using HistogramCallBack =  std::function<std::unique_ptr<QAHistoBase>(Qn::InputVariableManager *)>;
-  using CorrectionAxisCallBack = std::function<CorrectionAxis(Qn::InputVariableManager *)>;
  public:
+  CorrectionManager() = default;
+  virtual ~CorrectionManager() = default;
   /**
    * Add a variable to the variable manager
    * @param name Name of the variable
@@ -65,11 +62,28 @@ class CorrectionManager {
    * Adds a axis used for correction.
    * @param axis Axis used for correction. The name of the axis corresponds to the name of a variable.
    */
-  void AddCorrectionAxis(Qn::AxisD axis) {
-    auto callback = [axis](InputVariableManager *var) {
-      return CorrectionAxis(var->FindVariable(axis.Name()), axis);
-    };
-    correction_axes_callback_.emplace_back(callback);
+  void AddCorrectionAxis(const Qn::AxisD& axis) { correction_axes_.Add(axis); }
+
+  /**
+   * Adds a correction step based on Q vectors to the specified detector
+   * @tparam CORRECTION
+   * @param name Name of the detector
+   * @param correction the preconfigured correction step
+   */
+  template<typename CORRECTION>
+  void AddCorrectionOnQnVector(const std::string &name, CORRECTION &&correction) {
+    detectors_.FindDetector(name).AddCorrectionOnQnVector(std::forward<CORRECTION>(correction));
+  }
+
+  /**
+   * Adds a correction step based on the input data to the specified detector
+   * @tparam CORRECTION
+   * @param name Name of the detector
+   * @param correction the preconfigured correction step
+   */
+  template<typename CORRECTION>
+  void AddCorrectionOnInputData(const std::string &name, CORRECTION &&correction) {
+    detectors_.FindDetector(name).AddCorrectionOnInputData(std::forward<CORRECTION>(correction));
   }
 
   /**
@@ -119,7 +133,9 @@ class CorrectionManager {
                         FUNCTION cut_function,
                         const std::string &cut_description) {
     bool is_channel_wise = variable_manager_.FindVariable(variable_names[0]).size() > 1;
-    detectors_.AddCut(detector_name, CallBacks::MakeCut(variable_names, cut_function, cut_description), is_channel_wise);
+    detectors_.AddCut(detector_name,
+                      CallBacks::MakeCut(variable_names, cut_function, cut_description),
+                      is_channel_wise);
   }
 
   template<std::size_t N, typename FUNCTION>
@@ -174,15 +190,7 @@ class CorrectionManager {
                   const std::string &weight = "Ones") {
     detectors_.FindDetector(detector).AddHistogram(detector, axes, weight);
   }
-  /**
-   * @brief Adds correction steps to a detector.
-   * @param name Name of the detector.
-   * @param config function configuring the correction framework.
-   * C-callable of signature void(DetectorConfiguration *config) config.
-   */
-  void SetCorrectionSteps(const std::string &name, ConfigurationFunction config) {
-    detectors_.FindDetector(name).SetConfig(std::move(config));
-  }
+
   void SetOutputQVectors(const std::string &name, const std::vector<Qn::QVector::CorrectionStep> &steps) {
     auto &detector = detectors_.FindDetector(name);
     for (auto &step : steps) {
@@ -245,42 +253,28 @@ class CorrectionManager {
   TList *GetCorrectionQAList() { return correction_qa_histos_.get(); }
 
  private:
-
   void InitializeCorrections();
-
   void AttachQAHistograms();
-
-  InputVariableManager *GetVariableManager() { return &variable_manager_; }
-  DetectorList *GetDetectors() { return &detectors_; }
-  CorrectionAxisSet *GetCorrectionAxes() { return &correction_axes_; }
-
- private:
-  friend class Detector;
-
   static constexpr auto kCorrectionListName = "CorrectionHistograms";
-
-  RunList runs_;
-  DetectorList detectors_;
+  bool fill_qa_histos_ = true; ///< Flag for filling QA histograms
+  bool fill_validation_qa_histos_ = true; ///< Flag for filling calibration bin validation histograms
+  bool fill_output_tree_ = false; ///< Flag for filling the output tree
+  bool event_passed_cuts_ = false; ///< variable holding status if an event passed the cuts.
+  RunList runs_; ///< list of processed runs
+  DetectorList detectors_; ///< list of detectors
   InputVariableManager variable_manager_; ///< manager of the variables
-
   std::string correction_input_file_name_; ///< name of the calibration input file
-
-  std::unique_ptr<TList> correction_input_;   //!<! the list of the input calibration histograms
-  std::unique_ptr<TList> correction_output;  //!<! the list of the support histograms
-  std::unique_ptr<TList> correction_qa_histos_;          //!<! the list of QA histograms
-  std::unique_ptr<TFile> correction_input_file_;               //!<! input calibration file
-//  TList *validation_histos_ = nullptr;     //!<! the list of not validated entries QA histograms
-  bool fill_qa_histos_ = true;
-  bool fill_validation_qa_histos_ = true;
-  bool fill_output_tree_ = false;
-  std::vector<CorrectionAxisCallBack> correction_axes_callback_;
+  std::unique_ptr<TList> correction_input_;      //!<! the list of the input calibration histograms
+  std::unique_ptr<TList> correction_output;      //!<! the list of the support histograms
+  std::unique_ptr<TList> correction_qa_histos_;  //!<! the list of QA histograms
+  std::unique_ptr<TFile> correction_input_file_; //!<! input calibration file
   CorrectionAxisSet correction_axes_; /// CorrectionCalculator correction axes
   CorrectionCuts event_cuts_; ///< Pointer to the event cuts
-  TList *det_qa_histos_ = nullptr; //!<! List holding the Detector QA histograms. Lifetime is managed by the user.
-//  CorrectionCalculator qnc_calculator_; ///< calculator of the corrections
   QAHistograms event_histograms_; ///< event QA histograms
   TTree *out_tree_ = nullptr;  //!<! Tree of Qn Vectors and event variables. Lifetime is managed by the user.
-  bool event_passed_cuts_ = false; ///< variable holding status if an event passed the cuts.
+ /// \cond CLASSIMP
+ ClassDef(CorrectionManager, 1);
+ /// \endcond
 };
 }
 

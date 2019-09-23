@@ -28,13 +28,18 @@
 
 #include "Axis.h"
 #include "InputVariable.h"
+#include "InputVariableManager.h"
 
 namespace Qn {
 class CorrectionAxis {
  public:
   CorrectionAxis() = default;
-  CorrectionAxis(InputVariable variable, const AxisD &axis) : variable_(variable), axis_(axis) {}
+  CorrectionAxis(const AxisD &axis) : variable_(), axis_(axis) {}
+
   virtual ~CorrectionAxis() = default;
+  void Initialize(const InputVariableManager &man) {
+    variable_ = man.FindVariable(axis_.Name());
+  }
   /// Gets the variable unique Id
   int GetId() const { return variable_.GetID(); }
   /// Gets the value of the variable

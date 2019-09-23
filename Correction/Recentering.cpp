@@ -54,7 +54,7 @@ const char *Recentering::szQAQnAverageHistogramName = "Rec Qn avg ";
 /// Default constructor
 /// Passes to the base class the identity data for the recentering and width equalization correction step
 Recentering::Recentering() :
-    CorrectionOnQvector(szCorrectionName, CorrectionOnQvector::Step::kRecentering) {
+    CorrectionOnQnVector(szCorrectionName, CorrectionOnQnVector::Step::kRecentering) {
   fApplyWidthEqualization = kFALSE;
   fMinNoOfEntriesToValidate = fDefaultMinNoOfEntries;
 }

@@ -82,7 +82,7 @@
 
 /* harmonic multiplier */
 
-#include "CorrectionOnQvector.h"
+#include "CorrectionOnQnVector.h"
 namespace Qn {
 /// \class QnCorrectionsQnVectorTwistAndRescale
 /// \brief Encapsulates twist and rescale on Q vector
@@ -129,7 +129,7 @@ namespace Qn {
 
 class CorrectionHistogramSparse;
 
-class TwistAndRescale : public CorrectionOnQvector {
+class TwistAndRescale : public CorrectionOnQnVector {
  public:
   /// \enum QnTwistAndRescaleMethod
   /// \brief The class of the id of the supported twist and rescale methods
@@ -150,6 +150,20 @@ class TwistAndRescale : public CorrectionOnQvector {
 
   TwistAndRescale();
   virtual ~TwistAndRescale() = default;
+
+  TwistAndRescale(const TwistAndRescale &other) : CorrectionOnQnVector(other),
+                                                  fTwistAndRescaleMethod(other.fTwistAndRescaleMethod),
+                                                  fApplyTwist(other.fApplyTwist),
+                                                  fApplyRescale(other.fApplyRescale),
+                                                  fBDetectorConfigurationName(other.fBDetectorConfigurationName),
+                                                  fSubEventB(other.fSubEventB),
+                                                  fCDetectorConfigurationName(other.fCDetectorConfigurationName),
+                                                  fSubEventC(other.fSubEventC),
+                                                  fMinNoOfEntriesToValidate(other.fMinNoOfEntriesToValidate) {
+  }
+
+  virtual CorrectionOnQnVector *MakeCopy() const { return dynamic_cast<CorrectionOnQnVector *>(new TwistAndRescale(*this)); }
+
   /// Sets the method for extracting twist and rescale correction parameters
   /// \param method the chosen method
   void SetTwistAndRescaleMethod(Method method) { fTwistAndRescaleMethod = method; }
@@ -175,8 +189,9 @@ class TwistAndRescale : public CorrectionOnQvector {
   virtual void IncludeCorrectedQnVector(std::map<QVector::CorrectionStep, QVector *> &qvectors) const;
 
  private:
-  using State = Qn::CorrectionStep::State;
-  static constexpr const unsigned int szPriority = CorrectionOnQvector::Step::kTwistAndRescale; ///< the key of the correction step for ordering purpose
+  using State = Qn::CorrectionBase::State;
+  static constexpr const unsigned int szPriority =
+      CorrectionOnQnVector::Step::kTwistAndRescale; ///< the key of the correction step for ordering purpose
   static const Int_t fDefaultMinNoOfEntries;         ///< the minimum number of entries for bin content validation
   static const Double_t fMaxThreshold;               ///< highest absolute value for meaningful results
   static const char *szTwistCorrectionName;          ///< the name of the twist correction step
@@ -194,13 +209,20 @@ class TwistAndRescale : public CorrectionOnQvector {
       *szQATwistQnAverageHistogramName;     ///< the name and title for after twist Qn components average QA histograms
   static const char *
       szQARescaleQnAverageHistogramName;     ///< the name and title for after rescale Qn components average QA histograms
-  std::unique_ptr<CorrectionProfileComponents> fDoubleHarmonicInputHistograms; //!<! the histogram with calibration information for the double harmonic method
-  std::unique_ptr<CorrectionProfileComponents> fDoubleHarmonicCalibrationHistograms; //!<! the histogram for building calibration information for the doubel harmonic method
-  std::unique_ptr<CorrectionProfile3DCorrelations> fCorrelationsInputHistograms; //!<! the histogram with calibration information for the correlations method
-  std::unique_ptr<CorrectionProfile3DCorrelations> fCorrelationsCalibrationHistograms; //!<! the histogram for building calibration information for the correlations method
-  std::unique_ptr<CorrectionHistogramSparse> fQANotValidatedBin;    //!<! the histogram with non validated bin information
-  std::unique_ptr<CorrectionProfileComponents> fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
-  std::unique_ptr<CorrectionProfileComponents> fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
+  std::unique_ptr<CorrectionProfileComponents>
+      fDoubleHarmonicInputHistograms; //!<! the histogram with calibration information for the double harmonic method
+  std::unique_ptr<CorrectionProfileComponents>
+      fDoubleHarmonicCalibrationHistograms; //!<! the histogram for building calibration information for the doubel harmonic method
+  std::unique_ptr<CorrectionProfile3DCorrelations>
+      fCorrelationsInputHistograms; //!<! the histogram with calibration information for the correlations method
+  std::unique_ptr<CorrectionProfile3DCorrelations>
+      fCorrelationsCalibrationHistograms; //!<! the histogram for building calibration information for the correlations method
+  std::unique_ptr<CorrectionHistogramSparse>
+      fQANotValidatedBin;    //!<! the histogram with non validated bin information
+  std::unique_ptr<CorrectionProfileComponents>
+      fQATwistQnAverageHistogram; //!<! the after twist correction step average Qn components QA histogram
+  std::unique_ptr<CorrectionProfileComponents>
+      fQARescaleQnAverageHistogram; //!<! the after rescale correction step average Qn components QA histogram
 
   Method fTwistAndRescaleMethod;  ///< the chosen method for extracting twist and rescale correction parameters
   Bool_t fApplyTwist;              ///< apply the twist step
@@ -210,6 +232,7 @@ class TwistAndRescale : public CorrectionOnQvector {
   std::string fCDetectorConfigurationName; ///< the name of the C detector configuration
   SubEvent *fSubEventC; ///< pointer to the C detector configuration
   Int_t fMinNoOfEntriesToValidate;              ///< number of entries for bin content validation threshold
+
   std::unique_ptr<QVector> fTwistCorrectedQnVector;    //!<! twisted Qn vector
   std::unique_ptr<QVector> fRescaleCorrectedQnVector;  //!<! rescaled Qn vector
 

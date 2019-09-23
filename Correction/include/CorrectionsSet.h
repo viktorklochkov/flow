@@ -18,8 +18,8 @@
 #include <list>
 #include <set>
 
-#include "CorrectionStep.h"
-#include "CorrectionOnQvector.h"
+#include "CorrectionBase.h"
+#include "CorrectionOnQnVector.h"
 #include "CorrectionOnInputData.h"
 
 namespace Qn {
@@ -66,7 +66,7 @@ class CorrectionsSet {
 
   /// Fill the global list of correction steps
 /// \param correctionlist (partial) global list of corrections ordered by correction key
-  void FillOverallCorrectionsList(std::set<CorrectionStep*> &set) const {
+  void FillOverallCorrectionsList(std::set<CorrectionBase*> &set) const {
     for (auto & entry : list_) {
       set.emplace(entry.get());
     }
@@ -75,7 +75,7 @@ class CorrectionsSet {
 /// Gets the correction on Qn vector previous to the one passed as argument
 /// \param correction the correction to find the previous one
 /// \return the previous correction, NULL if none
-  const CorrectionOnQvector *GetPrevious(const T *correction) const {
+  const CorrectionOnQnVector *GetPrevious(const T *correction) const {
     if (correction==nullptr) return nullptr;
     if (list_.empty()) return nullptr;
     if (list_.front()->GetName()==correction->GetName()) return nullptr;
@@ -109,7 +109,7 @@ class CorrectionsSet {
 /// \endcond
 };
 // typedefs for convenience
-using CorrectionsSetOnQvector = CorrectionsSet<CorrectionOnQvector>;
+using CorrectionsSetOnQvector = CorrectionsSet<CorrectionOnQnVector>;
 using CorrectionsSetOnInputData = CorrectionsSet<CorrectionOnInputData>;
 }
 #endif // QNCORRECTIONS_CORRECTIONSETONQNVECTOR_H

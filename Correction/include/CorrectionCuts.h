@@ -35,11 +35,11 @@ namespace Qn {
 
 class CorrectionCut {
  public:
-  using CallBack = std::function<std::unique_ptr<Qn::CutBase>(Qn::InputVariableManager *)>;
-  CorrectionCut(CallBack callback) : callback_(callback) {}
+  using CallBack = std::function<std::unique_ptr<Qn::CutBase>(const Qn::InputVariableManager &)>;
+  CorrectionCut(CallBack callback) : callback_(std::move(callback)) {}
   ~CorrectionCut() = default;
   CorrectionCut(CorrectionCut &&) = default;
-  void Initialize(Qn::InputVariableManager *var) {
+  void Initialize(const Qn::InputVariableManager &var) {
     cut_ = callback_(var);
   }
   std::string Name() const {
@@ -69,11 +69,11 @@ class CorrectionCuts {
 //   * @brief Adds a cut to the manager.
 //   * @param cut pointer to the cut.
 //   */
-  void AddCut(CorrectionCut::CallBack callback) {
+  void AddCut(const CorrectionCut::CallBack& callback) {
     cuts_.emplace_back(callback);
   }
 
-  void Initialize(Qn::InputVariableManager *var) {
+  void Initialize(const Qn::InputVariableManager &var) {
     for (auto &cut : cuts_) {
       cut.Initialize(var);
     }
@@ -85,7 +85,7 @@ class CorrectionCuts {
    * @param i offset of the variable in case it has a length longer than 1
    * @return Returns true if the cut was passed.
    */
-  inline bool CheckCuts(int i) {
+  inline bool CheckCuts(std::size_t i) {
     int icut = 1;
     if (cuts_.empty()) return true;
     ++*((cut_weight_).begin() + i);
@@ -192,18 +192,18 @@ class CorrectionCuts {
   InputVariable cut_weight_; /// Variable saving a weight used for filling the cut histogram
   InputVariable cut_channel_; /// Variable saving the channel number
   std::vector<CorrectionCut> cuts_; /// vector of cuts which are applied
-  std::unique_ptr<QAHistoBase> report_; //!<! histogram of the cut report.
+  std::unique_ptr<Impl::QAHistoBase> report_; //!<! histogram of the cut report.
 };
 
 namespace CallBacks {
 
 template<std::size_t N, typename FUNCTION>
 CorrectionCut::CallBack MakeCut(const char *const (&names)[N], FUNCTION lambda, const std::string &cut_description) {
-  return CorrectionCut::CallBack{[names, lambda, cut_description](Qn::InputVariableManager *var) {
+  return CorrectionCut::CallBack{[names, lambda, cut_description](const Qn::InputVariableManager &var) {
     InputVariable arr[N];
     int i = 0;
     for (auto &name : names) {
-      arr[i] = var->FindVariable(name);
+      arr[i] = var.FindVariable(name);
       ++i;
     }
     return MakeUniqueCut<const double>(arr, lambda, cut_description);

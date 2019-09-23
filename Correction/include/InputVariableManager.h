@@ -67,7 +67,7 @@ class InputVariableManager {
     CreateVariableOnes();
   }
 
-  ~InputVariableManager() {
+  virtual ~InputVariableManager() {
     for (auto &var : channel_variables_) {
       delete[] var;
     }
@@ -86,7 +86,7 @@ class InputVariableManager {
   }
 
   void InitVariable(InputVariable &var) {
-    if (var.name_ == "Ones") {
+    if (var.name_=="Ones") {
       var.values_container_ = variable_values_ones_;
     } else {
       var.values_container_ = variable_values_float_;
@@ -185,12 +185,15 @@ class InputVariableManager {
 
  private:
   static constexpr int kMaxSize = 11000; /// Maximum number of variables.
-  f_type *variable_values_float_ = nullptr; /// non-owning pointer to variables
-  f_type *variable_values_ones_ = nullptr; /// values container of ones.
-  std::vector<double *> channel_variables_;
+  f_type *variable_values_float_ = nullptr; //!<! non-owning pointer to variables
+  f_type *variable_values_ones_ = nullptr; //!<! values container of ones.
+  std::vector<double *> channel_variables_; //!<!
   std::map<std::string, InputVariable> variable_map_; /// name to variable map
-  std::vector<OutputValue<f_type>> variable_output_float_; /// variables registered for output as float
-  std::vector<OutputValue<i_type>> variable_output_integer_; /// variables registered for output as long
+  std::vector<OutputValue<f_type>> variable_output_float_; //!<! variables registered for output as float
+  std::vector<OutputValue<i_type>> variable_output_integer_; //!<! variables registered for output as long
+  /// \cond CLASSIMP
+ ClassDef(InputVariableManager, 1);
+/// \endcond
 };
 }
 
