@@ -19,29 +19,29 @@
 
 namespace Qn {
 
-ConfidenceInterval ReSamples::ConfidenceIntervalPercentile(std::vector<SampleMean> means) const {
+ConfidenceInterval ConfidenceIntervalPercentile(std::vector<double > means) {
   if (means.empty()) {throw std::out_of_range("vector of samples is empty.");}
   const double alpha = 0.3173;
-  std::sort(means.begin(), means.end(), [](const SampleMean &a, const SampleMean &b) { return a.mean < b.mean; });
+  std::sort(means.begin(), means.end());
   auto lowerpos = std::round(means.size()*alpha/2.);
   auto upperpos = std::floor(means.size()*(1 - alpha/2.));
-  return ConfidenceInterval{means.at(lowerpos).mean, means.at(upperpos).mean};
+  return ConfidenceInterval{means.at(lowerpos), means.at(upperpos)};
 }
 
-ConfidenceInterval ReSamples::ConfidenceIntervalPivot(std::vector<SampleMean> means, const double real_mean) const {
+ConfidenceInterval ConfidenceIntervalPivot(std::vector<double> means, const double real_mean) {
   if (means.empty()) {throw std::out_of_range("vector of samples is empty.");}
   const double alpha = 0.3173;
-  std::sort(means.begin(), means.end(), [](const SampleMean &a, const SampleMean &b) { return a.mean < b.mean; });
+  std::sort(means.begin(), means.end());
   auto upperpos = std::round(means.size()*alpha/2.);
   auto lowerpos = std::floor(means.size()*(1 - alpha/2.));
-  return ConfidenceInterval{2*real_mean - means.at(lowerpos).mean, 2*real_mean - means.at(upperpos).mean};
+  return ConfidenceInterval{2*real_mean - means.at(lowerpos), 2*real_mean - means.at(upperpos)};
 }
 
-ConfidenceInterval ReSamples::ConfidenceIntervalNormal(std::vector<SampleMean> means, const double real_mean) const {
+ConfidenceInterval ConfidenceIntervalNormal(std::vector<double> means, const double real_mean) {
   if (means.empty()) {throw std::out_of_range("vector of samples is empty.");}
   Statistic stats;
   for (const auto &mean : means) {
-    stats.Fill(mean.mean, 1.0);
+    stats.Fill(mean, 1.0);
   }
   auto stddev = std::sqrt(stats.Variance());
   return ConfidenceInterval{real_mean - stddev, real_mean + stddev};
@@ -50,7 +50,7 @@ ConfidenceInterval ReSamples::ConfidenceIntervalNormal(std::vector<SampleMean> m
 ReSamples ReSamples::Addition(const ReSamples &a, const ReSamples &b) {
   ReSamples result(a);
   for (size_t i = 0; i < result.means_.size(); ++i) {
-    result.means_[i].mean += b.means_[i].mean;
+    result.means_[i] += b.means_[i];
   }
   return result;
 }
@@ -58,14 +58,14 @@ ReSamples ReSamples::Addition(const ReSamples &a, const ReSamples &b) {
 ReSamples ReSamples::Subtraction(const ReSamples &a, const ReSamples &b) {
   ReSamples result(a);
   for (size_t i = 0; i < result.means_.size(); ++i) {
-    result.means_[i].mean -= b.means_[i].mean;
+    result.means_[i] -= b.means_[i];
   }
   return result;
 }
 ReSamples ReSamples::Division(const ReSamples &a, const ReSamples &b) {
   ReSamples result(a);
   for (size_t i = 0; i < result.means_.size(); ++i) {
-    result.means_[i].mean /= b.means_[i].mean;
+    result.means_[i] /= b.means_[i];
   }
   return result;
 }
@@ -73,7 +73,7 @@ ReSamples ReSamples::Division(const ReSamples &a, const ReSamples &b) {
 ReSamples ReSamples::Multiplication(const ReSamples &a, const ReSamples &b) {
   ReSamples result(a);
   for (size_t i = 0; i < result.means_.size(); ++i) {
-    result.means_[i].mean *= b.means_[i].mean;
+    result.means_[i] *= b.means_[i];
   }
   return result;
 }
@@ -81,7 +81,7 @@ ReSamples ReSamples::Multiplication(const ReSamples &a, const ReSamples &b) {
 ReSamples ReSamples::Scaling(const ReSamples &a, const double scale) {
   ReSamples result(a);
   for (auto &mean : result.means_) {
-    mean.mean *= scale;
+    mean *= scale;
   }
   return result;
 }
@@ -89,8 +89,8 @@ ReSamples ReSamples::Scaling(const ReSamples &a, const double scale) {
 ReSamples ReSamples::Sqrt(const ReSamples &a) {
   ReSamples result(a);
   for (size_t i = 0; i < result.means_.size(); ++i) {
-    auto root = sqrt(fabs(a.means_[i].mean));
-    result.means_[i].mean = std::signbit(a.means_[i].mean) ? -1.*root : root;
+    auto root = sqrt(fabs(a.means_[i]));
+    result.means_[i] = std::signbit(a.means_[i]) ? -1.*root : root;
   }
   return result;
 }
@@ -98,12 +98,17 @@ ReSamples ReSamples::Sqrt(const ReSamples &a) {
 ReSamples ReSamples::Merge(const ReSamples &a, const ReSamples &b, bool merge_weights) {
   ReSamples result(b);
   for (size_t i = 0; i < result.means_.size(); ++i) {
-    SampleMean a_mean{0.0,0.0};
-    if (i < a.size()) a_mean = a.means_[i];
+    ValueType a_mean = 0.;
+    ValueType a_weight = 0.;
+    if (i < a.size()) {
+      a_mean = a.means_[i];
+      a_weight = a.weights_[i];
+    }
     auto b_mean = b.means_[i];
-    result.means_[i].mean = (a_mean.mean*a_mean.weight + b_mean.mean*b_mean.weight)/(a_mean.weight + b_mean.weight);
+    auto b_weight = b.weights_[i];
+    result.means_[i] = (a_mean*a_weight + b_mean*b_weight)/(a_weight + b_weight);
     if (merge_weights) {
-      result.means_[i].weight += b.means_[i].weight;
+      result.weights_[i] += b.weights_[i];
     }
   }
   return result;
@@ -123,6 +128,7 @@ ReSamples ReSamples::MergeStatistics(const ReSamples &a, const ReSamples &b) {
 ReSamples ReSamples::Concatenate(const ReSamples &a, const ReSamples &b) {
   ReSamples result(a);
   result.means_.insert(result.means_.end(), b.means_.begin(), b.means_.end());
+  result.weights_.insert(result.weights_.end(), b.weights_.begin(), b.weights_.end());
   result.statistics_.insert(result.statistics_.end(), b.statistics_.begin(), b.statistics_.end());
   return result;
 }

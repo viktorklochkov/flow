@@ -112,6 +112,17 @@ set(CORRELATION_SOURCES
         Correlation/EventAxes.cpp
         )
 
+set(DATAFRAMECORRELATION_SOURCES
+        )
+
+set(DATAFRAMECORRELATION_HEADERS
+        DataFrameCorrelation.h
+        DataFrameHelper.h
+        TemplateHelpers.h
+        DataFrameReSampler.h
+        DataFrameAxisConfiguration.h
+        )
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
@@ -120,7 +131,7 @@ find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer
 include(${ROOT_USE_FILE})
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
-set(ROOTCLING ${ROOT_DIR}/../bin/rootcling)
+set(ROOTCLING ${ROOT_DIR}/bin/rootcling)
 
 #Base
 add_custom_command(OUTPUT G__BASE.cxx
@@ -191,6 +202,29 @@ target_include_directories(Correlation
         )
 target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
+#DataFrameCorrelation
+add_custom_command(OUTPUT G__DataFrameCorrelation.cxx
+        COMMAND ${ROOTCLING} -v -f G__DataFrameCorrelation.cxx
+        -rml libDataFrameCorrelation${CMAKE_SHARED_LIBRARY_SUFFIX}
+        -rmf libDataFrameCorrelation.rootmap
+        -s libDataFrameCorrelation
+        -I${CMAKE_SOURCE_DIR}/DataFrameCorrelation -I${CMAKE_SOURCE_DIR}/DataFrameCorrelation/include  -I${CMAKE_SOURCE_DIR}/Base/include -I${CMAKE_SOURCE_DIR}/Base
+        ${DATAFRAMECORRELATION_HEADERS}
+        ${CMAKE_SOURCE_DIR}/DataFrameCorrelation/DataFrameCorrelationLinkDef.h
+        )
+add_library(DataFrameCorrelation SHARED ${DATAFRAMECORRELATION_SOURCES} G__DataFrameCorrelation)
+add_library(Qn::DataFrameCorrelation ALIAS DataFrameCorrelation)
+target_compile_definitions(DataFrameCorrelation PUBLIC "-DUSE_ROOT")
+target_include_directories(DataFrameCorrelation
+        PRIVATE
+        ${ROOT_INCLUDE_DIRS}
+        ${CMAKE_SOURCE_DIR}/DataFrameCorrelation
+        PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrameCorrelation/include>
+        )
+target_link_libraries(DataFrameCorrelation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
+
 IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
     # Googletest
     configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
@@ -213,14 +247,14 @@ IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 add_executable(main main.cpp)
-target_link_libraries(main ${ROOT_LIBRARIES} Base Correlation)
+target_link_libraries(main ${ROOT_LIBRARIES} Base Correlation DataFrameCorrelation)
 #
 # Install configuration
 
 set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
 
-install(DIRECTORY Base/include/ Correction/include/ Correlation/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY Base/include/ Correction/include/ Correlation/include/ DataFrameCorrelation/include DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 # Installion of ROOT dictionaries
 install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libBase.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -228,9 +262,11 @@ install(FILES ${CMAKE_BINARY_DIR}/libCorrection_rdict.pcm DESTINATION ${CMAKE_IN
 install(FILES ${CMAKE_BINARY_DIR}/libCorrection.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libCorrelation_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libCorrelation.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_BINARY_DIR}/libDataFrameCorrelation_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_BINARY_DIR}/libDataFrameCorrelation.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 
-install(TARGETS Base Correction Correlation
+install(TARGETS Base Correction Correlation DataFrameCorrelation
         EXPORT QnTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -260,5 +296,5 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/QnConfigVersion.cmake
         DESTINATION ${INSTALL_CONFIGDIR})
 
-export(TARGETS Base Correction Correlation NAMESPACE Qn:: FILE QnTargets.cmake)
+export(TARGETS Base Correction Correlation DataFrameCorrelation NAMESPACE Qn:: FILE QnTargets.cmake)
 export(PACKAGE Qn)

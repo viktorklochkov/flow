@@ -75,7 +75,7 @@ class Correlation {
    * Returns the result of the correlation per event.
    * @return Result of one event.
    */
-  const Qn::DataContainerProduct &GetResult() const { return current_event_result_; };
+  const Qn::DataContainerCorrelation &GetResult() const { return current_event_result_; };
 
   bool UsingWeights() const { return std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; }); }
 
@@ -107,7 +107,7 @@ class Correlation {
   function_type function_; ///< correlation function
   std::vector<std::vector<std::vector<size_type>>> index_; ///< map of multi-dimensional indices of all inputs
   std::vector<size_type> c_index_; ///<  multi-dimensional indices of a bin of the resulting correlation
-  Qn::DataContainerProduct current_event_result_; ///< result of the correlation of the current event
+  Qn::DataContainerCorrelation current_event_result_; ///< result of the correlation of the current event
 
   /**
    * Iterative function which fills the correlation

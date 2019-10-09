@@ -63,6 +63,11 @@ class Stats {
 
   double SumWeights() const { return statistic_.SumWeights(); }
 
+  double RatioOfErrors() const {
+    auto bootstrap_error = resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
+    return bootstrap_error / statistic_.MeanError();
+  }
+
   double Mean() const {
     double mean;
     switch (state_) {
@@ -142,7 +147,15 @@ class Stats {
     }
   }
 
-  void SetNumberOfSubSamples(size_type nsamples) {
+  template<typename SAMPLES>
+  inline void FillPoisson(const CorrelationResult &correlation_result, SAMPLES &&samples) {
+    if (correlation_result.validity) {
+      resamples_.FillPoisson( correlation_result, std::forward<SAMPLES>(samples));
+      statistic_.Fill(correlation_result);
+    }
+  }
+
+  void SetNumberOfReSamples(size_type nsamples) {
     resamples_.SetNumberOfSamples(nsamples);
   }
 
@@ -159,6 +172,7 @@ class Stats {
   const ReSamples &GetReSamples() const { return resamples_; }
 
   TCanvas *CIvsNSamples(const int nsteps = 10) const;
+
 
  private:
   ReSamples resamples_;

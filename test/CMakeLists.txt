@@ -11,10 +11,11 @@ set(TEST_SOURCES
         StatisticUnitTest.cpp
         BootstrapSamplerUnitTest.cpp
         ReSampleUnitTest.cpp
-        StatsUnitTest.cpp)
+        StatsUnitTest.cpp
+        DataFrameAlgorithmUnitTest.cpp
+        DataContainerUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})
-#target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correlation Correction)
-target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correction Correlation)
+target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correction Correlation DataFrameCorrelation)
 add_test(NAME all_tests COMMAND tests)

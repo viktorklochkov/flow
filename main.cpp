@@ -1,8 +1,8 @@
-#include <random>
-#include "TFile.h"
-#include "TChain.h"
-#include "Correction/include/CorrectionManager.h"
-#include "Correlation/include/CorrelationManager.h"
+#include "ROOT/RDataFrame.hxx"
+#include "DataFrameCorrelation.h"
+#include "DataFrameHelper.h"
+#include "DataFrameReSampler.h"
+
 //
 //int main() {
 //  using namespace Qn;
@@ -103,47 +103,59 @@
 //  delete treefile;
 //}
 int main() {
-auto begin = std::chrono::steady_clock::now(); // start of timing
-// abbreviations for convenience
-using QVectors = Qn::QVectors;
-auto constexpr kRef = Qn::kRef;
-auto constexpr kObs = Qn::kObs;
-auto constexpr ese = false;
-std::string inputname("/Users/lukas/flowtest/list");
-std::ifstream infile(inputname);
-auto chain = new TChain("tree");
-std::string line;
-while (std::getline(infile, line)) {
-std::cout << "Adding to TChain: " << line << std::endl;
-chain->Add(line.data());
-}
+  auto begin = std::chrono::high_resolution_clock::now(); // start of timing
 
-std::string out_correlations{"correlations.root"};
+  ROOT::EnableImplicitMT();
+  auto file = TFile::Open("~/flowtest/mergedtree.root");
+  if (!file) return 1;
+  TTreeReader reader("tree", file);
 
-Qn::CorrelationManager man(chain);
-man.EnableDebug();
-man.SetOutputFile(out_correlations);
+  const std::size_t n_samples = 100;
 
-auto xx = [](QVectors q) {return q[0].x(1)*q[1].x(1);};
-auto yy = [](QVectors q) {return q[0].y(1)*q[1].y(1);};
-auto xy = [](QVectors q) {return q[0].x(1)*q[1].y(1);};
-auto yx = [](QVectors q) {return q[0].y(1)*q[1].x(1);};
+  auto xaxc = [](const Qn::QVector &a, const Qn::QVector &c) {
+    return a.x(1)*c.x(1);
+  };
 
-man.AddEventAxis({"CentralityV0M",70,0.,70.});
+  std::cout << reader.GetEntries(true) << std::endl;
 
-  man.AddCorrelation("ZNXNX", {"ZNA_RECENTERED", "ZNC_RECENTERED"}, xx, {kRef, kRef});
-  man.AddCorrelation("ZNYNY", {"ZNA_RECENTERED", "ZNC_RECENTERED"}, yy, {kRef, kRef});
-  man.AddCorrelation("ZNYNX", {"ZNA_RECENTERED", "ZNC_RECENTERED"}, yx, {kRef, kRef});
-  man.AddCorrelation("ZNXNY", {"ZNA_RECENTERED", "ZNC_RECENTERED"}, xy, {kRef, kRef});
-  man.AddCorrelation("ZPXPX", {"ZPA_RECENTERED", "ZPC_RECENTERED"}, xx, {kRef, kRef});
-  man.AddCorrelation("ZPXNX", {"ZPA_RECENTERED", "ZNC_RECENTERED"}, xx, {kRef, kRef});
-  man.AddCorrelation("ZNXPX", {"ZNA_RECENTERED", "ZPC_RECENTERED"}, xx, {kRef, kRef});
-  man.AddCorrelation("ZPXNY", {"ZPA_RECENTERED", "ZNC_RECENTERED"}, xy, {kRef, kRef});
-  man.AddCorrelation("ZNYPX", {"ZNA_RECENTERED", "ZPC_RECENTERED"}, yx, {kRef, kRef});
+  Qn::AxisD centrality("CentralityV0M", 100, 0, 100);
+  Qn::AxisD Trigger("Trigger", 3, 0., 3.);
+  Qn::AxisD VertexX("VtxX",10,0.088,0.096);
+  Qn::AxisD VertexY("VtxY",10,0.364,0.372);
+  Qn::DataFrameReSampler re_sampler(n_samples);
 
-// Global configuration of the resampling method applied to all correlations if not explicitly disabled.
-man.SetResampling(Qn::Sampler::Method::BOOTSTRAP, 20);
-man.Run();
-auto end = std::chrono::steady_clock::now(); //end of timing
-std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::minutes> (end - begin).count() << " minutes" << std::endl;
+  ROOT::RDataFrame df("tree", "~/flowtest/mergedtree.root");
+
+  auto ntrackfilter = [](const Qn::DataContainerQVector &a) {
+    return a.At(0).sumweights() > 1;
+  };
+
+  auto df_samples = df.Define("Samples", re_sampler, {});
+
+  auto stats = Qn::MakeCorrelation("znaX_zncX_recentered", xaxc, Qn::MakeEventAxes(Trigger,centrality,VertexX,VertexY))
+      .SetInputNames("ZNA_RECENTERED", "ZNC_RECENTERED")
+      .SetWeights(Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE)
+      .BookMe(df_samples, reader, n_samples);
+
+//  auto stats2 = Qn::MakeCorrelation("znaX_zncX_plain", xaxc, Qn::MakeEventAxes(centrality))
+//      .SetInputNames("ZNA_PLAIN", "ZNC_PLAIN")
+//      .SetWeights(Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE)
+//      .BookMe(df_samples, reader, n_samples);
+
+  auto histo = df_samples.Histo1D({"h", "centrality", 100, 0, 100},"CentralityV0M");
+
+  auto val = stats.GetValue();
+  auto out_file = new TFile("test.root", "RECREATE");
+  out_file->cd();
+  stats->Write("recentered");
+//  stats2->Write("plain");
+  histo->Write("centrality");
+  out_file->Close();
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> fp_time = end - begin;
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(fp_time);
+  auto minutes = std::chrono::duration_cast<std::chrono::minutes>(fp_time);
+  std::cout << minutes.count() << " minutes " << seconds.count() - minutes.count()*60 << " seconds" << std::endl;
+
 }

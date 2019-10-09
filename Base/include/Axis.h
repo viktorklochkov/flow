@@ -35,6 +35,8 @@ template<typename T>
 class Axis {
  public:
 
+  using ValueType =  T;
+
   Axis() = default; ///< default constructor
   virtual ~Axis() = default; ///< default destructor
 
@@ -62,7 +64,6 @@ class Axis {
   }
 
   Axis(const Axis<T> &axis) : name_(axis.name_), bin_edges_(axis.bin_edges_) {}
-
   bool operator==(const Axis &axis) const { return name_==axis.name_; }
 
   typedef typename std::vector<T>::const_iterator citerator;
@@ -81,8 +82,8 @@ class Axis {
    * @return name of axis
    */
   std::string Name() const { return name_; }
-  typename std::vector<T>::size_type GetNBins() const { return bin_edges_.size() - 1;}
-  const T* GetPtr() const {return bin_edges_.data();}
+  typename std::vector<T>::size_type GetNBins() const { return bin_edges_.size() - 1; }
+  const T *GetPtr() const { return bin_edges_.data(); }
 
   /**
    * Finds bin index for a given value
@@ -111,26 +112,6 @@ class Axis {
     lower = lower.erase(lower.find_last_not_of('0') + 1, std::string::npos);
     lower = lower.erase(lower.find_last_not_of('.') + 1, std::string::npos);
     return name_ + ":" + lower;
-  }
-  /**
- * Finds bin iterator for a given value
- * if value is smaller than lowest bin returns end().
- * @param value for finding corresponding bin
- * @return bin index
- */
-  citerator FindBinIter(const float value) {
-    citerator bin;
-    if (value < *bin_edges_.begin()) {
-      bin = end();
-    } else {
-      auto lb = std::lower_bound(bin_edges_.begin(), bin_edges_.end(), value);
-      if (lb==bin_edges_.begin() || *lb==value)
-        bin = lb;
-      else
-        bin = lb - 1;
-    }
-    if (*bin >= (long) bin_edges_.size() - 1 || *bin < 0) bin = end();
-    return bin;
   }
   /**
    * Returns number of bins.
@@ -163,7 +144,7 @@ class Axis {
   inline T GetLastBinEdge() const { return bin_edges_.back(); }
 
   void Print() const {
-    std::cout <<"OBJ: Qn::Axis " << name_ <<"\n";
+    std::cout << "OBJ: Qn::Axis " << name_ << "\n";
     std::cout << "number of Bins:" << GetNBins() << "\n";
     std::cout << "bin edges: ";
     for (unsigned int i = 0; i < bin_edges_.size() - 1; ++i) {

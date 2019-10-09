@@ -52,7 +52,7 @@ void StatsResult::ConfigureStats(Qn::Sampler *sampler) {
     if (sampler) {
       resampler_ = sampler;
       for (auto &bin :result_) {
-        bin.SetNumberOfSubSamples(resampler_->GetNumSamples());
+        bin.SetNumberOfReSamples(resampler_->GetNumSamples());
       }
     }
     else {

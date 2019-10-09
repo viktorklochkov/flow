@@ -25,17 +25,13 @@
 #include <cmath>
 #include <random>
 
+#include "TH2.h"
 #include "TGraphAsymmErrors.h"
 
 #include "CorrelationResult.h"
 #include "Statistic.h"
 
 namespace Qn {
-
-struct SampleMean {
-  double mean;
-  double weight;
-};
 
 struct ConfidenceInterval {
   double lower_limit;
@@ -45,9 +41,14 @@ struct ConfidenceInterval {
   }
 };
 
+ConfidenceInterval ConfidenceIntervalPercentile(std::vector<double>);
+ConfidenceInterval ConfidenceIntervalPivot(std::vector<double>, double);
+ConfidenceInterval ConfidenceIntervalNormal(std::vector<double>, double);
+
 class ReSamples {
   using size_type = std::size_t;
  public:
+  using ValueType = double;
 
   enum class CIMethod {
     percentile,
@@ -56,22 +57,26 @@ class ReSamples {
   };
 
   ReSamples() = default;
-  explicit ReSamples(unsigned int size) : statistics_(size), means_(size) {}
+  explicit ReSamples(unsigned int size) : statistics_(size), means_(size), weights_(size) {}
   virtual ~ReSamples() = default;
-  ReSamples(const ReSamples &sample) : statistics_(sample.statistics_), means_(sample.means_) {}
+  ReSamples(const ReSamples &sample) {
+    statistics_ = sample.statistics_;
+    means_ = sample.means_;
+    weights_ = sample.weights_;
+  }
   ReSamples(ReSamples &&sample) = default;
   ReSamples &operator=(const ReSamples &sample) = default;
 
   void SetNumberOfSamples(unsigned int i) {
     statistics_.resize(i);
     means_.resize(i);
+    weights_.resize(i);
   }
-
-  const SampleMean &GetSampleMean(int i) const {
-    return means_.at(i);
-  }
-
   size_type size() const { return means_.size(); }
+
+  const ValueType &GetSampleMean(int i) const { return means_.at(i); }
+
+  std::vector<double> GetMeans() const { return means_; }
 
   ConfidenceInterval GetConfidenceInterval(const double mean, CIMethod method) const {
     return ConstructConfidenceInterval(means_, mean, method);
@@ -81,7 +86,8 @@ class ReSamples {
     for (const auto &id : sample_ids) { statistics_[id].Fill(result); }
   }
 
-  void FillPoisson(const CorrelationResult &result, const std::vector<size_type> &sample_multiplicities_) {
+  template<typename SAMPLES>
+  void FillPoisson(const CorrelationResult &result, SAMPLES &&sample_multiplicities_) {
     for (unsigned int i = 0; i < sample_multiplicities_.size(); ++i) {
       for (unsigned int j = 0; j < sample_multiplicities_[i]; ++j) {
         statistics_[i].Fill(result);
@@ -99,27 +105,28 @@ class ReSamples {
       for (auto &statistic : statistics_) {
         double mean = statistic.Mean();
         double weight = statistic.SumWeights();
-        means_.at(i) = {mean, weight};
+        means_.at(i) = mean;
+        weights_.at(i) = weight;
         ++i;
         using_means_ = true;
       }
     }
   }
 
-  std::vector<double> GetMeans() const {
-    std::vector<double> means(means_.size());
-    std::transform(means_.begin(), means_.end(), means.begin(), [](const SampleMean &mean) { return mean.mean; });
-    return means;
-  }
-
   std::pair<TGraph *, TGraph *> CIvsNSamples(double mean, CIMethod method, unsigned int nsteps = 10) const;
 
-  void ScatterGraph(TGraph &graph, double offset, double width) {
+  void ScatterGraph(TGraph &graph, double offset, double width) const {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> position(offset - width, offset + width);
     for (auto mean : means_) {
-      graph.SetPoint(graph.GetN(), position(gen), mean.mean);
+      graph.SetPoint(graph.GetN(), position(gen), mean);
+    }
+  }
+
+  void FillHistogram(TH2 &histogram, double x_value) const {
+    for (const auto &mean : means_) {
+      histogram.Fill(x_value, mean);
     }
   }
 
@@ -146,12 +153,12 @@ class ReSamples {
   ConfidenceInterval ConfidenceIntervalNSamplesMethod(const double mean,
                                                       const size_type nsamples,
                                                       CIMethod method = CIMethod::pivot) const {
-    std::vector<SampleMean> bsmeans = means_;
+    std::vector<ValueType> bsmeans = means_;
     bsmeans.resize(nsamples);
     return ConstructConfidenceInterval(bsmeans, mean, method);
   }
 
-  inline ConfidenceInterval ConstructConfidenceInterval(std::vector<SampleMean> means,
+  inline ConfidenceInterval ConstructConfidenceInterval(std::vector<ValueType> means,
                                                         const double mean,
                                                         CIMethod method) const {
     ConfidenceInterval interval{};
@@ -166,22 +173,16 @@ class ReSamples {
     return interval;
   }
 
-  ConfidenceInterval ConfidenceIntervalPercentile(std::vector<SampleMean>) const;
-
-  ConfidenceInterval ConfidenceIntervalPivot(std::vector<SampleMean>, double) const;
-
-  ConfidenceInterval ConfidenceIntervalNormal(std::vector<SampleMean>, double) const;
-
   bool using_means_ = false;
   std::vector<Statistic> statistics_;
-  std::vector<SampleMean> means_;
+  std::vector<ValueType> means_;
+  std::vector<ValueType> weights_;
 
   /// \cond CLASSIMP
- ClassDef(ReSamples, 1);
+ ClassDef(ReSamples, 2);
   /// \endcond
 
 };
-
 }
 
 #endif //FLOW_SAMPLE_H

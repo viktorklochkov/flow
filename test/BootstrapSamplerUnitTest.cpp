@@ -33,14 +33,14 @@ TEST(BootStrapSamplerTest, Constructor) {
 }
 
 TEST(BootStrapSampler, Basic) {
-  const int nsamples = 20;
+  const int nsamples = 2000;
   const int nevents = 10000;
   Qn::Sampler sampler(nevents, nsamples);
   sampler.CreateBootstrapSamples();
   std::mt19937 gen(10);
-  std::normal_distribution<double> d(1., 0.5);
+  std::gamma_distribution<double> d(3,1);
   Qn::Stats stats;
-  stats.SetNumberOfSubSamples(nsamples);
+  stats.SetNumberOfReSamples(nsamples);
   TH1D hdist("dist", "dist", 100, -2, 4);
   TH1D hboot("boot", "boot", 100, 0.8, 1.2);
   for (int i = 0; i < nevents; ++i) {
@@ -51,16 +51,16 @@ TEST(BootStrapSampler, Basic) {
   }
   stats.CalculateMeanAndError();
   for (int i = 0; i < nsamples; ++i) {
-    hboot.Fill(stats.GetReSamples().GetSampleMean(i).mean);
+    hboot.Fill(stats.GetReSamples().GetSampleMean(i));
   }
   auto resamples = stats.GetReSamples();
 
   auto percentile = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::percentile);
   auto pivot = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::pivot);
   auto normal = resamples.GetConfidenceInterval(stats.Mean(),Qn::ReSamples::CIMethod::normal);
-  std::cout << "percentile  " << stats.Mean() - percentile.lower_limit << " " << percentile.upper_limit - stats.Mean() << std::endl;
-  std::cout << "pivot       " << stats.Mean() - pivot.lower_limit << " " << pivot.upper_limit - stats.Mean() << std::endl;
-  std::cout << "normal      " << stats.Mean() - normal.lower_limit << " " << normal.upper_limit - stats.Mean() << std::endl;
+  std::cout << "percentile  " << percentile.lower_limit << " " << percentile.upper_limit << std::endl;
+  std::cout << "pivot       " << pivot.lower_limit << " " << pivot.upper_limit << std::endl;
+  std::cout << "normal      " << normal.lower_limit << " " << normal.upper_limit << std::endl;
   auto error = stats.GetStatistic().MeanError();
   std::cout << "statistical " << stats.Mean() - error << " " << stats.Mean() + error << std::endl;
   stats.SetBits(Qn::Stats::CORRELATEDERRORS);

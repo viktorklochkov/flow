@@ -1,6 +1,6 @@
 // Flow Vector Correction Framework
 //
-// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Copyright (C) 2019  Lukas Kreis Ilya Selyuzhenkov
 // Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
 // For a full list of contributors please see docs/Credits
 //
@@ -14,33 +14,13 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#ifdef __CINT__
+#pragma link off all globals;
+#pragma link off all classes;
+#pragma link off all functions;
 
-#ifndef FLOW_CORRELATIONRESULT_H
-#define FLOW_CORRELATIONRESULT_H
-
-#include <cmath>
-#include <vector>
-#include <numeric>
-#include "Rtypes.h"
-
-namespace Qn {
-
-struct CorrelationResult {
-  CorrelationResult() = default;
-  virtual ~CorrelationResult() = default;
-  CorrelationResult(double result, bool valid, double inweight) :
-      result(result),
-      validity(valid),
-      weight(inweight) {}
-  double result = 0.;    // value of the product
-  bool validity = false; // flag to show if product is valid
-  double weight = 1.;    // weight
-
-  /// \cond CLASSIMP
- ClassDef(CorrelationResult, 1);
-/// \endcond
-};
-
-}
+#pragma link C++ namespace Qn;
+#pragma link C++ nestedclass;
+#pragma link C++ nestedtypedef;
 
 #endif
