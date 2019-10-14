@@ -59,7 +59,7 @@ class CorrectionBase : public TObject {
   virtual ~CorrectionBase() = default;
   CorrectionBase(const char *name, unsigned int prio) : fPriority(prio), fName(name) {}
   virtual const char *GetName() const { return fName.data(); }
-  CorrectionBase(const CorrectionBase &other) {
+  CorrectionBase(const CorrectionBase &other) : TObject(other) {
     fPriority = other.fPriority;
     fName = other.fName;
     fState = other.fState;

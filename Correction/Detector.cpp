@@ -59,10 +59,10 @@ void Detector::Initialize(DetectorList &detectors, InputVariableManager &var, Co
       event = std::make_unique<SubEventTracks>(ibin, &correction_axis, harmonics_bits_);
     }
     event->SetDetector(this);
-    for (int i = 0; i < correction_on_input_data.GetEntriesFast(); i =++i) {
+    for (int i = 0; i < correction_on_input_data.GetEntriesFast(); ++i) {
       event->AddCorrectionOnInputData(dynamic_cast<CorrectionOnInputData*>(correction_on_input_data.At(i))->MakeCopy());
     }
-    for (int i = 0; i < correction_on_q_vector.GetEntriesFast(); i =++i) {
+    for (int i = 0; i < correction_on_q_vector.GetEntriesFast(); ++i) {
       event->AddCorrectionOnQnVector(dynamic_cast<CorrectionOnQnVector*>(correction_on_q_vector.At(i))->MakeCopy());
     }
     ++ibin;

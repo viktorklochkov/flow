@@ -6,6 +6,8 @@ if ("${CMAKE_VERSION}" VERSION_GREATER "3.12.0")
 endif ()
 project(flow VERSION 2.0 LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 14)
+
 if (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
     add_definitions(-DGTEST_USE_OWN_TR1_TUPLE)

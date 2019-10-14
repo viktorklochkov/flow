@@ -17,14 +17,12 @@
 
 #include <iostream>
 #include <iterator>
-#include <cmath>
-#include <TGaxis.h>
-#include <TText.h>
 
+#include "TGaxis.h"
+#include "TText.h"
 #include "TGraphAsymmErrors.h"
 #include "TCanvas.h"
 #include "TFrame.h"
-
 #include "DataContainerHelper.h"
 #include "DataContainer.h"
 

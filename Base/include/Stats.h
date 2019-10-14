@@ -76,7 +76,7 @@ class Stats {
   }
 
   double Mean() const {
-    double mean;
+    double mean = 0;
     switch (state_) {
       case State::MOMENTS :mean = statistic_.Mean();
         break;
@@ -87,7 +87,7 @@ class Stats {
   }
 
   double LowerMeanError() const {
-    double lower_error;
+    double lower_error = 0;
     if (bits_ & Settings::ASYMMERRORS) {
       double mean = mean_;
       if (state_!=State::MEAN_ERROR) { mean = statistic_.Mean(); }
@@ -100,7 +100,7 @@ class Stats {
   }
 
   double UpperMeanError() const {
-    double upper_error;
+    double upper_error = 0;
     if (bits_ & Settings::ASYMMERRORS) {
       double mean = mean_;
       if (state_!=State::MEAN_ERROR) { mean = statistic_.Mean(); }
@@ -113,7 +113,7 @@ class Stats {
   }
 
   double MeanError() const {
-    double error;
+    double error = 0;
     if (bits_ & Settings::CORRELATEDERRORS) {
       error = resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
     } else {
@@ -128,7 +128,7 @@ class Stats {
   }
 
   double MeanErrorStat() const {
-    double error;
+    double error = 0;
     switch (state_) {
       case State::MOMENTS :error = statistic_.MeanError();
         break;
