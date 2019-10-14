@@ -142,6 +142,8 @@ class ReSamples {
 
   static ReSamples Sqrt(const ReSamples &);
 
+  static ReSamples PowSqrt(const ReSamples &, unsigned int);
+
   static ReSamples Merge(const ReSamples &, const ReSamples &, bool);
 
   static ReSamples MergeStatistics(const ReSamples &, const ReSamples &);

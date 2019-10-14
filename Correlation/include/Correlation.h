@@ -1,6 +1,6 @@
 // Flow Vector Correction Framework
 //
-// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Copyright (C) 2019  Lukas Kreis Ilya Selyuzhenkov
 // Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
 // For a full list of contributors please see docs/Credits
 //
@@ -14,126 +14,178 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#ifndef FLOW_DATAFRAMECORRELATION_H
+#define FLOW_DATAFRAMECORRELATION_H
 
-#ifndef FLOW_CORRELATIONBASE_H
-#define FLOW_CORRELATIONBASE_H
+#include <functional>
+#include <cstring>
+#include <type_traits>
 
-#include <utility>
+#include "ROOT/RIntegerSequence.hxx"
+#include "ROOT/RDataFrame.hxx"
+
+#include "Stats.h"
+#include "TTreeReader.h"
 #include "DataContainer.h"
+#include "TemplateHelpers.h"
 
 namespace Qn {
+namespace Correlation {
 
-/**
- * @class Weight
- * @brief Enumerator for setting if weights of a detector are used in the correlation.
- */
-enum class Weight {
-  REFERENCE,
-  OBSERVABLE
-};
+template<typename Function, typename Qvectors, typename InputDataContainers>
+class Correlation;
 
-auto constexpr kRef = Qn::Weight::REFERENCE;
-auto constexpr kObs = Qn::Weight::OBSERVABLE;
-
-/**
- * @class Correlation
- * @brief abstract baseclass of the correlation
- * Implements all the methods to calculate correlations of qvectors.
- */
-class Correlation {
- protected:
-  using size_type = std::size_t;
-  using inputs_type = std::vector<DataContainerQVector *const *>;
+template<typename Function, typename... Qvectors, typename... InputDataContainers>
+class Correlation<Function, std::tuple<Qvectors...>, std::tuple<InputDataContainers...>> {
  public:
-  using function_type = std::function<double(const std::vector<Qn::QVectorPtr> &)>;
-  using function_t  = const function_type &;
+  constexpr static std::size_t NInputs = sizeof...(Qvectors);
+  using DataContainerTypeTuple = typename std::tuple<InputDataContainers...>;
+  using FunctionType = Function;
+  using CollelationHolder = std::vector<CorrelationResult>;
 
-  Correlation(std::string name,
-              std::vector<std::string> names,
-              function_type function,
-              std::vector<Qn::Weight> use_weights) :
-      name_(std::move(name)),
-      names_(std::move(names)),
-      function_(std::move(function)) {
-    for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(use_weights[i]==Qn::kObs); }
+  explicit Correlation(Function function) : function_(function) {}
+
+  void Initialize(TTreeReader &reader) {
+    std::vector<TTreeReaderValue<DataContainerQVector>> input_data;
+    for (auto name : input_names_) {
+      input_data.emplace_back(reader, name.data());
+    }
+    reader.SetLocalEntry(1);
+    for (std::size_t i = 0; i < input_data.size(); ++i) {
+      auto &i_data = input_data[i];
+      if (i_data.GetSetupStatus() < 0) {
+        auto message = std::string("The Q-Vector entry") +
+            i_data.GetBranchName() + "in the tree is not valid. Cannot setup the correlation";
+        throw std::runtime_error(message);
+      }
+      if (!i_data->IsIntegrated()) {
+        AddAxes(input_data, i);
+      }
+    }
+    correlation_result_.resize(data_container_correlation_.size());
+    reader.Restart();
   }
 
-  Correlation(std::string name, std::vector<std::string> names, function_type function) :
-      name_(std::move(name)),
-      names_(std::move(names)),
-      function_(std::move(function)) {
-    for (size_type i = 0; i < names_.size(); ++i) { use_weights_.push_back(false); }
+  template<typename ...Names>
+  void SetInputNames(Names ...names) {
+    static_assert(sizeof...(names)==NInputs,
+                  "The input names must match the number of variables in the correlation function");
+    input_names_ = {names...};
   }
 
-  /**
-   * Returns the Input Q vector names.
-   * @return Input names
-   */
-  const std::vector<std::string> &GetInputNames() const { return names_; }
+  template<typename ...Weights>
+  void SetWeights(Weights ...weights) {
+    static_assert(sizeof...(weights)==NInputs,
+                  "The input weights must match the number of variables in the correlation function");
+    std::array<Qn::Stats::Weights, NInputs> weights_array{weights...};
+    for (std::size_t i = 0; i < NInputs; ++i) {
+      use_weights_[i] = weights_array[i]==Qn::Stats::Weights::OBSERVABLE;
+    }
+  }
 
-  /**
-   * Returns the result of the correlation per event.
-   * @return Result of one event.
-   */
-  const Qn::DataContainerCorrelation &GetResult() const { return current_event_result_; };
+  const CollelationHolder &Correlate(InputDataContainers... input) {
+    for (auto &bin : correlation_result_) { bin.validity = false; }
+    std::size_t output_bin = 0;
+    std::array<const Qn::QVector *, NInputs> q_vectors;
+    std::array<DataContainerQVector, NInputs> input_array = {input...};
+    IterateOverBins(output_bin, q_vectors, input_array, 0);
+    return correlation_result_;
+  }
 
-  bool UsingWeights() const { return std::any_of(use_weights_.begin(), use_weights_.end(), [](bool x) { return x; }); }
+  std::vector<Qn::AxisD> GetCorrelationAxes() const {
+    return !data_container_correlation_.IsIntegrated() ? data_container_correlation_.GetAxes()
+                                                       : std::vector<Qn::AxisD>{};
+  }
 
-  /**
-   * Fills the current event to the correlation
-   * @param eventindices indices determining the bin indices of the event axes.
-   */
-  void Fill(const std::vector<unsigned long> &eventindices);
-
-  /**
-   * Configures the correlation with the currently read information.
-   * @param qvectors map of qvector inputs
-   * @param eventaxes vector of event axes
-   */
-  void Configure(std::map<std::string, Qn::DataContainerQVector *> *qvectors, const std::vector<Qn::AxisD> &eventaxes);
-
-  /**
-   * Returns the name of the correlation.
-   * @return Name of the correlation
-   */
-  std::string GetName() const { return name_; }
+  std::vector<std::string> GetInputNames() const {
+    return std::vector<std::string>{std::begin(input_names_), std::end(input_names_)};
+  }
 
  private:
-  std::string name_; ///< name of the correlation
-  std::vector<std::string> names_; ///< vector of input names
-  inputs_type inputs_; ///< pointer to the Q-Vector inputs during the correlation step.
-  std::vector<QVectorPtr> qvector_ptrs_; ///< vector holding pointers to the Q-Vector during FillCorrelation step
-  std::vector<bool> use_weights_; ///< vector of input weights
-  function_type function_; ///< correlation function
-  std::vector<std::vector<std::vector<size_type>>> index_; ///< map of multi-dimensional indices of all inputs
-  std::vector<size_type> c_index_; ///<  multi-dimensional indices of a bin of the resulting correlation
-  Qn::DataContainerCorrelation current_event_result_; ///< result of the correlation of the current event
 
-  /**
-   * Iterative function which fills the correlation
-   * @param initial_offset linearized initial offset for the resulting bin container
-   * @param n iteration at n+1=N(inputs) the iteration ends.
-   */
-  void FillCorrelation(size_type initial_offset, unsigned int n = 0);
-
-  /**
-   * Calculate weight for correlation;
-   * @return weight for the current event
-   */
-  inline double CalculateWeight() {
-    size_type i_weight = 0;
-    double weight = 1.;
-    for (const auto &q : qvector_ptrs_) {
-      if (use_weights_[i_weight]) {
-        weight *= q.sumweights();
-      }
-      ++i_weight;
+  double CalculateWeights(const std::array<const Qn::QVector *, NInputs> &q_array) const {
+    int i = 0;
+    double weight = 1.0;
+    for (const auto &q : q_array) {
+      if (use_weights_[i]) weight *= q->sumweights();
+      ++i;
     }
     return weight;
   }
 
+  void IterateOverBins(std::size_t &output_bin,
+                       std::array<const Qn::QVector *, NInputs> &q_array,
+                       const std::array<DataContainerQVector, NInputs> &input_array,
+                       std::size_t iteration) {
+    // ends recursive iteration over the data inputs
+    if (iteration + 1==NInputs) {
+      // iterates over all bins of the input data
+      for (const auto &bin : input_array[iteration]) {
+        // skips empty bins
+        if (bin.n() < 1) continue;
+        // save pointer to Q vector in an array
+        q_array[iteration] = &bin;
+        // calculate the output weight
+        auto weight = CalculateWeights(q_array);
+        // Apply the correlation function on the inputs saved in the array.
+        // Save together with the weight and the validity in the output container in the  output bin.
+        correlation_result_[output_bin] = {TemplateHelpers::Call(function_, q_array), true, weight};
+        // increment output bin.
+        ++output_bin;
+      }
+      // ends the recursion
+      return;
+    }
+    // starts the recursion over the input data.
+    // iterates over all bins of the input data.
+    for (const auto &bin : input_array[iteration]) {
+      // skips empty bins
+      if (bin.n() < 1) continue;
+      // save pointer to Q vector in an array
+      q_array[iteration] = &bin;
+      // next step of recursion
+      IterateOverBins(output_bin, q_array, input_array, iteration + 1);
+    }
+  }
+
+  void AddAxes(std::vector<TTreeReaderValue<DataContainerQVector>> &data_containers, std::size_t i) {
+    for (auto axis :data_containers[i]->GetAxes()) {
+      // default name of the axis.
+      std::string name = axis.Name();
+      // check all other inputs for an axis with the same name, or for another input with the same name.
+      for (std::size_t j = 0; j < data_containers.size(); ++j) {
+        if (i!=j) {
+          auto &other = data_containers[j];
+          // only check for non-integrated containers. Integrated containers do not add their axis to the correlation.
+          if (!other->IsIntegrated()) {
+            for (const auto &other_axis :other->GetAxes()) {
+              if (axis==other_axis) {
+                auto input_name = data_containers[i].GetBranchName();
+                if (std::strcmp(input_name, other.GetBranchName())==0) {
+                  // Prepends the input position and name to the axis name if another identical input is present.
+                  name = std::to_string(i) + "_" + input_name + "_" + axis.Name();
+                } else {
+                  // Prepends the input name to the axis name if another input with an identical axis name is present.
+                  name = std::string(input_name) + "_" + axis.Name();
+                }
+              }
+            }
+          }
+        }
+      }
+      // Renames the axis and adds it to the correlation container.
+      axis.SetName(name);
+      data_container_correlation_.AddAxis(axis);
+    }
+  }
+
+  Qn::DataContainerCorrelation data_container_correlation_;
+  std::vector<CorrelationResult> correlation_result_;
+  Function function_;
+  std::array<std::string, NInputs> input_names_;
+  std::array<bool, NInputs> use_weights_;
 };
 
 }
-
-#endif
+}
+#endif //FLOW_DATAFRAMECORRELATION_H

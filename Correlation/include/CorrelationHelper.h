@@ -22,14 +22,14 @@
 #include "ROOT/TypeTraits.hxx"
 #include "ROOT/RVec.hxx"
 
-#include "DataFrameCorrelation.h"
-#include "DataFrameAxisConfiguration.h"
+#include "Correlation.h"
+#include "AxesConfiguration.h"
 
 #include "DataContainer.h"
 
 namespace Qn {
-
 namespace Correlation {
+
 template<typename helper_t>
 using RActionImpl =  ROOT::Detail::RDF::RActionImpl<helper_t>;
 
@@ -44,7 +44,7 @@ class CorrelationHelper;
 
 }
 template<typename Function, typename AxisConfig>
-auto MakeCorrelation(const std::string &name, Function &&function, AxisConfig &&event_axes);
+auto MakeCorrelation(const std::string &name, Function function, AxisConfig event_axes);
 
 namespace Correlation {
 template<ConfigurationState State, typename AxisConfig, typename Correlation, typename... EventParameters, typename... DataContainers>
@@ -60,7 +60,9 @@ class CorrelationHelper<State,
   using Function = typename Correlation::FunctionType;
   using Result_t = Qn::DataContainerStats;
 
-  friend auto Qn::MakeCorrelation<>(const std::string &name, Function &&function, AxisConfig &&event_axes);
+  template<typename F, typename Axis>
+  friend auto Qn::MakeCorrelation(const std::string &name, F function, Axis event_axes);
+
   template<ConfigurationState OtherState>
   using CorrelationHelperOtherState = CorrelationHelper<OtherState, AxisConfig, Correlation,
                                                         std::tuple<EventParameters...>,
@@ -71,9 +73,7 @@ class CorrelationHelper<State,
   std::vector<std::shared_ptr<Result_t>> data_containers_; //!<! vector of result data containers
   AxisConfig event_axes_config_; //!<! Axis configuration of the event axes
   Correlation correlation_; //!<! object calculating the event by event correlation
-
  public:
-
   CorrelationHelper(std::string name, Correlation correlation, AxisConfig event_axes_config) :
       name_(std::move(name)),
       event_axes_config_(std::move(event_axes_config)),
@@ -186,20 +186,23 @@ class CorrelationHelper<State,
     return name_;
   }
 };
-}
 
 template<typename F, typename AxisConfig>
-auto MakeCorrelation(const std::string &name, F &&function, AxisConfig &&event_axes) {
-  auto correlation = Qn::Correlation::MakeDataFrameCorrelation(std::forward<decltype(function)>(function));
-  using DataContainerTypeTuple = typename decltype(correlation)::DataContainerTypeTuple;
-  using AxisValueTypeTuple = typename AxisConfig::AxisValueTypeTuple;
+auto MakeCorrelation(const std::string &name, F function, AxisConfig event_axes) {
+  auto constexpr n_parameters = TemplateHelpers::FunctionTraits<decltype(function)>::Arity;
+  using QVectorTuple = TemplateHelpers::TupleOf<n_parameters, Qn::QVector>;
+  using DataContainerTuple = TemplateHelpers::TupleOf<n_parameters, Qn::DataContainerQVector>;
+  auto correlation = Correlation<F, QVectorTuple, DataContainerTuple>(function);
+  using EventParameterTuple = typename AxisConfig::AxisValueTypeTuple;
   using CorrelationType = decltype(correlation);
-  Qn::Correlation::CorrelationHelper<Correlation::ConfigurationState::Start,
-                                     AxisConfig,
-                                     CorrelationType,
-                                     AxisValueTypeTuple,
-                                     DataContainerTypeTuple> helper(name, correlation, event_axes);
+  CorrelationHelper<ConfigurationState::Start,
+                    AxisConfig,
+                    CorrelationType,
+                    EventParameterTuple,
+                    DataContainerTuple> helper(name, correlation, event_axes);
   return helper;
+}
+
 }
 }
 #endif //FLOW_DATAFRAMESTATISTICS_H

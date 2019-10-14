@@ -65,7 +65,14 @@ class Stats {
 
   double RatioOfErrors() const {
     auto bootstrap_error = resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
-    return bootstrap_error / statistic_.MeanError();
+    double error = 0;
+    if (state_==State::MOMENTS) {
+      error = statistic_.MeanError();
+    } else if (state_==State::MEAN_ERROR) {
+      error = error_;
+    }
+    std::cout << bootstrap_error << " " << error << std::endl;
+    return bootstrap_error/error;
   }
 
   double Mean() const {
@@ -120,6 +127,21 @@ class Stats {
     return error;
   }
 
+  double MeanErrorStat() const {
+    double error;
+    switch (state_) {
+      case State::MOMENTS :error = statistic_.MeanError();
+        break;
+      case State::MEAN_ERROR :error = error_;
+        break;
+    }
+    return error;
+  }
+
+  double MeanErrorBoot() const {
+    return resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
+  }
+
   void CalculateMeanAndError() {
     if (state_!=State::MEAN_ERROR) {
       state_ = State::MEAN_ERROR;
@@ -139,6 +161,7 @@ class Stats {
   friend Stats operator*(double, const Stats &);
   friend Stats operator/(const Stats &, const Stats &);
   friend Stats Sqrt(const Stats &);
+  friend Stats PowSqrt(const Stats &, unsigned int);
 
   inline void Fill(const CorrelationResult &product, const std::vector<size_type> &samples) {
     if (product.validity) {
@@ -150,7 +173,7 @@ class Stats {
   template<typename SAMPLES>
   inline void FillPoisson(const CorrelationResult &correlation_result, SAMPLES &&samples) {
     if (correlation_result.validity) {
-      resamples_.FillPoisson( correlation_result, std::forward<SAMPLES>(samples));
+      resamples_.FillPoisson(correlation_result, std::forward<SAMPLES>(samples));
       statistic_.Fill(correlation_result);
     }
   }
@@ -172,7 +195,6 @@ class Stats {
   const ReSamples &GetReSamples() const { return resamples_; }
 
   TCanvas *CIvsNSamples(const int nsteps = 10) const;
-
 
  private:
   ReSamples resamples_;
@@ -202,6 +224,7 @@ Stats operator/(const Stats &, double);
 Stats operator*(double, const Stats &);
 Stats operator/(const Stats &, const Stats &);
 Stats Sqrt(const Stats &);
+Stats PowSqrt(const Stats &, unsigned int);
 }
 
 #endif //FLOW_STATS_H

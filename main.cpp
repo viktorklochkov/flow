@@ -1,7 +1,7 @@
 #include "ROOT/RDataFrame.hxx"
-#include "DataFrameCorrelation.h"
-#include "DataFrameHelper.h"
-#include "DataFrameReSampler.h"
+#include "Correlation.h"
+#include "CorrelationHelper.h"
+#include "ReSampler.h"
 
 //
 //int main() {
@@ -116,39 +116,59 @@ int main() {
     return a.x(1)*c.x(1);
   };
 
+  auto v2_2 = [](const Qn::QVector &a) {
+    auto Q = a.DeNormal();
+    auto M = Q.sumweights();
+    return (Qn::ScalarProduct(Q, Q, 2) - M)/(M*(M - 1));
+  };
+
+  auto RealPart = [](const Qn::QVector &q, std::size_t h) {
+    return q.x(2*h)*q.x(h)*q.x(h) - q.x(2*h)*q.y(h)*q.y(h) + 2*(q.y(2*h)*q.x(h)*q.y(h));
+  };
+  auto v2_4 = [RealPart](const Qn::QVector &n) {
+    auto Q = n.DeNormal();
+    auto M = Q.sumweights();
+    auto SP_Q_2 = Qn::ScalarProduct(Q, Q, 2);
+    auto SP_Q_4 = Qn::ScalarProduct(Q, Q, 4);
+    return (SP_Q_2*SP_Q_2 + SP_Q_4 - 2*RealPart(Q,2))/(M*(M - 1)*(M - 2)*(M - 3))
+        - 2*(2*(M - 2)*SP_Q_2 - M*(M - 3))/(M*(M - 1)*(M - 2)*(M - 3));
+  };
+
   std::cout << reader.GetEntries(true) << std::endl;
 
-  Qn::AxisD centrality("CentralityV0M", 100, 0, 100);
+  Qn::AxisD centrality("CentralityV0M", 9, 0, 90);
   Qn::AxisD Trigger("Trigger", 3, 0., 3.);
-  Qn::AxisD VertexX("VtxX",10,0.088,0.096);
-  Qn::AxisD VertexY("VtxY",10,0.364,0.372);
-  Qn::DataFrameReSampler re_sampler(n_samples);
+  Qn::AxisD VertexX("VtxX", 10, 0.088, 0.096);
+  Qn::AxisD VertexY("VtxY", 10, 0.364, 0.372);
+  Qn::Correlation::ReSampler re_sampler(n_samples);
 
   ROOT::RDataFrame df("tree", "~/flowtest/mergedtree.root");
 
   auto ntrackfilter = [](const Qn::DataContainerQVector &a) {
-    return a.At(0).sumweights() > 1;
+    return a.At(0).sumweights() > 3;
   };
 
-  auto df_samples = df.Define("Samples", re_sampler, {});
+  auto df_samples = df.Filter(ntrackfilter, {"TPC_PLAIN"}).Define("Samples", re_sampler, {});
 
-  auto stats = Qn::MakeCorrelation("znaX_zncX_recentered", xaxc, Qn::MakeEventAxes(Trigger,centrality,VertexX,VertexY))
-      .SetInputNames("ZNA_RECENTERED", "ZNC_RECENTERED")
-      .SetWeights(Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE)
-      .BookMe(df_samples, reader, n_samples);
+  auto stats =
+      Qn::Correlation::MakeCorrelation("v22", v2_2, Qn::Correlation::MakeAxes(centrality))
+          .SetInputNames("TPC_PLAIN")
+          .SetWeights(Qn::Stats::Weights::REFERENCE)
+          .BookMe(df_samples, reader, n_samples);
 
-//  auto stats2 = Qn::MakeCorrelation("znaX_zncX_plain", xaxc, Qn::MakeEventAxes(centrality))
-//      .SetInputNames("ZNA_PLAIN", "ZNC_PLAIN")
-//      .SetWeights(Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE)
-//      .BookMe(df_samples, reader, n_samples);
+  auto stats2 =
+      Qn::Correlation::MakeCorrelation("v24", v2_4, Qn::Correlation::MakeAxes(centrality))
+          .SetInputNames("TPC_PLAIN")
+          .SetWeights(Qn::Stats::Weights::REFERENCE)
+          .BookMe(df_samples, reader, n_samples);
 
-  auto histo = df_samples.Histo1D({"h", "centrality", 100, 0, 100},"CentralityV0M");
+  auto histo = df_samples.Histo1D({"h", "centrality", 100, 0, 100}, "CentralityV0M");
 
   auto val = stats.GetValue();
   auto out_file = new TFile("test.root", "RECREATE");
   out_file->cd();
-  stats->Write("recentered");
-//  stats2->Write("plain");
+  stats->Write("v22");
+  stats2->Write("v24");
   histo->Write("centrality");
   out_file->Close();
 

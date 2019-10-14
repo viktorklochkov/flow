@@ -14,13 +14,9 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#ifdef __CINT__
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
-
-#pragma link C++ namespace Qn;
-#pragma link C++ nestedclass;
-#pragma link C++ nestedtypedef;
-
-#endif
+#ifndef FLOW_DATAFRAMECORRELATION_DFCORRELATION_H_
+#define FLOW_DATAFRAMECORRELATION_DFCORRELATION_H_
+#include "ReSampler.h"
+#include "AxesConfiguration.h"
+#include "CorrelationHelper.h"
+#endif //FLOW_DATAFRAMECORRELATION_DFCORRELATION_H_

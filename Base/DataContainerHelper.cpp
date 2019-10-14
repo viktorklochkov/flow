@@ -42,11 +42,11 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
   unsigned int ibin = 0;
   for (const auto &bin : data) {
     auto tbin = bin;
+    if (tbin.N()==0 && tbin.GetState()!=Stats::State::MEAN_ERROR) continue;
     if (tbin.GetState()!=Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
     auto y = tbin.Mean();
     auto ylo = tbin.LowerMeanError();
     auto yhi = tbin.UpperMeanError();
-    if (tbin.N()==0) continue;
     auto xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
     auto xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
     auto x = xlo + ((xhi - xlo)*static_cast<double>(i)/maxi);
@@ -206,12 +206,12 @@ TGraph *DataContainerHelper::ToBootstrapScatterGraph(const Qn::DataContainer<Sta
   auto scatter_graph = new TGraph;
   std::size_t i_bin = 0;
   for (const auto &bin : data) {
+    if (bin.N()==0 && bin.GetState() != Stats::State::MEAN_ERROR) continue;
     auto tbin = bin;
+    if (tbin.GetState()!=Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
     auto xhi = data.GetAxes().front().GetUpperBinEdge(i_bin);
     auto xlo = data.GetAxes().front().GetLowerBinEdge(i_bin);
     auto offset = (xhi + xlo)/2;
-    tbin.CalculateMeanAndError();
-    if (tbin.N()==0) continue;
     tbin.GetReSamples().ScatterGraph(*scatter_graph, offset, (xhi - xlo)/2);
     ++i_bin;
   }
@@ -222,9 +222,9 @@ TGraph *DataContainerHelper::ToErrorComparisonGraph(const Qn::DataContainer<Stat
   auto error_ratio = new TGraph;
   std::size_t i_bin = 0;
   for (const auto &bin : data) {
-    if (bin.N()==0) continue;
+    if (bin.N()==0 && bin.GetState() != Stats::State::MEAN_ERROR) continue;
     auto tbin = bin;
-    tbin.CalculateMeanAndError();
+    if (tbin.GetState()!=Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
     auto ratio = tbin.RatioOfErrors();
     auto xhi = data.GetAxes().front().GetUpperBinEdge(i_bin);
     auto xlo = data.GetAxes().front().GetLowerBinEdge(i_bin);
@@ -253,10 +253,12 @@ TCanvas *UncertaintyComparison(const Qn::DataContainer<Stats, AxisD> &data) {
     auto pad = new TPad(axis.Name().data(),"",0.0, stepsize*(i_axis-1),1.0, stepsize*(i_axis));
     pad->Draw();
     pad->cd();
-//    pad->SetFillStyle(1001);
-//    auto pad = canvas->cd(i_axis);
-    auto projected = data.Projection({axis.Name()});
-    auto graph = ToErrorComparisonGraph(projected);
+    TGraph *graph = nullptr;
+    if (axes.size() > 1) {
+      graph = ToErrorComparisonGraph(data.Projection({axis.Name()}));
+    } else {
+      graph = ToErrorComparisonGraph(data);
+    }
     auto y_max = TMath::MaxElement(graph->GetN(), graph->GetY());
     auto y_min = TMath::MinElement(graph->GetN(), graph->GetY());
     auto y_range = y_max - y_min;
@@ -312,20 +314,7 @@ TCanvas *UncertaintyComparison(const Qn::DataContainer<Stats, AxisD> &data) {
     y_axis->CenterTitle();
     y_axis->Draw();
 
-    auto over = new TText(x_max*0.8, c_y_max - y_range*0.16, "overestimation");
-    over->SetTextColor(kGray + 1);
-    over->SetTextFont(43);
-    over->SetTextSize(16);
-
-    auto under = new TText(x_max*0.8, c_y_min + y_range*0.1, "underestimation");
-    under->SetTextColor(kGray + 1);
-    under->SetTextFont(43);
-    under->SetTextSize(16);
-
-//    over->Draw();
-//    under->Draw();
     graph->SetLineWidth(2);
-//    graph->SetLineColor(kRed);
     graph->Draw("L");
     ++i_axis;
   }

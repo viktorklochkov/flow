@@ -24,11 +24,12 @@
 #include "ROOT/RVec.hxx"
 
 namespace Qn {
+namespace Correlation {
 
-class DataFrameReSampler {
+class ReSampler {
  public:
-  DataFrameReSampler() = default;
-  DataFrameReSampler(std::size_t n) :
+  ReSampler() = default;
+  ReSampler(std::size_t n) :
       n_(n),
       poisson_(1) {
     std::random_device rd;
@@ -49,6 +50,7 @@ class DataFrameReSampler {
   std::mt19937 generator_;
   std::poisson_distribution<> poisson_;
 };
-}
 
+}
+}
 #endif //FLOW_DATAFRAMECORRELATION_INCLUDE_DATAFRAMERESAMPLER_H_

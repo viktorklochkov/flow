@@ -913,6 +913,10 @@ template<typename T, typename AxisType>
 DataContainer<T, AxisType> Sqrt(const DataContainer<T, AxisType> &a) {
   return a.Map([](const T &x) { return Qn::Sqrt(x); });
 }
+template<typename AxisType>
+DataContainer<Stats, AxisType> PowSqrt(const DataContainer<Stats, AxisType> &a, unsigned int k) {
+  return a.Map([k](const Stats &x) { return Qn::PowSqrt(x, k); });
+}
 
 /**
  * Transformation of a DataContainer providing the operation:

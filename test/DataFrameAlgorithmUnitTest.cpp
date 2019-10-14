@@ -17,17 +17,17 @@
 
 #include "gtest/gtest.h"
 #include "ROOT/RDataFrame.hxx"
-#include "DataFrameCorrelation.h"
-#include "DataFrameHelper.h"
-#include "DataFrameReSampler.h"
-#include "DataFrameAxisConfiguration.h"
+#include "Correlation.h"
+#include "CorrelationHelper.h"
+#include "ReSampler.h"
+#include "AxesConfiguration.h"
 
 TEST(DataFrameAlgorithmUnitTest, axisnaming) {
 
   Qn::AxisD a1("a1",10,0,100);
   Qn::AxisD a2("a2",10,0,100);
   Qn::AxisD a3("a3",10,0,100);
-  auto axes = Qn::MakeEventAxes(a1,a2,a3);
+  auto axes = Qn::MakeAxes(a1, a2, a3);
 
   auto index = axes.GetLinearIndexFromCoordinates(20.,30.,-1);
 

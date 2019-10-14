@@ -434,32 +434,9 @@ class QVector {
   /// \endcond
 };
 
-/**
- * @class QVector ptr
- * @brief Wrapper for QVector used in the correlation step.
- */
-class QVectorPtr {
-  using Normalization = QVector::Normalization;
- public:
-  QVectorPtr() = default;
-  // construct/copy/destroy
-  explicit QVectorPtr(const QVector &ref) noexcept : qvector_(&ref) {}
-  QVectorPtr(const QVectorPtr &) noexcept = default;
-  // assignment
-  QVectorPtr &operator=(const QVectorPtr &x) noexcept = default;
-
-  inline float x(const unsigned int i) const { return qvector_->x(i); }
-  inline float y(const unsigned int i) const { return qvector_->y(i); }
-  inline float mag(const unsigned int i) const { return qvector_->mag(i); }
-  inline float sumweights() const { return qvector_->sumweights(); }
-  inline float n() const { return qvector_->n(); }
-  inline unsigned int GetCorrectionStep() const { return qvector_->GetCorrectionStep(); }
-  inline Normalization GetNorm() const { return qvector_->GetNorm(); }
-  inline QVector Normal(Normalization norm) const { return qvector_->Normal(norm); }
-  inline QVector DeNormal() const { return qvector_->DeNormal(); }
- private:
-  const QVector *qvector_ = nullptr;
-};
+inline double ScalarProduct(QVector a, QVector b, unsigned int harmonic) {
+  return a.x(harmonic) * b.x(harmonic) + a.y(harmonic) * b.y(harmonic);
+}
 
 static constexpr std::array<const char *, 6> kCorrectionStepNamesArray = {
     "RAW",

@@ -95,6 +95,15 @@ ReSamples ReSamples::Sqrt(const ReSamples &a) {
   return result;
 }
 
+ReSamples ReSamples::PowSqrt(const ReSamples &a, unsigned int k) {
+  ReSamples result(a);
+  for (size_t i = 0; i < result.means_.size(); ++i) {
+    auto res = std::pow(fabs(a.means_[i]), 1./k);
+    result.means_[i] = std::signbit(a.means_[i]) ? -1.*res : res;
+  }
+  return result;
+}
+
 ReSamples ReSamples::Merge(const ReSamples &a, const ReSamples &b, bool merge_weights) {
   ReSamples result(b);
   for (size_t i = 0; i < result.means_.size(); ++i) {

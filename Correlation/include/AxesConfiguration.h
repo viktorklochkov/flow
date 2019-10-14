@@ -19,18 +19,35 @@
 
 #include "TemplateHelpers.h"
 namespace Qn {
+namespace Correlation {
+
+namespace Impl {
+template<std::size_t position>
+struct StrideCalculator {
+  template<typename Stride, typename Axes>
+  static void Calculate(Stride &stride, const Axes &axes) {
+    stride[position] = stride[position + 1]*std::get<position>(axes).size();
+    StrideCalculator<position - 1>::Calculate(stride, axes);
+  }
+};
+template<>
+struct StrideCalculator<0> {
+  template<typename Stride, typename Axes>
+  static void Calculate(Stride &stride, const Axes &axes) {
+    stride[0] = stride[1]*std::get<0>(axes).size();
+  }
+};
+}
 
 template<typename ...Axes>
-class AxisConfiguration {
+class AxesConfiguration {
  public:
   static constexpr auto kDimension = sizeof...(Axes);
-  AxisConfiguration(Axes... axes) : axes_(axes...) {
+  AxesConfiguration(Axes... axes) : axes_(axes...) {
     CalculateStride();
   }
   using AxisType = typename std::tuple_element<0, std::tuple<Axes...>>::type;
-  using AxisValueType = typename std::tuple_element<0, std::tuple<Axes...>>::type::ValueType;
-  using AxisValueTypeTuple = typename TemplateHelpers::TupleOf<sizeof...(Axes), AxisValueType>;
-  std::tuple<Axes...> axes_;
+  using AxisValueTypeTuple = typename TemplateHelpers::TupleOf<sizeof...(Axes), typename AxisType::ValueType>;
   std::vector<AxisType> GetVector() const { return TemplateHelpers::ToVector(axes_); }
 
   template<typename... Coordinates>
@@ -43,7 +60,7 @@ class AxisConfiguration {
   template<typename FirstCoordinate, typename... Rest>
   long FindBin(FirstCoordinate first_coordinate, Rest... rest) const {
     constexpr std::size_t position = kDimension - sizeof...(rest) - 1;
-    auto bin = stride_[position+1]*std::get<position>(axes_).FindBin(first_coordinate);
+    auto bin = stride_[position + 1]*std::get<position>(axes_).FindBin(first_coordinate);
     auto rest_bin = FindBin(rest...);
     if (rest_bin < 0) return -1;
     return bin + rest_bin;
@@ -52,35 +69,24 @@ class AxisConfiguration {
   template<typename FirstCoordinate>
   long FindBin(FirstCoordinate first_coordinate) const {
     constexpr std::size_t position = kDimension - 1;
-    return stride_[position+1]*std::get<position>(axes_).FindBin(first_coordinate);
+    return stride_[position + 1]*std::get<position>(axes_).FindBin(first_coordinate);
   }
 
   void CalculateStride() {
     stride_[kDimension] = 1;
-    CalculateStrideRecursive<1>();
-  }
-
-  template<std::size_t iteration>
-  void CalculateStrideRecursive() {
-    constexpr std::size_t position = kDimension - iteration;
-    stride_[position] = stride_[position+1]*std::get<position>(axes_).size();
-    CalculateStrideRecursive<iteration+1>();
-  }
-
-  template<>
-  void CalculateStrideRecursive<kDimension>() {
-    stride_[0] = stride_[1]*std::get<0>(axes_).size();
+    Impl::StrideCalculator<kDimension - 1>::Calculate(stride_, axes_);
   }
 
  private:
-  std::array<std::size_t, kDimension+1> stride_;
+  std::tuple<Axes...> axes_;
+  std::array<std::size_t, kDimension + 1> stride_;
 };
 
 template<typename ...Axes>
-auto MakeEventAxes(Axes... axes) {
-  return AxisConfiguration<Axes...>(axes...);
+auto MakeAxes(Axes... axes) {
+  return AxesConfiguration<Axes...>(axes...);
 }
 
 }
-
+}
 #endif //FLOW_DATAFRAMECORRELATION_INCLUDE_DATAFRAMEAXISCONFIGURATION_H_

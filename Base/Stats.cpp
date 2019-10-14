@@ -16,7 +16,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Stats.h"
-#include "../Correlation/include/Correlation.h"
 
 namespace Qn {
 using STAT = Qn::Stats::State;
@@ -119,10 +118,13 @@ Stats operator*(const Stats &lhs, const Stats &rhs) {
     result.mergeable_ = false;
   }
   result.mean_ = tlhs.mean_*trhs.mean_;
-  result.error_ = std::sqrt(tlhs.error_*tlhs.error_ + trhs.error_*trhs.error_);
+  auto t1 = trhs.mean_*tlhs.error_;
+  auto t2 = tlhs.mean_*trhs.error_;
+  result.error_ = std::sqrt(t1*t1 + t2*t2);
   result.resamples_ = ReSamples::Multiplication(tlhs.resamples_, trhs.resamples_);
   return result;
 }
+
 //
 Stats operator*(const Stats &stat, const double scale) {
   Stats result = stat;
@@ -168,7 +170,9 @@ Stats operator/(const Stats &num, const Stats &den) {
     result.mergeable_ = false;
   }
   result.mean_ = tlhs.mean_/trhs.mean_;
-  result.error_ = std::sqrt(tlhs.error_*tlhs.error_ + trhs.error_*trhs.error_);
+  auto t1 = num.error_ / den.mean_;
+  auto t2 = num.mean_*den.error_ / (den.mean_*den.mean_);
+  result.error_ = std::sqrt(t1*t1+t2*t2);
   result.resamples_ = ReSamples::Division(tlhs.resamples_, trhs.resamples_);
   return result;
 }
@@ -176,10 +180,21 @@ Stats operator/(const Stats &num, const Stats &den) {
 Stats Sqrt(const Stats &stat) {
   Stats result = stat;
   if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  auto temp_mean = result.mean_;
   result.mean_ =
-      std::signbit(result.mean_) ? -1*std::sqrt(std::fabs(result.mean_)) : std::sqrt(std::fabs(result.mean_));
-  result.error_ = stat.error_/(2*std::sqrt(result.mean_));
+      std::signbit(temp_mean) ? -1*std::sqrt(std::fabs(temp_mean)) : std::sqrt(std::fabs(temp_mean));
+  result.error_ = stat.error_/(2*std::sqrt(temp_mean));
   result.resamples_ = ReSamples::Sqrt(result.resamples_);
+  return result;
+}
+
+Stats PowSqrt(const Stats & stat, unsigned int k) {
+  Stats result = stat;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  auto temp_mean = result.mean_;
+  result.mean_ = std::signbit(temp_mean) ? -1*std::pow(std::fabs(temp_mean), 1./k) : std::pow(std::fabs(temp_mean), 1./k);
+  result.error_  = stat.error_ * std::pow(temp_mean, 1./(k - 1)) / k;
+  result.resamples_ = ReSamples::PowSqrt(result.resamples_, k);
   return result;
 }
 

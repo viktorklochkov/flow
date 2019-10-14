@@ -1,6 +1,6 @@
 // Flow Vector Correction Framework
 //
-// Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
+// Copyright (C) 2019  Lukas Kreis Ilya Selyuzhenkov
 // Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
 // For a full list of contributors please see docs/Credits
 //
@@ -14,9 +14,12 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#ifdef __CLING__
 
-#ifdef __CINT__
+#pragma link C++ namespace Qn;
+#pragma link C++ nestedclass;
+#pragma link C++ nestedtypedef;
 
-#pragma link C++ class Qn::CorrelationManager-;
+
 
 #endif

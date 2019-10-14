@@ -20,6 +20,8 @@
 #include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
+namespace Correlation {
+
 namespace TemplateHelpers {
 
 namespace Impl {
@@ -118,8 +120,8 @@ auto ToVector(const std::tuple<first_type, others...> &t) {
   constexpr auto s = std::tuple_size<tuple_type>::value;
   return Impl::ToVectorHelper<first_type, tuple_type>(t, std::make_index_sequence<s>{});
 }
+}
 
 }
 }
-
 #endif //FLOW_TEMPLATEHELPERS_H
