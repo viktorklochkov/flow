@@ -42,11 +42,6 @@ enum ConfigurationState {
 template<ConfigurationState State, typename AxisConfig, typename Correlation, typename EventParameters, typename DataContainers>
 class CorrelationHelper;
 
-}
-template<typename Function, typename AxisConfig>
-auto MakeCorrelation(const std::string &name, Function function, AxisConfig event_axes);
-
-namespace Correlation {
 template<ConfigurationState State, typename AxisConfig, typename Correlation, typename... EventParameters, typename... DataContainers>
 class CorrelationHelper<State,
                         AxisConfig,
@@ -60,8 +55,6 @@ class CorrelationHelper<State,
   using Function = typename Correlation::FunctionType;
   using Result_t = Qn::DataContainerStats;
 
-  template<typename F, typename Axis>
-  friend auto Qn::MakeCorrelation(const std::string &name, F function, Axis event_axes);
 
   template<ConfigurationState OtherState>
   using CorrelationHelperOtherState = CorrelationHelper<OtherState, AxisConfig, Correlation,
@@ -130,7 +123,7 @@ class CorrelationHelper<State,
   }
 
   template<typename DATAFRAME>
-  auto BookMe(DATAFRAME &df, TTreeReader &reader, const std::size_t n_resamples) &&{
+  ROOT::RDF::RResultPtr<Result_t> BookMe(DATAFRAME &df, TTreeReader &reader, const std::size_t n_resamples) {
     static_assert(State==ConfigurationState::Weight, "Configure weights first");
     Configure(reader, n_resamples);
     std::vector<std::string> columns;
@@ -188,7 +181,14 @@ class CorrelationHelper<State,
 };
 
 template<typename F, typename AxisConfig>
-auto MakeCorrelation(const std::string &name, F function, AxisConfig event_axes) {
+CorrelationHelper<ConfigurationState::Start,
+                  AxisConfig,
+                  Correlation<F, TemplateHelpers::TupleOf<TemplateHelpers::FunctionTraits<F>::Arity, Qn::QVector>,
+                              TemplateHelpers::TupleOf<TemplateHelpers::FunctionTraits<F>::Arity,
+                                                       Qn::DataContainerQVector>>,
+                  typename AxisConfig::AxisValueTypeTuple,
+                  TemplateHelpers::TupleOf<TemplateHelpers::FunctionTraits<F>::Arity, Qn::DataContainerQVector>>
+MakeCorrelation(const std::string &name, F function, AxisConfig event_axes) {
   auto constexpr n_parameters = TemplateHelpers::FunctionTraits<decltype(function)>::Arity;
   using QVectorTuple = TemplateHelpers::TupleOf<n_parameters, Qn::QVector>;
   using DataContainerTuple = TemplateHelpers::TupleOf<n_parameters, Qn::DataContainerQVector>;

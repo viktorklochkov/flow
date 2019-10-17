@@ -1,4 +1,3 @@
-//
 // Created by Lukas Kreis on 30.01.18.
 //
 

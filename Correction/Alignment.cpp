@@ -84,7 +84,7 @@ void Alignment::CreateSupportQVectors() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void Alignment::CreateCorrectionHistograms(TList *list) {
+void Alignment::CreateCorrectionHistograms() {
   auto hname = std::string(szSupportHistogramName) + "_" + fSubEvent->GetName() + "#times"
       + fDetectorForAlignment->GetName();
   fInputHistograms =
@@ -92,7 +92,7 @@ void Alignment::CreateCorrectionHistograms(TList *list) {
   fInputHistograms->SetNoOfEntriesThreshold(fMinNoOfEntriesToValidate);
   fCalibrationHistograms =
       std::make_unique<CorrectionProfileCorrelationComponents>(hname, fSubEvent->GetEventClassVariablesSet());
-  fCalibrationHistograms->CreateCorrelationComponentsProfileHistograms(list);
+  fCalibrationHistograms->CreateCorrelationComponentsProfileHistograms(&output_histograms);
 }
 
 /// Attaches the needed input information to the correction step

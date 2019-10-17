@@ -55,15 +55,21 @@ void Detector::Initialize(DetectorList &detectors, InputVariableManager &var, Co
   for (auto &event : sub_events_) {
     if (type_==DetectorType::CHANNEL) {
       event = std::make_unique<SubEventChannels>(ibin, &correction_axis, nchannels_, harmonics_bits_);
+      if (channel_groups_.empty()) {
+        for (int i = 0; i < nchannels_; ++i) {
+          channel_groups_.push_back(0);
+        }
+      }
+      event->SetChannelsScheme(channel_groups_);
     } else if (type_==DetectorType::TRACK) {
       event = std::make_unique<SubEventTracks>(ibin, &correction_axis, harmonics_bits_);
     }
     event->SetDetector(this);
     for (int i = 0; i < correction_on_input_data.GetEntriesFast(); ++i) {
-      event->AddCorrectionOnInputData(dynamic_cast<CorrectionOnInputData*>(correction_on_input_data.At(i))->MakeCopy());
+      event->AddCorrectionOnInputData(dynamic_cast<CorrectionOnInputData *>(correction_on_input_data.At(i))->MakeCopy());
     }
     for (int i = 0; i < correction_on_q_vector.GetEntriesFast(); ++i) {
-      event->AddCorrectionOnQnVector(dynamic_cast<CorrectionOnQnVector*>(correction_on_q_vector.At(i))->MakeCopy());
+      event->AddCorrectionOnQnVector(dynamic_cast<CorrectionOnQnVector *>(correction_on_q_vector.At(i))->MakeCopy());
     }
     ++ibin;
   }

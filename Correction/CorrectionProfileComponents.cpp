@@ -117,9 +117,9 @@ Bool_t CorrectionProfileComponents::CreateComponentsProfileHistograms(TList *his
   }
   /* now prepare the construction of the histograms */
   Int_t nVariables = fEventClassVariables.GetSize();
-  Double_t *minvals = new Double_t[nVariables];
-  Double_t *maxvals = new Double_t[nVariables];
-  Int_t *nbins = new Int_t[nVariables];
+  auto *minvals = new Double_t[nVariables];
+  auto *maxvals = new Double_t[nVariables];
+  auto *nbins = new Int_t[nVariables];
   TString sVariableLabels = "";
   /* get the multidimensional structure */
   fEventClassVariables.GetMultidimensionalConfiguration(nbins, minvals, maxvals);

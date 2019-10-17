@@ -49,7 +49,8 @@ class SubEventTracks : public SubEvent {
   virtual Bool_t GetIsTrackingDetector() const { return kTRUE; }
 
   virtual void CreateSupportQVectors();
-  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void CreateCorrectionHistograms();
+  virtual void CopyToOutputList(TList* list);
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
   virtual void AttachCorrectionInput(TList *list);
@@ -63,12 +64,7 @@ class SubEventTracks : public SubEvent {
   virtual void FillOverallQnVectorCorrectionStepList(std::set<CorrectionBase *> &set) const;
   virtual void Clear();
   virtual std::map<std::string, Report> ReportOnCorrections() const {
-    std::map<std::string, Report> report;
-    for (const auto& correction : fQnVectorCorrections) {
-      auto usage = correction->ReportUsage();
-      report.emplace(correction->GetName(),usage);
-    }
-    return report;
+    return fQnVectorCorrections.ReportOnUsage();
   }
   
  private:

@@ -134,7 +134,7 @@ void TwistAndRescale::CreateSupportQVectors() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void TwistAndRescale::CreateCorrectionHistograms(TList *list) {
+void TwistAndRescale::CreateCorrectionHistograms() {
   Int_t *harmonicsMap;
   auto event_variables = fSubEvent->GetEventClassVariablesSet();
   std::string name;
@@ -149,7 +149,7 @@ void TwistAndRescale::CreateCorrectionHistograms(TList *list) {
       fCorrectedQnVector->GetHarmonicsMap(harmonicsMap);
       /* we duplicate the harmonics used because that will be the info stored by the profiles */
       for (unsigned int h = 0; h < fCorrectedQnVector->GetNoOfHarmonics(); h++) harmonicsMap[h] = 2*harmonicsMap[h];
-      fDoubleHarmonicCalibrationHistograms->CreateComponentsProfileHistograms(list,
+      fDoubleHarmonicCalibrationHistograms->CreateComponentsProfileHistograms(&output_histograms,
                                                                               fCorrectedQnVector->GetNoOfHarmonics(),
                                                                               harmonicsMap);
       delete[] harmonicsMap;
@@ -170,7 +170,7 @@ void TwistAndRescale::CreateCorrectionHistograms(TList *list) {
                                                             event_variables);
       harmonicsMap = new Int_t[fCorrectedQnVector->GetNoOfHarmonics()];
       fCorrectedQnVector->GetHarmonicsMap(harmonicsMap);
-      fCorrelationsCalibrationHistograms->CreateCorrelationComponentsProfileHistograms(list,
+      fCorrelationsCalibrationHistograms->CreateCorrelationComponentsProfileHistograms(&output_histograms,
                                                                                        fCorrectedQnVector->GetNoOfHarmonics(),
                                                                                        1 /* harmonic multiplier */,
                                                                                        harmonicsMap);
@@ -328,8 +328,8 @@ bool TwistAndRescale::ProcessCorrections() {
                   harmonic = fCorrectedQnVector->GetNextHarmonic(harmonic);
                   continue;
                 }
-                Double_t Qx = fTwistCorrectedQnVector->x(harmonic);
-                Double_t Qy = fTwistCorrectedQnVector->y(harmonic);
+                Double_t Qx = fSubEvent->GetCurrentQnVector()->x(harmonic);
+                Double_t Qy = fSubEvent->GetCurrentQnVector()->y(harmonic);
                 Double_t newQx = (Qx - LambdaMinus*Qy)/(1 - LambdaMinus*LambdaPlus);
                 Double_t newQy = (Qy - LambdaPlus*Qx)/(1 - LambdaMinus*LambdaPlus);
                 if (fApplyTwist) {

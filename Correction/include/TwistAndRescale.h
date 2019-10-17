@@ -180,13 +180,21 @@ class TwistAndRescale : public CorrectionOnQnVector {
   virtual void AttachInput(TList *list);
   virtual void AfterInputAttachAction();
   virtual void CreateSupportQVectors();
-  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void CreateCorrectionHistograms();
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
   virtual Bool_t ProcessCorrections();
   virtual Bool_t ProcessDataCollection();
   virtual void ClearCorrectionStep();
   virtual void IncludeCorrectedQnVector(std::map<QVector::CorrectionStep, QVector *> &qvectors) const;
+  virtual void IncludeCorrectionStep(std::vector<QVector::CorrectionStep> &steps) {
+    if (fApplyRescale) {
+      steps.push_back(fRescaleCorrectedQnVector->GetCorrectionStep());
+    }
+    if (fApplyTwist) {
+      steps.push_back(fTwistCorrectedQnVector->GetCorrectionStep());
+    }
+  }
 
  private:
   using State = Qn::CorrectionBase::State;

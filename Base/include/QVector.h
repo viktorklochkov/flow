@@ -288,6 +288,7 @@ class QVector {
    * @param other Q-vector whose properties are being copied.
    */
   void CopyNumberOfContributors(const QVector &other) {
+    norm_ = other.norm_;
     quality_ = other.quality_;
     n_ = other.n_;
     sum_weights_ = other.sum_weights_;
@@ -443,7 +444,7 @@ static constexpr std::array<const char *, 6> kCorrectionStepNamesArray = {
     "PLAIN",
     "RECENTERED",
     "TWIST",
-    "RESCALED"
+    "RESCALED",
     "ALIGNED"
 };
 

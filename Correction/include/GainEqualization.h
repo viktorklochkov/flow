@@ -151,7 +151,7 @@ class GainEqualization : public CorrectionOnInputData {
   virtual void AttachedToFrameworkManager() {}
   virtual void AttachInput(TList *list);
   virtual void CreateSupportQVectors();
-  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void CreateCorrectionHistograms();
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
 

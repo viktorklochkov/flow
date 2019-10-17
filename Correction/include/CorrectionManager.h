@@ -75,6 +75,10 @@ class CorrectionManager {
     detectors_.FindDetector(name).AddCorrectionOnQnVector(std::forward<CORRECTION>(correction));
   }
 
+  void SetChannelGroups(const std::string &name, const std::vector<int> &channel_groups) {
+    detectors_.FindDetector(name).SetChannelScheme(channel_groups);
+  }
+
   /**
    * Adds a correction step based on the input data to the specified detector
    * @tparam CORRECTION

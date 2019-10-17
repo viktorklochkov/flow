@@ -81,7 +81,7 @@ void GainEqualization::CreateSupportQVectors() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void GainEqualization::CreateCorrectionHistograms(TList *list) {
+void GainEqualization::CreateCorrectionHistograms() {
   std::string name = std::string(szSupportHistogramName) + "_" + fSubEvent->GetName();
   auto *sub_event = dynamic_cast<SubEventChannels *>(fSubEvent);
   fInputHistograms = std::make_unique<CorrectionProfileChannelizedIngress>(name,
@@ -93,7 +93,7 @@ void GainEqualization::CreateCorrectionHistograms(TList *list) {
                                                                           sub_event->GetEventClassVariablesSet(),
                                                                           sub_event->GetNoOfChannels(),
                                                                           CorrectionHistogramBase::ErrorMode::SPREAD);
-  fCalibrationHistograms->CreateProfileHistograms(list,
+  fCalibrationHistograms->CreateProfileHistograms(&output_histograms,
                                                   sub_event->GetUsedChannelsMask(),
                                                   sub_event->GetChannelsGroups());
 }
@@ -249,7 +249,7 @@ bool GainEqualization::ProcessCorrections() {
 /// Due to this structure as today it is not possible to split data collection
 /// from correction processing. If so is required probably multiple equalization
 /// structures should be included.
-/// So this function only retures the proper value according to the status.
+/// So this function only returns the proper value according to the status.
 /// \return kTRUE if the correction step was applied
 Bool_t GainEqualization::ProcessDataCollection() {
   bool applied = false;

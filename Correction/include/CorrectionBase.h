@@ -57,7 +57,9 @@ class CorrectionBase : public TObject {
   friend class SubEvent;
   CorrectionBase() = default;
   virtual ~CorrectionBase() = default;
-  CorrectionBase(const char *name, unsigned int prio) : fPriority(prio), fName(name) {}
+  CorrectionBase(const char *name, unsigned int prio) : fPriority(prio), fName(name) {
+    output_histograms.SetOwner(true);
+  }
   virtual const char *GetName() const { return fName.data(); }
   CorrectionBase(const CorrectionBase &other) : TObject(other) {
     fPriority = other.fPriority;
@@ -88,7 +90,7 @@ class CorrectionBase : public TObject {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual void CreateCorrectionHistograms(TList *list) { (void) list; }
+  virtual void CreateCorrectionHistograms() {}
   /// Asks for QA histograms creation
   ///
   /// Pure virtual function
@@ -146,14 +148,23 @@ class CorrectionBase : public TObject {
     return std::make_pair(collecting, applying);
   }
   State GetState() { return fState; }
+  void Enable() {fState = State::CALIBRATION;}
+
+  void CopyToOutputList(TList *list) {
+    if (fState == State::PASSIVE) return;
+    output_histograms.SetOwner(false);
+    list->AddAll(&output_histograms);
+    output_histograms.Clear();
+  }
  protected:
 /// Stores the detector configuration owner
 /// \param subevent the detector configuration owner
   void SetOwner(SubEvent *subevent) { fSubEvent = subevent; }
   unsigned int fPriority = 0; ///< the correction key that codifies order information
   std::string fName;
-  State fState = State::CALIBRATION; ///< the state in which the correction step is
+  State fState = State::PASSIVE; ///< the state in which the correction step is
   SubEvent *fSubEvent = nullptr; ///< pointer to the detector configuration owner
+  TList output_histograms;
   friend bool operator<(const CorrectionBase &lh, const CorrectionBase &rh);
 
 /// \cond CLASSIMP

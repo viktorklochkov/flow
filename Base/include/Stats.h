@@ -75,6 +75,14 @@ class Stats {
     return bootstrap_error/error;
   }
 
+  double Weight() const {
+    if (state_==Qn::Stats::State::MEAN_ERROR) {
+      return weight_;
+    } else {
+      return statistic_.SumWeights();
+    }
+  }
+
   double Mean() const {
     double mean = 0;
     switch (state_) {
@@ -147,6 +155,7 @@ class Stats {
       state_ = State::MEAN_ERROR;
       mean_ = statistic_.Mean();
       error_ = statistic_.MeanError();
+      weight_ = statistic_.SumWeights();
       resamples_.CalculateMeans();
     }
   }
@@ -207,7 +216,7 @@ class Stats {
 
   double mean_ = 0.;
   double error_ = 0.;
-  double weight_ = 1.;
+  double weight_ = 0.;
 
   /// \cond CLASSIMP
  ClassDef(Stats, 4);

@@ -128,7 +128,7 @@ class Recentering : public CorrectionOnQnVector {
   /// Does nothing for the time being
   virtual void AfterInputAttachAction() {}
   virtual void CreateSupportQVectors();
-  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void CreateCorrectionHistograms();
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
   virtual Bool_t ProcessCorrections();

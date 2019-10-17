@@ -151,7 +151,9 @@ class SubEvent {
   /// Pure virtual function
   /// \param list list where the histograms should be incorporated for its persistence
   /// \return kTRUE if everything went OK
-  virtual void CreateCorrectionHistograms(TList *list) = 0;
+  virtual void CreateCorrectionHistograms() = 0;
+
+  virtual void CopyToOutputList(TList* list) = 0;
 
   /// Asks for QA histograms creation
   ///
@@ -240,13 +242,11 @@ class SubEvent {
   /// Clean the configuration to accept a new event
   /// Pure virtual function
   virtual void Clear() = 0;
-  virtual void SetChannelsScheme(Bool_t *bUsedChannel,
-                                 Int_t *nChannelGroup = nullptr,
-                                 Float_t *hardCodedGroupWeights = nullptr) {
-    (void) bUsedChannel;
-    (void) nChannelGroup;
-    (void) hardCodedGroupWeights;
+
+  virtual void SetChannelsScheme(std::vector<int> channel_groups) {
+    (void) channel_groups;
   }
+
   QVector *GetQVector(Qn::QVector::CorrectionStep step) { return qvectors_.at(step); }
 
   Qn::QVector::CorrectionStep GetLatestCorrectionStep() {
@@ -265,7 +265,7 @@ class SubEvent {
     steps.emplace_back(QVector::CorrectionStep::PLAIN);
     for (auto &correction_step : fQnVectorCorrections) {
       if (correction_step->GetState() >= CorrectionBase::State::APPLY) {
-        steps.push_back(correction_step->GetCorrectedQnVector()->GetCorrectionStep());
+        correction_step->IncludeCorrectionStep(steps);
       }
     }
     return steps;

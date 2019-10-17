@@ -64,9 +64,7 @@ class SubEventChannels : public SubEvent {
   /// \return FALSE, this is a hit / channel detector configuration
   Bool_t GetIsTrackingDetector() const { return kFALSE; }
 
-  void SetChannelsScheme(Bool_t *bUsedChannel,
-                         Int_t *nChannelGroup = nullptr,
-                         Float_t *hardCodedGroupWeights = nullptr);
+  virtual void SetChannelsScheme(std::vector<int> channel_groups);
 
   /* QA section */
   /// Sets the variable id used for centrality in QA histograms.
@@ -86,7 +84,8 @@ class SubEventChannels : public SubEvent {
   void BuildRawQnVector();
 
   virtual void CreateSupportQVectors();
-  virtual void CreateCorrectionHistograms(TList *list);
+  virtual void CreateCorrectionHistograms();
+  virtual void CopyToOutputList(TList* list);
   virtual void AttachQAHistograms(TList *list);
   virtual void AttachNveQAHistograms(TList *list);
 
@@ -107,18 +106,11 @@ class SubEventChannels : public SubEvent {
   virtual void Clear();
 
   virtual std::map<std::string, Report> ReportOnCorrections() const {
-    std::map<std::string, Report> report;
-    for (const auto& correction : fInputDataCorrections) {
-      auto usage = correction->ReportUsage();
-      report.emplace(correction->GetName(),usage);
-    }
-    for (const auto& correction : fQnVectorCorrections) {
-      auto usage = correction->ReportUsage();
-      report.emplace(correction->GetName(),usage);
-    }
+    auto report = fInputDataCorrections.ReportOnUsage();
+    auto qn_correction_report = fQnVectorCorrections.ReportOnUsage();
+    report.insert(qn_correction_report.begin(), qn_correction_report.end());
     return report;
   }
-
 
  private:
   static const char
@@ -148,88 +140,6 @@ class SubEventChannels : public SubEvent {
  ClassDef(SubEventChannels, 2);
 /// \endcond
 };
-
-/// Ask for processing corrections for the involved detector configuration
-///
-/// The request is transmitted to the incoming data correction steps
-/// and then to Q vector correction steps.
-/// The first not applied correction step breaks the loop and kFALSE is returned
-/// \return kTRUE if all correction steps were applied
-inline Bool_t SubEventChannels::ProcessCorrections() {
-  /* first we build the raw Q vector with the chosen calibration */
-  BuildRawQnVector();
-  /* then we transfer the request to the input data correction steps */
-  for (auto &correction : fInputDataCorrections) {
-    if (correction->ProcessCorrections()) {
-      continue;
-    } else {
-      return kFALSE;
-    }
-  }
-  /* input corrections were applied so let's build the Q vector with the chosen calibration */
-  BuildQnVector();
-  /* now let's propagate it to Q vector corrections */
-  for (auto &correction : fQnVectorCorrections) {
-    if (correction->ProcessCorrections())
-      continue;
-    else
-      return kFALSE;
-  }
-  /* all correction steps were applied */
-  return kTRUE;
-}
-
-/// Ask for processing corrections data collection for the involved detector configuration
-///
-/// The request is transmitted to the incoming data correction steps
-/// and then to Q vector correction steps.
-/// The first not applied correction step should break the loop after collecting the data and kFALSE is returned
-/// \return kTRUE if all correction steps were applied
-inline Bool_t SubEventChannels::ProcessDataCollection() {
-  /* we transfer the request to the input data correction steps */
-  for (auto &correction : fInputDataCorrections) {
-    if (correction->ProcessDataCollection()) {
-      continue;
-    } else {
-      return kFALSE;
-    }
-  }
-  /* check whether QA histograms must be filled */
-  FillQAHistograms();
-  /* now let's propagate it to Q vector corrections */
-  for (auto &correction : fQnVectorCorrections) {
-    if (correction->ProcessDataCollection())
-      continue;
-    else
-      return kFALSE;
-  }
-  /* all correction steps were applied */
-  return kTRUE;
-}
-
-/// Clean the configuration to accept a new event
-///
-/// Transfers the order to the Q vector correction steps then
-/// to the input data correction steps and finally
-/// cleans the own Q vector and the input data vector bank
-/// for accepting the next event.
-inline void SubEventChannels::Clear() {
-  for (auto &correction : fQnVectorCorrections) {
-    correction->ClearCorrectionStep();
-  }
-  for (auto &correction : fInputDataCorrections) {
-    correction->ClearCorrectionStep();
-  }
-  /* clean the raw Q vector */
-  fRawQnVector.Reset();
-  /* clean the own Q vector */
-  fPlainQnVector.Reset();
-  fPlainQ2nVector.Reset();
-  fCorrectedQnVector.Reset();
-  fCorrectedQ2nVector.Reset();
-  /* and now clear the the input data bank */
-  fDataVectorBank.clear();
-}
 
 }
 #endif // QNCORRECTIONS_DETECTORCONFCHANNEL_H

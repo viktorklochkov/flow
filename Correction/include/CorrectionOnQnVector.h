@@ -84,6 +84,10 @@ class CorrectionOnQnVector : public CorrectionBase {
     }
     return applied;
   }
+
+  virtual void IncludeCorrectionStep(std::vector<QVector::CorrectionStep> &steps) {
+    steps.push_back(fCorrectedQnVector->GetCorrectionStep());
+  }
  protected:
   std::unique_ptr<QVector> fCorrectedQnVector; //!<! the step corrected Qn vector
   const QVector *fInputQnVector = nullptr; //!<! the previous step corrected Qn vector

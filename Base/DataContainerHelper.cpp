@@ -102,8 +102,12 @@ void DataContainerHelper::StatsBrowse(DataContainerStats *data, TBrowser *b) {
   if (!data->list_) data->list_ = new TList();
   data->list_->SetOwner(true);
   for (auto &axis : data->axes_) {
-    auto proj = data->Projection({axis.Name()});
-    auto graph = DataContainerHelper::ToTGraph(proj, Errors::Yonly);
+    TGraphAsymmErrors* graph;
+    if (data->dimension_ > 1) {
+      graph = DataContainerHelper::ToTGraph(data->Projection({axis.Name()}), Errors::Yonly);
+    } else {
+      graph = DataContainerHelper::ToTGraph(*data, Errors::Yonly);
+    }
     graph->SetName(axis.Name().data());
     graph->SetTitle(axis.Name().data());
     graph->GetXaxis()->SetTitle(axis.Name().data());

@@ -115,9 +115,15 @@ class DetectorList {
     }
   }
 
-  void CreateCorrectionHistograms(TList *list) {
+  void CreateCorrectionHistograms() {
     for (auto &d : all_detectors_) {
-      d->CreateCorrectionHistograms(list);
+      d->CreateCorrectionHistograms();
+    }
+  }
+
+  void CopyToOutputList(TList* list) {
+    for (auto &d : all_detectors_) {
+      d->CopyToOutputList(list);
     }
   }
 

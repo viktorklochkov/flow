@@ -43,7 +43,18 @@ class CorrectionOnInputData : public CorrectionBase {
   virtual CorrectionOnInputData *MakeCopy() const { return new CorrectionOnInputData(*this); }
   /// Reports if the correction step is being applied
   /// \return FALSE, input data correction step dont make use of this service, yet
-  virtual Bool_t IsBeingApplied() const { return kFALSE; }
+  virtual Bool_t IsBeingApplied() const {
+    bool applied = false;
+    switch (fState) {
+      case State::CALIBRATION: break;
+      case State::APPLYCOLLECT:
+        /* FALLTHRU */
+      case State::APPLY: applied = true;
+        break;
+      case State::PASSIVE: break;
+    }
+    return applied;
+  }
 /// \cond CLASSIMP
  ClassDef(CorrectionOnInputData, 1);
 /// \endcond

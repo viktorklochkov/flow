@@ -80,7 +80,7 @@ void Recentering::CreateSupportQVectors() {
 /// allocated ones.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void Recentering::CreateCorrectionHistograms(TList *list) {
+void Recentering::CreateCorrectionHistograms() {
   auto hname = std::string(szSupportHistogramName) + "_" + fSubEvent->GetName();
   fInputHistograms = std::make_unique<CorrectionProfileComponents>(hname, fSubEvent->GetEventClassVariablesSet(),
                                                                    CorrectionHistogramBase::ErrorMode::SPREAD);
@@ -91,7 +91,7 @@ void Recentering::CreateCorrectionHistograms(TList *list) {
   Int_t nNoOfHarmonics = fSubEvent->GetNoOfHarmonics();
   auto harmonicsMap = new Int_t[nNoOfHarmonics];
   fSubEvent->GetHarmonicMap(harmonicsMap);
-  fCalibrationHistograms->CreateComponentsProfileHistograms(list, nNoOfHarmonics, harmonicsMap);
+  fCalibrationHistograms->CreateComponentsProfileHistograms(&output_histograms, nNoOfHarmonics, harmonicsMap);
   delete[] harmonicsMap;
 }
 

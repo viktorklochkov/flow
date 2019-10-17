@@ -73,14 +73,7 @@ SubEventChannels::~SubEventChannels() {
   delete[] fHardCodedGroupWeights;
 }
 
-/// Incorporates the channels scheme to the detector configuration
-/// \param bUsedChannel array of booleans one per each channel
-///        If nullptr all channels in fNoOfChannels are allocated to the detector configuration
-/// \param nChannelGroup array of group number for each channel
-///        If nullptr all channels in fNoOfChannels are assigned to a unique group
-/// \param hardCodedGroupWeights array with hard coded weight for each group
-///        If nullptr no hard coded weight is assigned (i.e. weight = 1)
-void SubEventChannels::SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGroup, Float_t *hardCodedGroupWeights) {
+void SubEventChannels::SetChannelsScheme(std::vector<int> channel_groups) {
   /* TODO: there should be smart procedures on how to improve the channels scan for actual data */
   fUsedChannel = new Bool_t[fNoOfChannels];
   fChannelMap = new Int_t[fNoOfChannels];
@@ -89,39 +82,16 @@ void SubEventChannels::SetChannelsScheme(Bool_t *bUsedChannel, Int_t *nChannelGr
   Int_t nMaxGroup = 0x0000;
   Int_t intChannelNo = 0;
   for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
-    if (bUsedChannel!=nullptr)
-      fUsedChannel[ixChannel] = bUsedChannel[ixChannel];
-    else
-      fUsedChannel[ixChannel] = kTRUE;
+    fUsedChannel[ixChannel] = kTRUE;
     if (fUsedChannel[ixChannel]) {
       fChannelMap[ixChannel] = intChannelNo;
       intChannelNo++;
-      if (nChannelGroup!=nullptr) {
-        fChannelGroup[ixChannel] = nChannelGroup[ixChannel];
-        /* update min max group number */
-        if (nChannelGroup[ixChannel] < nMinGroup)
-          nMinGroup = nChannelGroup[ixChannel];
-        if (nMaxGroup < nChannelGroup[ixChannel])
-          nMaxGroup = nChannelGroup[ixChannel];
-      } else {
-        fChannelGroup[ixChannel] = 0;
-        nMinGroup = 0;
-        nMaxGroup = 0;
-      }
-    }
-  }
-  Bool_t bUseGroups = (hardCodedGroupWeights!=nullptr) && (nChannelGroup!=nullptr) && (nMinGroup!=nMaxGroup);
-  /* store the hard coded group weights assigned to each channel if applicable */
-  if (bUseGroups) {
-    fHardCodedGroupWeights = new Float_t[fNoOfChannels];
-    for (Int_t i = 0; i < fNoOfChannels; i++) {
-      fHardCodedGroupWeights[i] = 0.0;
-    }
-    for (Int_t ixChannel = 0; ixChannel < fNoOfChannels; ixChannel++) {
-      if (fUsedChannel[ixChannel]) {
-        fHardCodedGroupWeights[ixChannel] =
-            hardCodedGroupWeights[fChannelGroup[ixChannel]];
-      }
+      fChannelGroup[ixChannel] = channel_groups[ixChannel];
+      /* update min max group number */
+      if (channel_groups[ixChannel] < nMinGroup)
+        nMinGroup = channel_groups[ixChannel];
+      if (nMaxGroup < channel_groups[ixChannel])
+        nMaxGroup = channel_groups[ixChannel];
     }
   }
 }
@@ -148,22 +118,33 @@ void SubEventChannels::CreateSupportQVectors() {
 /// and then to the Q vector corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void SubEventChannels::CreateCorrectionHistograms(TList *list) {
-  auto detectorConfigurationList = new TList();
-  detectorConfigurationList->SetName(GetName().data());
-  detectorConfigurationList->SetOwner(kTRUE);
-  for (auto &correction : fInputDataCorrections) {
-    correction->CreateCorrectionHistograms(detectorConfigurationList);
-  }
-  /* if everything right propagate it to Q vector corrections */
-  for (auto &correction : fQnVectorCorrections) {
-    correction->CreateCorrectionHistograms(detectorConfigurationList);
-  }
-  /* if list is empty delete it if not incorporate it */
-  if (!detectorConfigurationList->IsEmpty()) {
-    list->Add(detectorConfigurationList);
+void SubEventChannels::CreateCorrectionHistograms() {
+  fInputDataCorrections.CreateCorrectionHistograms();
+  fQnVectorCorrections.CreateCorrectionHistograms();
+  if (!fInputDataCorrections.Empty()) {
+    fInputDataCorrections.EnableFirstCorrection();
   } else {
-    delete detectorConfigurationList;
+    fQnVectorCorrections.EnableFirstCorrection();
+  }
+//  /* if list is empty delete it if not incorporate it */
+//  if (!correction_list->IsEmpty()) {
+//    list->Add(correction_list);
+//  } else {
+//    delete correction_list;
+//  }
+}
+
+void SubEventChannels::CopyToOutputList(TList *list) {
+  auto correction_list = new TList();
+  correction_list->SetName(GetName().data());
+  correction_list->SetOwner(kTRUE);
+  fInputDataCorrections.CopyToOutputList(correction_list);
+  fQnVectorCorrections.CopyToOutputList(correction_list);
+  /* if list is empty delete it if not incorporate it */
+  if (!correction_list->IsEmpty()) {
+    list->Add(correction_list);
+  } else {
+    delete correction_list;
   }
 }
 
@@ -309,13 +290,15 @@ void SubEventChannels::AttachNveQAHistograms(TList *list) {
 /// \param list list where the input information should be found
 /// \return kTRUE if everything went OK
 void SubEventChannels::AttachCorrectionInput(TList *list) {
-  auto detectorConfigurationList = (TList *) list->FindObject(GetName().data());
-  if (detectorConfigurationList) {
-    for (auto &correction : fInputDataCorrections) {
-      correction->AttachInput(detectorConfigurationList);
+  auto input_list = (TList *) list->FindObject(GetName().data());
+  if (input_list) {
+    if (!fInputDataCorrections.Empty()) {
+      fInputDataCorrections.EnableFirstCorrection();
+      fInputDataCorrections.AttachInputs(input_list);
     }
-    for (auto &correction : fQnVectorCorrections) {
-      correction->AttachInput(detectorConfigurationList);
+    if (fInputDataCorrections.Empty() || fInputDataCorrections.IsLastStepApplied()) {
+      fQnVectorCorrections.EnableFirstCorrection();
+      fQnVectorCorrections.AttachInputs(input_list);
     }
   }
 }
@@ -420,5 +403,88 @@ void SubEventChannels::BuildRawQnVector() {
   fRawQnVector.CheckQuality();
   fRawQnVector.Normal(fDetector->GetNormalizationMethod());
 }
+
+/// Ask for processing corrections for the involved detector configuration
+///
+/// The request is transmitted to the incoming data correction steps
+/// and then to Q vector correction steps.
+/// The first not applied correction step breaks the loop and kFALSE is returned
+/// \return kTRUE if all correction steps were applied
+Bool_t SubEventChannels::ProcessCorrections() {
+  /* first we build the raw Q vector with the chosen calibration */
+  BuildRawQnVector();
+  /* then we transfer the request to the input data correction steps */
+  for (auto &correction : fInputDataCorrections) {
+    if (correction->ProcessCorrections()) {
+      continue;
+    } else {
+      return kFALSE;
+    }
+  }
+  /* input corrections were applied so let's build the Q vector with the chosen calibration */
+  BuildQnVector();
+  /* now let's propagate it to Q vector corrections */
+  for (auto &correction : fQnVectorCorrections) {
+    if (correction->ProcessCorrections())
+      continue;
+    else
+      return kFALSE;
+  }
+  /* all correction steps were applied */
+  return kTRUE;
+}
+
+/// Ask for processing corrections data collection for the involved detector configuration
+///
+/// The request is transmitted to the incoming data correction steps
+/// and then to Q vector correction steps.
+/// The first not applied correction step should break the loop after collecting the data and kFALSE is returned
+/// \return kTRUE if all correction steps were applied
+Bool_t SubEventChannels::ProcessDataCollection() {
+  /* we transfer the request to the input data correction steps */
+  for (auto &correction : fInputDataCorrections) {
+    if (correction->ProcessDataCollection()) {
+      continue;
+    } else {
+      return kFALSE;
+    }
+  }
+  /* check whether QA histograms must be filled */
+  FillQAHistograms();
+  /* now let's propagate it to Q vector corrections */
+  for (auto &correction : fQnVectorCorrections) {
+    if (correction->ProcessDataCollection())
+      continue;
+    else
+      return kFALSE;
+  }
+  /* all correction steps were applied */
+  return kTRUE;
+}
+
+/// Clean the configuration to accept a new event
+///
+/// Transfers the order to the Q vector correction steps then
+/// to the input data correction steps and finally
+/// cleans the own Q vector and the input data vector bank
+/// for accepting the next event.
+void SubEventChannels::Clear() {
+  for (auto &correction : fQnVectorCorrections) {
+    correction->ClearCorrectionStep();
+  }
+  for (auto &correction : fInputDataCorrections) {
+    correction->ClearCorrectionStep();
+  }
+  /* clean the raw Q vector */
+  fRawQnVector.Reset();
+  /* clean the own Q vector */
+  fPlainQnVector.Reset();
+  fPlainQ2nVector.Reset();
+  fCorrectedQnVector.Reset();
+  fCorrectedQ2nVector.Reset();
+  /* and now clear the the input data bank */
+  fDataVectorBank.clear();
+}
+
 }
 

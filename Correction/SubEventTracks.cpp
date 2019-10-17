@@ -76,18 +76,21 @@ void SubEventTracks::CreateSupportQVectors() {
 /// to the passed list. Then the new list is passed to the corrections.
 /// \param list list where the histograms should be incorporated for its persistence
 /// \return kTRUE if everything went OK
-void SubEventTracks::CreateCorrectionHistograms(TList *list) {
-  auto detectorConfigurationList = new TList();
-  detectorConfigurationList->SetName(GetName().data());
-  detectorConfigurationList->SetOwner(kTRUE);
-  for (auto &correction : fQnVectorCorrections) {
-    correction->CreateCorrectionHistograms(detectorConfigurationList);
-  }
+void SubEventTracks::CreateCorrectionHistograms() {
+  fQnVectorCorrections.CreateCorrectionHistograms();
+  fQnVectorCorrections.EnableFirstCorrection();
+}
+
+void SubEventTracks::CopyToOutputList(TList *list) {
+  auto correction_list = new TList();
+  correction_list->SetName(GetName().data());
+  correction_list->SetOwner(kTRUE);
+  fQnVectorCorrections.CopyToOutputList(correction_list);
   /* if list is empty delete it if not incorporate it */
-  if (!detectorConfigurationList->IsEmpty()) {
-    list->Add(detectorConfigurationList);
+  if (!correction_list->IsEmpty()) {
+    list->Add(correction_list);
   } else {
-    delete detectorConfigurationList;
+    delete correction_list;
   }
 }
 
@@ -160,9 +163,8 @@ void SubEventTracks::AttachNveQAHistograms(TList *list) {
 void SubEventTracks::AttachCorrectionInput(TList *list) {
   auto detectorConfigurationList = (TList *) list->FindObject(GetName().data());
   if (detectorConfigurationList) {
-    for (auto &correction : fQnVectorCorrections) {
-      correction->AttachInput(detectorConfigurationList);
-    }
+    fQnVectorCorrections.EnableFirstCorrection();
+    fQnVectorCorrections.AttachInputs(detectorConfigurationList);
   }
 }
 

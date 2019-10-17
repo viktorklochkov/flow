@@ -66,8 +66,8 @@ class CorrectionsSet {
 
   /// Fill the global list of correction steps
 /// \param correctionlist (partial) global list of corrections ordered by correction key
-  void FillOverallCorrectionsList(std::set<CorrectionBase*> &set) const {
-    for (auto & entry : list_) {
+  void FillOverallCorrectionsList(std::set<CorrectionBase *> &set) const {
+    for (auto &entry : list_) {
       set.emplace(entry.get());
     }
   }
@@ -87,7 +87,7 @@ class CorrectionsSet {
     return nullptr;
   }
 
-/// Check if a concrete correction step is bein applied on this detector configuration
+/// Check if a concrete correction step is being applied on this detector configuration
 /// It is not enough having the correction step configured or collecting data. To
 /// get an affirmative answer the correction step must be being applied.
 /// Transfer the order to each of the Qn correction steps.
@@ -100,6 +100,56 @@ class CorrectionsSet {
       }
     }
     return false;
+  }
+
+  bool IsLastStepApplied() const {
+    if (!list_.empty()) {
+      return (*list_.end())->IsBeingApplied();
+    }
+    return false;
+  }
+
+  std::map<std::string, std::pair<bool, bool>> ReportOnUsage() const {
+    std::map<std::string, std::pair<bool, bool>> report;
+    for (const auto &correction : list_) {
+      report.emplace(correction->GetName(), correction->ReportUsage());
+    }
+    return report;
+  }
+
+  void CreateCorrectionHistograms() {
+    for (auto &correction : list_) {
+      correction->CreateCorrectionHistograms();
+    }
+  }
+
+  void AttachInputs(TList *input_list) {
+    T *previous_correction = nullptr;
+    for (auto &correction : list_) {
+      if (previous_correction) {
+        if (previous_correction->GetState()==CorrectionBase::State::APPLYCOLLECT) {
+          correction->Enable();
+        }
+      }
+      if (correction->GetState()==CorrectionBase::State::CALIBRATION) {
+        correction->AttachInput(input_list);
+      }
+      previous_correction = correction.get();
+    }
+  }
+
+  void CopyToOutputList(TList *output_list) {
+    for (auto &correction : list_) {
+      correction->CopyToOutputList(output_list);
+    }
+  }
+
+  void EnableFirstCorrection() {
+    if (!list_.empty()) (*list_.begin())->Enable();
+  }
+
+  bool Empty() {
+    return list_.empty();
   }
 
  private:

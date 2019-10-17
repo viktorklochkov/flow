@@ -120,9 +120,31 @@ class Detector {
     cuts_.FillReport();
   }
   void CreateSupportQVectors() { for (auto &ev : sub_events_) { ev->CreateSupportQVectors(); }}
-  void AttachCorrectionInputs(TList *list) { for (auto &ev : sub_events_) { ev->AttachCorrectionInput(list); }}
-  void AfterInputAttachAction() { for (auto &ev : sub_events_) { ev->AfterInputAttachAction(); }}
-  void CreateCorrectionHistograms(TList *list) { for (auto &ev : sub_events_) { ev->CreateCorrectionHistograms(list); }}
+
+  void AttachCorrectionInputs(TList *list) {
+    for (auto &ev : sub_events_) {
+      ev->AttachCorrectionInput(list);
+    }
+  }
+
+  void AfterInputAttachAction() {
+    for (auto &ev : sub_events_) {
+      ev->AfterInputAttachAction();
+    }
+  }
+
+  void CreateCorrectionHistograms() {
+    for (auto &ev : sub_events_) {
+      ev->CreateCorrectionHistograms();
+    }
+  }
+  void CopyToOutputList(TList* list) {
+    for (auto &ev : sub_events_) {
+      ev->CopyToOutputList(list);
+    }
+  }
+
+
   bool IsIntegrated() const { return sub_events_.IsIntegrated(); }
   void ProcessCorrections();
   void IncludeQnVectors();
@@ -132,6 +154,10 @@ class Detector {
     for (auto &ev : sub_events_) {
       ev->ActivateHarmonic(i);
     }
+  }
+
+  void SetChannelScheme(std::vector<int> channel_groups) {
+    channel_groups_ = channel_groups;
   }
 
   DetectorList *GetDetectors() const { return detectors_; }
@@ -165,8 +191,11 @@ class Detector {
   TObjArray correction_on_q_vector; /// Holds the correction steps till they are used to configure the sub events
   TObjArray correction_on_input_data; /// Holds the correction steps till they are used to configure the sub events
 
+  std::vector<int> channel_groups_; /// for gain equalization
+
+
   /// \cond CLASSIMP
- ClassDef(Detector, 1);
+ ClassDef(Detector, 2);
   /// \endcond
 };
 

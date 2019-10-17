@@ -39,12 +39,13 @@ void CorrectionManager::InitializeCorrections() {
 
 void CorrectionManager::SetCurrentRunName(const std::string &name) {
   runs_.SetCurrentRun(name);
+  TList *current_output = nullptr;
   if (!runs_.empty()) {
-    auto current_run = new TList();
-    current_run->SetName(runs_.GetCurrent().data());
-    current_run->SetOwner(true);
-    correction_output->Add(current_run);
-    detectors_.CreateCorrectionHistograms(current_run);
+    current_output = new TList();
+    current_output->SetName(runs_.GetCurrent().data());
+    current_output->SetOwner(true);
+    correction_output->Add(current_output);
+    detectors_.CreateCorrectionHistograms();
   }
   if (correction_input_) {
     auto current_run = (TList *) correction_input_->FindObject(runs_.GetCurrent().data());
@@ -52,6 +53,7 @@ void CorrectionManager::SetCurrentRunName(const std::string &name) {
       detectors_.AttachCorrectionInput(current_run);
     }
   }
+  detectors_.CopyToOutputList(current_output);
   detectors_.IncludeQnVectors();
   if (fill_output_tree_ && out_tree_) {
     detectors_.SetOutputTree(out_tree_);
@@ -110,7 +112,7 @@ void CorrectionManager::Reset() {
 }
 
 void CorrectionManager::Finalize() {
-  auto calibration_list = (TList *) correction_output->FindObject(kCorrectionListName);
+  auto calibration_list = (TList *) correction_output->FindObject(runs_.GetCurrent().data());
   if (calibration_list) {
     correction_output->Add(calibration_list->Clone("all"));
   }
