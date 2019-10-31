@@ -21,12 +21,12 @@
 #include <cmath>
 #include <random>
 
+template <std::size_t n_harmonics_, std::size_t nphi_slices = 100>
 class ParticleGenerator {
-  static constexpr std::size_t n_harmonics_ = 4;
-  static constexpr std::size_t nphi_slices = 100;
   static constexpr double kPi = M_PI;
  public:
-  ParticleGenerator(std::array<double, n_harmonics_> harmonics) :
+  ParticleGenerator(int seed, std::array<double, n_harmonics_> harmonics) :
+      random_engine_(seed),
       vns_(harmonics),
       phi_dist_(nphi_slices, 0, 2*kPi, [&](const double x){return PhiPdf(x);}) {}
   double GeneratePhi() {return phi_dist_(random_engine_);}
@@ -44,7 +44,7 @@ class ParticleGenerator {
 
   double PhiPdf(double phi) {
     double value = 1.;
-    for (unsigned int n = 1; n < n_harmonics_; ++n) {
+    for (unsigned int n = 1; n < n_harmonics_+1; ++n) {
       value += 2 * vns_[n-1] * std::cos(n *(phi - psi_));
     }
     return value;

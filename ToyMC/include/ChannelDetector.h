@@ -18,6 +18,8 @@
 #define FLOW_TOYMC_INCLUDE_CHANNELDETECTOR_H_
 
 #include <utility>
+#include <functional>
+#include <algorithm>
 
 #include "Axis.h"
 
@@ -85,6 +87,8 @@ class ChannelDetector {
       std::cout << std::endl;
     }
   }
+
+  std::string Name() const {return axis_.Name();}
 
  private:
   std::size_t n_channels_;

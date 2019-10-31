@@ -123,7 +123,7 @@ class Stats {
   double MeanError() const {
     double error = 0;
     if (bits_ & Settings::CORRELATEDERRORS) {
-      error = resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
+      error = MeanErrorBoot();
     } else {
       switch (state_) {
         case State::MOMENTS :error = statistic_.MeanError();
@@ -147,7 +147,13 @@ class Stats {
   }
 
   double MeanErrorBoot() const {
-    return resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
+    if (state_!=State::MEAN_ERROR) {
+      auto t_samples = resamples_;
+      t_samples.CalculateMeans();
+      return t_samples.GetConfidenceInterval(statistic_.Mean(), ReSamples::CIMethod::normal).Uncertainty();
+    } else  {
+      return resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
+    }
   }
 
   void CalculateMeanAndError() {

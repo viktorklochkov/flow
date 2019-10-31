@@ -128,7 +128,13 @@ class InputVariableManager {
    * @param name Name of the variable.
    * @return Variable of the given name.
    */
-  InputVariable FindVariable(const std::string &name) const { return variable_map_.at(name); }
+  InputVariable FindVariable(const std::string &name) const {
+    try{
+      return variable_map_.at(name);
+    } catch (std::out_of_range&){
+      throw std::out_of_range("Requested variable " + name + " cannot be found.");
+    }
+  }
   /**
  * @brief Finds the variable in the variable manager.
  * @param name Name of the variable.

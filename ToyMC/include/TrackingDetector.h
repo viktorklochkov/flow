@@ -45,6 +45,8 @@ class TrackingDetector {
     }
   }
 
+  std::string Name() const {return axis_.Name();}
+
   void FillDataTruth(double *values_array, std::size_t position_phi, std::size_t position_weight) {
     values_array[position_phi] = phi_;
     values_array[position_weight] = 1.0;
