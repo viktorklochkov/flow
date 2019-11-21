@@ -1,4 +1,4 @@
-// Flow Vector Correction Framework
+dd// Flow Vector Correction Framework
 //
 // Copyright (C) 2018  Lukas Kreis, Ilya Selyuzhenkov
 // Contact: l.kreis@gsi.de; ilya.selyuzhenkov@gmail.com
@@ -26,12 +26,17 @@ Stats MergeBins(const Stats &lhs, const Stats &rhs) {
   if ((rhs.state_ == STAT::MEAN_ERROR)) {
     auto temp_l = lhs;
     auto temp_r = rhs;
-    auto totalweight = (temp_l.weight_ + temp_r.weight_);
+    double totalweight = 0.;
+    if (lhs.weight_ == 0) {
+      totalweight = temp_r.weight_;
+    } else {
+      totalweight = (temp_l.weight_ + temp_r.weight_);
+    }
     result.mean_ = (temp_l.weight_*temp_l.mean_ + temp_r.weight_*temp_r.mean_)/totalweight;
     auto error_1 = temp_l.weight_/totalweight*temp_l.error_;
     auto error_2 = temp_r.weight_/totalweight*temp_r.error_;
     result.error_ = std::sqrt(error_1*error_1 + error_2*error_2);
-    result.weight_ = temp_l.weight_ + temp_r.weight_;
+    result.weight_ = totalweight;
     bool merge_weights = (rhs.weights_flag==Qn::Stats::Weights::OBSERVABLE);
     result.resamples_ = ReSamples::Merge(temp_l.resamples_, temp_r.resamples_, merge_weights);
     result.state_ = STAT::MEAN_ERROR;
