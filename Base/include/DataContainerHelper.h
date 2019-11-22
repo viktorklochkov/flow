@@ -24,15 +24,18 @@
 #include "TBrowser.h"
 #include "TEnv.h"
 
-#include "Profile.h"
-#include "SubSamples.h"
+#include "ReSamples.h"
 #include "Stats.h"
 #include "EventShape.h"
+#include "Axis.h"
 
 namespace Qn {
 //Forward declaration of DataContainer
-template<typename T>
+template<typename T, typename AxisType>
 class DataContainer;
+
+inline float MergeBins(const float &a, const float &b) { return a + b; }
+
 namespace Internal {
 
 /**
@@ -68,29 +71,33 @@ class DataContainerHelper {
  public:
   enum class Errors { Yonly, XandY };
 
-  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Qn::Stats> &data, Errors x = Errors::Yonly);
-  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Qn::Stats> &data,
+  static TGraph *ToErrorComparisonGraph(const Qn::DataContainer<Stats,AxisD> &data);
+  static TGraph *ToBootstrapScatterGraph(const Qn::DataContainer<Stats, AxisD> &data);
+  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Stats, AxisD> &data, Errors x = Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Stats, AxisD> &data,
                                             int i,
                                             int max,
                                             Errors x = Errors::Yonly);
-  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Qn::Stats> &data,
+  static TMultiGraph *ToTMultiGraph(const Qn::DataContainer<Stats, AxisD> &data,
                                     const std::string &axisname,
                                     Errors x = Errors::Yonly);
-
  private:
-  friend DataContainer<Qn::Stats>;
-  friend DataContainer<Qn::EventShape>;
-  static void StatsBrowse(Qn::DataContainer<Qn::Stats> *data, TBrowser *b);
-  static void EventShapeBrowse(Qn::DataContainer<Qn::EventShape> *data, TBrowser *b);
-  static void NDraw(Qn::DataContainer<Qn::Stats> &data, std::string option, const std::string &axis_name);
+  friend Qn::DataContainer<Stats, AxisD>;
+  friend Qn::DataContainer<EventShape, AxisD>;
+  static void StatsBrowse(Qn::DataContainer<Stats, AxisD> *data, TBrowser *b);
+  static void EventShapeBrowse(Qn::DataContainer<EventShape, AxisD> *data, TBrowser *b);
+  static void NDraw(Qn::DataContainer<Stats, AxisD> &data, std::string option, const std::string &axis_name);
 
 };
 
 using Errors = DataContainerHelper::Errors;
+constexpr auto ToErrorComparisonGraph = &DataContainerHelper::ToErrorComparisonGraph;
+constexpr auto ToBootstrapScatterGraph = &DataContainerHelper::ToBootstrapScatterGraph;
 constexpr auto ToTGraph = &DataContainerHelper::ToTGraph;
 constexpr auto ToTMultiGraph = &DataContainerHelper::ToTMultiGraph;
 
-inline float MergeBins(const float &a, const float &b) {return a + b;}
+TCanvas *UncertaintyComparison(const Qn::DataContainer<Stats,AxisD> &data);
+
 }
 
 #endif //FLOW_DATACONTAINERHELPER_H

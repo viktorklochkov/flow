@@ -18,8 +18,11 @@
 #include <iostream>
 #include <iterator>
 
+#include "TGaxis.h"
+#include "TText.h"
 #include "TGraphAsymmErrors.h"
-
+#include "TCanvas.h"
+#include "TFrame.h"
 #include "DataContainerHelper.h"
 #include "DataContainer.h"
 
@@ -33,30 +36,36 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
     std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
     return nullptr;
   }
-  auto graph = new TGraphAsymmErrors((int) data.size());
+  auto graph = new TGraphAsymmErrors();
   unsigned int ibin = 0;
-  for (auto &bin : data) {
-    float xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
-    float xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
-    float x = xlo + ((xhi - xlo)*static_cast<float>(i)/maxi);
-    float exl = 0;
-    float exh = 0;
+  for (const auto &bin : data) {
+    auto tbin = bin;
+    if (tbin.N()==0 && tbin.GetState()!=Stats::State::MEAN_ERROR) continue;
+    if (tbin.GetState()!=Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
+    auto y = tbin.Mean();
+    auto ylo = tbin.LowerMeanError();
+    auto yhi = tbin.UpperMeanError();
+    auto xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
+    auto xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
+    auto x = xlo + ((xhi - xlo)*static_cast<double>(i)/maxi);
+    double exl = 0;
+    double exh = 0;
     if (drawerrors==Errors::XandY) {
       exl = x - xlo;
       exh = xhi - x;
     }
-    graph->SetPoint(ibin, x, bin.Mean());
-    graph->SetPointError(ibin, exl, exh, bin.ErrorLo(), bin.ErrorHi());
+    graph->SetPoint(ibin, x, y);
+    graph->SetPointError(ibin, exl, exh, ylo, yhi);
     graph->SetMarkerStyle(kFullCircle);
     ibin++;
   }
   return graph;
-};
+}
 
 TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerStats &data,
                                                  Errors drawerrors) {
   return ToTGraphShifted(data, 1, 2, drawerrors);
-};
+}
 
 /**
  * Create a TMultiGraph containing profile graphs for each bin of the specified axis.
@@ -72,7 +81,7 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
     std::cout << "Data Container dimension has wrong dimension " << data.GetAxes().size() << "\n";
     return nullptr;
   }
-  Axis axis;
+  AxisD axis;
   try { axis = data.GetAxis(axisname); }
   catch (std::exception &) {
     throw std::logic_error("axis not found");
@@ -87,14 +96,18 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
   return multigraph;
 }
 
-void DataContainerHelper::StatsBrowse(DataContainer<Stats> *data, TBrowser *b) {
+void DataContainerHelper::StatsBrowse(DataContainerStats *data, TBrowser *b) {
   using DrawErrorGraph = Internal::ProjectionDrawable<TGraphAsymmErrors *>;
   using DrawMultiGraph = Internal::ProjectionDrawable<TMultiGraph *>;
   if (!data->list_) data->list_ = new TList();
   data->list_->SetOwner(true);
   for (auto &axis : data->axes_) {
-    auto proj = data->Projection({axis.Name()});
-    auto graph = DataContainerHelper::ToTGraph(proj, Errors::Yonly);
+    TGraphAsymmErrors* graph;
+    if (data->dimension_ > 1) {
+      graph = DataContainerHelper::ToTGraph(data->Projection({axis.Name()}), Errors::Yonly);
+    } else {
+      graph = DataContainerHelper::ToTGraph(*data, Errors::Yonly);
+    }
     graph->SetName(axis.Name().data());
     graph->SetTitle(axis.Name().data());
     graph->GetXaxis()->SetTitle(axis.Name().data());
@@ -127,7 +140,7 @@ void DataContainerHelper::StatsBrowse(DataContainer<Stats> *data, TBrowser *b) {
   }
 }
 
-void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBrowser *b) {
+void DataContainerHelper::EventShapeBrowse(DataContainerEventShape *data, TBrowser *b) {
   if (!data->list_) data->list_ = new TList();
   unsigned long i = 0;
   auto hlist = new TList();
@@ -138,14 +151,14 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
   ilist->SetName("integrals");
   for (auto &bin : *data) {
     auto name = data->GetBinDescription(i);
-    auto histo  = dynamic_cast<TH1F*>(bin.histo_->Clone((std::string("H_") + (name)).data()));
+    auto histo = dynamic_cast<TH1F *>(bin.histo_->Clone((std::string("H_") + (name)).data()));
     histo->SetTitle((std::string("H_") + (name)).data());
     histo->GetXaxis()->SetTitle("|Q|^{2}");
     hlist->Add(histo);
-    auto spline  = dynamic_cast<TSpline3*>(bin.spline_->Clone((std::string("S_") + (name)).data()));
+    auto spline = dynamic_cast<TSpline3 *>(bin.spline_->Clone((std::string("S_") + (name)).data()));
     spline->SetTitle((std::string("S_") + (name)).data());
     slist->Add(spline);
-    auto integral  = dynamic_cast<TH1F*>(bin.integral_->Clone((std::string("I_") + (name)).data()));
+    auto integral = dynamic_cast<TH1F *>(bin.integral_->Clone((std::string("I_") + (name)).data()));
     integral->SetTitle((std::string("I_") + (name)).data());
     integral->GetXaxis()->SetTitle("|Q|^{2}");
     ilist->Add(integral);
@@ -159,7 +172,7 @@ void DataContainerHelper::EventShapeBrowse(DataContainer<EventShape> *data, TBro
     b->Add(data->list_->At(j));
   }
 }
-void DataContainerHelper::NDraw(DataContainer<Stats> &data,
+void DataContainerHelper::NDraw(DataContainerStats &data,
                                 std::string option,
                                 const std::string &axis_name = {}) {
   option = (option.empty()) ? std::string("ALP PMC PLC Z") : option;
@@ -189,6 +202,127 @@ void DataContainerHelper::NDraw(DataContainer<Stats> &data,
     std::cout << "Not drawn because the DataContainer has dimension: " << data.dimension_ << std::endl;
     std::cout << "Only DataContainers with dimension <=2 can be drawn." << std::endl;
   }
+}
+
+TGraph *DataContainerHelper::ToBootstrapScatterGraph(const Qn::DataContainer<Stats, AxisD> &data) {
+  auto scatter_graph = new TGraph;
+  std::size_t i_bin = 0;
+  for (const auto &bin : data) {
+    if (bin.N()==0 && bin.GetState() != Stats::State::MEAN_ERROR) continue;
+    auto tbin = bin;
+    if (tbin.GetState()!=Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
+    auto xhi = data.GetAxes().front().GetUpperBinEdge(i_bin);
+    auto xlo = data.GetAxes().front().GetLowerBinEdge(i_bin);
+    auto offset = (xhi + xlo)/2;
+    tbin.GetReSamples().ScatterGraph(*scatter_graph, offset, (xhi - xlo)/2);
+    ++i_bin;
+  }
+  return scatter_graph;
+}
+
+TGraph *DataContainerHelper::ToErrorComparisonGraph(const Qn::DataContainer<Stats, AxisD> &data) {
+  auto error_ratio = new TGraph;
+  std::size_t i_bin = 0;
+  for (const auto &bin : data) {
+    if (bin.N()==0 && bin.GetState() != Stats::State::MEAN_ERROR) continue;
+    auto tbin = bin;
+    if (tbin.GetState()!=Stats::State::MEAN_ERROR) tbin.CalculateMeanAndError();
+    auto ratio = tbin.RatioOfErrors();
+    auto xhi = data.GetAxes().front().GetUpperBinEdge(i_bin);
+    auto xlo = data.GetAxes().front().GetLowerBinEdge(i_bin);
+    auto xmean = (xhi + xlo)/2;
+    error_ratio->SetPoint(error_ratio->GetN(), xmean, ratio);
+    ++i_bin;
+  }
+  return error_ratio;
+}
+
+TCanvas *UncertaintyComparison(const Qn::DataContainer<Stats, AxisD> &data) {
+  auto axes = data.GetAxes();
+  auto size = axes.size();
+  auto canvas =
+      new TCanvas("UncertaintyComparison", "ratio of bootstrap uncertainty to statistical uncertainty", 600, 150*size);
+  std::size_t i_axis = 1;
+  float stepsize = 0.9/size;
+  auto label = new TText(0.25,0.925, "ratio of bootstrap to statistical uncertainty");
+  label->SetNDC(true);
+  label->SetTextColor(kGray + 1);
+  label->SetTextFont(43);
+  label->SetTextSize(16);
+  label->Draw();
+  for (auto &axis :axes) {
+    canvas->cd();
+    auto pad = new TPad(axis.Name().data(),"",0.0, stepsize*(i_axis-1),1.0, stepsize*(i_axis));
+    pad->Draw();
+    pad->cd();
+    TGraph *graph = nullptr;
+    if (axes.size() > 1) {
+      graph = ToErrorComparisonGraph(data.Projection({axis.Name()}));
+    } else {
+      graph = ToErrorComparisonGraph(data);
+    }
+    auto y_max = TMath::MaxElement(graph->GetN(), graph->GetY());
+    auto y_min = TMath::MinElement(graph->GetN(), graph->GetY());
+    auto y_range = y_max - y_min;
+    auto c_y_max = y_max + y_range*0.3;
+    double c_y_min;
+    if (y_min > 1.0) {
+      c_y_min = 1.0 - y_range*0.4;
+      y_min = 1.0;
+    } else {
+      c_y_min = y_min - y_range*0.4;
+    }
+
+    auto x_max = axis.GetLastBinEdge();
+    auto x_min = axis.GetFirstBinEdge();
+    auto x_range = x_max - x_min;
+    x_max = x_max + x_range*0.1;
+    x_min = x_min - x_range*0.1;
+    pad->Range(x_min, c_y_min, x_max, c_y_max);
+    std::string axis_name = std::string(" ;") + axis.Name();
+
+    auto x_axis = new TGaxis(axis.GetFirstBinEdge(),
+                             1.0,axis.GetLastBinEdge(),
+                             1.0,
+                             axis.GetFirstBinEdge(),
+                             axis.GetLastBinEdge(),
+                             5,
+                             "-+");
+    x_axis->SetLabelFont(43);
+    x_axis->SetLabelSize(16);
+    x_axis->SetTitle(axis.Name().data());
+    x_axis->SetTitleSize(16);
+    x_axis->SetTitleFont(43);
+    x_axis->SetLineColor(kGray + 1);
+    x_axis->SetTitleColor(kGray + 1);
+    x_axis->SetLabelColor(kGray + 1);
+    x_axis->SetTitleOffset(4.0);
+    x_axis->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
+    x_axis->CenterTitle();
+    x_axis->Draw();
+
+    auto y_axis = new TGaxis(axis.GetFirstBinEdge(), y_min, axis.GetFirstBinEdge(), y_max, y_min, y_max, 5, "+S");
+    y_axis->SetLabelFont(43);
+    y_axis->SetLabelSize(16);
+//    y_axis->SetTitle("ratio");
+    y_axis->SetTitleSize(16);
+    y_axis->SetTitleFont(43);
+    y_axis->SetTickSize(0.01);
+    y_axis->SetLineColor(kGray + 1);
+    y_axis->SetTitleColor(kGray + 1);
+    y_axis->SetLabelColor(kGray + 1);
+    y_axis->SetLabelOffset(-0.01);
+    y_axis->SetTitleOffset(-0.8);
+    y_axis->CenterTitle();
+    y_axis->Draw();
+
+    graph->SetLineWidth(2);
+    graph->Draw("L");
+    ++i_axis;
+  }
+  canvas->SaveAs("bserrorscomparison.pdf");
+  return canvas;
+
 }
 
 }

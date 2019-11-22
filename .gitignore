@@ -4,4 +4,6 @@ build
 .DS_STORE
 docs/doxygen
 Doxyfile
-
+*.swp
+*.swo
+*~

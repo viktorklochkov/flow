@@ -24,7 +24,7 @@
 #include "TSpline.h"
 #include "TCanvas.h"
 #include "TFile.h"
-#include "Product.h"
+#include "CorrelationResult.h"
 
 namespace Qn {
 /**
@@ -71,7 +71,7 @@ class EventShape : public TObject {
     auto lower = histo->GetXaxis()->GetBinLowEdge(1);
     auto upper = histo->GetXaxis()->GetBinUpEdge(nbins);
     histo_ = new TH1F((std::string("histo") + name).data(), ";ese;counts", nbins, lower, upper);
-    integral_ = new TH1F((std::string("integral") +name).data(), ";ese;counts", nbins, lower, upper);
+    integral_ = new TH1F((std::string("integral") + name).data(), ";ese;counts", nbins, lower, upper);
   }
 
   /**
@@ -101,7 +101,7 @@ class EventShape : public TObject {
    * Fill the current subevent information to the histogram.
    * @param product
    */
-  void Fill(const Product &product) { if (product.validity) histo_->Fill(product.result); }
+  void Fill(const CorrelationResult &product) { if (product.validity) histo_->Fill(product.result); }
 
   /**
    * Get the histogram.

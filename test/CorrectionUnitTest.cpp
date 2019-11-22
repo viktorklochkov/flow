@@ -4,92 +4,73 @@
 #include "gtest/gtest.h"
 #include "CorrectionManager.h"
 
-
 TEST(CorrectionUnitTest, Correction) {
-  using namespace Qn;
-  enum values {
-    kCent,
-    kPhiA,
-    kPhiB = kPhiA+4,
-    kMultA = kPhiB+4,
-    kMultB = kMultA+4,
-
+  int kNEvents = 1000;
+  int kNTracks = 1000;
+  Qn::CorrectionManager manager;
+  auto file = new TFile("testoutput.root", "RECREATE");
+  file->cd();
+  auto tree = new TTree();
+  tree->SetName("QVectors");
+  manager.SetFillCalibrationQA(true);
+  manager.SetFillValidationQA(true);
+  manager.SetFillOutputTree(true);
+  enum variables {
+    kPhi,
+    kAxis1,
+    kCentrality
   };
-  Qn::CorrectionManager man;
-  auto calibfile = new TFile("corr.root");
-  auto treefile = new TFile("tree.root","RECREATE");
-  treefile->cd();
-  auto tree = new TTree("tree","tree");
-  man.SetTree(tree);
-  man.AddVariable("PhiA",kPhiA,4);
-  man.AddVariable("PhiB",kPhiB,4);
-  man.AddVariable("MultA",kMultA,4);
-  man.AddVariable("MultB",kMultB,4);
-  man.AddVariable("Cent",kCent,1);
+  manager.AddVariable("phi",kPhi,1);
+  manager.AddVariable("centrality",kCentrality,1);
+  manager.AddVariable("axis1",kAxis1,1);
 
-  auto correction = [](Qn::DetectorConfiguration *config) {
-    config->SetNormalization(Qn::QVector::Normalization::M);
-    config->AddCorrectionOnQnVector(new Qn::Recentering());
-    auto channels = new bool[4]{true, true, true, true};
-    auto group = new int[4]{0, 0, 0, 0};
-    config->SetChannelsScheme(channels, group);
-  };
-  man.AddDetector("AA",DetectorType::CHANNEL,"PhiA","MultA",{},{1});
-  man.SetCorrectionSteps("AA",correction);
-  man.AddDetector("BB",DetectorType::CHANNEL,"PhiB","MultB",{},{1});
-  man.SetCorrectionSteps("BB",correction);
-  man.AddEventVariable("Cent");
-  man.AddCorrectionAxis({"Cent",100,0,100});
+  manager.AddCorrectionAxis({"centrality",100,0.,100.});
+  manager.AddEventVariable("centrality");
 
-  man.Initialize(calibfile);
+  Qn::AxisD axis("axis1",10,0,100);
+  manager.AddDetector("TEST",Qn::DetectorType::TRACK,"phi","Ones",{axis},
+      {1,2},Qn::QVector::Normalization::M);
+  manager.AddHisto1D("TEST",{"phi",100,0,2*TMath::Pi()});
 
-  auto caliblist = man.GetCalibrationList();
-  auto calibqalist = man.GetCalibrationQAList();
+//  auto test_configuration = [](Qn::SubEvent *config){
+//    auto rec = new Qn::Recentering();
+//    rec->SetApplyWidthEqualization(true);
+//    config->AddCorrectionOnQnVector(rec);
+//  };
+  Qn::Recentering rec;
+  rec.SetApplyWidthEqualization(true);
 
-  man.SetProcessName("test");
+//  manager.SetCorrectionSteps("TEST",test_configuration);
+  manager.AddCorrectionOnQnVector("TEST",rec);
+  manager.SetOutputQVectors("TEST",{Qn::QVector::CorrectionStep::PLAIN, Qn::QVector::CorrectionStep::RECENTERED});
 
-  const unsigned int nevents = 1000000;
-  std::default_random_engine gen;
-  std::uniform_real_distribution<double> uniform(0,100);
-  std::uniform_real_distribution<double> piform(0,2*TMath::Pi());
-  std::normal_distribution<double> gauss(0,20);
-  constexpr std::array<double, 4> vectorX = {{1.75, -1.75, 1.75, -1.75}};
-  constexpr std::array<double, 4> vectorY = {{-1.75, -1.75, 1.75, 1.75}};
-  auto values = man.GetVariableContainer();
-  for (unsigned int iev = 0; iev < nevents; ++iev) {
-    man.Reset();
-    values[kCent] = uniform(gen);
-    for (unsigned int ich = 0; ich < 4; ++ich) {
-      values[kPhiA+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-      values[kPhiB+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-      values[kMultA+ich] = gauss(gen);
-      values[kMultB+ich] = gauss(gen);
+  manager.SetCalibrationInputFileName("correctionfile.root");
+  manager.ConnectOutputTree(tree);
+  manager.InitializeOnNode();
+  manager.SetCurrentRunName("run1");
+  auto var = manager.GetVariableContainer();
+  std::mt19937 gen(0);
+  std::uniform_real_distribution<double> centrality(0.,100.);
+  std::uniform_real_distribution<double> axis1(0.,100.);
+  std::uniform_real_distribution<double> phi(0.,2*TMath::Pi());
+  for (int i = 0; i < kNEvents; ++i) {
+    manager.Reset();
+    auto c = centrality(gen);;
+    var[kCentrality] = c;
+    if(!manager.ProcessEvent()) continue;
+    for (int j = 0; j < kNTracks; ++j) {
+      var[kAxis1] = axis1(gen);
+      var[kPhi] = phi(gen);
+      manager.FillTrackingDetectors();
     }
-    man.ProcessEvent();
-    man.FillChannelDetectors();
-    man.ProcessQnVectors();
+    manager.ProcessCorrections();
   }
+  manager.Finalize();
 
-  man.Reset();
-  values[kCent] = 13.1;
-  for (unsigned int ich = 0; ich < 4; ++ich) {
-    values[kPhiA+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-    values[kPhiB+ich] = std::atan2(vectorY[ich],vectorX[ich]);
-    values[kMultA+ich] = 1;
-    values[kMultB+ich] = 1;
-  }
-  values[kMultA] = 100000000;
-  man.ProcessEvent();
-  man.FillChannelDetectors();
-  man.ProcessQnVectors();
-
-  man.Finalize();
-  calibfile->Close();
-  delete calibfile;
-  treefile->cd();
+  file->cd();
+  manager.GetCorrectionList()->Write("CorrectionHistograms",TObject::kSingleKey);
+  manager.GetCorrectionQAList()->Write("QA",TObject::kSingleKey);
   tree->Write();
-  caliblist->Write(caliblist->GetName(),TDirectoryFile::kSingleKey);
-  calibqalist->Write(calibqalist->GetName(),TDirectoryFile::kSingleKey);
-  treefile->Close();
-  delete treefile;
+  file->Write();
+  file->Close();
 }

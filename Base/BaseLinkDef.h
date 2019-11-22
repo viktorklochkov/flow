@@ -25,37 +25,35 @@
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 
-#pragma link C++ class Qn::Axis+;
-#pragma link C++ class Qn::DataVector+;
-#pragma link C++ class vector<Qn::DataVector >+;
-#pragma link C++ class vector<vector <Qn::DataVector> >+;
-#pragma link C++ class vector<Qn::CorrectionQnVector >+;
+#pragma link C++ class Qn::Axis<double>+;
 #pragma link C++ class vector<Qn::Axis >+;
 #pragma link C++ class Qn::QVec+;
 #pragma link C++ class Qn::QVector+;
-#pragma link C++ class Qn::Profile+;
-#pragma link C++ class Qn::Product+;
-#pragma link C++ class Qn::Sample+;
-#pragma link C++ class Qn::SubSamples+;
+#pragma link C++ class Qn::CorrelationResult+;
+#pragma link C++ class Qn::ReSamples+;
+#pragma link C++ class Qn::Statistic+;
 #pragma link C++ class Qn::Stats+;
 #pragma link C++ class Qn::EventShape+;
-#pragma link C++ class Qn::DataContainer<vector<Qn::DataVector> >+;
-#pragma link C++ class Qn::DataContainer<Qn::EventShape>+;
-#pragma link C++ class Qn::DataContainer<Qn::Product>+;
-#pragma link C++ class Qn::DataContainer<Qn::Stats>+;
-#pragma link C++ class Qn::DataContainer<Qn::QVector>+;
-#pragma link C++ class Qn::DataContainer<float>+;
-#pragma link C++ class Qn::DataContainer<TH1F>+;
+#pragma link C++ class Qn::Cuts+;
+#pragma link C++ class Qn::DataContainer<Qn::EventShape,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::CorrelationResult,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::Stats,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::QVector,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<double,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<TH1F, Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainerHelper+;
 
-#pragma link C++ typedef Qn::DataContainerProduct;
+#pragma link C++ typedef Qn::AxisF;
+#pragma link C++ typedef Qn::AxisD;
+#pragma link C++ typedef Qn::DataContainerCorrelation;
 #pragma link C++ typedef Qn::DataContainerStats;
 #pragma link C++ typedef Qn::DataContainerQVector;
-#pragma link C++ typedef Qn::DataContainerDataVector;
 #pragma link C++ typedef Qn::DataContainerEventShape;
 #pragma link C++ typedef Qn::Errors;
 
 #pragma link C++ function Qn::ToTGraph;
+#pragma link C++ function Qn::ToBootstrapScatterGraph;
+#pragma link C++ function Qn::ToErrorComparisionGraph;
 #pragma link C++ function Qn::ToTMultiGraph;
 #pragma link C++ function Qn::Sqrt<DataContainer<Qn::Stats>>;
 

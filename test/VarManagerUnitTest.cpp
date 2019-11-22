@@ -6,8 +6,8 @@
 #include <TMath.h>
 #include <Detector.h>
 #include <QAHistogram.h>
-#include <VariableCutBase.h>
-#include "VariableManager.h"
+#include <CorrectionCuts.h>
+#include "InputVariableManager.h"
 
 TEST(VarManagerUnitTest, test) {
   using namespace Qn;

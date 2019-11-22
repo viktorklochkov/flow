@@ -16,39 +16,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
+#include <algorithm>
 
 #include "QVector.h"
 
 namespace Qn {
-/**
- * Constructor
- * @param norm normalisation method
- * @param vector QnCorrectionsQnVector to construct the QVector from. It is used internally by the framework but not exposed to the user.
- */
-QVector::QVector(QVector::Normalization norm, const CorrectionQnVector *vector, std::bitset<kMaxNHarmonics> bits) :
-    norm_(norm),
-    bits_(bits) {
-  q_.resize(static_cast<size_t>(bits.count()));
-  if (vector) {
-    if (vector->IsGoodQuality()) {
-      n_ = vector->GetN();
-      sum_weights_ = vector->GetSumOfWeights();
-      auto harmonicsmap = new int[kMaxNHarmonics];
-      vector->GetHarmonicsMap(harmonicsmap);
-      for (unsigned int i = 0; i < bits.count(); i++) {
-        auto iharmonic = harmonicsmap[i];
-        if (!std::isinf(vector->Qx(iharmonic)) && !std::isinf(vector->Qy(iharmonic)) &&
-            !std::isnan(vector->Qx(iharmonic)) && !std::isnan(vector->Qy(iharmonic)))
-          q_[i] = QVec(vector->Qx(iharmonic), vector->Qy(iharmonic));
-      }
-      delete[] harmonicsmap;
-    }
-  } else {
-    n_ = 0;
-    sum_weights_ = 0;
-  }
-}
-
 /**
  * Adds two Q vectors taking into account for the normalizations
  * @param a Q vector
@@ -93,11 +65,11 @@ QVector QVector::Normal(const QVector::Normalization norm) const {
       break;
     }
     case (Normalization::M): {
-      auto add = [this](const QVec q) {
+      auto norm = [this](const QVec q) {
         if (sum_weights_!=0) return q/sum_weights_;
         return QVec{0., 0.};
       };
-      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), add);
+      std::transform(c.q_.begin(), c.q_.end(), c.q_.begin(), norm);
       break;
     }
     case (Normalization::SQRT_M): {
