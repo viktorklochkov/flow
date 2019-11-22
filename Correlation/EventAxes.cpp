@@ -20,14 +20,14 @@
 #include "ROOT/RMakeUnique.hxx"
 
 void Qn::EventAxes::RegisterEventAxis(Qn::Axis axis, Type type) {
-  auto name = axis.Name().data();
+  std::string name(axis.Name());
   if (type==Type::Integer) {
     event_axes_.push_back(
-        std::make_unique<Qn::EventAxis<Long64_t>>(axis, TTreeReaderValue<Long64_t>(*manager_->GetReader(), name)));
+        std::make_unique<Qn::EventAxis<Long64_t>>(axis, TTreeReaderValue<Long64_t>(*manager_->GetReader(), name.c_str())));
   }
   if (type==Type::Float) {
     event_axes_.push_back(
-        std::make_unique<Qn::EventAxis<Float_t>>(axis, TTreeReaderValue<Float_t>(*manager_->GetReader(), name)));
+        std::make_unique<Qn::EventAxis<Float_t>>(axis, TTreeReaderValue<Float_t>(*manager_->GetReader(), name.c_str())));
   }
   bin_.emplace_back(-1);
 }

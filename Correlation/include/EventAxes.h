@@ -72,7 +72,7 @@ class EventAxis : public EventAxisInterface {
    * Checks if the current entry read from the tree is a valid number (no NAN in case of float)
    * @return Returns true if the current entry is a valid number.
    */
-  bool IsValid() override { return !isnan(*value_.Get()); }
+  bool IsValid() override { return !std::isnan(*value_.Get()); }
 
  private:
   Qn::Axis axis_; /// Underlying axies determining the binning and the name
