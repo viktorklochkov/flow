@@ -22,7 +22,7 @@
 #include "ChannelDetector.h"
 
 TEST(ParticleGeneratorUnitTest, test1) {
-  ParticleGenerator gen({0.0, 0.5, 0., 0.});
+  ParticleGenerator<4> gen(1,{0.0, 0.5, 0., 0.});
   Qn::AxisD axis("phi", 10, 0, 2*M_PI);
   std::vector<double> data_(10);
   for (int i = 0; i < 10000; ++i) {
@@ -40,10 +40,10 @@ TEST(ParticleGeneratorUnitTest, test1) {
 }
 
 TEST(ParticleGeneratorUnitTest, Detector) {
-  ParticleGenerator gen({0.0, 0.5, 0., 0.});
+  ParticleGenerator<4> gen(1,{0.0, 0.5, 0., 0.});
   Qn::AxisD axis("A", 20, 0, 2*M_PI);
   ChannelDetector det(axis, [](double x) {
-    return x >= 3.14;
+    return true;
   });
   for (int i = 0; i < 10000; ++i) {
     det.Detect(gen.GeneratePhi());
@@ -52,14 +52,14 @@ TEST(ParticleGeneratorUnitTest, Detector) {
 }
 
 TEST(ParticleGeneratorUnitTest, RandomPsi) {
-  ParticleGenerator gen({0.0, 0.5, 0., 0.});
+  ParticleGenerator<4> gen(1,{0.0, 0.5, 0., 0.});
   Qn::AxisD axis("A", 20, 0, 2*M_PI);
   std::random_device device;
   std::default_random_engine engine(device());
   ChannelDetector det(axis, [](double x) { return true; });
   std::uniform_real_distribution<> psi_distribution(0, 2*M_PI);
-  auto psi = psi_distribution(engine);
   for (int i = 0; i < 10000; ++i) {
+    auto psi = psi_distribution(engine);
     auto phi = gen.GetPhi(psi);
     det.Detect(phi);
   }
@@ -74,7 +74,7 @@ TEST(ParticleGeneratorUnitTest, Detectorvalues) {
     kWeightTrue = kWeightRec + kChannelsA,
     kEvent = kWeightTrue + kChannelsA
   };
-  ParticleGenerator gen({0.02, 0.07, 0.03, 0.});
+  ParticleGenerator<2> gen(1,{0.0, 0.07});
   Qn::AxisD axis("A", kChannelsA, 0, 2*M_PI);
   ChannelDetector det(axis, [](const double phi) { return true; });
   det.SetChannelEfficencies({0.5,0.5,1.,1.,0.4,0.4,1.,1.});

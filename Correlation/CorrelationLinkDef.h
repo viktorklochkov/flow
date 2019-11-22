@@ -17,6 +17,7 @@
 #ifdef __CLING__
 
 #pragma link C++ namespace Qn;
+#pragma link C++ namespace Correlation;
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 

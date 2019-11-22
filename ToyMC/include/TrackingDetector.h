@@ -16,7 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FLOW_TOYMC_INCLUDE_TRACKINGDETECTOR_H_
 #define FLOW_TOYMC_INCLUDE_TRACKINGDETECTOR_H_
-
+template<typename RandomEngine>
 class TrackingDetector {
  public:
   TrackingDetector(const Qn::AxisD &axis, std::function<bool(double)> cuts) :
@@ -33,11 +33,11 @@ class TrackingDetector {
     return cuts_(phi);
   }
 
-  void FillDataRec(double *values_array, std::size_t position_phi, std::size_t position_weight) {
+  void FillDataRec(RandomEngine &engine, double *values_array, std::size_t position_phi, std::size_t position_weight) {
     auto bin = axis_.FindBin(phi_);
     if (bin > -1) {
       values_array[position_phi] = phi_;
-      if(detection_efficiency_(engine_) < efficiencies_[bin]) {
+      if(detection_efficiency_(engine) < efficiencies_[bin]) {
         values_array[position_weight] = 1.;
       } else {
         values_array[position_weight] = 0.;
@@ -61,7 +61,6 @@ class TrackingDetector {
   }
 
  private:
-  std::default_random_engine engine_;
   std::uniform_real_distribution<> detection_efficiency_{0,1};
   Qn::AxisD axis_;
   double phi_;

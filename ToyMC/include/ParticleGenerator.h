@@ -21,31 +21,24 @@
 #include <cmath>
 #include <random>
 
-template <std::size_t n_harmonics_, std::size_t nphi_slices = 100>
+template<typename RandomEngine, std::size_t n_harmonics_, std::size_t nphi_slices = 100>
 class ParticleGenerator {
   static constexpr double kPi = M_PI;
  public:
-  ParticleGenerator(int seed, std::array<double, n_harmonics_> harmonics) :
-      random_engine_(seed),
+  ParticleGenerator(std::array<double, n_harmonics_> harmonics) :
       vns_(harmonics),
-      phi_dist_(nphi_slices, 0, 2*kPi, [&](const double x){return PhiPdf(x);}) {}
-  double GeneratePhi() {return phi_dist_(random_engine_);}
-  double GetPhi(double psi) {
-    auto phi = GeneratePhi() + psi;
-    if (phi > 2*M_PI) phi -= 2*M_PI;
-    if (phi < 0) phi += 2*M_PI;
-    return phi;
+      phi_dist_(nphi_slices, 0, 2*kPi, [&](const double x) { return PhiPdf(x); }) {}
+  double GetPhi(RandomEngine &engine, double psi) {
+    return phi_dist_(engine) + psi;
   }
  private:
-  std::default_random_engine random_engine_;
-  std::array<double,n_harmonics_> vns_;
-  double psi_ = 0.;
+  std::array<double, n_harmonics_> vns_;
   std::piecewise_linear_distribution<> phi_dist_;
 
   double PhiPdf(double phi) {
     double value = 1.;
-    for (unsigned int n = 1; n < n_harmonics_+1; ++n) {
-      value += 2 * vns_[n-1] * std::cos(n *(phi - psi_));
+    for (unsigned int n = 1; n < n_harmonics_ + 1; ++n) {
+      value += 2*vns_[n - 1]*std::cos(n*(phi - 0.));
     }
     return value;
   }
