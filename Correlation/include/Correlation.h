@@ -83,6 +83,10 @@ class Correlation<Function, std::tuple<Qvectors...>, std::tuple<InputDataContain
     }
   }
 
+  bool IsObservable() const {
+    return std::any_of(std::begin(use_weights_), std::end(use_weights_),[](bool a){return a;});
+  }
+
   const CollelationHolder &Correlate(InputDataContainers... input) {
     for (auto &bin : correlation_result_) { bin.validity = false; }
     std::size_t output_bin = 0;

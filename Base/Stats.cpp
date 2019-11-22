@@ -30,7 +30,7 @@ Stats MergeBins(const Stats &lhs, const Stats &rhs) {
     if (lhs.weight_ == 0) {
       totalweight = temp_r.weight_;
     } else {
-      totalweight = (temp_l.weight_ + temp_r.weight_);
+      totalweight = temp_l.weight_ + temp_r.weight_;
     }
     result.mean_ = (temp_l.weight_*temp_l.mean_ + temp_r.weight_*temp_r.mean_)/totalweight;
     auto error_1 = temp_l.weight_/totalweight*temp_l.error_;
@@ -175,8 +175,14 @@ Stats operator/(const Stats &num, const Stats &den) {
     result.mergeable_ = false;
   }
   result.mean_ = tlhs.mean_/trhs.mean_;
-  auto t1 = num.error_ / den.mean_;
-  auto t2 = num.mean_*den.error_ / (den.mean_*den.mean_);
+  double denominator_mean;
+  if (trhs.mean_ != 0.) {
+    denominator_mean = trhs.mean_;
+  } else {
+    denominator_mean = 1.;
+  }
+  auto t1 = tlhs.error_ / denominator_mean;
+  auto t2 = tlhs.mean_*trhs.error_ / (denominator_mean*denominator_mean);
   result.error_ = std::sqrt(t1*t1+t2*t2);
   result.resamples_ = ReSamples::Division(tlhs.resamples_, trhs.resamples_);
   return result;

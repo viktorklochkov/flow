@@ -63,6 +63,8 @@ class Stats {
 
   double SumWeights() const { return statistic_.SumWeights(); }
 
+  bool IsObservable() const {return Qn::Stats::Weights::OBSERVABLE == weights_flag;}
+
   double RatioOfErrors() const {
     auto bootstrap_error = resamples_.GetConfidenceInterval(mean_, ReSamples::CIMethod::normal).Uncertainty();
     double error = 0;
@@ -212,17 +214,16 @@ class Stats {
   TCanvas *CIvsNSamples(const int nsteps = 10) const;
 
  private:
-  ReSamples resamples_;
-  Statistic statistic_;
-  unsigned int bits_ = 0 | Qn::Stats::CORRELATEDERRORS;
-  State state_ = State::MOMENTS;
+  ReSamples resamples_;     /// resamples used for error calculation
+  Statistic statistic_;     /// Used in the state of MOMENTS
+  unsigned int bits_ = 0 | Qn::Stats::CORRELATEDERRORS; // configuration bits
+  State state_ = State::MOMENTS; /// state of the calculations
   Weights weights_flag = Weights::REFERENCE; /// weighting of the Stats
   bool mergeable_ = true; /// flag is false if an operation leading to undefined weights has been performed
-
-
-  double mean_ = 0.;
-  double error_ = 0.;
-  double weight_ = 0.;
+  /// Used in the state of MEAN_ERROR
+  double mean_ = 0.; /// mean
+  double error_ = 0.; /// uncertainty
+  double weight_ = 0.; /// relative weight for rebinning
 
   /// \cond CLASSIMP
  ClassDef(Stats, 4);

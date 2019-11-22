@@ -118,7 +118,7 @@ find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer
 include(${ROOT_USE_FILE})
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 
-set(ROOTCLING ${ROOT_DIR}/bin/rootcling)
+set(ROOTCLING ${ROOT_DIR}/../bin/rootcling)
 
 #Base
 add_custom_command(OUTPUT G__BASE.cxx

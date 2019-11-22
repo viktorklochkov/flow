@@ -114,6 +114,11 @@ class CorrelationHelper<State,
       data->AddAxes(correlation_axes);
       for (auto &bin : *data) {
         bin.SetNumberOfReSamples(n_resamples);
+        if (correlation_.IsObservable()) {
+          bin.SetWeights(Qn::Stats::Weights::OBSERVABLE);
+        } else {
+          bin.SetWeights(Qn::Stats::Weights::REFERENCE);
+        }
       }
     }
     // calculate stride of the resulting container
