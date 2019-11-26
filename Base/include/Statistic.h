@@ -51,6 +51,7 @@ class Statistic {
   double Min() const { return min_; }
   double Max() const { return max_; }
   friend Statistic Merge(const Statistic &lhs, const Statistic &rhs);
+  friend Statistic MergeBins(const Statistic &lhs, const Statistic &rhs);
 
  private:
   double sum_values_ = 0;
@@ -63,6 +64,22 @@ class Statistic {
 };
 
 inline Statistic Merge(const Statistic &lhs, const Statistic &rhs) {
+  Statistic result = lhs;
+  result.sum_weights_ += rhs.sum_weights_;
+  result.n_entries_ += rhs.n_entries_;
+  result.sum_weights2_ += rhs.sum_weights2_;
+  result.sum_values_ += rhs.sum_values_;
+  result.max_ = std::max(result.max_, rhs.max_);
+  result.min_ = std::min(result.min_, rhs.min_);
+  double num = rhs.sum_weights_*lhs.sum_values_ - lhs.sum_weights_*rhs.sum_values_;
+  result.sum_sq_ = lhs.sum_sq_ + rhs.sum_sq_;
+  if (lhs.sum_weights_!=0. && rhs.sum_weights_!=0. && result.sum_weights_!=0.) {
+    result.sum_sq_ += (num*num)/(lhs.sum_weights_*rhs.sum_weights_*result.sum_weights_);
+  }
+  return result;
+}
+
+inline Statistic MergeBins(const Statistic &lhs, const Statistic &rhs) {
   Statistic result = lhs;
   result.sum_weights_ += rhs.sum_weights_;
   result.n_entries_ += rhs.n_entries_;

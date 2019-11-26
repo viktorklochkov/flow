@@ -45,7 +45,7 @@ class CorrectionFillHelper : public ROOT::Detail::RDF::RActionImpl<CorrectionFil
     TList l;
     l.SetOwner(); // The list will free the memory associated to its elements upon destruction
     for (unsigned int slot = 1; slot < nslots; ++slot) {
-      l.Add(data_containers_[slot].get());
+      l.Add(data_containers_.at(slot).get());
     }
     result->Merge(&l);
   }

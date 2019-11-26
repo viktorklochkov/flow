@@ -40,6 +40,7 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStati
   unsigned int ibin = 0;
   for (const auto &bin : data) {
     auto tbin = bin;
+    if (tbin.Entries() == 0) continue;
     auto y = tbin.Mean();
     auto ylo = tbin.MeanError();
     auto yhi = tbin.MeanError();
