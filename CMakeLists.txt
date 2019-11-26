@@ -69,6 +69,7 @@ set(CORRECTION_HEADERS
         DetectorList.h
         InputVariable.h
         QAHistogram.h
+        CorrectionFillHelper.h
         )
 
 set(BASE_SOURCES

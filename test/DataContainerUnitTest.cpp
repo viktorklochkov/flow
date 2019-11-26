@@ -10,6 +10,8 @@
 #include <TRandom3.h>
 #include <random>
 #include <TProfile.h>
+#include <ROOT/RDataFrame.hxx>
+#include "CorrectionFillHelper.h"
 
 //TEST(DataContainerTest, Copy) {
 //  Qn::DataContainerQVector container;
@@ -21,8 +23,17 @@
 TEST(DataContainerTest, Fill) {
   Qn::DataContainerStatistic a;
   a.AddAxis({"t",10,0,10});
-  a.Fill(4,1,{4});
+  a.Fill(4,4,{4});
   EXPECT_EQ(a.At(4).Mean(),4);
+
+  ROOT::RDataFrame df(20);
+  auto df1 = df.Define("x","4.").Define("w","1.").Define("ev",[](){return std::vector<double>{1};});
+  Qn::DataContainerStatistic data;
+  data.AddAxis({"t",10,0,10});
+//  auto da = df1.Fill<std::vector<double>, double>(std::forward<Qn::DataContainerStatistic >(data),{"ev","w"});
+ auto res = df1.Book<double,double,std::vector<double>>(CorrectionFillHelper(data),{"x","w","ev"});
+
+
 }
 //
 //

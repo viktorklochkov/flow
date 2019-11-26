@@ -832,10 +832,10 @@ class DataContainer : public TObject {
  */
   virtual void Browse(TBrowser *b) { (void) b; }
 
-  void Fill(double value, double weight, std::vector<double> coords) {
+  void Fill(const double value, const double weight, const std::vector<double> &coordinates) {
     (void) value;
     (void) weight;
-    (void) coords;
+    (void) coordinates;
   }
 
 /// \cond CLASSIMP
@@ -873,8 +873,8 @@ inline void DataContainer<Stats, AxisD>::NDraw(Option_t *option, const std::stri
 }
 
 template<>
-inline void DataContainer<Statistic, AxisD>::Fill(double value, double weight, std::vector<double> coords) {
-  data_.at(GetLinearIndex(coords)).Fill(value,weight);
+inline void DataContainer<Statistic, AxisD>::Fill(const double value, const double weight, const std::vector<double> &coordinates) {
+  data_.at(GetLinearIndex(coordinates)).Fill(value, weight);
 }
 
 //-----------------------------------//

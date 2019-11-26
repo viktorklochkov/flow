@@ -129,7 +129,7 @@ ReSamples ReSamples::MergeStatistics(const ReSamples &a, const ReSamples &b) {
     Statistic stat_a;
     if (i < a.size()) stat_a = a.statistics_[i];
     auto stat_b = b.statistics_[i];
-    result.statistics_[i] = Statistic::Merge(stat_a, stat_b);
+    result.statistics_[i] = Qn::Merge(stat_a, stat_b);
   }
   return result;
 }

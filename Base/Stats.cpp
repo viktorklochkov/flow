@@ -44,7 +44,7 @@ Stats MergeBins(const Stats &lhs, const Stats &rhs) {
     result.weights_flag = rhs.weights_flag;
     result.mergeable_ = rhs.mergeable_;
   } else {
-    result.statistic_ = Statistic::Merge(lhs.statistic_, rhs.statistic_);
+    result.statistic_ = Qn::Merge(lhs.statistic_, rhs.statistic_);
     result.resamples_ = ReSamples::MergeStatistics(lhs.resamples_, rhs.resamples_);
     result.state_ = STAT::MOMENTS;
     result.bits_ = rhs.bits_;
@@ -65,7 +65,7 @@ Stats Merge(const Stats &lhs, const Stats &rhs) {
     result.statistic_ = lhs.statistic_;
     result.resamples_ = ReSamples::Concatenate(lhs.resamples_, rhs.resamples_);
   } else {
-    result.statistic_ = Statistic::Merge(lhs.statistic_, rhs.statistic_);
+    result.statistic_ = Qn::Merge(lhs.statistic_, rhs.statistic_);
     result.resamples_ = ReSamples::MergeStatistics(lhs.resamples_, rhs.resamples_);
   }
   return result;
