@@ -874,7 +874,10 @@ inline void DataContainer<Stats, AxisD>::NDraw(Option_t *option, const std::stri
 
 template<>
 inline void DataContainer<Statistic, AxisD>::Fill(const double value, const double weight, const std::vector<double> &coordinates) {
-  data_.at(GetLinearIndex(coordinates)).Fill(value, weight);
+  auto i_bin = GetLinearIndex(coordinates);
+  if (i_bin != -1) {
+    data_.at(i_bin).Fill(value, weight);
+  }
 }
 
 //-----------------------------------//
