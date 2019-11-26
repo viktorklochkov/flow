@@ -74,7 +74,12 @@ class DataContainerHelper {
   static TGraph *ToErrorComparisonGraph(const Qn::DataContainer<Stats,AxisD> &data);
   static TGraph *ToBootstrapScatterGraph(const Qn::DataContainer<Stats, AxisD> &data);
   static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Stats, AxisD> &data, Errors x = Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraph(const Qn::DataContainer<Statistic, AxisD> &data, Errors x = Errors::Yonly);
   static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Stats, AxisD> &data,
+                                            int i,
+                                            int max,
+                                            Errors x = Errors::Yonly);
+  static TGraphAsymmErrors *ToTGraphShifted(const Qn::DataContainer<Statistic, AxisD> &data,
                                             int i,
                                             int max,
                                             Errors x = Errors::Yonly);
@@ -93,8 +98,15 @@ class DataContainerHelper {
 using Errors = DataContainerHelper::Errors;
 constexpr auto ToErrorComparisonGraph = &DataContainerHelper::ToErrorComparisonGraph;
 constexpr auto ToBootstrapScatterGraph = &DataContainerHelper::ToBootstrapScatterGraph;
-constexpr auto ToTGraph = &DataContainerHelper::ToTGraph;
 constexpr auto ToTMultiGraph = &DataContainerHelper::ToTMultiGraph;
+
+inline TGraphAsymmErrors* ToTGraph(const Qn::DataContainer<Statistic, AxisD> &data, Qn::Errors x = Errors::Yonly) {
+  return DataContainerHelper::ToTGraph(data, x);
+}
+
+inline TGraphAsymmErrors* ToTGraph(const Qn::DataContainer<Stats, AxisD> &data, Qn::Errors x = Errors::Yonly) {
+  return DataContainerHelper::ToTGraph(data, x);
+}
 
 TCanvas *UncertaintyComparison(const Qn::DataContainer<Stats,AxisD> &data);
 

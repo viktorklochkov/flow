@@ -31,8 +31,8 @@ TEST(DataContainerTest, Fill) {
   Qn::DataContainerStatistic data;
   data.AddAxis({"t",10,0,10});
 //  auto da = df1.Fill<std::vector<double>, double>(std::forward<Qn::DataContainerStatistic >(data),{"ev","w"});
- auto res = df1.Book<double,double,std::vector<double>>(CorrectionFillHelper(data),{"x","w","ev"});
-
+  auto res = df1.Book<double,double,std::vector<double>>(CorrectionFillHelper(data),{"x","w","ev"});
+  auto x = Qn::ToTGraph(*res,Qn::Errors::Yonly);
 
 }
 //

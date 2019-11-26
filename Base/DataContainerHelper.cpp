@@ -28,6 +28,38 @@
 
 namespace Qn {
 
+TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStatistic &data,
+                                                        int i,
+                                                        int maxi, Errors drawerrors) {
+  if (data.GetAxes().size() > 1) {
+    std::cout << "Data container has more than one dimension. " << std::endl;
+    std::cout << "Cannot draw as Graph. Use Projection() to make it one dimensional." << std::endl;
+    return nullptr;
+  }
+  auto graph = new TGraphAsymmErrors();
+  unsigned int ibin = 0;
+  for (const auto &bin : data) {
+    auto tbin = bin;
+    auto y = tbin.Mean();
+    auto ylo = tbin.MeanError();
+    auto yhi = tbin.MeanError();
+    auto xhi = data.GetAxes().front().GetUpperBinEdge(ibin);
+    auto xlo = data.GetAxes().front().GetLowerBinEdge(ibin);
+    auto x = xlo + ((xhi - xlo)*static_cast<double>(i)/maxi);
+    double exl = 0;
+    double exh = 0;
+    if (drawerrors==Errors::XandY) {
+      exl = x - xlo;
+      exh = xhi - x;
+    }
+    graph->SetPoint(ibin, x, y);
+    graph->SetPointError(ibin, exl, exh, ylo, yhi);
+    graph->SetMarkerStyle(kFullCircle);
+    ibin++;
+  }
+  return graph;
+}
+
 TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats &data,
                                                         int i,
                                                         int maxi, Errors drawerrors) {
@@ -63,6 +95,11 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
 }
 
 TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerStats &data,
+                                                 Errors drawerrors) {
+  return ToTGraphShifted(data, 1, 2, drawerrors);
+}
+
+TGraphAsymmErrors *DataContainerHelper::ToTGraph(const DataContainerStatistic &data,
                                                  Errors drawerrors) {
   return ToTGraphShifted(data, 1, 2, drawerrors);
 }
