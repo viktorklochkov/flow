@@ -832,6 +832,12 @@ class DataContainer : public TObject {
  */
   virtual void Browse(TBrowser *b) { (void) b; }
 
+  void Fill(double value, double weight, std::vector<double> coords) {
+    (void) value;
+    (void) weight;
+    (void) coords;
+  }
+
 /// \cond CLASSIMP
  ClassDef(DataContainer, 13);
 /// \endcond
@@ -845,6 +851,7 @@ template<typename T>
 using DataD = DataContainer<T, AxisD>;
 using DataContainerCorrelation = DataContainer<Qn::CorrelationResult, AxisD>;
 using DataContainerStats = DataContainer<Qn::Stats, AxisD>;
+using DataContainerStatistic = DataContainer<Qn::Statistic, AxisD>;
 using DataContainerQVector = DataContainer<Qn::QVector, AxisD>;
 using DataContainerEventShape = DataContainer<Qn::EventShape, AxisD>;
 
@@ -863,6 +870,11 @@ inline void DataContainer<EventShape, AxisD>::Browse(TBrowser *b) {
 template<>
 inline void DataContainer<Stats, AxisD>::NDraw(Option_t *option, const std::string &axis_name) {
   DataContainerHelper::NDraw(*this, option, axis_name);
+}
+
+template<>
+inline void DataContainer<Statistic, AxisD>::Fill(double value, double weight, std::vector<double> coords) {
+  data_.at(GetLinearIndex(coords)).Fill(value,weight);
 }
 
 //-----------------------------------//

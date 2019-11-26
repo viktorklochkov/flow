@@ -11,8 +11,6 @@
 #include <random>
 #include <TProfile.h>
 
-#include "Sampler.h"
-
 //TEST(DataContainerTest, Copy) {
 //  Qn::DataContainerQVector container;
 //  container.AddAxes({{"a1", 10, 0, 10}, {"a2", 10, 0, 10}});
@@ -20,9 +18,12 @@
 //  EXPECT_EQ(copy.size(), container.size());
 //}
 //
-//TEST(DataContainerTest, TClones) {
-//  Qn::DataContainerQVector a;
-//}
+TEST(DataContainerTest, Fill) {
+  Qn::DataContainerStatistic a;
+  a.AddAxis({"t",10,0,10});
+  a.Fill(4,1,{4});
+  EXPECT_EQ(a.At(4).Mean(),4);
+}
 //
 //
 TEST(DataContainerTest, AddAxes) {

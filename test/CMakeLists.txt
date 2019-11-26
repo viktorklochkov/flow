@@ -12,8 +12,9 @@ set(TEST_SOURCES
 #        ReSampleUnitTest.cpp
 #        StatsUnitTest.cpp
 #        DataFrameAlgorithmUnitTest.cpp
-#        DataContainerUnitTest.cpp
-        ParticleGeneratorUnitTest.cpp)
+        DataContainerUnitTest.cpp
+        )
+#        ParticleGeneratorUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})

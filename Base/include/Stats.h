@@ -187,6 +187,7 @@ class Stats {
     }
   }
 
+
   template<typename SAMPLES>
   inline void FillPoisson(const CorrelationResult &correlation_result, SAMPLES &&samples) {
     if (correlation_result.validity) {

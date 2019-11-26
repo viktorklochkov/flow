@@ -38,6 +38,7 @@
 #pragma link C++ class Qn::DataContainer<Qn::EventShape,Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainer<Qn::CorrelationResult,Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainer<Qn::Stats,Qn::Axis<double>>+;
+#pragma link C++ class Qn::DataContainer<Qn::Statistic,Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainer<Qn::QVector,Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainer<double,Qn::Axis<double>>+;
 #pragma link C++ class Qn::DataContainer<TH1F, Qn::Axis<double>>+;
@@ -47,6 +48,7 @@
 #pragma link C++ typedef Qn::AxisD;
 #pragma link C++ typedef Qn::DataContainerCorrelation;
 #pragma link C++ typedef Qn::DataContainerStats;
+#pragma link C++ typedef Qn::DataContainerStatistic;
 #pragma link C++ typedef Qn::DataContainerQVector;
 #pragma link C++ typedef Qn::DataContainerEventShape;
 #pragma link C++ typedef Qn::Errors;
