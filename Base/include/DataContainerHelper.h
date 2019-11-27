@@ -88,8 +88,10 @@ class DataContainerHelper {
                                     Errors x = Errors::Yonly);
  private:
   friend Qn::DataContainer<Stats, AxisD>;
+  friend Qn::DataContainer<Statistic, AxisD>;
   friend Qn::DataContainer<EventShape, AxisD>;
   static void StatsBrowse(Qn::DataContainer<Stats, AxisD> *data, TBrowser *b);
+  static void StatisticBrowse(Qn::DataContainer<Statistic, AxisD> *data, TBrowser *b);
   static void EventShapeBrowse(Qn::DataContainer<EventShape, AxisD> *data, TBrowser *b);
   static void NDraw(Qn::DataContainer<Stats, AxisD> &data, std::string option, const std::string &axis_name);
 

@@ -864,6 +864,10 @@ inline void DataContainer<Stats, AxisD>::Browse(TBrowser *b) {
   DataContainerHelper::StatsBrowse(this, b);
 }
 template<>
+inline void DataContainer<Statistic, AxisD>::Browse(TBrowser *b) {
+  DataContainerHelper::StatisticBrowse(this, b);
+}
+template<>
 inline void DataContainer<EventShape, AxisD>::Browse(TBrowser *b) {
   DataContainerHelper::EventShapeBrowse(this, b);
 }

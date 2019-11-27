@@ -134,6 +134,29 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
   return multigraph;
 }
 
+void DataContainerHelper::StatisticBrowse(DataContainerStatistic *data, TBrowser *b) {
+  using DrawErrorGraph = Internal::ProjectionDrawable<TGraphAsymmErrors *>;
+  using DrawMultiGraph = Internal::ProjectionDrawable<TMultiGraph *>;
+  if (!data->list_) data->list_ = new TList();
+  data->list_->SetOwner(true);
+  for (auto &axis : data->axes_) {
+    TGraphAsymmErrors* graph;
+    if (data->dimension_ > 1) {
+      graph = DataContainerHelper::ToTGraph(data->Projection({axis.Name()}), Errors::Yonly);
+    } else {
+      graph = DataContainerHelper::ToTGraph(*data, Errors::Yonly);
+    }
+    graph->SetName(axis.Name().data());
+    graph->SetTitle(axis.Name().data());
+    graph->GetXaxis()->SetTitle(axis.Name().data());
+    auto *drawable = new DrawErrorGraph(graph);
+    data->list_->Add(drawable);
+  }
+  for (int i = 0; i < data->list_->GetSize(); ++i) {
+    b->Add(data->list_->At(i));
+  }
+}
+
 void DataContainerHelper::StatsBrowse(DataContainerStats *data, TBrowser *b) {
   using DrawErrorGraph = Internal::ProjectionDrawable<TGraphAsymmErrors *>;
   using DrawMultiGraph = Internal::ProjectionDrawable<TMultiGraph *>;

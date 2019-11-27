@@ -30,7 +30,8 @@ class CorrectionFillHelper : public ROOT::Detail::RDF::RActionImpl<CorrectionFil
   explicit CorrectionFillHelper(const Qn::DataContainerStatistic &h) {
     const auto n_slots = ROOT::IsImplicitMTEnabled() ? ROOT::GetImplicitMTPoolSize() : 1;
     for (unsigned int i = 0; i < n_slots; ++i) {
-      data_containers_.emplace_back(std::make_shared<Result_t>(h));
+      data_containers_.emplace_back(std::make_shared<Result_t>());
+      data_containers_.back()->AddAxes(h.GetAxes());
     }
   }
 
@@ -43,7 +44,6 @@ class CorrectionFillHelper : public ROOT::Detail::RDF::RActionImpl<CorrectionFil
     auto result = data_containers_.at(0);
     const auto nslots = data_containers_.size();
     TList l;
-    l.SetOwner(); // The list will free the memory associated to its elements upon destruction
     for (unsigned int slot = 1; slot < nslots; ++slot) {
       l.Add(data_containers_.at(slot).get());
     }
