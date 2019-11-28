@@ -136,7 +136,6 @@ TMultiGraph *DataContainerHelper::ToTMultiGraph(const DataContainerStats &data,
 
 void DataContainerHelper::StatisticBrowse(DataContainerStatistic *data, TBrowser *b) {
   using DrawErrorGraph = Internal::ProjectionDrawable<TGraphAsymmErrors *>;
-  using DrawMultiGraph = Internal::ProjectionDrawable<TMultiGraph *>;
   if (!data->list_) data->list_ = new TList();
   data->list_->SetOwner(true);
   for (auto &axis : data->axes_) {

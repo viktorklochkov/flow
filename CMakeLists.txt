@@ -90,6 +90,7 @@ set(BASE_HEADERS DataContainer.h
         Stats.h
         Cuts.h
         Statistic.h
+        EqualEntriesBinner.h
         )
 
 set(CORRELATION_SOURCES
@@ -115,7 +116,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
 # ROOT
-find_package(ROOT REQUIRED COMPONENTS Core MathCore RIO Hist Tree Net TreePlayer)
+find_package(ROOT REQUIRED COMPONENTS Core MathCore MathMore RIO Hist Tree Net TreePlayer)
 include(${ROOT_USE_FILE})
 message(STATUS "Using ROOT: ${ROOT_VERSION} <${ROOT_CONFIG}>")
 

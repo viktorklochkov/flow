@@ -12,6 +12,37 @@
 #include <TProfile.h>
 #include <ROOT/RDataFrame.hxx>
 #include "CorrectionFillHelper.h"
+#include "EqualEntriesBinner.h"
+
+TEST(DataContainerTest, equalbinning) {
+  int nbins = 10;
+  Qn::AxisD axis1("t1",nbins,-2,2);
+  std::mt19937_64 gen(10);
+  std::normal_distribution<> normal_distribution(0,1);
+  std::vector<double> hist1(nbins);
+  std::vector<double> values;
+  for (int i = 0; i < 1000; ++i) {
+    auto value = normal_distribution(gen);
+    auto bin = axis1.FindBin(value);
+    if (bin != -1) {
+      ++hist1[bin];
+    }
+    values.push_back(value);
+  }
+  Qn::EqualEntriesBinner binner;
+  auto bins = binner.CalculateBins(values,nbins,2.,2.);
+  Qn::AxisD axis2("t2",bins);
+  std::vector<double> hist2(nbins);
+  for (auto & value : values) {
+    auto bin = axis2.FindBin(value);
+    if (bin != -1) {
+      ++hist2[bin];
+    }
+  }
+0  for (int i = 0; i < hist1.size(); ++i) {
+    std::cout << hist1[i] << " " << hist2[i] << std::endl;
+  }
+}
 
 //TEST(DataContainerTest, Copy) {
 //  Qn::DataContainerQVector container;
