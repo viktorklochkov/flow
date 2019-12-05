@@ -44,6 +44,7 @@ class Statistic {
   double Neff() const { return sum_weights2_ > 0 ? sum_weights_*sum_weights_/sum_weights2_ : 0.; }
   double N() const { return n_entries_; }
   double Variance() const { return sum_weights_ > 0 ? (n_entries_ > 1 ? (sum_sq_/(sum_weights_ - 1)) : 0) : -1; }
+  double Sigma() const { double var = Variance(); return var > 0 ? std::sqrt(var) : -1; }
   double SumWeights() const { return sum_weights_; }
   double Mean() const { return sum_weights_ > 0 ? sum_values_/sum_weights_ : 0.0; }
   double MeanError() const { return Neff() > 0 ? std::sqrt(Variance()/Neff()) : 0.0; }

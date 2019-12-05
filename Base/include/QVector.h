@@ -232,6 +232,13 @@ class QVector {
   void SetNormalization(const Normalization norm) { norm_ = norm; }
 
   /**
+   * Update correction step
+   */
+   void UpdateCorrectionStep(const CorrectionStep step) {
+     correction_step_ = step;
+   }
+
+  /**
    * Get the correction step
    * @return correction step of the Q-vector
    */

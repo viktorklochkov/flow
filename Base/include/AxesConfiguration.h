@@ -50,8 +50,8 @@ class AxesConfiguration {
   std::vector<AxisType> GetVector() const { return TemplateHelpers::ToVector(axes_); }
 
   template<typename... Coordinates>
-  long GetLinearIndexFromCoordinates(Coordinates... coordinates) const {
-    return FindBin(coordinates...);
+  long GetLinearIndexFromCoordinates(Coordinates&&... coordinates) const {
+    return FindBin(std::forward<Coordinates>(coordinates)...);
   }
 
   std::vector<std::string> GetNames() const {
@@ -66,18 +66,18 @@ class AxesConfiguration {
  private:
 
   template<typename FirstCoordinate, typename... Rest>
-  long FindBin(FirstCoordinate first_coordinate, Rest... rest) const {
+  long FindBin(FirstCoordinate &&first_coordinate, Rest &&...rest) const {
     constexpr std::size_t position = kDimension - sizeof...(rest) - 1;
-    auto bin = stride_[position + 1]*std::get<position>(axes_).FindBin(first_coordinate);
-    auto rest_bin = FindBin(rest...);
+    auto bin = stride_[position + 1]*std::get<position>(axes_).FindBin(std::forward<FirstCoordinate>(first_coordinate));
+    auto rest_bin = FindBin(std::forward<Rest>(rest)...);
     if (rest_bin < 0) return -1;
     return bin + rest_bin;
   }
 
   template<typename FirstCoordinate>
-  long FindBin(FirstCoordinate first_coordinate) const {
+  long FindBin(FirstCoordinate &&first_coordinate) const {
     constexpr std::size_t position = kDimension - 1;
-    return stride_[position + 1]*std::get<position>(axes_).FindBin(first_coordinate);
+    return stride_[position + 1]*std::get<position>(axes_).FindBin(std::forward<FirstCoordinate>(first_coordinate));
   }
 
   void CalculateStride() {
