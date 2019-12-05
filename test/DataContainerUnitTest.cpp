@@ -11,35 +11,77 @@
 #include <random>
 #include <TProfile.h>
 #include <ROOT/RDataFrame.hxx>
+#include "AxesConfiguration.h"
 #include "CorrectionFillHelper.h"
 #include "EqualEntriesBinner.h"
+#include "RecenterAction.h"
+#include "AverageHelper.h"
+
+TEST(DataContainerTest, TestHelper) {
+  ROOT::RDataFrame df("tree", "~/testhelper/mergedtree.root");
+
+  auto result = Qn::Correction::MakeAverageHelper(
+      Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+               .EnableWidthEqualization()
+  ).BookMe(df);
+  auto resultwo = Qn::Correction::MakeAverageHelper(
+      Qn::Correction::Recentering("testwo","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+  ).BookMe(df);
+
+  auto result2 = Qn::Correction::MakeAverageHelper(
+      Qn::Correction::Recentering("test2", "TPCPT_PLAIN", Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+  ).BookMe(df);
+
+  auto corrected = Qn::Correction::ApplyCorrections(df, *result, *result2, *resultwo);
+
+  corrected.Snapshot("tree", "~/testhelper/rectree.root", {"ZNA_PLAIN_test","ZNA_PLAIN_testwo", "TPCPT_PLAIN_test2", "CentralityV0M"});
+  auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
+  file->cd();
+  result->Write(file);
+  result2->Write(file);
+  file->Close();
+  delete file;
+
+//  ROOT::RDataFrame df2("tree", "~/testhelper/mergedtree.root");
+//  auto file_2 = TFile::Open("~/testhelper/tt.root", "Open");
+//  auto file_tree = TFile::Open("~/testhelper/mergedtree.root", "Open");
+//  TTreeReader reader("tree",file_tree);
+//  auto result_read = Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}));
+//  result_read.LoadCorrectionFromFile(file_2, &reader);
+//  auto corr2 = Qn::Correction::ApplyCorrections(df2, result_read);
+//  corr2.Snapshot("tree","~/testhelper/rectree2.root",{"ZNA_PLAIN_test","CentralityV0M"});
+//  file_2->Close();
+//  file_tree->Close();
+//  delete file_tree;
+//  delete file_2;
+}
 
 TEST(DataContainerTest, equalbinning) {
   int nbins = 10;
-  Qn::AxisD axis1("t1",nbins,-2,2);
+  Qn::AxisD axis1("t1", nbins, -2, 2);
   std::mt19937_64 gen(10);
-  std::normal_distribution<> normal_distribution(0,1);
+  std::normal_distribution<> normal_distribution(0, 1);
   std::vector<double> hist1(nbins);
   std::vector<double> values;
   for (int i = 0; i < 1000; ++i) {
     auto value = normal_distribution(gen);
     auto bin = axis1.FindBin(value);
-    if (bin != -1) {
+    if (bin!=-1) {
       ++hist1[bin];
     }
     values.push_back(value);
   }
   Qn::EqualEntriesBinner binner;
-  auto bins = binner.CalculateBins(values,nbins,2.,2.);
-  Qn::AxisD axis2("t2",bins);
+  auto bins = binner.CalculateBins(values, nbins, 2., 2.);
+  Qn::AxisD axis2("t2", bins);
   std::vector<double> hist2(nbins);
-  for (auto & value : values) {
+  for (auto &value : values) {
     auto bin = axis2.FindBin(value);
-    if (bin != -1) {
+    if (bin!=-1) {
       ++hist2[bin];
     }
   }
-0  for (int i = 0; i < hist1.size(); ++i) {
+  for (int i = 0; i < hist1.size(); ++i) {
     std::cout << hist1[i] << " " << hist2[i] << std::endl;
   }
 }
@@ -53,47 +95,47 @@ TEST(DataContainerTest, equalbinning) {
 //
 TEST(DataContainerTest, Fill) {
   Qn::DataContainerStatistic a;
-  a.AddAxis({"t",10,0,10});
-  a.Fill(4,4,{4});
-  EXPECT_EQ(a.At(4).Mean(),4);
+  a.AddAxis({"t", 10, 0, 10});
+  a.Fill(4, 4, {4});
+  EXPECT_EQ(a.At(4).Mean(), 4);
 
   ROOT::RDataFrame df(20);
-  auto df1 = df.Define("x","4.").Define("w","1.").Define("ev",[](){return std::vector<double>{1};});
+  auto df1 = df.Define("x", "4.").Define("w", "1.").Define("ev", []() { return std::vector<double>{1}; });
   Qn::DataContainerStatistic data;
-  data.AddAxis({"t",10,0,10});
+  data.AddAxis({"t", 10, 0, 10});
 //  auto da = df1.Fill<std::vector<double>, double>(std::forward<Qn::DataContainerStatistic >(data),{"ev","w"});
-  auto res = df1.Book<double,double,std::vector<double>>(CorrectionFillHelper(data),{"x","w","ev"});
-  auto x = Qn::ToTGraph(*res,Qn::Errors::Yonly);
+  auto res = df1.Book<double, double, std::vector<double>>(CorrectionFillHelper(data), {"x", "w", "ev"});
+  auto x = Qn::ToTGraph(*res, Qn::Errors::Yonly);
 
 }
 //
 //
 TEST(DataContainerTest, AddAxes) {
-  Qn::DataContainer<double,Qn::AxisD> container;
+  Qn::DataContainer<double, Qn::AxisD> container;
   container.AddAxes({{"ev1", 2, 0, 2},
                      {"ev2", 2, 0, 2},
                      {"a1", 2, 0, 10},
                      {"a2", 2, 0, 10}});
-  Qn::DataContainer<double,Qn::AxisD> c2;
-  c2.AddAxes({{"ev1", 2, 0, 2},{"ev2", 2, 0, 2}});
+  Qn::DataContainer<double, Qn::AxisD> c2;
+  c2.AddAxes({{"ev1", 2, 0, 2}, {"ev2", 2, 0, 2}});
 //  EXPECT_EQ(100, container.size());
   for (std::size_t i = 0; i < container.size(); ++i) {
     auto index = container.GetIndex(i);
     std::cout << "linear: " << i << " multi: ";
-    for (const auto & in :index ) {
+    for (const auto &in :index) {
       std::cout << in << " ";
     }
     std::cout << std::endl;
   }
   std::vector<double> vec(2);
-  for (unsigned int i = 0; i < 2;++i) {
-    for (unsigned int j = 0; j < 2;++j) {
-      vec = {(double)i,(double)j};
-      auto ibin = c2.FindBin(vec) * c2.size();
+  for (unsigned int i = 0; i < 2; ++i) {
+    for (unsigned int j = 0; j < 2; ++j) {
+      vec = {(double) i, (double) j};
+      auto ibin = c2.FindBin(vec)*c2.size();
       for (unsigned int k = 0; k < 4; ++k) {
 //        std::cout << i << " " << j << " " << ibin << " " << k << std::endl;
-        std::cout << ibin+k << std::endl;
-        container.At(ibin+k) = i+2*j;
+        std::cout << ibin + k << std::endl;
+        container.At(ibin + k) = i + 2*j;
       }
     }
   }

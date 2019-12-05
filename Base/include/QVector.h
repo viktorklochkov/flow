@@ -146,6 +146,10 @@ class QVector {
     this->q_.resize(other.q_.size());
   }
 
+  void InitializeHarmonics() {
+    maximum_harmonic_ = highestharmonic();
+  }
+
   /**
    * Reset the Q-vector. Is called before the Q-vector is filled in every event.
    */
@@ -308,7 +312,7 @@ class QVector {
   }
 
   /**
-   * Gets the next harmonic using the current one as imput.
+   * Gets the next harmonic using the current one as input.
    * @param harmonic current harmonic.
    * @return returns the next harmonic. Returns -1 if none are found.
    */

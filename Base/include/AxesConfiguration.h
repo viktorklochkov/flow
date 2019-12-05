@@ -19,7 +19,6 @@
 
 #include "TemplateHelpers.h"
 namespace Qn {
-namespace Correlation {
 
 namespace Impl {
 template<std::size_t position>
@@ -55,6 +54,15 @@ class AxesConfiguration {
     return FindBin(coordinates...);
   }
 
+  std::vector<std::string> GetNames() const {
+    const auto axes_vector = GetVector();
+    std::vector<std::string> axes_names_;
+    for (const auto & axis :axes_vector) {
+      axes_names_.push_back(axis.Name());
+    }
+    return axes_names_;
+  }
+
  private:
 
   template<typename FirstCoordinate, typename... Rest>
@@ -85,8 +93,6 @@ class AxesConfiguration {
 template<typename ...Axes>
 auto MakeAxes(Axes... axes) {
   return AxesConfiguration<Axes...>(axes...);
-}
-
 }
 }
 #endif //FLOW_DATAFRAMECORRELATION_INCLUDE_DATAFRAMEAXISCONFIGURATION_H_
