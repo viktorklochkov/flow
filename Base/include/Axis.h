@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 
 #include "Rtypes.h"
 

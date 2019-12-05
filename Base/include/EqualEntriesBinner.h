@@ -41,6 +41,8 @@ class EqualEntriesBinner {
   }
   std::vector<double> CalculateBins(std::vector<double> data, unsigned int nbins, double low, double high) {
     std::sort(data.begin(), data.end());
+    if (low < data.front()) { data.insert(data.begin(),low); }
+    if (high > data.back()) { data.push_back(high); }
     auto npoints = data.size();
     auto lowiter = std::lower_bound(data.begin(), data.end(), low);
     auto highiter = std::lower_bound(data.begin(), data.end(), high);
