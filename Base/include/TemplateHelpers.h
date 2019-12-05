@@ -20,7 +20,6 @@
 #include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
-namespace Correlation {
 
 namespace TemplateHelpers {
 
@@ -122,6 +121,5 @@ auto ToVector(const std::tuple<first_type, others...> &t) {
 }
 }
 
-}
 }
 #endif //FLOW_TEMPLATEHELPERS_H

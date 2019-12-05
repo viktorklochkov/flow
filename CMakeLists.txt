@@ -91,17 +91,17 @@ set(BASE_HEADERS DataContainer.h
         Cuts.h
         Statistic.h
         EqualEntriesBinner.h
+        TemplateHelpers.h
+        AxesConfiguration.h
         )
 
 set(CORRELATION_SOURCES
         )
 
 set(CORRELATION_HEADERS
-        AxesConfiguration.h
         CorrelationHelper.h
         Correlation.h
         ReSampler.h
-        TemplateHelpers.h
         )
 
 set (TOYMC_SOURCES

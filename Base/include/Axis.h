@@ -64,7 +64,19 @@ class Axis {
   }
 
   Axis(const Axis<T> &axis) : name_(axis.name_), bin_edges_(axis.bin_edges_) {}
-  bool operator==(const Axis &axis) const { return name_==axis.name_; }
+  bool operator==(const Axis &axis) const {
+    auto same_bins = false;
+    if (size()==axis.size()) {
+      std::vector<bool> result;
+      std::transform(std::begin(bin_edges_),
+                     std::end(bin_edges_),
+                     std::begin(axis.bin_edges_),
+                     std::back_inserter(result),
+                     [](const T &a, const T &b) { return a==b; });
+      same_bins = std::all_of(std::begin(result), std::end(result), [](bool a) { return a; });
+    }
+    return name_==axis.name_ && same_bins;
+  }
 
   typedef typename std::vector<T>::const_iterator citerator;
   typedef typename std::vector<T>::iterator iterator;

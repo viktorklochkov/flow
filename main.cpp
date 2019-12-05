@@ -246,7 +246,7 @@ int main() {
   std::map<std::string, ROOT::RDF::RResultPtr<Qn::DataContainerStats>> correlations;
   for (const auto &detector : detector_names_trk) {
     std::string correlation_name{"v22"};
-    auto c22 = Qn::Correlation::MakeCorrelation(correlation_name, v2, Qn::Correlation::MakeAxes(event))
+    auto c22 = Qn::Correlation::MakeCorrelation(correlation_name, v2, Qn::MakeAxes(event))
         .SetInputNames(detector, "DetPsi_PLAIN")
         .SetWeights(Qn::Stats::Weights::OBSERVABLE, Qn::Stats::Weights::REFERENCE).BookMe(df_samples,
                                                                                           reader,
@@ -256,7 +256,7 @@ int main() {
 
   for (const auto &detector : detector_names_trk) {
     std::string correlation_name{"v2_2"};
-    auto c22 = Qn::Correlation::MakeCorrelation(correlation_name, v2_2, Qn::Correlation::MakeAxes(event))
+    auto c22 = Qn::Correlation::MakeCorrelation(correlation_name, v2_2, Qn::MakeAxes(event))
         .SetInputNames(detector)
         .SetWeights(Qn::Stats::Weights::OBSERVABLE).BookMe(df_samples,
                                                            reader,
