@@ -208,12 +208,12 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   void LoadCorrectionFromFile(TFile *file, TTreeReader *reader) {
     Initialize(*reader);
-    if (file->FindKey(correction_name_.data())) {
+    if (file->FindKey(GetName().data())) {
       for (unsigned int i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
         auto harmonic = harmonics_vector_[i_harmonic];
-        auto x = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((correction_name_ + "/X_"
+        auto x = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/X_"
             + std::to_string(harmonic)).data()));
-        auto y = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((correction_name_ + "/Y_"
+        auto y = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/Y_"
             + std::to_string(harmonic)).data()));
         if (x && y) {
           auto read_axes = x->GetAxes();
@@ -273,12 +273,24 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   void Write(TDirectory *directory) {
     directory->cd();
-    directory->mkdir(correction_name_.data());
-    directory->cd(correction_name_.data());
+    directory->mkdir(GetName().data());
+    directory->cd(GetName().data());
     for (unsigned int i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       x_.at(i_harmonic).Write((std::string("X_") + std::to_string(harmonics_vector_[i_harmonic])).data());
       y_.at(i_harmonic).Write((std::string("Y_") + std::to_string(harmonics_vector_[i_harmonic])).data());
     }
+    auto max_entries = std::max_element(x_[0].begin(),
+                                        x_[0].end(),
+                                        [](const Statistic &a, const Statistic &b) {
+                                          return a.Entries() < b.Entries();
+                                        });
+    auto histo_bin_occupancy =
+        new TH1F("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, 0., max_entries->Entries());
+    for (auto &bin : x_[0]) {
+      auto n = bin.Entries();
+      histo_bin_occupancy->Fill(n);
+    }
+    histo_bin_occupancy->Write("EntriesPerBin");
   }
 
  private:
