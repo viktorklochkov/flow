@@ -14,9 +14,8 @@ set(TEST_SOURCES
 #        DataFrameAlgorithmUnitTest.cpp
         DataContainerUnitTest.cpp
         )
-#        ParticleGeneratorUnitTest.cpp)
 string(REPLACE ".cpp" ".h" TEST_HEADERS "${TEST_SOURCES}")
 
 add_executable(tests ${TEST_SOURCES})
-target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correction Correlation ToyMC)
+target_link_libraries(tests gtest gtest_main ${ROOT_LIBRARIES} Base Correction ToyMC DataFrame)
 add_test(NAME all_tests COMMAND tests)

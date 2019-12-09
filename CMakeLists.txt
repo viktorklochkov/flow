@@ -69,7 +69,6 @@ set(CORRECTION_HEADERS
         DetectorList.h
         InputVariable.h
         QAHistogram.h
-        CorrectionFillHelper.h
         )
 
 set(BASE_SOURCES
@@ -91,8 +90,6 @@ set(BASE_HEADERS DataContainer.h
         Cuts.h
         Statistic.h
         EqualEntriesBinner.h
-        TemplateHelpers.h
-        AxesConfiguration.h
         )
 
 set(CORRELATION_SOURCES
@@ -104,10 +101,11 @@ set(CORRELATION_HEADERS
         ReSampler.h
         )
 
-set (TOYMC_SOURCES
+set(TOYMC_SOURCES
         ToyMC/ParticleGenerator.cpp
         ToyMC/ChannelDetector.cpp)
-set (TOYMC_HEADERS
+
+set(TOYMC_HEADERS
         ToyMC/ParticleGenerator.h
         ToyMC/include/ChannelDetector.h
         )
@@ -168,28 +166,17 @@ target_include_directories(Correction
         )
 target_link_libraries(Correction PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
 
-#DataFrameCorrelation
-add_custom_command(OUTPUT G__Correlation.cxx
-        COMMAND ${ROOTCLING} -v -f G__Correlation.cxx
-        -rml libCorrelation${CMAKE_SHARED_LIBRARY_SUFFIX}
-        -rmf libCorrelation.rootmap
-        -s libCorrelation
-        -I${CMAKE_SOURCE_DIR}/Correlation -I${CMAKE_SOURCE_DIR}/Correlation/include  -I${CMAKE_SOURCE_DIR}/Base/include -I${CMAKE_SOURCE_DIR}/Base
-        ${CORRELATION_HEADERS}
-        ${CMAKE_SOURCE_DIR}/Correlation/CorrelationLinkDef.h
-        )
-add_library(Correlation SHARED ${CORRELATION_SOURCES} G__Correlation)
-add_library(Qn::Correlation ALIAS Correlation)
-target_compile_definitions(Correlation PUBLIC "-DUSE_ROOT")
-target_include_directories(Correlation
-        PRIVATE
+add_library(DataFrame INTERFACE)
+target_include_directories(DataFrame
+        INTERFACE
         ${ROOT_INCLUDE_DIRS}
-        ${CMAKE_SOURCE_DIR}/Correlation
-        PUBLIC
         $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Correlation/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame/Common>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame/Correlation>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame/Correction>
         )
-target_link_libraries(Correlation PUBLIC Base PRIVATE ${ROOT_LIBRARIES})
+target_link_libraries(DataFrame INTERFACE Base ${ROOT_LIBRARIES})
 
 # ToyMC
 add_library(ToyMC SHARED ${TOYMC_SOURCES})
@@ -203,7 +190,7 @@ target_include_directories(ToyMC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/ToyMC/include>
         )
-target_link_libraries(ToyMC PUBLIC Base Correlation Correction PRIVATE ${ROOT_LIBRARIES})
+target_link_libraries(ToyMC PUBLIC Base Correction PRIVATE ${ROOT_LIBRARIES})
 
 IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
     # Googletest
@@ -226,16 +213,19 @@ IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
     add_subdirectory(test)
 ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
-add_executable(main main.cpp)
-target_link_libraries(main ${ROOT_LIBRARIES} Base Correlation ToyMC Correction)
 #
 # Install configuration
 
 set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
 
-install(DIRECTORY Base/include/ Correction/include/ Correlation/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-# Installion of ROOT dictionaries
+install(DIRECTORY Base/include/ Correction/include/ DataFrame/Common/ DataFrame/Correction/ DataFrame/Correlation/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY DataFrame/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        PATTERN "DataFrame/Common" EXCLUDE
+        PATTERN "DataFrame/Correction" EXCLUDE
+        PATTERN "DataFrame/Correlation" EXCLUDE)
+
+# Installation of ROOT dictionaries
 install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libBase.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libCorrection_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -243,7 +233,7 @@ install(FILES ${CMAKE_BINARY_DIR}/libCorrection.rootmap DESTINATION ${CMAKE_INST
 install(FILES ${CMAKE_BINARY_DIR}/libCorrelation_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_BINARY_DIR}/libCorrelation.rootmap DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(TARGETS Base Correction Correlation
+install(TARGETS Base Correction DataFrame
         EXPORT QnTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -273,7 +263,7 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/QnConfigVersion.cmake
         DESTINATION ${INSTALL_CONFIGDIR})
 
-export(TARGETS Base Correction Correlation NAMESPACE Qn:: FILE QnTargets.cmake)
+export(TARGETS Base Correction DataFrame NAMESPACE Qn:: FILE QnTargets.cmake)
 export(PACKAGE Qn)
 
 

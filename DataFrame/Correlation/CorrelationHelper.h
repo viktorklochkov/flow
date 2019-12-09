@@ -14,8 +14,8 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#ifndef FLOW_DATAFRAMESTATISTICS_H
-#define FLOW_DATAFRAMESTATISTICS_H
+#ifndef FLOW_CORRELATIONHELPER_H
+#define FLOW_CORRELATIONHELPER_H
 
 #include "ROOT/RDF/ActionHelpers.hxx"
 #include "ROOT/RStringView.hxx"
@@ -210,4 +210,4 @@ MakeCorrelation(const std::string &name, F function, AxisConfig event_axes) {
 
 }
 }
-#endif //FLOW_DATAFRAMESTATISTICS_H
+#endif //FLOW_CORRELATIONHELPER_H

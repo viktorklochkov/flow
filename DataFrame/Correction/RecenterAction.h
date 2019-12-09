@@ -72,7 +72,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   RecenterAction(std::string correction_name, std::string sub_event_name, AxesConfig axes_configuration) :
       correction_name_(std::move(correction_name)),
       sub_event_name_(std::move(sub_event_name)),
-      axes_configuration_(axes_configuration) {}
+      event_axes_(axes_configuration) {}
 
   /**
    * Enables the width equalization.
@@ -100,7 +100,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   std::vector<std::string> GetColumnNames() const {
     std::vector<std::string> columns;
     columns.emplace_back(sub_event_name_);
-    const auto event_axes_names = axes_configuration_.GetNames();
+    const auto event_axes_names = event_axes_.GetNames();
     std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
     return columns;
   }
@@ -134,8 +134,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
         x_[i_harmonic].AddAxes(input_data->GetAxes());
         y_[i_harmonic].AddAxes(input_data->GetAxes());
       }
-      x_[i_harmonic].AddAxes(axes_configuration_.GetVector());
-      y_[i_harmonic].AddAxes(axes_configuration_.GetVector());
+      x_[i_harmonic].AddAxes(event_axes_.GetVector());
+      y_[i_harmonic].AddAxes(event_axes_.GetVector());
       harmonics_vector_.push_back(harmonic);
       harmonic = input_q.GetNextHarmonic(harmonic);
       i_harmonic++;
@@ -151,7 +151,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   void CalculateCorrections(const Qn::DataContainerQVector &input,
                             EventParameters ...event_parameters) {
-    auto event_bin = axes_configuration_.GetLinearIndexFromCoordinates(event_parameters...);
+    auto event_bin = event_axes_.GetLinearIndexFromCoordinates(event_parameters...);
     if (event_bin < 0) return;
     for (std::size_t ibin = 0; ibin < input.size(); ++ibin) {
       const auto output_bin = (event_bin*stride_ + ibin);
@@ -173,7 +173,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   Qn::DataContainerQVector operator()(const Qn::DataContainerQVector &input_q, EventParameters ...coordinates) {
     Qn::DataContainerQVector corrected_q(input_q);
-    auto event_bin = axes_configuration_.GetLinearIndexFromCoordinates(coordinates...);
+    auto event_bin = event_axes_.GetLinearIndexFromCoordinates(coordinates...);
     if (event_bin < 0) return corrected_q;
     for (std::size_t ibin = 0; ibin < corrected_q.size(); ++ibin) {
       auto x_width = 1.;
@@ -244,7 +244,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   auto ApplyCorrection(DataFrame &df) const {
     std::vector<std::string> columns;
     columns.push_back(sub_event_name_);
-    const auto event_axes_names = axes_configuration_.GetNames();
+    const auto event_axes_names = event_axes_.GetNames();
     std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
     return df.Define(GetName(), *this, columns);
   }
@@ -300,7 +300,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   std::vector<unsigned int> harmonics_vector_; /// vector of enabled harmonics.
   std::string correction_name_; /// name of the correction step.
   std::string sub_event_name_; /// name of the input Q-vector.
-  AxesConfig axes_configuration_; /// event axes used to classify the events in classes for the correction step.
+  AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms .
 };
@@ -345,7 +345,7 @@ auto ApplyCorrections(DataFrame df, Last last) {
  * @return RDataFrame, which contains the the corrected Q-vectors.
  */
 template<typename DataFrame, typename First, typename... Rest>
-auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
+inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
   return ApplyCorrections(first.ApplyCorrection(df), rest...);
 }
 

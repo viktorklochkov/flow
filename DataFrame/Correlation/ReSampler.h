@@ -14,13 +14,43 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#ifdef __CLING__
+#ifndef FLOW_RESAMPLER_H_
+#define FLOW_RESAMPLER_H_
 
-#pragma link C++ namespace Qn;
-#pragma link C++ namespace Correlation;
-#pragma link C++ nestedclass;
-#pragma link C++ nestedtypedef;
+#include <random>
+#include <vector>
+#include <algorithm>
+#include "RtypesCore.h"
+#include "ROOT/RVec.hxx"
 
+namespace Qn {
+namespace Correlation {
 
+class ReSampler {
+ public:
+  ReSampler() = default;
+  ReSampler(std::size_t n) :
+      n_(n),
+      poisson_(1) {
+    std::random_device rd;
+    generator_ = std::mt19937{rd()};
+  }
 
-#endif
+  ROOT::RVec<ULong64_t> operator()() {
+    ROOT::RVec<ULong64_t> vec(n_);
+    for (auto &entry : vec) {
+      entry = poisson_(generator_);
+    }
+    return vec;
+  }
+
+  std::size_t N() const { return n_; }
+ private:
+  std::size_t n_{10};
+  std::mt19937 generator_;
+  std::poisson_distribution<> poisson_;
+};
+
+}
+}
+#endif //RESAMPLER_H_
