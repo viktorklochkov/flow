@@ -14,8 +14,8 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#ifndef FLOW_DATAFRAMECORRELATION_H
-#define FLOW_DATAFRAMECORRELATION_H
+#ifndef FLOW_CORRELATION_H
+#define FLOW_CORRELATION_H
 
 #include <functional>
 #include <cstring>
@@ -192,4 +192,4 @@ class Correlation<Function, std::tuple<Qvectors...>, std::tuple<InputDataContain
 
 }
 }
-#endif //FLOW_DATAFRAMECORRELATION_H
+#endif //FLOW_CORRELATION_H

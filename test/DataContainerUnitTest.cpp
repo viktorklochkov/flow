@@ -12,13 +12,12 @@
 #include <TProfile.h>
 #include <ROOT/RDataFrame.hxx>
 #include "AxesConfiguration.h"
-#include "CorrectionFillHelper.h"
 #include "EqualEntriesBinner.h"
-#include "RecenterAction.h"
-#include "AverageHelper.h"
+#include "FlowDataFrame.h"
 
 TEST(DataContainerTest, TestHelper) {
-  ROOT::RDataFrame df("tree", "~/testhelper/mergedtree.root");
+  ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
+  auto df = df0.Filter("Trigger==0","minbias");
 
   auto result = Qn::Correction::MakeAverageHelper(
       Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
@@ -60,7 +59,7 @@ TEST(DataContainerTest, equalbinning) {
   int nbins = 10;
   Qn::AxisD axis1("t1", nbins, -2, 2);
   std::mt19937_64 gen(10);
-  std::normal_distribution<> normal_distribution(0, 1);
+  std::normal_distribution<> normal_distribution(0, 0.1);
   std::vector<double> hist1(nbins);
   std::vector<double> values;
   for (int i = 0; i < 1000; ++i) {
@@ -72,7 +71,7 @@ TEST(DataContainerTest, equalbinning) {
     values.push_back(value);
   }
   Qn::EqualEntriesBinner binner;
-  auto bins = binner.CalculateBins(values, nbins, 2., 2.);
+  auto bins = binner.CalculateBins(values, nbins, -2., 2.);
   Qn::AxisD axis2("t2", bins);
   std::vector<double> hist2(nbins);
   for (auto &value : values) {
@@ -84,6 +83,7 @@ TEST(DataContainerTest, equalbinning) {
   for (int i = 0; i < hist1.size(); ++i) {
     std::cout << hist1[i] << " " << hist2[i] << std::endl;
   }
+  axis2.Print();
 }
 
 //TEST(DataContainerTest, Copy) {
@@ -93,21 +93,7 @@ TEST(DataContainerTest, equalbinning) {
 //  EXPECT_EQ(copy.size(), container.size());
 //}
 //
-TEST(DataContainerTest, Fill) {
-  Qn::DataContainerStatistic a;
-  a.AddAxis({"t", 10, 0, 10});
-  a.Fill(4, 4, {4});
-  EXPECT_EQ(a.At(4).Mean(), 4);
 
-  ROOT::RDataFrame df(20);
-  auto df1 = df.Define("x", "4.").Define("w", "1.").Define("ev", []() { return std::vector<double>{1}; });
-  Qn::DataContainerStatistic data;
-  data.AddAxis({"t", 10, 0, 10});
-//  auto da = df1.Fill<std::vector<double>, double>(std::forward<Qn::DataContainerStatistic >(data),{"ev","w"});
-  auto res = df1.Book<double, double, std::vector<double>>(CorrectionFillHelper(data), {"x", "w", "ev"});
-  auto x = Qn::ToTGraph(*res, Qn::Errors::Yonly);
-
-}
 //
 //
 TEST(DataContainerTest, AddAxes) {

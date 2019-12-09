@@ -25,7 +25,13 @@ using RActionImpl =  ROOT::Detail::RDF::RActionImpl<Helper>;
 
 template<typename Action, typename EventParameters, typename DataContainers>
 class AverageHelper;
-
+/**
+ * Averaging helper class for the use in the RDataFrame
+ * Allows to perform an averaging over events with an Action
+ * @tparam Action Action which specifies the way to perform the average
+ * @tparam EventParameters Event parameters used for classification of events
+ * @tparam DataContainers Input data containers / Q-vectors
+ */
 template<typename Action, typename... EventParameters, typename... DataContainers>
 class AverageHelper<Action,
                     std::tuple<EventParameters...>,
@@ -33,13 +39,18 @@ class AverageHelper<Action,
                                                                                       std::tuple<EventParameters...>,
                                                                                       std::tuple<DataContainers...> >> {
  public:
-  using Result_t = Action;
+  using Result_t = Action; /// Result of the averaging operation.
 
  private:
-  bool is_configured_ = false;
-  std::vector<std::shared_ptr<Action>> results_;
+  bool is_configured_ = false; /// flag for tracking if the helper has been configured using the input data.
+  std::vector<std::shared_ptr<Action>> results_; /// vector of results.
 
  public:
+  /**
+   * Constructor
+   * takes an action and creates as many results as the ROOT MT pool size demands.
+   * @param action Action which determines the operation and event classification.
+   */
   explicit AverageHelper(Action action) {
     const auto n_slots = ROOT::IsImplicitMTEnabled() ? ROOT::GetImplicitMTPoolSize() : 1;
     for (std::size_t i = 0; i < n_slots; ++i) {
@@ -47,15 +58,31 @@ class AverageHelper<Action,
     }
   }
 
+  /**
+   * Adds the helper to the datacontainer using the Book function.
+   * Wraps this in this function to omit template parameters in it's usage.
+   * @tparam DataFrame type of a RDataFrame.
+   * @param df input data frame
+   * @return returns the result of the averaging. This Action can in the following be used to perform the corrections.
+   */
   template<typename DataFrame>
   ROOT::RDF::RResultPtr<Result_t> BookMe(DataFrame &df) {
     return df.template Book<DataContainers..., EventParameters...>(std::move(*this), results_[0]->GetColumnNames());
   }
 
+  /**
+   * Main analysis loop. This function is run for every event. Forwards the inputs to the action.
+   * @param slot slot in the MT pool.
+   * @param data_containers input Q-vectors.
+   * @param coordinates input event parameters for event classification.
+   */
   void Exec(unsigned int slot, DataContainers... data_containers, EventParameters... coordinates) {
     results_[slot]->CalculateCorrections(data_containers..., coordinates...);
   }
 
+  /**
+   * Finalizes the results and merges all slots into the first.
+   */
   void Finalize() {
     auto result = results_.at(0);
     const auto number_of_slots = results_.size();
@@ -66,6 +93,10 @@ class AverageHelper<Action,
     result->Merge(others);
   }
 
+  /**
+   * Initializes the helper and the action using the first event in the input tree.
+   * @param reader
+   */
   void InitTask(TTreeReader *reader, unsigned int) {
     if (!is_configured_) {
       auto entry = reader->GetCurrentEntry();
@@ -85,12 +116,12 @@ class AverageHelper<Action,
   std::string GetActionName() const { return results_[0]->GetName(); }
 };
 
+/**
+ * Helper function which creates the AverageHelper without needing to specify the template parameters.
+ * @tparam Action Action which carries the needed information to derive the template parameters and create the AverageHelper.
+ */
 template<typename Action>
-AverageHelper<Action,
-              typename Action::EventParameterTuple,
-              TemplateHelpers::TupleOf<Action::NumberOfInputs, Qn::DataContainerQVector>
-             >
-MakeAverageHelper(Action action) {
+auto inline MakeAverageHelper(Action action) {
   using EventParameterTuple = typename Action::EventParameterTuple;
   using DataContainerTuple = TemplateHelpers::TupleOf<Action::NumberOfInputs, Qn::DataContainerQVector>;
   return AverageHelper<Action, EventParameterTuple, DataContainerTuple>{action};
