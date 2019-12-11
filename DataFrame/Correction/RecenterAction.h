@@ -275,9 +275,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     }
     auto max_entries = std::max_element(x_[0].begin(),
                                         x_[0].end(),
-                                        [](const Statistic &a, const Statistic &b) {
-                                          return a.Entries() < b.Entries();
-                                        });
+                                        [](const Statistic &a, const Statistic &b) {return a.Entries() < b.Entries();});
     auto histo_bin_occupancy =
         new TH1F("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, 0., max_entries->Entries());
     for (auto &bin : x_[0]) {
@@ -343,6 +341,39 @@ template<typename DataFrame, typename First, typename... Rest>
 inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
   return ApplyCorrections(first.ApplyCorrection(df), rest...);
 }
+
+/**
+ * Convenience function to apply the corrections of multiple Recentering procedures.
+ * @tparam DataFrame type of a RDataFrame
+ * @param df RDataFrame which contains the input Q-vectors.
+ * @param first the first correction step to be applied.
+ * @param rest rest of the correction steps.
+ * @return RDataFrame, which contains the the corrected Q-vectors.
+ */
+template<typename DataFrame, typename VectorOfCorrections>
+inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector) {
+  auto dftemp = df;
+  for (auto &correction : resultptr_vector) {
+    dftemp = correction->ApplyCorrection(dftemp);
+  }
+  return dftemp;
+}
+
+
+template<typename DataFrame, typename VectorOfCorrections>
+inline auto SnapshotVector(DataFrame df, std::string filename, std::string treename, VectorOfCorrections result_vector, std::vector<std::string> branches) {
+  std::vector<std::string> columns;
+  std::transform(std::begin(result_vector),
+                 std::end(result_vector),
+                 std::back_inserter(columns),
+                 [](auto ptr){ return ptr->GetName();});
+  std::transform(std::begin(branches),
+                 std::end(branches),
+                 std::back_inserter(columns),
+                 [](auto name){ return name;});
+  return df.Snapshot(treename, filename, columns);
+}
+
 
 }
 }
