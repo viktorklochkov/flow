@@ -19,23 +19,22 @@
 TEST(DataContainerTest, TestHelper) {
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
   auto df = df0.Filter("Trigger==0", "minbias");
-
-  auto resultzna = Qn::EventAverage(
+  auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
+  std::vector<ROOT::RDF::RResultPtr<Qn::Correction::RecenterAction<decltype(axes), decltype(axes)::AxisValueTypeTuple >>> corrections;
+  corrections.push_back(Qn::EventAverage(
       Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
                .EnableWidthEqualization()
-  ).BookMe(df);
-
-  auto resultznc = Qn::EventAverage(
+  ).BookMe(df));
+  corrections.push_back(Qn::EventAverage(
       Qn::Correction::Recentering("test","ZNC_PLAIN",Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
           .EnableWidthEqualization()
-  ).BookMe(df);
-
-  auto result2 = Qn::EventAverage(
+  ).BookMe(df));
+  corrections.push_back(Qn::EventAverage(
       Qn::Correction::Recentering("test", "TPCPT_PLAIN", Qn::EventAxes(Qn::AxisD{"CentralityV0M", 2, 0, 100}))
-  ).BookMe(df);
+  ).BookMe(df));
 
-  auto corrected = Qn::Correction::ApplyCorrections(df, *resultzna, *resultznc, *result2);
-  corrected.Snapshot("tree", "~/testhelper/rectree.root", {"ZNA_PLAIN_test", "ZNC_PLAIN_test", "TPCPT_PLAIN_test", "CentralityV0M"});
+  auto corrected = Qn::Correction::ApplyCorrectionsVector(df,corrections);
+  Qn::Correction::SnapshotVector(corrected, "~/testhelper/rectree.root", "tree", corrections, {"CentralityV0M","VtxX"});
 
   ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
 
@@ -53,8 +52,6 @@ TEST(DataContainerTest, TestHelper) {
 
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-  resultzna->Write(file);
-  resultznc->Write(file);
   t->Write();
   file->Close();
   delete file;
