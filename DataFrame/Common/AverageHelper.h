@@ -18,7 +18,6 @@
 #define FLOW_AVERAGEHELPER_H_
 
 namespace Qn {
-namespace Correction {
 
 template<typename Helper>
 using RActionImpl =  ROOT::Detail::RDF::RActionImpl<Helper>;
@@ -77,7 +76,7 @@ class AverageHelper<Action,
    * @param coordinates input event parameters for event classification.
    */
   void Exec(unsigned int slot, DataContainers... data_containers, EventParameters... coordinates) {
-    results_[slot]->CalculateCorrections(data_containers..., coordinates...);
+    results_[slot]->CalculateAction(data_containers..., coordinates...);
   }
 
   /**
@@ -121,13 +120,12 @@ class AverageHelper<Action,
  * @tparam Action Action which carries the needed information to derive the template parameters and create the AverageHelper.
  */
 template<typename Action>
-auto inline MakeAverageHelper(Action action) {
+auto inline EventAverage(Action action) {
   using EventParameterTuple = typename Action::EventParameterTuple;
-  using DataContainerTuple = TemplateHelpers::TupleOf<Action::NumberOfInputs, Qn::DataContainerQVector>;
+  using DataContainerTuple = TemplateMagic::TupleOf<Action::NumberOfInputs, Qn::DataContainerQVector>;
   return AverageHelper<Action, EventParameterTuple, DataContainerTuple>{action};
 }
 
-}
 }
 
 #endif

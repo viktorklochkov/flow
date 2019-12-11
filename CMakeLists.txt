@@ -89,7 +89,6 @@ set(BASE_HEADERS DataContainer.h
         Stats.h
         Cuts.h
         Statistic.h
-        EqualEntriesBinner.h
         )
 
 set(CORRELATION_SOURCES
@@ -219,11 +218,7 @@ ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
 
-install(DIRECTORY Base/include/ Correction/include/ DataFrame/Common/ DataFrame/Correction/ DataFrame/Correlation/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(DIRECTORY DataFrame/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        PATTERN "DataFrame/Common" EXCLUDE
-        PATTERN "DataFrame/Correction" EXCLUDE
-        PATTERN "DataFrame/Correlation" EXCLUDE)
+install(DIRECTORY Base/include/ Correction/include/ DataFrame/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Installation of ROOT dictionaries
 install(FILES ${CMAKE_BINARY_DIR}/libBase_rdict.pcm DESTINATION ${CMAKE_INSTALL_LIBDIR})

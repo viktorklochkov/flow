@@ -14,14 +14,17 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#ifndef FLOW_TEMPLATEHELPERS_H
-#define FLOW_TEMPLATEHELPERS_H
+#ifndef FLOW_TEMPLATEMAGIC_H
+#define FLOW_TEMPLATEMAGIC_H
 
 #include "ROOT/RIntegerSequence.hxx"
+#include <tuple>
+#include <utility>
+#include <algorithm>
 
 namespace Qn {
 
-namespace TemplateHelpers {
+namespace TemplateMagic {
 
 namespace Impl {
 template<typename T>
@@ -119,7 +122,7 @@ auto ToVector(const std::tuple<first_type, others...> &t) {
   constexpr auto s = std::tuple_size<tuple_type>::value;
   return Impl::ToVectorHelper<first_type, tuple_type>(t, std::make_index_sequence<s>{});
 }
-}
 
 }
-#endif //FLOW_TEMPLATEHELPERS_H
+}
+#endif //FLOW_TEMPLATEMAGIC_H

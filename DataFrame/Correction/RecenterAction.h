@@ -17,10 +17,17 @@
 #ifndef FLOW_RECENTERACTION_H_
 #define FLOW_RECENTERACTION_H_
 
-#include <utility>
 #include <algorithm>
+#include <string>
+#include <vector>
 
-#include "TemplateHelpers.h"
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
+#include "TFile.h"
+
+#include "DataContainer.h"
+#include "QVector.h"
+#include "TemplateMagic.h"
 
 namespace Qn {
 namespace Correction {
@@ -130,12 +137,12 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     while (harmonic!=-1) {
       x_.emplace_back();
       y_.emplace_back();
+      x_[i_harmonic].AddAxes(event_axes_.GetVector());
+      y_[i_harmonic].AddAxes(event_axes_.GetVector());
       if (!input_data->IsIntegrated()) {
         x_[i_harmonic].AddAxes(input_data->GetAxes());
         y_[i_harmonic].AddAxes(input_data->GetAxes());
       }
-      x_[i_harmonic].AddAxes(event_axes_.GetVector());
-      y_[i_harmonic].AddAxes(event_axes_.GetVector());
       harmonics_vector_.push_back(harmonic);
       harmonic = input_q.GetNextHarmonic(harmonic);
       i_harmonic++;
@@ -149,16 +156,14 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param input input Q-vector, which is supposed to be corrected.
    * @param event_parameters event parameters determining the correction histogram bin.
    */
-  void CalculateCorrections(const Qn::DataContainerQVector &input,
-                            EventParameters ...event_parameters) {
-    auto event_bin = event_axes_.GetLinearIndexFromCoordinates(event_parameters...);
+  void CalculateAction(const Qn::DataContainerQVector &input, EventParameters ...event_parameters) {
+    auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
     if (event_bin < 0) return;
-    for (std::size_t ibin = 0; ibin < input.size(); ++ibin) {
-      const auto output_bin = (event_bin*stride_ + ibin);
-      for (unsigned int i = 0; i < harmonics_vector_.size(); ++i) {
-        auto q = input[ibin];
-        x_[i].At(output_bin).Fill(q.x(harmonics_vector_[i]), 1.);
-        y_[i].At(output_bin).Fill(q.y(harmonics_vector_[i]), 1.);
+    for (std::size_t i = 0u; i < harmonics_vector_.size(); ++i) {
+      for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
+        const auto output_bin = event_bin+ibin;
+        x_[i].At(output_bin).Fill(input[ibin].x(harmonics_vector_[i]), 1.);
+        y_[i].At(output_bin).Fill(input[ibin].y(harmonics_vector_[i]), 1.);
       }
     }
   }
@@ -173,29 +178,22 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   Qn::DataContainerQVector operator()(const Qn::DataContainerQVector &input_q, EventParameters ...coordinates) {
     Qn::DataContainerQVector corrected_q(input_q);
-    auto event_bin = event_axes_.GetLinearIndexFromCoordinates(coordinates...);
+    auto event_bin = event_axes_.GetLinearIndex(coordinates...) * stride_;
     if (event_bin < 0) return corrected_q;
-    for (std::size_t ibin = 0; ibin < corrected_q.size(); ++ibin) {
+    for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
+      auto correction_bin = event_bin+ibin;
+      if (x_[0].At(correction_bin).Entries() < min_entries_) continue;
       auto x_width = 1.;
       auto y_width = 1.;
-      auto position = event_bin*stride_ + ibin;
-      if (x_[0].At(position).Entries() > min_entries_) {
-        auto &corrected_bin = corrected_q.At(ibin);
-        auto &in_bin = input_q.At(ibin);
-        corrected_bin = in_bin;
-        corrected_bin.UpdateCorrectionStep(Qn::QVector::CorrectionStep::RECENTERED);
-        for (unsigned int i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
-          if (use_width_equalization_) {
-            x_width = x_[i_harmonic].At(position).Sigma();
-            y_width = y_[i_harmonic].At(position).Sigma();
-          }
-          auto harmonic = harmonics_vector_[i_harmonic];
-          corrected_bin.CopyNumberOfContributors(in_bin);
-          corrected_bin.SetX(harmonic, (in_bin.x(harmonic) - x_[i_harmonic].At(position).Mean())/x_width);
-          corrected_bin.SetY(harmonic, (in_bin.y(harmonic) - y_[i_harmonic].At(position).Mean())/y_width);
+      corrected_q[ibin].UpdateCorrectionStep(Qn::QVector::CorrectionStep::RECENTERED);
+      for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
+        if (use_width_equalization_) {
+          x_width = x_[i_harmonic][correction_bin].Sigma();
+          y_width = y_[i_harmonic][correction_bin].Sigma();
         }
-      } else {
-        corrected_q[ibin] = input_q[ibin];
+        auto harmonic = harmonics_vector_[i_harmonic];
+        corrected_q[ibin].SetQ(harmonic, (input_q[ibin].x(harmonic) - x_[i_harmonic][correction_bin].Mean())/x_width,
+                                         (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
       }
     }
     return corrected_q;
@@ -208,29 +206,25 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   void LoadCorrectionFromFile(TFile *file, TTreeReader *reader) {
     Initialize(*reader);
-    if (file->FindKey(GetName().data())) {
-      for (unsigned int i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
-        auto harmonic = harmonics_vector_[i_harmonic];
-        auto x = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/X_"
-            + std::to_string(harmonic)).data()));
-        auto y = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/Y_"
-            + std::to_string(harmonic)).data()));
-        if (x && y) {
-          auto read_axes = x->GetAxes();
-          auto configured_axes = x_.at(i_harmonic).GetAxes();
-          std::vector<bool> result;
-          std::transform(std::begin(read_axes),
-                         std::end(read_axes),
-                         std::begin(configured_axes),
-                         std::back_inserter(result),
-                         [](const Qn::AxisD &a, const Qn::AxisD &b) { return a==b; });
-          if (!std::all_of(result.begin(), result.end(), [](bool x) { return x; })) {
-            throw std::logic_error("Axes not equal");
-          }
-          x_.at(i_harmonic) = *x;
-          y_.at(i_harmonic) = *y;
-        }
-      }
+    if (!file->FindKey(GetName().data())) throw std::runtime_error("correction in file not found");
+    for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
+      auto harmonic = harmonics_vector_[i_harmonic];
+      auto x = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/X_"
+          + std::to_string(harmonic)).data()));
+      auto y = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/Y_"
+          + std::to_string(harmonic)).data()));
+      if (!(x && y)) throw std::runtime_error("correction in file not found");;
+      auto read_axes = x->GetAxes();
+      auto configured_axes = x_.at(i_harmonic).GetAxes();
+      std::vector<bool> result;
+      std::transform(std::begin(read_axes),
+                     std::end(read_axes),
+                     std::begin(configured_axes),
+                     std::back_inserter(result),
+                     [](const Qn::AxisD &a, const Qn::AxisD &b) { return a==b; });
+      if (!std::all_of(result.begin(), result.end(), [](bool x) { return x; })) throw std::logic_error("Axes not equal");
+      x_.at(i_harmonic) = *x;
+      y_.at(i_harmonic) = *y;
     }
   }
 
@@ -251,19 +245,19 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
 
   /**
    * Merges the correction histogram after the collection of statistics is complete.
-   * This function is requiered by the AverageHelper class.
+   * This function is required by the AverageHelper class.
    * @param results the other results which are to be merged with this one.
    */
   void Merge(const std::vector<std::shared_ptr<RecenterAction>> &results) {
-    TList xs_;
-    TList ys_;
-    for (unsigned int i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
-      for (auto &result : results) {
-        xs_.Add(&result->x_[i_harmonic]);
-        ys_.Add(&result->y_[i_harmonic]);
+    for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
+      TList xs;
+      TList ys;
+      for (const auto &result : results) {
+        xs.Add(&result->x_[i_harmonic]);
+        ys.Add(&result->y_[i_harmonic]);
       }
-      x_[i_harmonic].Merge(&xs_);
-      y_[i_harmonic].Merge(&ys_);
+      x_[i_harmonic].Merge(&xs);
+      y_[i_harmonic].Merge(&ys);
     }
   }
 
@@ -275,7 +269,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     directory->cd();
     directory->mkdir(GetName().data());
     directory->cd(GetName().data());
-    for (unsigned int i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
+    for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       x_.at(i_harmonic).Write((std::string("X_") + std::to_string(harmonics_vector_[i_harmonic])).data());
       y_.at(i_harmonic).Write((std::string("Y_") + std::to_string(harmonics_vector_[i_harmonic])).data());
     }
@@ -291,6 +285,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       histo_bin_occupancy->Fill(n);
     }
     histo_bin_occupancy->Write("EntriesPerBin");
+    directory->cd("../");
   }
 
  private:
@@ -298,9 +293,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   unsigned int min_entries_ = 10; /// Number of minimum entries in a bin required to apply corrections.
   unsigned int stride_ = 1.; /// stride of the differential Q-vector.
   std::vector<unsigned int> harmonics_vector_; /// vector of enabled harmonics.
-  std::string correction_name_; /// name of the correction step.
-  std::string sub_event_name_; /// name of the input Q-vector.
-  AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
+  const std::string correction_name_; /// name of the correction step.
+  const std::string sub_event_name_; /// name of the input Q-vector.
+  const AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms .
 };
@@ -351,4 +346,4 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
 
 }
 }
-#endif //FLOW_CORRECTION_INCLUDE_RECENTERACTION_H_
+#endif //FLOW_RECENTERACTION_H_

@@ -294,6 +294,17 @@ class QVector {
   }
 
   /**
+ * Sets the x-component of the Q-vector of the i-th harmonic.
+ * @param i harmonic i of the Q-vector
+ * @param x new x component.
+ */
+  inline void SetQ(const unsigned int i, double x, double y) {
+    auto position = std::bitset<kmaxharmonics>(bits_ & std::bitset<kmaxharmonics>((1UL << (i)) - 1)).count() - 1;
+    q_[position].x = x;
+    q_[position].y = y;
+  }
+
+  /**
    * Copy the number of contributors of the other Q-vector.
    * This is used during the construction of the corrected Q-vector.
    * @param other Q-vector whose properties are being copied.

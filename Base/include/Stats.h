@@ -187,13 +187,18 @@ class Stats {
     }
   }
 
-
   template<typename SAMPLES>
   inline void FillPoisson(const CorrelationResult &correlation_result, SAMPLES &&samples) {
     if (correlation_result.validity) {
       resamples_.FillPoisson(correlation_result, std::forward<SAMPLES>(samples));
       statistic_.Fill(correlation_result);
     }
+  }
+
+  template<typename SAMPLES>
+  inline void Fill(const double value, const double weight, SAMPLES &&samples) {
+      resamples_.Fill(value, weight, std::forward<SAMPLES>(samples));
+      statistic_.Fill(value, weight);
   }
 
   void SetNumberOfReSamples(size_type nsamples) {

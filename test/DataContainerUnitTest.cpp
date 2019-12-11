@@ -12,32 +12,50 @@
 #include <TProfile.h>
 #include <ROOT/RDataFrame.hxx>
 #include "AxesConfiguration.h"
-#include "EqualEntriesBinner.h"
+#include "EqualBinningHelper.h"
 #include "FlowDataFrame.h"
+#include "CorrelationAction.h"
 
 TEST(DataContainerTest, TestHelper) {
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
-  auto df = df0.Filter("Trigger==0","minbias");
+  auto df = df0.Filter("Trigger==0", "minbias");
 
-  auto result = Qn::Correction::MakeAverageHelper(
-      Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+  auto resultzna = Qn::EventAverage(
+      Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
                .EnableWidthEqualization()
   ).BookMe(df);
-  auto resultwo = Qn::Correction::MakeAverageHelper(
-      Qn::Correction::Recentering("testwo","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+
+  auto resultznc = Qn::EventAverage(
+      Qn::Correction::Recentering("test","ZNC_PLAIN",Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+          .EnableWidthEqualization()
   ).BookMe(df);
 
-  auto result2 = Qn::Correction::MakeAverageHelper(
-      Qn::Correction::Recentering("test2", "TPCPT_PLAIN", Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
+  auto result2 = Qn::EventAverage(
+      Qn::Correction::Recentering("test", "TPCPT_PLAIN", Qn::EventAxes(Qn::AxisD{"CentralityV0M", 2, 0, 100}))
   ).BookMe(df);
 
-  auto corrected = Qn::Correction::ApplyCorrections(df, *result, *result2, *resultwo);
+  auto corrected = Qn::Correction::ApplyCorrections(df, *resultzna, *resultznc, *result2);
+  corrected.Snapshot("tree", "~/testhelper/rectree.root", {"ZNA_PLAIN_test", "ZNC_PLAIN_test", "TPCPT_PLAIN_test", "CentralityV0M"});
 
-  corrected.Snapshot("tree", "~/testhelper/rectree.root", {"ZNA_PLAIN_test","ZNA_PLAIN_testwo", "TPCPT_PLAIN_test2", "CentralityV0M"});
+  ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
+
+
+  auto dfsamples = Qn::Correlation::Resample(dfcorrected,100);
+
+  auto t = Qn::EventAverage(Qn::Correlation::Correlation([](const Qn::QVector &a, const Qn::QVector &b) { return a.x(1) * b.y(1); },
+                                                         {"ZNC_PLAIN_test", "ZNA_PLAIN_test"},
+                                                         {Qn::Stats::Weights::REFERENCE,Qn::Stats::Weights::REFERENCE},
+                                                         "test",
+                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
+                                                         100)).BookMe(dfsamples);
+
+  auto &ttr = t->GetDataContainer();
+
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-  result->Write(file);
-  result2->Write(file);
+  resultzna->Write(file);
+  resultznc->Write(file);
+  t->Write();
   file->Close();
   delete file;
 
@@ -55,36 +73,41 @@ TEST(DataContainerTest, TestHelper) {
 //  delete file_2;
 }
 
+
+
 TEST(DataContainerTest, equalbinning) {
   int nbins = 10;
-  Qn::AxisD axis1("t1", nbins, -2, 2);
+  auto axes = Qn::EventAxes(Qn::AxisD{"t2", nbins, -2, 2},Qn::AxisD{"t1", nbins, -2, 2},Qn::AxisD{"t3", nbins, -2, 2});
   std::mt19937_64 gen(10);
   std::normal_distribution<> normal_distribution(0, 0.1);
   std::vector<double> hist1(nbins);
   std::vector<double> values;
-  for (int i = 0; i < 1000; ++i) {
-    auto value = normal_distribution(gen);
-    auto bin = axis1.FindBin(value);
+  ROOT::RDataFrame df(1000);
+  auto df1 = df.Define("t1", [&normal_distribution, &gen]() { return normal_distribution(gen); }, {})
+               .Define("t2", [&normal_distribution, &gen]() { return normal_distribution(gen); }, {});
+  df1.Foreach([& hist1, &values, axes](const double x) {
+    auto bin = axes.GetLinearIndex(x);
     if (bin!=-1) {
       ++hist1[bin];
     }
-    values.push_back(value);
-  }
-  Qn::EqualEntriesBinner binner;
-  auto bins = binner.CalculateBins(values, nbins, -2., 2.);
-  Qn::AxisD axis2("t2", bins);
-  std::vector<double> hist2(nbins);
-  for (auto &value : values) {
-    auto bin = axis2.FindBin(value);
-    if (bin!=-1) {
-      ++hist2[bin];
-    }
-  }
-  for (int i = 0; i < hist1.size(); ++i) {
-    std::cout << hist1[i] << " " << hist2[i] << std::endl;
-  }
-  axis2.Print();
-}
+    values.push_back(x);
+  },{"t1"});
+  auto equalized = Qn::EqualizeBinning(axes,df1,{"t1","t2"});
+//  Qn::EqualEntriesBinner binner;
+//  auto bins = binner.CalculateBins(values, nbins, -2., 2.);
+//  Qn::AxisD axis2("t2", bins);
+//  std::vector<double> hist2(nbins);
+//  for (auto &value : values) {
+//    auto bin = axis2.FindBin(value);
+//    if (bin!=-1) {
+//      ++hist2[bin];
+//    }
+//  }
+//  for (int i = 0; i < hist1.size(); ++i) {
+//    std::cout << hist1[i] << " " << hist2[i] << std::endl;
+//  }
+//  axis2.Print();
+//}
 
 //TEST(DataContainerTest, Copy) {
 //  Qn::DataContainerQVector container;
@@ -96,6 +119,8 @@ TEST(DataContainerTest, equalbinning) {
 
 //
 //
+}
+
 TEST(DataContainerTest, AddAxes) {
   Qn::DataContainer<double, Qn::AxisD> container;
   container.AddAxes({{"ev1", 2, 0, 2},

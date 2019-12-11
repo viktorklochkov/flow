@@ -16,13 +16,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FLOW_FLOWDATAFRAME_H_
 #define FLOW_FLOWDATAFRAME_H_
-// Base headers
-#include "AxesConfiguration.h"
-#include "EqualEntriesBinner.h"
+// Common headers
+#include "Common/AxesConfiguration.h"
+#include "Common/EqualBinningHelper.h"
+#include "Common/AverageHelper.h"
 // Correction Step
-#include "RecenterAction.h"
-#include "AverageHelper.h"
+#include "Correction/RecenterAction.h"
 // Correlation Step
-#include "ReSampler.h"
-#include "CorrelationHelper.h"
+#include "Correlation/ReSampleHelper.h"
+#include "Correlation/CorrelationAction.h"
 #endif //FLOW_FLOWDATAFRAME_H_
