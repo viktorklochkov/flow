@@ -79,7 +79,11 @@ class Axis {
     return name_==axis.name_ && same_bins;
   }
 
-  typedef typename std::vector<T>::const_iterator citerator;
+  bool operator!=(const Axis &axis) const {
+    return ! operator==(axis);
+  }
+
+    typedef typename std::vector<T>::const_iterator citerator;
   typedef typename std::vector<T>::iterator iterator;
   citerator begin() const { return bin_edges_.cbegin(); } ///< iterator for external use
   citerator end() const { return bin_edges_.cend(); } ///< iterator for external use

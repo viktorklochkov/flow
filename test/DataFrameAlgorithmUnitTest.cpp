@@ -19,7 +19,7 @@
 #include "ROOT/RDataFrame.hxx"
 #include "Correlation.h"
 #include "CorrelationHelper.h"
-#include "ReSampler.h"
+#include "ReSampleHelper.h"
 #include "AxesConfiguration.h"
 
 TEST(DataFrameAlgorithmUnitTest, axisnaming) {

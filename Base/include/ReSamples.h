@@ -95,6 +95,15 @@ class ReSamples {
     }
   }
 
+  template<typename SAMPLES>
+  void Fill(const double value, const double weight, SAMPLES &&sample_multiplicities_) {
+    for (unsigned int i = 0; i < sample_multiplicities_.size(); ++i) {
+      for (unsigned int j = 0; j < sample_multiplicities_[i]; ++j) {
+        statistics_[i].Fill(value, weight);
+      }
+    }
+  }
+
   void FillSample(const CorrelationResult &result, unsigned int sample) {
     statistics_[sample].Fill(result);
   }
