@@ -17,6 +17,16 @@
 #ifndef FLOW_AVERAGEHELPER_H_
 #define FLOW_AVERAGEHELPER_H_
 
+#include <vector>
+#include <tuple>
+#include <string>
+
+#include "ROOT/RResultPtr.hxx"
+#include "ROOT/RDF/ActionHelpers.hxx"
+
+#include "DataContainer.h"
+#include "Common/TemplateMagic.h"
+
 namespace Qn {
 
 template<typename Helper>

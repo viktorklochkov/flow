@@ -22,7 +22,7 @@
 #include <tuple>
 #include <string>
 
-#include "TemplateMagic.h"
+#include "Common/TemplateMagic.h"
 
 namespace Qn {
 

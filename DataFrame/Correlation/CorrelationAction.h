@@ -29,7 +29,7 @@
 
 #include "DataContainer.h"
 #include "QVector.h"
-#include "TemplateMagic.h"
+#include "Common/TemplateMagic.h"
 
 namespace Qn {
 namespace Correlation {

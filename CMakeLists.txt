@@ -171,9 +171,6 @@ target_include_directories(DataFrame
         ${ROOT_INCLUDE_DIRS}
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame/Common>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame/Correlation>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/DataFrame/Correction>
         )
 target_link_libraries(DataFrame INTERFACE Base ${ROOT_LIBRARIES})
 

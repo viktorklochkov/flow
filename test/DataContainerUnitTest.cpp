@@ -11,10 +11,7 @@
 #include <random>
 #include <TProfile.h>
 #include <ROOT/RDataFrame.hxx>
-#include "AxesConfiguration.h"
-#include "EqualBinningHelper.h"
 #include "FlowDataFrame.h"
-#include "CorrelationAction.h"
 
 TEST(DataContainerTest, TestHelper) {
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");

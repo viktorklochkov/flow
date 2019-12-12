@@ -17,10 +17,11 @@
 #ifndef FLOW_TEMPLATEMAGIC_H
 #define FLOW_TEMPLATEMAGIC_H
 
-#include "ROOT/RIntegerSequence.hxx"
 #include <tuple>
 #include <utility>
 #include <algorithm>
+
+#include "ROOT/RIntegerSequence.hxx"
 
 namespace Qn {
 
