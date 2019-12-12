@@ -87,6 +87,7 @@ TEST(DataContainerTest, equalbinning) {
     values.push_back(x);
   },{"t1"});
   auto equalized = Qn::EqualizeBinning(axes,df1,{"t1","t2"});
+  axes = std::move(equalized);
 //  Qn::EqualEntriesBinner binner;
 //  auto bins = binner.CalculateBins(values, nbins, -2., 2.);
 //  Qn::AxisD axis2("t2", bins);

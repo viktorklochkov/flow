@@ -352,9 +352,9 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
  */
 template<typename DataFrame, typename VectorOfCorrections>
 inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector) {
-  auto dftemp = df;
-  for (auto &correction : resultptr_vector) {
-    dftemp = correction->ApplyCorrection(dftemp);
+  auto dftemp = resultptr_vector[0]->ApplyCorrection(df);
+  for (auto i = 1; i < resultptr_vector.size(); ++i) {
+    dftemp = resultptr_vector[i]->ApplyCorrection(dftemp);
   }
   return dftemp;
 }
