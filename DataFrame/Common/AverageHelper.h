@@ -108,14 +108,10 @@ class AverageHelper<Action,
    */
   void InitTask(TTreeReader *reader, unsigned int) {
     if (!is_configured_) {
-      auto entry = reader->GetCurrentEntry();
       for (auto &result : results_) {
-        reader->Restart();
         result->Initialize(*reader);
       }
       is_configured_ = true;
-      reader->Restart();
-      reader->SetLocalEntry(entry);
     }
   }
 
