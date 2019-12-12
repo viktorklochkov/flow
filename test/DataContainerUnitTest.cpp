@@ -19,7 +19,7 @@ TEST(DataContainerTest, TestHelper) {
   auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
 
   using RecenterCorrection = Qn::Correction::RecenterAction<decltype(axes), decltype(axes)::AxisValueTypeTuple>;
-  std::vector<RecenterCorrection> corrections{};
+  std::list<RecenterCorrection> corrections{};
   corrections.push_back(Qn::Correction::Recentering("test",
                                                     "ZNA_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
@@ -32,20 +32,25 @@ TEST(DataContainerTest, TestHelper) {
                                                     "TPCPT_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
   std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
-
-//  for (const auto &correction : corrections) { resultptrs.push_back(Qn::EventAverage(correction).BookMe(df)); }
-
   auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
   auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
   TTreeReader reader("tree", in_tree_file);
+  std::vector<std::string> qvector_names;
+  for (auto it = std::begin(corrections); it != std::end(corrections) ;++it) {
+    qvector_names.push_back(it->GetName());
+    if(!it->LoadCorrectionFromFile(in_correction_file, &reader)) {
+      resultptrs.push_back(Qn::EventAverage(*it).BookMe(df));
+      corrections.erase(it);
+    }
+  }
 
-  for (auto &correction : corrections) { correction.LoadCorrectionFromFile(in_correction_file, &reader); }
+  auto corrected = Qn::Correction::ApplyCorrectionsVector(df, resultptrs);
+  auto corrected2 = Qn::Correction::ApplyCorrectionsVector(corrected, corrections);
 
-  auto corrected = Qn::Correction::ApplyCorrectionsVector(df, corrections);
-  Qn::Correction::SnapshotVector(corrected,
+  Qn::Correction::SnapshotVector(corrected2,
                                  "~/testhelper/rectree.root",
                                  "tree",
-                                 corrections,
+                                 qvector_names,
                                  {"CentralityV0M", "VtxX"});
 
   ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
@@ -65,9 +70,7 @@ TEST(DataContainerTest, TestHelper) {
 
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-  for (auto &result : resultptrs) {
-    result->Write(file);
-  }
+  resultptrs.front()->Write(file);
   file->Close();
   delete file;
 

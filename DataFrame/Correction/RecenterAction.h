@@ -210,9 +210,13 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param file file which contains the correction histograms.
    * @param reader reader which wraps the input tree. Needed to perform the initialization.
    */
-  void LoadCorrectionFromFile(TFile *file, TTreeReader *reader) {
+  bool LoadCorrectionFromFile(TFile *file, TTreeReader *reader) {
+    if (!file->FindKey(GetName().data())) {
+      std::cout << "Correction for " << GetName() << " not found in file " << file->GetName() << ". ";
+      std::cout << "Rerunning the correction step." << std::endl;
+      return false;
+    }
     Initialize(*reader);
-    if (!file->FindKey(GetName().data())) throw std::runtime_error("correction in file not found");
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       auto harmonic = harmonics_vector_[i_harmonic];
       auto x = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/X_"
@@ -232,6 +236,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       x_.at(i_harmonic) = *x;
       y_.at(i_harmonic) = *y;
     }
+    std::cout << "Correction for " << GetName() << " found in file " << file->GetName() << "." << std::endl;
+    return true;
   }
 
   /**
@@ -304,9 +310,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   unsigned int min_entries_ = 10; /// Number of minimum entries in a bin required to apply corrections.
   unsigned int stride_ = 1.; /// stride of the differential Q-vector.
   std::vector<unsigned int> harmonics_vector_; /// vector of enabled harmonics.
-  const std::string correction_name_; /// name of the correction step.
-  const std::string sub_event_name_; /// name of the input Q-vector.
-  const AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
+  std::string correction_name_; /// name of the correction step.
+  std::string sub_event_name_; /// name of the input Q-vector.
+  AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms .
 };
@@ -365,21 +371,22 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
  */
 template<typename DataFrame, typename VectorOfCorrections>
 inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector) {
-  auto dftemp = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[0]).ApplyCorrection(df);
-  for (std::size_t i = 1; i < resultptr_vector.size(); ++i) {
-    dftemp = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[i]).ApplyCorrection(dftemp);
+  decltype(Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector.front()).ApplyCorrection(df)) corrected_df(df);
+  for (auto & correction : resultptr_vector) {
+    corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(correction).ApplyCorrection(corrected_df);
   }
-  return dftemp;
+  return corrected_df;
 }
 
 
-template<typename DataFrame, typename VectorOfCorrections>
-inline auto SnapshotVector(DataFrame df, std::string filename, std::string treename, VectorOfCorrections result_vector, std::vector<std::string> branches) {
+template<typename DataFrame>
+inline auto SnapshotVector(DataFrame df, std::string filename, std::string treename,
+                           std::vector<std::string> qvectors, std::vector<std::string> branches) {
   std::vector<std::string> columns;
-  std::transform(std::begin(result_vector),
-                 std::end(result_vector),
+  std::transform(std::begin(qvectors),
+                 std::end(qvectors),
                  std::back_inserter(columns),
-                 [](auto value){ return Qn::TemplateMagic::DereferenceRResultPtr(value).GetName();});
+                 [](auto name){ return name;});
   std::transform(std::begin(branches),
                  std::end(branches),
                  std::back_inserter(columns),
