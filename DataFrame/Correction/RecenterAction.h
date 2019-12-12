@@ -211,6 +211,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param reader reader which wraps the input tree. Needed to perform the initialization.
    */
   bool LoadCorrectionFromFile(TFile *file, TTreeReader *reader) {
+    if (!file) {
+      std::cout << "Rerunning the correction step." << std::endl;
+      return false;
+    }
     if (!file->FindKey(GetName().data())) {
       std::cout << "Correction for " << GetName() << " not found in file " << file->GetName() << ". ";
       std::cout << "Rerunning the correction step." << std::endl;
@@ -371,9 +375,9 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
  */
 template<typename DataFrame, typename VectorOfCorrections>
 inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector) {
-  decltype(Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector.front()).ApplyCorrection(df)) corrected_df(df);
-  for (auto & correction : resultptr_vector) {
-    corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(correction).ApplyCorrection(corrected_df);
+  auto corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector.front()).ApplyCorrection(df);
+  for (auto it = std::next(std::begin(resultptr_vector)); it != std::end(resultptr_vector); ++it) {
+    corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(*it).ApplyCorrection(corrected_df);
   }
   return corrected_df;
 }
