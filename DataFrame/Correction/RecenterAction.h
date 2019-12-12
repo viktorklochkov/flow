@@ -123,6 +123,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param reader reader wrapping the input Q-vector tree. This function is required by the AverageHelper.
    */
   void Initialize(TTreeReader &reader) {
+    auto entry = reader.GetCurrentEntry();
+    reader.Restart();
     TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
     reader.SetLocalEntry(1);
     if (input_data.GetSetupStatus() < 0) {
@@ -148,6 +150,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       i_harmonic++;
     }
     stride_ = input_data->size();
+    reader.Restart();
+    reader.SetLocalEntry(entry);
   }
 
   /**
@@ -162,8 +166,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     for (std::size_t i = 0u; i < harmonics_vector_.size(); ++i) {
       for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
         const auto output_bin = event_bin+ibin;
-        x_[i].At(output_bin).Fill(input[ibin].x(harmonics_vector_[i]), 1.);
-        y_[i].At(output_bin).Fill(input[ibin].y(harmonics_vector_[i]), 1.);
+        if (input[ibin].sumweights() > 0.) {
+          x_[i].At(output_bin).Fill(input[ibin].x(harmonics_vector_[i]), 1.);
+          y_[i].At(output_bin).Fill(input[ibin].y(harmonics_vector_[i]), 1.);
+        }
       }
     }
   }
@@ -273,16 +279,23 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       x_.at(i_harmonic).Write((std::string("X_") + std::to_string(harmonics_vector_[i_harmonic])).data());
       y_.at(i_harmonic).Write((std::string("Y_") + std::to_string(harmonics_vector_[i_harmonic])).data());
     }
-    auto max_entries = std::max_element(x_[0].begin(),
-                                        x_[0].end(),
-                                        [](const Statistic &a, const Statistic &b) {return a.Entries() < b.Entries();});
-    auto histo_bin_occupancy =
-        new TH1F("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, 0., max_entries->Entries());
+    auto max_entries = std::max_element(x_[0].begin(), x_[0].end(),
+                                        [](const Statistic &a, const Statistic &b) {
+                                          return a.Entries() < b.Entries();
+                                        })->Entries();
+    auto min_entries = std::min_element(x_[0].begin(), x_[0].end(),
+                                        [](const Statistic &a, const Statistic &b) {
+                                          return a.Entries() < b.Entries();
+                                        })->Entries();
+    auto difference = (max_entries - min_entries) * 0.05;
+    max_entries = max_entries + difference;
+    min_entries = min_entries - difference;
+    TH1F histo_bin_occupancy("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, min_entries, max_entries);
     for (auto &bin : x_[0]) {
       auto n = bin.Entries();
-      histo_bin_occupancy->Fill(n);
+      histo_bin_occupancy.Fill(n);
     }
-    histo_bin_occupancy->Write("EntriesPerBin");
+    histo_bin_occupancy.Write("EntriesPerBin");
     directory->cd("../");
   }
 
@@ -352,9 +365,9 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
  */
 template<typename DataFrame, typename VectorOfCorrections>
 inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector) {
-  auto dftemp = resultptr_vector[0]->ApplyCorrection(df);
-  for (auto i = 1; i < resultptr_vector.size(); ++i) {
-    dftemp = resultptr_vector[i]->ApplyCorrection(dftemp);
+  auto dftemp = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[0]).ApplyCorrection(df);
+  for (std::size_t i = 1; i < resultptr_vector.size(); ++i) {
+    dftemp = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[i]).ApplyCorrection(dftemp);
   }
   return dftemp;
 }
@@ -366,7 +379,7 @@ inline auto SnapshotVector(DataFrame df, std::string filename, std::string treen
   std::transform(std::begin(result_vector),
                  std::end(result_vector),
                  std::back_inserter(columns),
-                 [](auto ptr){ return ptr->GetName();});
+                 [](auto value){ return Qn::TemplateMagic::DereferenceRResultPtr(value).GetName();});
   std::transform(std::begin(branches),
                  std::end(branches),
                  std::back_inserter(columns),

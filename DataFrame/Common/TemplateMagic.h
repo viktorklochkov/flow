@@ -124,6 +124,19 @@ auto ToVector(const std::tuple<first_type, others...> &t) {
   return Impl::ToVectorHelper<first_type, tuple_type>(t, std::make_index_sequence<s>{});
 }
 
+template<typename T> struct IsRResultPtr : std::false_type {};
+template<typename T> struct IsRResultPtr<ROOT::RDF::RResultPtr<T>> : std::true_type {};
+
+template<typename T>
+std::enable_if_t<IsRResultPtr<T>::value, typename T::Value_t> DereferenceRResultPtr( T t) {
+  return *t;
+}
+
+template<typename T>
+std::enable_if_t<!IsRResultPtr<T>::value, T> DereferenceRResultPtr( T t) {
+  return t;
+}
+
 }
 }
 #endif //FLOW_TEMPLATEMAGIC_H

@@ -17,39 +17,57 @@ TEST(DataContainerTest, TestHelper) {
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
   auto df = df0.Filter("Trigger==0", "minbias");
   auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
-  std::vector<ROOT::RDF::RResultPtr<Qn::Correction::RecenterAction<decltype(axes), decltype(axes)::AxisValueTypeTuple >>> corrections;
-  corrections.push_back(Qn::EventAverage(
-      Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
-               .EnableWidthEqualization()
-  ).BookMe(df));
-  corrections.push_back(Qn::EventAverage(
-      Qn::Correction::Recentering("test","ZNC_PLAIN",Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}))
-          .EnableWidthEqualization()
-  ).BookMe(df));
-  corrections.push_back(Qn::EventAverage(
-      Qn::Correction::Recentering("test", "TPCPT_PLAIN", Qn::EventAxes(Qn::AxisD{"CentralityV0M", 2, 0, 100}))
-  ).BookMe(df));
 
-  auto corrected = Qn::Correction::ApplyCorrectionsVector(df,corrections);
-  Qn::Correction::SnapshotVector(corrected, "~/testhelper/rectree.root", "tree", corrections, {"CentralityV0M","VtxX"});
+  using RecenterCorrection = Qn::Correction::RecenterAction<decltype(axes), decltype(axes)::AxisValueTypeTuple>;
+  std::vector<RecenterCorrection> corrections{};
+  corrections.push_back(Qn::Correction::Recentering("test",
+                                                    "ZNA_PLAIN",
+                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
+                            .EnableWidthEqualization());
+  corrections.push_back(Qn::Correction::Recentering("test",
+                                                    "ZNC_PLAIN",
+                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
+                            .EnableWidthEqualization());
+  corrections.push_back(Qn::Correction::Recentering("test",
+                                                    "TPCPT_PLAIN",
+                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
+  std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
+
+//  for (const auto &correction : corrections) { resultptrs.push_back(Qn::EventAverage(correction).BookMe(df)); }
+
+  auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
+  auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
+  TTreeReader reader("tree", in_tree_file);
+
+  for (auto &correction : corrections) { correction.LoadCorrectionFromFile(in_correction_file, &reader); }
+
+  auto corrected = Qn::Correction::ApplyCorrectionsVector(df, corrections);
+  Qn::Correction::SnapshotVector(corrected,
+                                 "~/testhelper/rectree.root",
+                                 "tree",
+                                 corrections,
+                                 {"CentralityV0M", "VtxX"});
 
   ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
 
-
-  auto dfsamples = Qn::Correlation::Resample(dfcorrected,100);
-
-  auto t = Qn::EventAverage(Qn::Correlation::Correlation([](const Qn::QVector &a, const Qn::QVector &b) { return a.x(1) * b.y(1); },
-                                                         {"ZNC_PLAIN_test", "ZNA_PLAIN_test"},
-                                                         {Qn::Stats::Weights::REFERENCE,Qn::Stats::Weights::REFERENCE},
-                                                         "test",
-                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
-                                                         100)).BookMe(dfsamples);
-
-  auto &ttr = t->GetDataContainer();
+//  auto dfsamples = Qn::Correlation::Resample(dfcorrected, 100);
+//
+//  auto t = Qn::EventAverage(Qn::Correlation::Correlation([](const Qn::QVector &a, const Qn::QVector &b) {
+//                                                           return a.x(1)*b.y(1);
+//                                                         },
+//                                                         {"ZNC_PLAIN_test", "ZNA_PLAIN_test"},
+//                                                         {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
+//                                                         "test",
+//                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
+//                                                         100)).BookMe(dfsamples);
+//
+//  auto &ttr = t->GetDataContainer();
 
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-  t->Write();
+  for (auto &result : resultptrs) {
+    result->Write(file);
+  }
   file->Close();
   delete file;
 
@@ -67,26 +85,25 @@ TEST(DataContainerTest, TestHelper) {
 //  delete file_2;
 }
 
-
-
 TEST(DataContainerTest, equalbinning) {
   int nbins = 10;
-  auto axes = Qn::EventAxes(Qn::AxisD{"t2", nbins, -2, 2},Qn::AxisD{"t1", nbins, -2, 2},Qn::AxisD{"t3", nbins, -2, 2});
+  auto
+      axes = Qn::EventAxes(Qn::AxisD{"t2", nbins, -2, 2}, Qn::AxisD{"t1", nbins, -2, 2}, Qn::AxisD{"t3", nbins, -2, 2});
   std::mt19937_64 gen(10);
   std::normal_distribution<> normal_distribution(0, 0.1);
   std::vector<double> hist1(nbins);
   std::vector<double> values;
   ROOT::RDataFrame df(1000);
   auto df1 = df.Define("t1", [&normal_distribution, &gen]() { return normal_distribution(gen); }, {})
-               .Define("t2", [&normal_distribution, &gen]() { return normal_distribution(gen); }, {});
+      .Define("t2", [&normal_distribution, &gen]() { return normal_distribution(gen); }, {});
   df1.Foreach([& hist1, &values, axes](const double x) {
     auto bin = axes.GetLinearIndex(x);
     if (bin!=-1) {
       ++hist1[bin];
     }
     values.push_back(x);
-  },{"t1"});
-  auto equalized = Qn::EqualizeBinning(axes,df1,{"t1","t2"});
+  }, {"t1"});
+  auto equalized = Qn::EqualizeBinning(axes, df1, {"t1", "t2"});
   axes = std::move(equalized);
 //  Qn::EqualEntriesBinner binner;
 //  auto bins = binner.CalculateBins(values, nbins, -2., 2.);
