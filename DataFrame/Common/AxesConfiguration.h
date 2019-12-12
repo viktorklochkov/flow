@@ -153,8 +153,8 @@ class AxesConfiguration {
     return Impl::StrideCalculator<kDimension - 1>::Calculate(temp, axes_);
   }
 
-  const std::tuple<Axes...> axes_; /// tuple of event axes.
-  const std::array<std::size_t, kDimension + 1> stride_; /// array of strides used for linear bin calculation.
+  std::tuple<Axes...> axes_; /// tuple of event axes.
+  std::array<std::size_t, kDimension + 1> stride_; /// array of strides used for linear bin calculation.
 };
 
 /**
@@ -167,5 +167,6 @@ template<typename ...Axes>
 auto EventAxes(Axes... axes) {
   return AxesConfiguration<Axes...>(axes...);
 }
+
 }
 #endif //FLOW_AXESCONFIGURATION_H_
