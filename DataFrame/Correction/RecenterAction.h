@@ -231,6 +231,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       if (!(x && y)) {
         std::cout << "harmonic" << harmonic << " of Q-vector correction step "
           << GetName() << " is not not found in the file." << std::endl;
+        Reset();
         return false;
       }
       auto read_axes = x->GetAxes();
@@ -244,6 +245,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       if (!std::all_of(result.begin(), result.end(), [](bool x) { return x; })) {
         std::cout << "Axes of Q-vector correction step " << GetName()
           << " are not equal to the ones found in the file." << std::endl;
+        Reset();
         return false;
       }
       x_.at(i_harmonic) = *x;
@@ -327,7 +329,17 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   std::string sub_event_name_; /// name of the input Q-vector.
   AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
-  std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms .
+  std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms.
+
+  /**
+   * Resets the Correction.
+   */
+  void Reset() {
+    x_.clear();
+    y_.clear();
+    harmonics_vector_.clear();
+    stride_ = 1;
+  }
 };
 
 /**
