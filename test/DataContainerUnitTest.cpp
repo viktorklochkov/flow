@@ -49,6 +49,8 @@ TEST(DataContainerTest, TestHelper) {
                                    }),
                     corrections.end());
 
+  std::cout << Qn::AxisD{"CentralityV0M", 10, 0, 100}.ShortName() << std::endl;
+
   auto corrected = Qn::Correction::ApplyCorrectionsVector(df, resultptrs);
   auto corrected2 = Qn::Correction::ApplyCorrectionsVector(corrected, corrections);
 
@@ -76,6 +78,7 @@ TEST(DataContainerTest, TestHelper) {
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
   resultptrs.front()->Write(file);
+
   file->Close();
   delete file;
 
