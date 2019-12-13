@@ -51,7 +51,7 @@ class AverageHelper<Action,
   using Result_t = Action; /// Result of the averaging operation.
 
  private:
-  bool is_configured_ = false; /// flag for tracking if the helper has been configured using the input data.
+  std::vector<bool> is_configured_; /// flag for tracking if the helper has been configured using the input data.
   std::vector<std::shared_ptr<Action>> results_; /// vector of results.
 
  public:
@@ -63,6 +63,7 @@ class AverageHelper<Action,
   explicit AverageHelper(Action action) {
     const auto n_slots = ROOT::IsImplicitMTEnabled() ? ROOT::GetImplicitMTPoolSize() : 1;
     for (std::size_t i = 0; i < n_slots; ++i) {
+      is_configured_.push_back(false);
       results_.emplace_back(std::make_shared<Action>(action));
     }
   }
@@ -97,7 +98,7 @@ class AverageHelper<Action,
     const auto number_of_slots = results_.size();
     std::vector<std::shared_ptr<Result_t>> others;
     for (std::size_t slot = 1; slot < number_of_slots; ++slot) {
-      others.push_back(others[slot]);
+      others.push_back(results_[slot]);
     }
     result->Merge(others);
   }
@@ -106,12 +107,12 @@ class AverageHelper<Action,
    * Initializes the helper and the action using the first event in the input tree.
    * @param reader
    */
-  void InitTask(TTreeReader *reader, unsigned int) {
-    if (!is_configured_) {
-      for (auto &result : results_) {
-        result->Initialize(*reader);
-      }
-      is_configured_ = true;
+  void InitTask(TTreeReader *reader, unsigned int slot) {
+    if (!is_configured_[slot]) {
+      reader->Restart();
+      TTreeReader local_reader(reader->GetTree());
+      results_[slot]->Initialize(local_reader);
+      is_configured_[slot] = true;
     }
   }
 
