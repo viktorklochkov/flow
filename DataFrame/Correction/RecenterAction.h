@@ -24,6 +24,7 @@
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
 #include "TFile.h"
+#include "ROOT/RDataFrame.hxx"
 
 #include "DataContainer.h"
 #include "QVector.h"
@@ -376,14 +377,16 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
  * @return RDataFrame, which contains the the corrected Q-vectors.
  */
 template<typename DataFrame, typename VectorOfCorrections>
-inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector, std::size_t position = 0) {
-  if (position + 1 == resultptr_vector.size()) {
-    return Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[position]).ApplyCorrection(df);
+inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections corrections) {
+  ROOT::RDF::RNode corrected_df(df);
+  for (auto &result : corrections) {
+    corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(result).ApplyCorrection(corrected_df);
   }
-  if (position > resultptr_vector.size()) return df;
-  auto corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[position]).ApplyCorrection(df);
-  return ApplyCorrectionsVector(corrected_df, resultptr_vector, position+1);
+  return corrected_df;
 }
+
+
+
 
 
 template<typename DataFrame>
