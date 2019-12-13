@@ -41,7 +41,7 @@ TEST(DataContainerTest, TestHelper) {
   corrections.erase(std::remove_if(std::begin(corrections),std::end(corrections),
                                    [&resultptrs, &in_correction_file, &reader, &df, &qvector_names](auto &correction){
                                      qvector_names.push_back(correction.GetName());
-                                     if(!correction.LoadCorrectionFromFile(in_correction_file, &reader)) {
+                                     if(!correction.LoadCorrectionFromFile(in_correction_file, reader)) {
                                        resultptrs.push_back(Qn::EventAverage(correction).BookMe(df));
                                        return true;
                                      } else {

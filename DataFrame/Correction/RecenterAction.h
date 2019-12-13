@@ -125,10 +125,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param reader reader wrapping the input Q-vector tree. This function is required by the AverageHelper.
    */
   void Initialize(TTreeReader &reader) {
-    auto entry = reader.GetCurrentEntry();
-    reader.Restart();
-    TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
-    reader.SetLocalEntry(1);
+    TTreeReader local_reader(reader.GetTree());
+    local_reader.Restart();
+    TTreeReaderValue<DataContainerQVector> input_data(local_reader, sub_event_name_.data());
+    local_reader.SetLocalEntry(1);
     if (input_data.GetSetupStatus() < 0) {
       auto message = std::string("The Q-Vector entry") +
           input_data.GetBranchName() + "in the tree is not valid. Cannot setup the recentering";
@@ -152,8 +152,6 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       i_harmonic++;
     }
     stride_ = input_data->size();
-    reader.Restart();
-    reader.SetLocalEntry(entry);
   }
 
   /**
@@ -212,12 +210,12 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param file file which contains the correction histograms.
    * @param reader reader which wraps the input tree. Needed to perform the initialization.
    */
-  bool LoadCorrectionFromFile(TDirectory * dir, TTreeReader *reader) {
+  bool LoadCorrectionFromFile(TDirectory * dir, TTreeReader &reader) {
     if (!dir) {
       std::cout << "Rerunning the correction step." << std::endl;
       return false;
     }
-    Initialize(*reader);
+    Initialize(reader);
     if (!dir->FindKey(HashName().data())) {
       std::cout << "Correction " << GetName() << ": Not found in the file " << dir->GetName() << ". ";
       std::cout << "Rerunning the correction step." << std::endl;
