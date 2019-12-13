@@ -19,6 +19,7 @@
 #define FLOW_QNAXIS_H
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -99,6 +100,26 @@ class Axis {
    * @return name of axis
    */
   std::string Name() const { return name_; }
+
+  /**
+   * Returns a short name for the axis.
+   * @return short name
+   */
+  std::string ShortName() const {
+    auto is_vowel = [](const char p_char){
+      constexpr char vowels[] = { 'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U' };
+      return std::find(std::begin(vowels),std::end(vowels), p_char) != std::end(vowels);
+    };
+    std::string t_name = name_;
+    t_name.erase(std::remove_if(t_name.begin(),t_name.end(),is_vowel),t_name.end());
+    std::for_each(t_name.begin(), t_name.end(), [](char & c){c = ::tolower(c);});
+    std::ostringstream axislimits;
+    axislimits.precision(2);
+    axislimits << std::scientific;
+    axislimits << "|" << t_name << "|" << size() << "|" << GetFirstBinEdge() << "|" <<GetLastBinEdge() << "|";
+    return axislimits.str();
+  }
+
   typename std::vector<T>::size_type GetNBins() const { return bin_edges_.size() - 1; }
   const T *GetPtr() const { return bin_edges_.data(); }
 

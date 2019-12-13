@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
@@ -216,21 +217,23 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       std::cout << "Rerunning the correction step." << std::endl;
       return false;
     }
-    if (!dir->FindKey(GetName().data())) {
-      std::cout << "Correction for " << GetName() << " not found in file " << dir->GetName() << ". ";
+    Initialize(*reader);
+    if (!dir->FindKey(HashName().data())) {
+      std::cout << "Correction " << GetName() << ": Not found in the file " << dir->GetName() << ". ";
       std::cout << "Rerunning the correction step." << std::endl;
+      Reset();
       return false;
     }
-    Initialize(*reader);
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       auto harmonic = harmonics_vector_[i_harmonic];
-      auto x = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((GetName() + "/X_"
+      auto x = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((HashName() + "/X_"
           + std::to_string(harmonic)).data()));
-      auto y = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((GetName() + "/Y_"
+      auto y = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((HashName() + "/Y_"
           + std::to_string(harmonic)).data()));
       if (!(x && y)) {
-        std::cout << "harmonic" << harmonic << " of Q-vector correction step "
-          << GetName() << " is not not found in the file." << std::endl;
+        std::cout << "Correction " << GetName() << ": Harmonic" << harmonic;
+        std::cout << " not found in the file " << dir->GetName() << ". ";
+        std::cout << "Rerunning the correction step." << std::endl;
         Reset();
         return false;
       }
@@ -243,15 +246,16 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
                      std::back_inserter(result),
                      [](const Qn::AxisD &a, const Qn::AxisD &b) { return a==b; });
       if (!std::all_of(result.begin(), result.end(), [](bool x) { return x; })) {
-        std::cout << "Axes of Q-vector correction step " << GetName()
-          << " are not equal to the ones found in the file." << std::endl;
+        std::cout << "Correction " << GetName() << ": Axes not equal to the ones found in the file ";
+        std::cout << dir->GetName() << ". ";
+        std::cout << "Rerunning the correction step." << std::endl;
         Reset();
         return false;
       }
       x_.at(i_harmonic) = *x;
       y_.at(i_harmonic) = *y;
     }
-    std::cout << "Correction for " << GetName() << " found in directory " << dir->GetName() << "." << std::endl;
+    std::cout << "Correction " << GetName() << ": Found in the file " << dir->GetName() << "." << std::endl;
     return true;
   }
 
@@ -294,8 +298,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   void Write(TDirectory *directory) {
     directory->cd();
-    directory->mkdir(GetName().data());
-    directory->cd(GetName().data());
+    directory->mkdir(HashName().data());
+    directory->cd(HashName().data());
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       x_.at(i_harmonic).Write((std::string("X_") + std::to_string(harmonics_vector_[i_harmonic])).data());
       y_.at(i_harmonic).Write((std::string("Y_") + std::to_string(harmonics_vector_[i_harmonic])).data());
@@ -330,6 +334,22 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms.
+
+  /**
+   * Gives a unique name to the Corrections step for persisting it to the file.
+   */
+  std::string HashName() const {
+    std::stringstream name;
+    name << GetName();
+    name << "_h";
+    for (const auto & harmonic : harmonics_vector_) {
+      name << harmonic;
+    }
+    for (const auto & axis : event_axes_.GetVector()) {
+      name << axis.ShortName();
+    }
+    return name.str();
+  }
 
   /**
    * Resets the Correction.
