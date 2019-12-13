@@ -75,13 +75,11 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
    * @param reader The TTreeReader gives access to the input TTree.
    */
   void Initialize(TTreeReader &reader) {
-    TTreeReader local_reader(reader.GetTree());
-    local_reader.Restart();
     reader.Restart();
     std::vector<TTreeReaderValue<DataContainerQVector>> input_data;
     std::transform(std::begin(input_names_),std::end(input_names_),std::back_inserter(input_data),
-        [&local_reader](const std::string &name){return TTreeReaderValue<DataContainerQVector>(local_reader,name.data());});
-    local_reader.SetLocalEntry(1);
+        [&reader](const std::string &name){return TTreeReaderValue<DataContainerQVector>(reader,name.data());});
+    reader.Next();
     for (std::size_t i = 0; i < input_data.size(); ++i) {
       auto &i_data = input_data[i];
       if (i_data.GetSetupStatus() < 0) {

@@ -125,13 +125,12 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param reader reader wrapping the input Q-vector tree. This function is required by the AverageHelper.
    */
   void Initialize(TTreeReader &reader) {
-    TTreeReader local_reader(reader.GetTree());
-    local_reader.Restart();
-    TTreeReaderValue<DataContainerQVector> input_data(local_reader, sub_event_name_.data());
-    local_reader.SetLocalEntry(1);
+    reader.Restart();
+    TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
+    reader.Next();
     if (input_data.GetSetupStatus() < 0) {
-      auto message = std::string("The Q-Vector entry") +
-          input_data.GetBranchName() + "in the tree is not valid. Cannot setup the recentering";
+      auto message = std::string("The Q-Vector entry ") +
+          input_data.GetBranchName() + " in the tree is not valid. Cannot setup the recentering";
       throw std::runtime_error(message);
     }
     auto input_q = input_data->At(0);

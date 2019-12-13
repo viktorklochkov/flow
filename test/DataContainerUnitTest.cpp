@@ -14,6 +14,8 @@
 #include "FlowDataFrame.h"
 
 TEST(DataContainerTest, TestHelper) {
+
+  ROOT::EnableImplicitMT(4);
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
   auto df = df0.Filter("Trigger==0", "minbias");
   auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
