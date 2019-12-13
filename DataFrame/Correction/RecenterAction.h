@@ -365,6 +365,8 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
   return ApplyCorrections(first.ApplyCorrection(df), rest...);
 }
 
+
+
 /**
  * Convenience function to apply the corrections of multiple Recentering procedures.
  * @tparam DataFrame type of a RDataFrame
@@ -374,12 +376,13 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
  * @return RDataFrame, which contains the the corrected Q-vectors.
  */
 template<typename DataFrame, typename VectorOfCorrections>
-inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector) {
-  auto corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector.front()).ApplyCorrection(df);
-  for (auto it = std::next(std::begin(resultptr_vector)); it != std::end(resultptr_vector); ++it) {
-    corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(*it).ApplyCorrection(corrected_df);
+inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections resultptr_vector, std::size_t position = 0) {
+  if (position + 1 == resultptr_vector.size()) {
+    return Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[position]).ApplyCorrection(df);
   }
-  return corrected_df;
+  if (position > resultptr_vector.size()) return df;
+  auto corrected_df = Qn::TemplateMagic::DereferenceRResultPtr(resultptr_vector[position]).ApplyCorrection(df);
+  return ApplyCorrectionsVector(corrected_df, resultptr_vector, position+1);
 }
 
 
