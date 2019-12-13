@@ -211,22 +211,22 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param file file which contains the correction histograms.
    * @param reader reader which wraps the input tree. Needed to perform the initialization.
    */
-  bool LoadCorrectionFromFile(TFile *file, TTreeReader *reader) {
-    if (!file) {
+  bool LoadCorrectionFromFile(TDirectory * dir, TTreeReader *reader) {
+    if (!dir) {
       std::cout << "Rerunning the correction step." << std::endl;
       return false;
     }
-    if (!file->FindKey(GetName().data())) {
-      std::cout << "Correction for " << GetName() << " not found in file " << file->GetName() << ". ";
+    if (!dir->FindKey(GetName().data())) {
+      std::cout << "Correction for " << GetName() << " not found in file " << dir->GetName() << ". ";
       std::cout << "Rerunning the correction step." << std::endl;
       return false;
     }
     Initialize(*reader);
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       auto harmonic = harmonics_vector_[i_harmonic];
-      auto x = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/X_"
+      auto x = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((GetName() + "/X_"
           + std::to_string(harmonic)).data()));
-      auto y = dynamic_cast<Qn::DataContainerStatistic *>(file->Get((GetName() + "/Y_"
+      auto y = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((GetName() + "/Y_"
           + std::to_string(harmonic)).data()));
       if (!(x && y)) throw std::runtime_error("correction in file not found");;
       auto read_axes = x->GetAxes();
@@ -241,7 +241,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       x_.at(i_harmonic) = *x;
       y_.at(i_harmonic) = *y;
     }
-    std::cout << "Correction for " << GetName() << " found in file " << file->GetName() << "." << std::endl;
+    std::cout << "Correction for " << GetName() << " found in directory " << dir->GetName() << "." << std::endl;
     return true;
   }
 
