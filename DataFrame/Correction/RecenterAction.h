@@ -87,18 +87,18 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * Enables the width equalization.
    * @return returns it self.
    */
-  RecenterAction EnableWidthEqualization() &&{
+  RecenterAction EnableWidthEqualization() {
     use_width_equalization_ = true;
-    return std::move(*this);
+    return *this;
   }
 
   /**
    * Sets the minumum number of contributors required for the correction to be applied in this bin.
    * @return returns it self.
    */
-  RecenterAction SetMinimumNumberOfEntries(const unsigned int minimum_entries) &&{
+  RecenterAction SetMinimumNumberOfEntries(const unsigned int minimum_entries) {
     min_entries_ = minimum_entries;
-    return std::move(*this);
+    return *this;
   }
 
   /**

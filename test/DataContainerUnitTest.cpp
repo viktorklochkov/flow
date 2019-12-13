@@ -31,6 +31,7 @@ TEST(DataContainerTest, TestHelper) {
   corrections.push_back(Qn::Correction::Recentering("test",
                                                     "TPCPT_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
+  corrections.back().SetMinimumNumberOfEntries(5).EnableWidthEqualization();
   std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
   auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
   auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
