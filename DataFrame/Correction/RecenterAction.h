@@ -228,7 +228,11 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
           + std::to_string(harmonic)).data()));
       auto y = dynamic_cast<Qn::DataContainerStatistic *>(dir->Get((GetName() + "/Y_"
           + std::to_string(harmonic)).data()));
-      if (!(x && y)) throw std::runtime_error("correction in file not found");;
+      if (!(x && y)) {
+        std::cout << "harmonic" << harmonic << " of Q-vector correction step "
+          << GetName() << " is not not found in the file." << std::endl;
+        return false;
+      }
       auto read_axes = x->GetAxes();
       auto configured_axes = x_.at(i_harmonic).GetAxes();
       std::vector<bool> result;
@@ -237,7 +241,11 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
                      std::begin(configured_axes),
                      std::back_inserter(result),
                      [](const Qn::AxisD &a, const Qn::AxisD &b) { return a==b; });
-      if (!std::all_of(result.begin(), result.end(), [](bool x) { return x; })) throw std::logic_error("Axes not equal");
+      if (!std::all_of(result.begin(), result.end(), [](bool x) { return x; })) {
+        std::cout << "Axes of Q-vector correction step " << GetName()
+          << " are not equal to the ones found in the file." << std::endl;
+        return false;
+      }
       x_.at(i_harmonic) = *x;
       y_.at(i_harmonic) = *y;
     }
