@@ -86,21 +86,31 @@ class AverageHelper<Action,
    * @param data_containers input Q-vectors.
    * @param coordinates input event parameters for event classification.
    */
-  void Exec(unsigned int slot, DataContainers... data_containers, EventParameters... coordinates) {
-    results_[slot]->CalculateAction(data_containers..., coordinates...);
+  template<typename... Parameters>
+  void Exec(unsigned int slot, Parameters &&... parameters) {
+    results_[slot]->CalculateAction(std::forward<Parameters>(parameters)...);
   }
+//  void Exec(unsigned int slot, DataContainers... data_containers, EventParameters... coordinates) {
+//    results_[slot]->CalculateAction(data_containers..., coordinates...);
+//  }
 
   /**
    * Finalizes the results and merges all slots into the first.
    */
   void Finalize() {
-    auto result = results_.at(0);
-    const auto number_of_slots = results_.size();
-    std::vector<std::shared_ptr<Result_t>> others;
-    for (std::size_t slot = 1; slot < number_of_slots; ++slot) {
-      others.push_back(results_[slot]);
+    auto first_configured = [](const std::vector<bool>& vec){
+      for (std::size_t i = 0; i < vec.size(); ++i) { if (vec[i]) return i; }
+      return vec.size();
+    }(is_configured_);
+    if (!results_[0]->IsInitialized()) {
+      auto result = results_.at(first_configured);
+      results_[0]->SwapWithOther(*result);
     }
-    result->Merge(others);
+    std::vector<std::shared_ptr<Result_t>> others;
+    for (std::size_t slot = first_configured+1; slot < results_.size(); ++slot) {
+      if (is_configured_[slot]) others.push_back(results_[slot]);
+    }
+    results_[0]->Merge(others);
   }
 
   /**

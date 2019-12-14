@@ -120,6 +120,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   std::string GetName() const { return sub_event_name_ + "_" + correction_name_; }
 
+  bool IsInitialized() const { return is_initialized_;}
+
   /**
    * Initializes the correction step using the information inside the input tree.
    * @param reader reader wrapping the input Q-vector tree. This function is required by the AverageHelper.
@@ -151,6 +153,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       i_harmonic++;
     }
     stride_ = input_data->size();
+    is_initialized_ = true;
   }
 
   /**
@@ -271,21 +274,27 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     return df.Define(GetName(), *this, columns);
   }
 
+  void SwapWithOther( RecenterAction &b) { std::swap(*this, b); }
+
   /**
    * Merges the correction histogram after the collection of statistics is complete.
    * This function is required by the AverageHelper class.
    * @param results the other results which are to be merged with this one.
    */
   void Merge(const std::vector<std::shared_ptr<RecenterAction>> &results) {
-    for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
-      TList xs;
-      TList ys;
-      for (const auto &result : results) {
-        xs.Add(&result->x_[i_harmonic]);
-        ys.Add(&result->y_[i_harmonic]);
+    for (const auto &result : results) {
+      if (!is_initialized_) {
+        std::swap(*this, *result);
+      } else {
+        for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
+          TList xs;
+          TList ys;
+          xs.Add(&result->x_[i_harmonic]);
+          ys.Add(&result->y_[i_harmonic]);
+          x_[i_harmonic].Merge(&xs);
+          y_[i_harmonic].Merge(&ys);
+        }
       }
-      x_[i_harmonic].Merge(&xs);
-      y_[i_harmonic].Merge(&ys);
     }
   }
 
@@ -322,6 +331,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   }
 
  private:
+  bool is_initialized_ = false;
   bool use_width_equalization_ = false; /// Switch for applying the width equalization procedure.
   unsigned int min_entries_ = 10; /// Number of minimum entries in a bin required to apply corrections.
   unsigned int stride_ = 1.; /// stride of the differential Q-vector.
@@ -356,7 +366,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     y_.clear();
     harmonics_vector_.clear();
     stride_ = 1;
+    is_initialized_ = false;
   }
+
 };
 
 /**
