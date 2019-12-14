@@ -15,7 +15,7 @@
 
 TEST(DataContainerTest, TestHelper) {
 
-  ROOT::EnableImplicitMT(4);
+  ROOT::EnableImplicitMT(24);
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
   auto df = df0.Filter("Trigger==0", "minbias");
   auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
@@ -24,46 +24,48 @@ TEST(DataContainerTest, TestHelper) {
   std::vector<RecenterCorrection> corrections{};
   corrections.push_back(Qn::Correction::Recentering("test",
                                                     "ZNA_PLAIN",
-                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
-                            .EnableWidthEqualization());
-  corrections.push_back(Qn::Correction::Recentering("test",
-                                                    "ZNC_PLAIN",
-                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
-                            .EnableWidthEqualization());
-  corrections.push_back(Qn::Correction::Recentering("test",
-                                                    "TPCPT_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-  corrections.back().SetMinimumNumberOfEntries(5).EnableWidthEqualization();
+//  corrections.push_back(Qn::Correction::Recentering("test",
+//                                                    "ZNC_PLAIN",
+//                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
+//                            .EnableWidthEqualization());
+//  corrections.push_back(Qn::Correction::Recentering("test",
+//                                                    "TPCPT_PLAIN",
+//                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
+  corrections.back().SetMinimumNumberOfEntries(5);
   std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
-  auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
-  auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
-  TTreeReader reader("tree", in_tree_file);
+  auto res = Qn::EventAverage(corrections[0]).BookMe(df);
+//  auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
+//  auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
+//  TTreeReader reader("tree", in_tree_file);
+//
+//  std::vector<std::string> qvector_names;
+//  corrections.erase(std::remove_if(std::begin(corrections),std::end(corrections),
+//                                   [&resultptrs, &in_correction_file, &reader, &df, &qvector_names](auto &correction){
+//                                     qvector_names.push_back(correction.GetName());
+//                                     if(!correction.LoadCorrectionFromFile(in_correction_file, reader)) {
+//                                       resultptrs.push_back(Qn::EventAverage(correction).BookMe(df));
+//                                       return true;
+//                                     } else {
+//                                       return false;
+//                                     }
+//                                   }),
+//                    corrections.end());
+  auto value = *res;
 
-  std::vector<std::string> qvector_names;
-  corrections.erase(std::remove_if(std::begin(corrections),std::end(corrections),
-                                   [&resultptrs, &in_correction_file, &reader, &df, &qvector_names](auto &correction){
-                                     qvector_names.push_back(correction.GetName());
-                                     if(!correction.LoadCorrectionFromFile(in_correction_file, reader)) {
-                                       resultptrs.push_back(Qn::EventAverage(correction).BookMe(df));
-                                       return true;
-                                     } else {
-                                       return false;
-                                     }
-                                   }),
-                    corrections.end());
+//  auto corrected = Qn::Correction::ApplyCorrections(df, value);
+  auto corrected = df.Define("ZNA_PLAIN_test",value,{"ZNA_PLAIN","CentralityV0M"});
+//  auto corrected = value.ApplyCorrection(df);
+//  auto corrected2 = Qn::Correction::ApplyCorrectionsVector(corrected, corrections);
+  corrected.Snapshot("tree","~/testhelper/rectree.root",{"ZNA_PLAIN_test","CentralityV0M"});
 
-  std::cout << Qn::AxisD{"CentralityV0M", 10, 0, 100}.ShortName() << std::endl;
-
-  auto corrected = Qn::Correction::ApplyCorrectionsVector(df, resultptrs);
-  auto corrected2 = Qn::Correction::ApplyCorrectionsVector(corrected, corrections);
-
-  Qn::Correction::SnapshotVector(corrected2,
-                                 "~/testhelper/rectree.root",
-                                 "tree",
-                                 qvector_names,
-                                 {"CentralityV0M", "VtxX"});
-
-  ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
+//  Qn::Correction::SnapshotVector(corrected,
+//                                 "~/testhelper/rectree.root",
+//                                 "tree",
+//                                 {"ZNA_PLAIN_test"},
+//                                 {"CentralityV0M", "VtxX"});
+//
+//  ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
 
 //  auto dfsamples = Qn::Correlation::Resample(dfcorrected, 100);
 //
@@ -80,7 +82,7 @@ TEST(DataContainerTest, TestHelper) {
 
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-  resultptrs.front()->Write(file);
+//  resultptrs.front()->Write(file);
 
   file->Close();
   delete file;
