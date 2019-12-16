@@ -62,17 +62,6 @@ template<typename AxesConfig, typename ...EventParameters>
 class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
  public:
   /**
-   * Number of Input Q vectors going into the correction step.
-   * It is used in the AverageHelper class.
-   */
-  static constexpr unsigned int NumberOfInputs = 1;
-  /**
-   * typename of the tuple of types of the axes' bin edges.
-   * It is used in the AverageHelper class.
-   */
-  using EventParameterTuple = typename AxesConfig::AxisValueTypeTuple;
-
-  /**
    * Constructor
    * @param correction_name name of the correction step
    * @param sub_event_name name of the input Q vector in the input TTree.
@@ -102,79 +91,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   }
 
   /**
-   * Returns the name of the columns used in the correction step. This includes both the input Q-vector and
-   * the name of the axes parameters. This function is required by the AverageHelper.
-   * @return returns a vector of the column names.
-   */
-  std::vector<std::string> GetColumnNames() const {
-    std::vector<std::string> columns;
-    columns.emplace_back(sub_event_name_);
-    const auto event_axes_names = event_axes_.GetNames();
-    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
-    return columns;
-  }
-
-  /**
    * Returns the name of the output Q-vector.
    * @return name of the output Q-vector
    */
   std::string GetName() const { return sub_event_name_ + "_" + correction_name_; }
-
-  bool IsInitialized() const { return is_initialized_;}
-
-  /**
-   * Initializes the correction step using the information inside the input tree.
-   * @param reader reader wrapping the input Q-vector tree. This function is required by the AverageHelper.
-   */
-  void Initialize(TTreeReader &reader) {
-    reader.Restart();
-    TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
-    reader.Next();
-    if (input_data.GetSetupStatus() < 0) {
-      auto message = std::string("The Q-Vector entry ") +
-          input_data.GetBranchName() + " in the tree is not valid. Cannot setup the recentering";
-      throw std::runtime_error(message);
-    }
-    auto input_q = input_data->At(0);
-    input_q.InitializeHarmonics();
-    int i_harmonic = 0;
-    int harmonic = input_q.GetFirstHarmonic();
-    while (harmonic!=-1) {
-      x_.emplace_back();
-      y_.emplace_back();
-      x_[i_harmonic].AddAxes(event_axes_.GetVector());
-      y_[i_harmonic].AddAxes(event_axes_.GetVector());
-      if (!input_data->IsIntegrated()) {
-        x_[i_harmonic].AddAxes(input_data->GetAxes());
-        y_[i_harmonic].AddAxes(input_data->GetAxes());
-      }
-      harmonics_vector_.push_back(harmonic);
-      harmonic = input_q.GetNextHarmonic(harmonic);
-      i_harmonic++;
-    }
-    stride_ = input_data->size();
-    is_initialized_ = true;
-  }
-
-  /**
-   * Calculates the corrections and saves them in the x_ and y_ member variables.
-   * This function is required by the AverageHelper.
-   * @param input input Q-vector, which is supposed to be corrected.
-   * @param event_parameters event parameters determining the correction histogram bin.
-   */
-  void CalculateAction(const Qn::DataContainerQVector &input, EventParameters ...event_parameters) {
-    auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
-    if (event_bin < 0) return;
-    for (std::size_t i = 0u; i < harmonics_vector_.size(); ++i) {
-      for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
-        const auto output_bin = event_bin+ibin;
-        if (input[ibin].sumweights() > 0.) {
-          x_[i].At(output_bin).Fill(input[ibin].x(harmonics_vector_[i]), 1.);
-          y_[i].At(output_bin).Fill(input[ibin].y(harmonics_vector_[i]), 1.);
-        }
-      }
-    }
-  }
 
   /**
    * Applies the correction on the input Q-vector and returns a corrected Q-vector.
@@ -201,10 +121,25 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
         }
         auto harmonic = harmonics_vector_[i_harmonic];
         corrected_q[ibin].SetQ(harmonic, (input_q[ibin].x(harmonic) - x_[i_harmonic][correction_bin].Mean())/x_width,
-                                         (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
+                               (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
       }
     }
     return corrected_q;
+  }
+
+  /**
+   * Wrapper function to easily apply the correction on the Q-vector
+   * @tparam DataFrame a RDataFrame type
+   * @param df the RDataframe which contains the input Q-vector.
+   * @return returns a RDataframe which has a column of the corrected Q-vector.
+   */
+  template<typename DataFrame>
+  auto ApplyCorrection(DataFrame &df) const {
+    std::vector<std::string> columns;
+    columns.push_back(sub_event_name_);
+    const auto event_axes_names = event_axes_.GetNames();
+    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
+    return df.Define(GetName(), *this, columns);
   }
 
   /**
@@ -260,78 +195,24 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   }
 
   /**
-   * Wrapper function to easily apply the correctino on the Q-vector
-   * @tparam DataFrame a RDataFrame type
-   * @param df the dataframe which contains the input Q-vector.
-   * @return returns a dataframe which has a column of the corrected Q-vector.
-   */
-  template<typename DataFrame>
-  auto ApplyCorrection(DataFrame &df) const {
-    std::vector<std::string> columns;
-    columns.push_back(sub_event_name_);
-    const auto event_axes_names = event_axes_.GetNames();
-    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
-    return df.Define(GetName(), *this, columns);
-  }
-
-  void SwapWithOther( RecenterAction &b) { std::swap(*this, b); }
-
-  /**
-   * Merges the correction histogram after the collection of statistics is complete.
-   * This function is required by the AverageHelper class.
-   * @param results the other results which are to be merged with this one.
-   */
-  void Merge(const std::vector<std::shared_ptr<RecenterAction>> &results) {
-    for (const auto &result : results) {
-      if (!is_initialized_) {
-        std::swap(*this, *result);
-      } else {
-        for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
-          TList xs;
-          TList ys;
-          xs.Add(&result->x_[i_harmonic]);
-          ys.Add(&result->y_[i_harmonic]);
-          x_[i_harmonic].Merge(&xs);
-          y_[i_harmonic].Merge(&ys);
-        }
-      }
-    }
-  }
-
-  /**
    * Writes the correction histograms to file.
    * @param directory directory in which the correction histograms are supposed to be written.
    */
   void Write(TDirectory *directory) {
+    using namespace std::literals::string_literals;
     directory->cd();
     directory->mkdir(HashName().data());
     directory->cd(HashName().data());
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
-      x_.at(i_harmonic).Write((std::string("X_") + std::to_string(harmonics_vector_[i_harmonic])).data());
-      y_.at(i_harmonic).Write((std::string("Y_") + std::to_string(harmonics_vector_[i_harmonic])).data());
+      x_.at(i_harmonic).Write(("X_"s + std::to_string(harmonics_vector_[i_harmonic])).data());
+      y_.at(i_harmonic).Write(("Y_"s + std::to_string(harmonics_vector_[i_harmonic])).data());
     }
-    auto max_entries = std::max_element(x_[0].begin(), x_[0].end(),
-                                        [](const Statistic &a, const Statistic &b) {
-                                          return a.Entries() < b.Entries();
-                                        })->Entries();
-    auto min_entries = std::min_element(x_[0].begin(), x_[0].end(),
-                                        [](const Statistic &a, const Statistic &b) {
-                                          return a.Entries() < b.Entries();
-                                        })->Entries();
-    auto difference = (max_entries - min_entries) * 0.05;
-    max_entries = max_entries + difference;
-    min_entries = min_entries - difference;
-    TH1F histo_bin_occupancy("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, min_entries, max_entries);
-    for (auto &bin : x_[0]) {
-      auto n = bin.Entries();
-      histo_bin_occupancy.Fill(n);
-    }
-    histo_bin_occupancy.Write("EntriesPerBin");
+    CreateBinOccupancyHisto().Write("EntriesPerBin");
     directory->cd("../");
   }
 
  private:
-  bool is_initialized_ = false;
+  friend class AverageHelper<RecenterAction>; /// Helper friend
   bool use_width_equalization_ = false; /// Switch for applying the width equalization procedure.
   unsigned int min_entries_ = 10; /// Number of minimum entries in a bin required to apply corrections.
   unsigned int stride_ = 1.; /// stride of the differential Q-vector.
@@ -343,19 +224,117 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms.
 
   /**
-   * Gives a unique name to the Corrections step for persisting it to the file.
+   * Initializes the correction step using the information inside the input tree.
+   * @param reader reader wrapping the input Q-vector tree. This function is required by the AverageHelper.
    */
-  std::string HashName() const {
-    std::stringstream name;
-    name << GetName();
-    name << "_h";
-    for (const auto & harmonic : harmonics_vector_) {
-      name << harmonic;
+  void Initialize(TTreeReader &reader) {
+    using namespace std::literals::string_literals;
+    reader.Restart();
+    TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
+    reader.Next();
+    if (input_data.GetSetupStatus() < 0) {
+      throw std::runtime_error("The Q-Vector entry "s + input_data.GetBranchName() +
+      " in the tree is not valid. Cannot setup the recentering");
     }
-    for (const auto & axis : event_axes_.GetVector()) {
-      name << axis.ShortName();
+    auto input_q = input_data->At(0);
+    input_q.InitializeHarmonics();
+    int i_harmonic = 0;
+    int harmonic = input_q.GetFirstHarmonic();
+    while (harmonic!=-1) {
+      x_.emplace_back();
+      y_.emplace_back();
+      x_[i_harmonic].AddAxes(event_axes_.GetVector());
+      y_[i_harmonic].AddAxes(event_axes_.GetVector());
+      if (!input_data->IsIntegrated()) {
+        x_[i_harmonic].AddAxes(input_data->GetAxes());
+        y_[i_harmonic].AddAxes(input_data->GetAxes());
+      }
+      harmonics_vector_.push_back(harmonic);
+      harmonic = input_q.GetNextHarmonic(harmonic);
+      i_harmonic++;
     }
-    return name.str();
+    stride_ = input_data->size();
+  }
+
+  /**
+   * Calculates the corrections and saves them in the x_ and y_ member variables.
+   * This function is required by the AverageHelper.
+   * @param input input Q-vector, which is supposed to be corrected.
+   * @param event_parameters event parameters determining the correction histogram bin.
+   */
+  void CalculateAction(const Qn::DataContainerQVector &input, EventParameters ...event_parameters) {
+    auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
+    if (event_bin < 0) return;
+    for (std::size_t i = 0u; i < harmonics_vector_.size(); ++i) {
+      for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
+        const auto output_bin = event_bin+ibin;
+        if (input[ibin].sumweights() > 0.) {
+          x_[i].At(output_bin).Fill(input[ibin].x(harmonics_vector_[i]), 1.);
+          y_[i].At(output_bin).Fill(input[ibin].y(harmonics_vector_[i]), 1.);
+        }
+      }
+    }
+  }
+
+  /**
+   * Merges the correction histogram after the collection of statistics is complete.
+   * This function is required by the AverageHelper class.
+   * @param results the other results which are to be merged with this one.
+   */
+  void Merge(const std::vector<std::shared_ptr<RecenterAction>> &results) {
+    for (const auto &result : results) {
+      for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
+        TList xs;
+        TList ys;
+        xs.Add(&result->x_[i_harmonic]);
+        ys.Add(&result->y_[i_harmonic]);
+        x_[i_harmonic].Merge(&xs);
+        y_[i_harmonic].Merge(&ys);
+      }
+    }
+  }
+
+  /**
+   * Called during booking process.
+   * Allows to hide template parameters.
+   * @tparam DataFrame type of dataframe
+   * @param df dataframe to which the action is booked.
+   * @param helper helper
+   * @return Result pointer to the result of the action
+   */
+  template<typename DataFrame>
+  auto BookMe(DataFrame df, Qn::AverageHelper<RecenterAction> helper) {
+    return df.template Book<DataContainerQVector, EventParameters...>(std::move(helper), GetColumnNames());
+  }
+
+  /**
+   * Copy one state to the next.
+   * Used during multi threading.
+   * @param other another state.
+   */
+  void CopyInitializedState( RecenterAction &other) {
+    use_width_equalization_ = other.use_width_equalization_;
+    min_entries_ = other.min_entries_;
+    stride_ = other.stride_;
+    harmonics_vector_ = other.harmonics_vector_;
+    correction_name_ = other.correction_name_;
+    sub_event_name_ = other.sub_event_name_;
+    event_axes_ = other.event_axes_;
+    x_ = other.x_;
+    y_ = other.y_;
+  }
+
+  /**
+   * Returns the name of the columns used in the correction step. This includes both the input Q-vector and
+   * the name of the axes parameters. This function is required by the AverageHelper.
+   * @return returns a vector of the column names.
+   */
+  std::vector<std::string> GetColumnNames() const {
+    std::vector<std::string> columns;
+    columns.emplace_back(sub_event_name_);
+    const auto event_axes_names = event_axes_.GetNames();
+    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
+    return columns;
   }
 
   /**
@@ -366,7 +345,38 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     y_.clear();
     harmonics_vector_.clear();
     stride_ = 1;
-    is_initialized_ = false;
+  }
+
+  /**
+   * Gives a unique name to the Corrections step for persisting it to the file.
+   */
+  std::string HashName() const {
+    std::stringstream name;
+    name << GetName();
+    name << "_h";
+    for (const auto & harmonic : harmonics_vector_)   name << harmonic;
+    for (const auto & axis : event_axes_.GetVector()) name << axis.ShortName();
+    return name.str();
+  }
+
+  TH1D CreateBinOccupancyHisto() {
+    auto max_entries = std::max_element(x_[0].begin(), x_[0].end(),
+                                        [](const Statistic &a, const Statistic &b) {
+                                          return a.Entries() < b.Entries();
+                                        })->Entries();
+    auto min_entries = std::min_element(x_[0].begin(), x_[0].end(),
+                                        [](const Statistic &a, const Statistic &b) {
+                                          return a.Entries() < b.Entries();
+                                        })->Entries();
+    auto difference = (max_entries - min_entries) * 0.05;
+    max_entries = max_entries + difference;
+    min_entries = min_entries - difference;
+    TH1D histo_bin_occupancy("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, min_entries, max_entries);
+    for (auto &bin : x_[0]) {
+      auto n = bin.Entries();
+      histo_bin_occupancy.Fill(n);
+    }
+    return histo_bin_occupancy;
   }
 
 };
@@ -415,8 +425,6 @@ inline auto ApplyCorrections(DataFrame df, First first, Rest ...rest) {
   return ApplyCorrections(first.ApplyCorrection(df), rest...);
 }
 
-
-
 /**
  * Convenience function to apply the corrections of multiple Recentering procedures.
  * @tparam DataFrame type of a RDataFrame
@@ -435,25 +443,6 @@ inline auto ApplyCorrectionsVector(DataFrame df, VectorOfCorrections corrections
 }
 
 
-
-
-
-template<typename DataFrame>
-inline auto SnapshotVector(DataFrame df, std::string filename, std::string treename,
-                           std::vector<std::string> qvectors, std::vector<std::string> branches) {
-  std::vector<std::string> columns;
-  std::transform(std::begin(qvectors),
-                 std::end(qvectors),
-                 std::back_inserter(columns),
-                 [](auto name){ return name;});
-  std::transform(std::begin(branches),
-                 std::end(branches),
-                 std::back_inserter(columns),
-                 [](auto name){ return name;});
-  return df.Snapshot(treename, filename, columns);
-}
-
-
-}
-}
+} /// Correction
+} /// Qn
 #endif //FLOW_RECENTERACTION_H_

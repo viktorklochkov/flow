@@ -32,21 +32,13 @@ namespace Qn {
 template<typename Helper>
 using RActionImpl =  ROOT::Detail::RDF::RActionImpl<Helper>;
 
-template<typename Action, typename EventParameters, typename DataContainers>
-class AverageHelper;
 /**
  * Averaging helper class for the use in the RDataFrame
  * Allows to perform an averaging over events with an Action
  * @tparam Action Action which specifies the way to perform the average
- * @tparam EventParameters Event parameters used for classification of events
- * @tparam DataContainers Input data containers / Q-vectors
  */
-template<typename Action, typename... EventParameters, typename... DataContainers>
-class AverageHelper<Action,
-                    std::tuple<EventParameters...>,
-                    std::tuple<DataContainers...>> : public RActionImpl<AverageHelper<Action,
-                                                                                      std::tuple<EventParameters...>,
-                                                                                      std::tuple<DataContainers...> >> {
+template<typename Action>
+class AverageHelper : public RActionImpl<AverageHelper<Action>> {
  public:
   using Result_t = Action; /// Result of the averaging operation.
 
@@ -76,38 +68,33 @@ class AverageHelper<Action,
    * @return returns the result of the averaging. This Action can in the following be used to perform the corrections.
    */
   template<typename DataFrame>
-  ROOT::RDF::RResultPtr<Result_t> BookMe(DataFrame &df) {
-    return df.template Book<DataContainers..., EventParameters...>(std::move(*this), results_[0]->GetColumnNames());
+  ROOT::RDF::RResultPtr<Result_t> BookMe(DataFrame &&df) {
+    return results_[0]->BookMe(std::forward<DataFrame>(df), *this);
   }
 
   /**
    * Main analysis loop. This function is run for every event. Forwards the inputs to the action.
+   * @tparam Parameters of the action.
    * @param slot slot in the MT pool.
-   * @param data_containers input Q-vectors.
-   * @param coordinates input event parameters for event classification.
+   * @param parameters of the action.
    */
   template<typename... Parameters>
   void Exec(unsigned int slot, Parameters &&... parameters) {
     results_[slot]->CalculateAction(std::forward<Parameters>(parameters)...);
   }
-//  void Exec(unsigned int slot, DataContainers... data_containers, EventParameters... coordinates) {
-//    results_[slot]->CalculateAction(data_containers..., coordinates...);
-//  }
 
   /**
    * Finalizes the results and merges all slots into the first.
+   * Special case if results_[0] is not initialized.
+   * During merging all elements of the merge need to be initialized.
    */
   void Finalize() {
-    auto first_configured = [](const std::vector<bool>& vec){
-      for (std::size_t i = 0; i < vec.size(); ++i) { if (vec[i]) return i; }
-      return vec.size();
-    }(is_configured_);
-    if (!results_[0]->IsInitialized()) {
-      auto result = results_.at(first_configured);
-      results_[0]->SwapWithOther(*result);
-    }
+    auto first_configured = std::distance(std::begin(is_configured_), std::find_if(std::begin(is_configured_),
+                                                                                   std::end(is_configured_),
+                                                                                   [](bool x) { return x; }));
+    if (!is_configured_[0]) results_[0]->CopyInitializedState(*results_.at(first_configured));
     std::vector<std::shared_ptr<Result_t>> others;
-    for (std::size_t slot = first_configured+1; slot < results_.size(); ++slot) {
+    for (std::size_t slot = first_configured + 1; slot < results_.size(); ++slot) {
       if (is_configured_[slot]) others.push_back(results_[slot]);
     }
     results_[0]->Merge(others);
@@ -119,16 +106,34 @@ class AverageHelper<Action,
    */
   void InitTask(TTreeReader *reader, unsigned int slot) {
     if (!is_configured_[slot]) {
-      reader->Restart();
       TTreeReader local_reader(reader->GetTree());
       results_[slot]->Initialize(local_reader);
       is_configured_[slot] = true;
     }
   }
 
+  /**
+   * Needed by the RDataFrame do not remove
+   */
   void Initialize() { /* no-op */}
-  Result_t &PartialUpdate(unsigned int slot) { return *results_.at(slot); }
+
+  /**
+   * Get partial result of a slot
+   * @param slot slot index
+   * @return partial result
+   */
+  Result_t &PartialUpdate(unsigned int slot) { return *results_[slot]; }
+
+  /**
+   * Get pointer to the merged result.
+   * @return pointer to the result
+   */
   std::shared_ptr<Result_t> GetResultPtr() const { return results_[0]; }
+
+  /**
+   * Returns the name of the Action
+   * @return Name of the action
+   */
   std::string GetActionName() const { return results_[0]->GetName(); }
 };
 
@@ -137,12 +142,8 @@ class AverageHelper<Action,
  * @tparam Action Action which carries the needed information to derive the template parameters and create the AverageHelper.
  */
 template<typename Action>
-auto inline EventAverage(Action action) {
-  using EventParameterTuple = typename Action::EventParameterTuple;
-  using DataContainerTuple = TemplateMagic::TupleOf<Action::NumberOfInputs, Qn::DataContainerQVector>;
-  return AverageHelper<Action, EventParameterTuple, DataContainerTuple>{action};
-}
+auto inline EventAverage(Action action) { return AverageHelper<Action>{action}; }
 
-}
+} /// Qn
 
 #endif

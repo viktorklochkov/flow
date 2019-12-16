@@ -155,6 +155,6 @@ auto EqualizeBinning(AxesConfig config, DataFrame dataframe, const std::vector<s
   return Qn::EqualBinningHelper<AxesConfig, DataFrame>(config, dataframe, to_equalize)();
 }
 
-}
+} /// Qn
 
 #endif //FLOW_EQUALBINNINGHELPER_H_

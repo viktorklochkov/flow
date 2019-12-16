@@ -30,7 +30,6 @@ namespace Correlation {
 /**
  * Class for creating samples in the DataFrame using
  */
-template<typename DataFrame>
 class ReSampleHelper {
  public:
   /**
@@ -38,8 +37,7 @@ class ReSampleHelper {
    * @param df Dataframe to which the samples are added.
    * @param n number of samples which are to be used for error estimation
    */
-  ReSampleHelper(DataFrame df, std::size_t n=100) :
-      dataframe_(df),
+  explicit ReSampleHelper(std::size_t n=100) :
       n_(n),
       generator_(std::random_device{}()),
       poisson_(1) {
@@ -52,18 +50,11 @@ class ReSampleHelper {
    */
   ROOT::RVec<ULong64_t> operator()() {
     ROOT::RVec<ULong64_t> vec(n_);
-    for (auto &entry : vec) { entry = poisson_(generator_); }
+    for (auto &entry : vec) entry = poisson_(generator_);
     return vec;
   }
 
-  /**
-   * Adds the samples to the RDataFrame and returns the resulting dataframe.
-   * @return The DataFrame containing the definitions.
-   */
-  auto Define() { return dataframe_.Define("samples", *this, {}); }
-
  private:
-  DataFrame dataframe_; /// Input data
   const std::size_t n_; /// Number of samples
   std::mt19937 generator_; /// Random number generator
   std::poisson_distribution<> poisson_; /// distribution of events per sample.
@@ -78,9 +69,7 @@ class ReSampleHelper {
  * @return The resulting RDataFrame with the sample definition.
  */
 template <typename DataFrame>
-auto Resample(DataFrame df, std::size_t n) {
-  return ReSampleHelper<DataFrame>(df,n).Define();
-}
+auto Resample(DataFrame df, std::size_t n) { return df.template Define("samples", ReSampleHelper(n), {}); }
 
 }
 }
