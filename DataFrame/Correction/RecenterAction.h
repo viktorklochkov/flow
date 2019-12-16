@@ -312,7 +312,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * Used during multi threading.
    * @param other another state.
    */
-  void CopyInitializedState( RecenterAction &other) {
+  void CopyInitializedState(const RecenterAction &other) {
     use_width_equalization_ = other.use_width_equalization_;
     min_entries_ = other.min_entries_;
     stride_ = other.stride_;
