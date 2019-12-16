@@ -83,6 +83,7 @@ class DataContainer : public TObject {
   DataContainer(const DataContainer &detector) = default;
   DataContainer &operator=(DataContainer &&detector) = default;
   DataContainer &operator=(DataContainer &detector) = default;
+  DataContainer &operator=(const DataContainer &detector) = default;
 
   using QnAxes = std::vector<AxisType>;
   using size_type = std::size_t;
