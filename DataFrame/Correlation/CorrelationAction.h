@@ -39,10 +39,8 @@ class CorrelationAction;
 
 template<typename Function, typename... InputDataContainers, typename AxesConfig, typename... EventParameters>
 class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig, std::tuple<EventParameters...>> {
- public:
-  constexpr static std::size_t NumberOfInputs = sizeof...(InputDataContainers);
-  using EventParameterTuple = std::tuple<ROOT::RVec<ULong64_t>, EventParameters...>;
  private:
+  constexpr static std::size_t NumberOfInputs = sizeof...(InputDataContainers);
   using DataContainerRef = std::reference_wrapper<const DataContainerQVector>;
  public:
 
@@ -71,22 +69,50 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
   }
 
   /**
+   * Returns the name of the output Q-vector.
+   * @return name of the output Q-vector
+   */
+  std::string GetName() const { return action_name_; }
+
+  /**
+   * Writes the result of the correlation to file. Triggers the evaluation of the event loop
+   */
+  void Write() const { correlation_.Write(GetName().data()); }
+
+  /**
+   * Gives a const reference to the result of the correlation. Triggers the evaluation of the event loop.
+   * @return returns const reference.
+   */
+  const Qn::DataContainerStats &GetDataContainer() const { return correlation_; }
+
+ private:
+
+  friend class AverageHelper<CorrelationAction>; /// Helper friend
+
+  unsigned int stride_ = 1; /// Offset of due to the non-event axes.
+  unsigned int n_samples_ = 1; /// Number of samples used in the ReSampler.
+  std::string action_name_; /// Name of the correlation.
+  std::array<std::string, NumberOfInputs> input_names_; /// Names of the input Qvectors.
+  std::array<bool, NumberOfInputs> use_weights_; /// Array to track which weight is being used.
+  AxesConfig event_axes_; /// Configuration of the event axes.
+  Function function_; /// Correlation function.
+  Qn::DataContainerStats correlation_; /// Result data container.
+
+
+  /**
    * Initializes the CorrelationAction using the input Q-vectors in the input TTree.
    * @param reader The TTreeReader gives access to the input TTree.
    */
   void Initialize(TTreeReader &reader) {
+    using namespace std::literals::string_literals;
     reader.Restart();
     std::vector<TTreeReaderValue<DataContainerQVector>> input_data;
     std::transform(std::begin(input_names_),std::end(input_names_),std::back_inserter(input_data),
-        [&reader](const std::string &name){return TTreeReaderValue<DataContainerQVector>(reader,name.data());});
+                   [&reader](const std::string &name){return TTreeReaderValue<DataContainerQVector>(reader,name.data());});
     reader.Next();
     for (std::size_t i = 0; i < input_data.size(); ++i) {
       auto &i_data = input_data[i];
-      if (i_data.GetSetupStatus() < 0) {
-        std::ostringstream error_message;
-        error_message << "The Q-Vector " << i_data.GetBranchName() << " in the tree is not valid. Aborting.";
-        throw std::runtime_error(error_message.str());
-      }
+      if (i_data.GetSetupStatus() < 0) throw std::runtime_error("Q-Vector branch "s + i_data.GetBranchName() + " not found.");
       if (!i_data->IsIntegrated()) AddAxes(input_data, i);
     }
     stride_ = correlation_.size();
@@ -96,20 +122,6 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
       if (IsObservable()) bin.SetWeights(Qn::Stats::Weights::OBSERVABLE);
       else                bin.SetWeights(Qn::Stats::Weights::REFERENCE);
     }
-  }
-
-  /**
-   * Returns the name of the columns used in the correction step. This includes both the input Q-vector and
-   * the name of the axes parameters. This function is required by the AverageHelper.
-   * @return returns a vector of the column names.
-   */
-  std::vector<std::string> GetColumnNames() const {
-    std::vector<std::string> columns;
-    std::copy(std::begin(input_names_), std::end(input_names_), std::back_inserter(columns));
-    columns.emplace_back("samples");
-    const auto event_axes_names = event_axes_.GetNames();
-    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
-    return columns;
   }
 
   /**
@@ -142,22 +154,49 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
   }
 
   /**
-   * Returns the name of the output Q-vector.
-   * @return name of the output Q-vector
+   * Called during booking process.
+   * Allows to hide template parameters.
+   * @tparam DataFrame type of dataframe
+   * @param df dataframe to which the action is booked.
+   * @param helper helper
+   * @return Result pointer to the result of the action
    */
-  std::string GetName() const { return action_name_; }
-  /**
-   * Gives a const reference to the result of the correlation. Triggers the evaluation of the event loop.
-   * @return returns const reference.
-   */
-  const Qn::DataContainerStats &GetDataContainer() const { return correlation_; }
+  template<typename DataFrame>
+  auto BookMe(DataFrame df, Qn::AverageHelper<CorrelationAction> helper) {
+    return df.template Book<InputDataContainers..., ROOT::RVec<ULong64_t>, EventParameters...>
+        (std::move(helper), GetColumnNames());
+  }
 
   /**
-   * Writes the result of the correlation to file. Triggers the evaluation of the event loop
+   * Copy one state to the next.
+   * Used during multi threading.
+   * Does not copy function_.
+   * @param other another state.
    */
-  void Write() const { correlation_.Write(GetName().data()); }
+  void CopyInitializedState(CorrelationAction &other) {
+    stride_ = other.stride_;
+    n_samples_ = other.n_samples_;
+    action_name_ = other.action_name_;
+    input_names_ = other.input_names_;
+    use_weights_ = other.use_weights_;
+    event_axes_ = other.event_axes_;
+    correlation_ = other.correlation_;
+  }
 
- private:
+  /**
+   * Returns the name of the columns used in the correction step. This includes both the input Q-vector and
+   * the name of the axes parameters. This function is required by the AverageHelper.
+   * @return returns a vector of the column names.
+   */
+  std::vector<std::string> GetColumnNames() const {
+    std::vector<std::string> columns;
+    std::copy(std::begin(input_names_), std::end(input_names_), std::back_inserter(columns));
+    columns.emplace_back("samples");
+    const auto event_axes_names = event_axes_.GetNames();
+    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
+    return columns;
+  }
+
   /**
    * Checks if at least one Q-vector is not a reference Q-vector.
    * @return true if at least one of them is not a reference Q-vector.
@@ -235,14 +274,6 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
     }
   }
 
-  unsigned int stride_ = 1; /// Offset of due to the non-event axes.
-  unsigned int n_samples_ = 1; /// Number of samples used in the ReSampler.
-  std::string action_name_; /// Name of the correlation.
-  std::array<std::string, NumberOfInputs> input_names_; /// Names of the input Qvectors.
-  std::array<bool, NumberOfInputs> use_weights_; /// Array to track which weight is being used.
-  AxesConfig event_axes_; /// Configuration of the event axes.
-  Function function_; /// Correlation function.
-  Qn::DataContainerStats correlation_; /// Result data container.
 };
 
 /**
@@ -258,18 +289,19 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
  * @return result of the correlation.
  */
 template<typename Function, typename AxesConfig>
-auto Correlation(Function function,
-                     const std::array<std::string, TemplateMagic::FunctionTraits<Function>::Arity> input_names,
-                     const std::array<Qn::Stats::Weights, TemplateMagic::FunctionTraits<Function>::Arity> weights,
-                     const std::string& correlation_name,
-                     AxesConfig event_axes,
-                     unsigned int n_samples) {
+auto Correlation(const std::string& correlation_name,
+                 Function function,
+                 const std::array<std::string, TemplateMagic::FunctionTraits<Function>::Arity> input_names,
+                 const std::array<Qn::Stats::Weights, TemplateMagic::FunctionTraits<Function>::Arity> weights,
+                 AxesConfig event_axes,
+                 unsigned int n_samples) {
   constexpr auto n_parameters = TemplateMagic::FunctionTraits<Function>::Arity;
   using DataContainerTuple = TemplateMagic::TupleOf<n_parameters, Qn::DataContainerQVector>;
   using EventParameterTuple = typename AxesConfig::AxisValueTypeTuple;
-  return CorrelationAction<Function, DataContainerTuple, AxesConfig, EventParameterTuple>(function, input_names, weights, correlation_name, event_axes, n_samples);
+  return CorrelationAction<Function, DataContainerTuple, AxesConfig, EventParameterTuple>
+      (function, input_names, weights, correlation_name, event_axes, n_samples);
 }
 
-}
-}
+} /// Correlation
+} /// Qn
 #endif //FLOW_CORRELATIONACTION_H

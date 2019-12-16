@@ -25,4 +25,5 @@
 // Correlation Step
 #include "Correlation/ReSampleHelper.h"
 #include "Correlation/CorrelationAction.h"
+#include "Correlation/CorrelationFunctions.h"
 #endif //FLOW_FLOWDATAFRAME_H_

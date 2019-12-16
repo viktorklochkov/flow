@@ -25,7 +25,6 @@
 #include "Common/TemplateMagic.h"
 
 namespace Qn {
-
 namespace Impl {
 
 /**
@@ -53,7 +52,7 @@ struct StrideCalculator<0> {
   }
 };
 
-}
+} /// Impl
 
 /**
  * Template class for the configuration of the event axes. Calculates the binning of a multidimensional
@@ -168,5 +167,5 @@ auto EventAxes(Axes... axes) {
   return AxesConfiguration<Axes...>(axes...);
 }
 
-}
+} /// Qn
 #endif //FLOW_AXESCONFIGURATION_H_

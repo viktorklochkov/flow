@@ -25,16 +25,19 @@ TEST(DataContainerTest, TestHelper) {
   corrections.push_back(Qn::Correction::Recentering("test",
                                                     "ZNA_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-//  corrections.push_back(Qn::Correction::Recentering("test",
-//                                                    "ZNC_PLAIN",
-//                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100}))
-//                            .EnableWidthEqualization());
+  corrections.push_back(Qn::Correction::Recentering("test",
+                                                    "ZNC_PLAIN",
+                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
 //  corrections.push_back(Qn::Correction::Recentering("test",
 //                                                    "TPCPT_PLAIN",
 //                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-  corrections.back().SetMinimumNumberOfEntries(5);
   std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
-  auto res = Qn::EventAverage(corrections[0]).BookMe(df);
+  std::vector<std::string> names_;
+  for (auto &correction : corrections) {
+    resultptrs.push_back(Qn::EventAverage(correction).BookMe(df));
+    names_.push_back(correction.GetName());
+  }
+//  auto res = Qn::EventAverage(corrections[0]).BookMe(df);
 //  auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
 //  auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
 //  TTreeReader reader("tree", in_tree_file);
@@ -51,38 +54,33 @@ TEST(DataContainerTest, TestHelper) {
 //                                     }
 //                                   }),
 //                    corrections.end());
-  auto value = *res;
+//  auto value = *res;
 
 //  auto corrected = Qn::Correction::ApplyCorrections(df, value);
-  auto corrected = df.Define("ZNA_PLAIN_test",value,{"ZNA_PLAIN","CentralityV0M"});
+//  auto corrected = df.Define("ZNA_PLAIN_test",value,{"ZNA_PLAIN","CentralityV0M"});
 //  auto corrected = value.ApplyCorrection(df);
-//  auto corrected2 = Qn::Correction::ApplyCorrectionsVector(corrected, corrections);
-  corrected.Snapshot("tree","~/testhelper/rectree.root",{"ZNA_PLAIN_test","CentralityV0M"});
+  auto corrected = Qn::Correction::ApplyCorrectionsVector(df, resultptrs);
+//  corrected.Snapshot("tree","~/testhelper/rectree.root",{"ZNA_PLAIN_test","CentralityV0M"});
+  auto other_branches = {"CentralityV0M", "VtxX"};
+  names_.insert(std::end(names_), std::begin(other_branches), std::end(other_branches));
 
-//  Qn::Correction::SnapshotVector(corrected,
-//                                 "~/testhelper/rectree.root",
-//                                 "tree",
-//                                 {"ZNA_PLAIN_test"},
-//                                 {"CentralityV0M", "VtxX"});
-//
-//  ROOT::RDataFrame dfcorrected("tree", "~/testhelper/rectree.root");
+  auto dfcorrected = corrected.Snapshot("tree", "~/testhelper/rectree.root", names_);
 
-//  auto dfsamples = Qn::Correlation::Resample(dfcorrected, 100);
+  auto dfsamples = Qn::Correlation::Resample(*dfcorrected, 100);
+
+  auto t = Qn::EventAverage(Qn::Correlation::Correlation("test",
+                                                         Qn::Correlation::TwoParticle::xx(1, 1),
+                                                         {"ZNA_PLAIN_test", "ZNC_PLAIN_test"},
+                                                         {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
+                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
+                                                         100)).BookMe(dfsamples);
 //
-//  auto t = Qn::EventAverage(Qn::Correlation::Correlation([](const Qn::QVector &a, const Qn::QVector &b) {
-//                                                           return a.x(1)*b.y(1);
-//                                                         },
-//                                                         {"ZNC_PLAIN_test", "ZNA_PLAIN_test"},
-//                                                         {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
-//                                                         "test",
-//                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
-//                                                         100)).BookMe(dfsamples);
-//
-//  auto &ttr = t->GetDataContainer();
+  auto &ttr = t->GetDataContainer();
 
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-//  resultptrs.front()->Write(file);
+  ttr.Write("test");
+  resultptrs[0]->Write(file);
 
   file->Close();
   delete file;
