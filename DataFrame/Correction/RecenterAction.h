@@ -121,7 +121,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
         }
         auto harmonic = harmonics_vector_[i_harmonic];
         corrected_q[ibin].SetQ(harmonic, (input_q[ibin].x(harmonic) - x_[i_harmonic][correction_bin].Mean())/x_width,
-                               (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
+                                         (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
       }
     }
     return corrected_q;
@@ -201,8 +201,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   void Write(TDirectory *directory) {
     using namespace std::literals::string_literals;
     directory->cd();
-    directory->mkdir(HashName().data());
-    directory->cd(HashName().data());
+    auto unique_name = HashName().data();
+    directory->mkdir(unique_name);
+    directory->cd(unique_name);
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       x_.at(i_harmonic).Write(("X_"s + std::to_string(harmonics_vector_[i_harmonic])).data());
       y_.at(i_harmonic).Write(("Y_"s + std::to_string(harmonics_vector_[i_harmonic])).data());
@@ -360,14 +361,12 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   }
 
   TH1D CreateBinOccupancyHisto() {
-    auto max_entries = std::max_element(x_[0].begin(), x_[0].end(),
-                                        [](const Statistic &a, const Statistic &b) {
-                                          return a.Entries() < b.Entries();
-                                        })->Entries();
-    auto min_entries = std::min_element(x_[0].begin(), x_[0].end(),
-                                        [](const Statistic &a, const Statistic &b) {
-                                          return a.Entries() < b.Entries();
-                                        })->Entries();
+    auto min_max = std::minmax_element(x_[0].begin(), x_[0].end(),
+                                       [](const Statistic &a, const Statistic &b) {
+                                         return a.Entries() < b.Entries();
+                                       });
+    auto min_entries = min_max.first->Entries();
+    auto max_entries = min_max.second->Entries();
     auto difference = (max_entries - min_entries) * 0.05;
     max_entries = max_entries + difference;
     min_entries = min_entries - difference;

@@ -34,11 +34,37 @@
 namespace Qn {
 namespace Correlation {
 
+class CorrelationActionBase {
+ public:
+  explicit CorrelationActionBase(std::string name) : action_name_(name) {}
+  /**
+ * Returns the name of the output Q-vector.
+ * @return name of the output Q-vector
+ */
+  std::string GetName() const { return action_name_; }
+
+  /**
+   * Writes the result of the correlation to file. Triggers the evaluation of the event loop
+   */
+  void Write() const { correlation_.Write(GetName().data()); }
+
+  /**
+   * Gives a const reference to the result of the correlation. Triggers the evaluation of the event loop.
+   * @return returns const reference.
+   */
+  const Qn::DataContainerStats &GetDataContainer() const { return correlation_; }
+ protected:
+  std::string action_name_;
+  Qn::DataContainerStats correlation_; /// Result data container.
+
+};
+
 template<typename Function, typename InputDataContainers, typename AxesConfig, typename EventParameters>
 class CorrelationAction;
 
 template<typename Function, typename... InputDataContainers, typename AxesConfig, typename... EventParameters>
-class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig, std::tuple<EventParameters...>> {
+class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig, std::tuple<EventParameters...>> :
+    public CorrelationActionBase {
  private:
   constexpr static std::size_t NumberOfInputs = sizeof...(InputDataContainers);
   using DataContainerRef = std::reference_wrapper<const DataContainerQVector>;
@@ -59,8 +85,8 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
                     const std::string &correlation_name,
                     AxesConfig event_axes,
                     unsigned int n_samples) :
+      CorrelationActionBase(correlation_name),
       n_samples_(n_samples),
-      action_name_(correlation_name),
       input_names_(input_names),
       event_axes_(event_axes),
       function_(function) {
@@ -68,35 +94,16 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
                    [](Qn::Stats::Weights weight) { return weight==Qn::Stats::Weights::OBSERVABLE; });
   }
 
-  /**
-   * Returns the name of the output Q-vector.
-   * @return name of the output Q-vector
-   */
-  std::string GetName() const { return action_name_; }
-
-  /**
-   * Writes the result of the correlation to file. Triggers the evaluation of the event loop
-   */
-  void Write() const { correlation_.Write(GetName().data()); }
-
-  /**
-   * Gives a const reference to the result of the correlation. Triggers the evaluation of the event loop.
-   * @return returns const reference.
-   */
-  const Qn::DataContainerStats &GetDataContainer() const { return correlation_; }
-
  private:
 
   friend class AverageHelper<CorrelationAction>; /// Helper friend
 
   unsigned int stride_ = 1; /// Offset of due to the non-event axes.
   unsigned int n_samples_ = 1; /// Number of samples used in the ReSampler.
-  std::string action_name_; /// Name of the correlation.
   std::array<std::string, NumberOfInputs> input_names_; /// Names of the input Qvectors.
   std::array<bool, NumberOfInputs> use_weights_; /// Array to track which weight is being used.
   AxesConfig event_axes_; /// Configuration of the event axes.
   Function function_; /// Correlation function.
-  Qn::DataContainerStats correlation_; /// Result data container.
 
 
   /**
