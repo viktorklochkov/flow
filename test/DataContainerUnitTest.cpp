@@ -15,7 +15,7 @@
 
 TEST(DataContainerTest, TestHelper) {
 
-  ROOT::EnableImplicitMT(24);
+//  ROOT::EnableImplicitMT(24);
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
   auto df = df0.Filter("Trigger==0", "minbias");
   auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
@@ -60,43 +60,27 @@ TEST(DataContainerTest, TestHelper) {
 //  auto corrected = df.Define("ZNA_PLAIN_test",value,{"ZNA_PLAIN","CentralityV0M"});
 //  auto corrected = value.ApplyCorrection(df);
   auto corrected = Qn::Correction::ApplyCorrectionsVector(df, resultptrs);
-//  corrected.Snapshot("tree","~/testhelper/rectree.root",{"ZNA_PLAIN_test","CentralityV0M"});
   auto other_branches = {"CentralityV0M", "VtxX"};
   names_.insert(std::end(names_), std::begin(other_branches), std::end(other_branches));
-
   auto dfcorrected = corrected.Snapshot("tree", "~/testhelper/rectree.root", names_);
-
   auto dfsamples = Qn::Correlation::Resample(*dfcorrected, 100);
-
-  auto t = Qn::EventAverage(Qn::Correlation::Correlation("test",
+  std::vector<ROOT::RDF::RResultPtr<Qn::Correlation::CorrelationActionBase>> vecs;
+      vecs.push_back(Qn::EventAverage(Qn::Correlation::Correlation("test",
                                                          Qn::Correlation::TwoParticle::xx(1, 1),
                                                          {"ZNA_PLAIN_test", "ZNC_PLAIN_test"},
                                                          {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
                                                          Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
-                                                         100)).BookMe(dfsamples);
-//
-  auto &ttr = t->GetDataContainer();
-
+                                                         100)).BookMe(dfsamples));
+  
+  auto &ttr = vecs.front()->GetDataContainer();
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
   ttr.Write("test");
   resultptrs[0]->Write(file);
-
   file->Close();
   delete file;
-
-//  ROOT::RDataFrame df2("tree", "~/testhelper/mergedtree.root");
-//  auto file_2 = TFile::Open("~/testhelper/tt.root", "Open");
-//  auto file_tree = TFile::Open("~/testhelper/mergedtree.root", "Open");
-//  TTreeReader reader("tree",file_tree);
-//  auto result_read = Qn::Correction::Recentering("test","ZNA_PLAIN",Qn::MakeAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100}));
-//  result_read.LoadCorrectionFromFile(file_2, &reader);
-//  auto corr2 = Qn::Correction::ApplyCorrections(df2, result_read);
-//  corr2.Snapshot("tree","~/testhelper/rectree2.root",{"ZNA_PLAIN_test","CentralityV0M"});
-//  file_2->Close();
-//  file_tree->Close();
-//  delete file_tree;
-//  delete file_2;
+  using Weights = Qn::Stats::Weights;
+  using Qn::Correlation::Correlation;
 }
 
 TEST(DataContainerTest, equalbinning) {
