@@ -116,7 +116,7 @@ class Axis {
     std::ostringstream axislimits;
     axislimits.precision(2);
     axislimits << std::scientific;
-    axislimits << "|" << t_name << "|" << size() << "|" << GetFirstBinEdge() << "|" <<GetLastBinEdge() << "|";
+    axislimits << "_" << t_name << "_" << size() << "_" << GetFirstBinEdge() << "_" <<GetLastBinEdge() << "_";
     return axislimits.str();
   }
 
