@@ -201,9 +201,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   void Write(TDirectory *directory) {
     using namespace std::literals::string_literals;
     directory->cd();
-    auto unique_name = HashName().data();
-    directory->mkdir(unique_name);
-    directory->cd(unique_name);
+    auto unique_name = HashName();
+    directory->mkdir(unique_name.data());
+    directory->cd(unique_name.data());
     for (std::size_t i_harmonic = 0; i_harmonic < harmonics_vector_.size(); ++i_harmonic) {
       x_.at(i_harmonic).Write(("X_"s + std::to_string(harmonics_vector_[i_harmonic])).data());
       y_.at(i_harmonic).Write(("Y_"s + std::to_string(harmonics_vector_[i_harmonic])).data());

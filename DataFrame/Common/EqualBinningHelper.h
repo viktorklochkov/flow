@@ -28,6 +28,8 @@
 #include "ROOT/RResultPtr.hxx"
 #include "Math/Interpolator.h"
 
+#include "Axis.h"
+
 namespace Qn {
 
 /**
