@@ -197,8 +197,10 @@ class Stats {
 
   template<typename SAMPLES>
   inline void Fill(const double value, const double weight, SAMPLES &&samples) {
+    if (!std::isnan(value)) {
       resamples_.Fill(value, weight, std::forward<SAMPLES>(samples));
       statistic_.Fill(value, weight);
+    }
   }
 
   void SetNumberOfReSamples(size_type nsamples) {

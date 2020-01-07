@@ -87,10 +87,12 @@ TGraphAsymmErrors *DataContainerHelper::ToTGraphShifted(const DataContainerStats
       exl = x - xlo;
       exh = xhi - x;
     }
-    graph->SetPoint(ibin, x, y);
-    graph->SetPointError(ibin, exl, exh, ylo, yhi);
-    graph->SetMarkerStyle(kFullCircle);
-    ibin++;
+    if (!std::isnan(y) && !std::isnan(ylo) && !std::isnan(yhi)) {
+      graph->SetPoint(ibin, x, y);
+      graph->SetPointError(ibin, exl, exh, ylo, yhi);
+      graph->SetMarkerStyle(kFullCircle);
+      ibin++;
+    }
   }
   return graph;
 }
