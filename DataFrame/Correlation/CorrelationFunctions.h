@@ -17,6 +17,8 @@
 #ifndef FLOW_CORRELATIONFUNCTIONS_H_
 #define FLOW_CORRELATIONFUNCTIONS_H_
 
+#include <cmath>
+
 namespace Qn {
 namespace Correlation {
 /**
@@ -40,9 +42,15 @@ inline auto ScalarProduct(unsigned int h_u, unsigned int h_Q) {
 }
 inline auto Cumulant(unsigned int h_u) {
   return [h_u](const Qn::QVector &u) {
+    double ret = 0.;
     auto m = u.sumweights();
-    auto Q_mag = u.DeNormal().mag(h_u);
-    return (Q_mag*Q_mag - m)/(m*(m - 1));
+    if ( m < 2.) {
+      ret = NAN;
+    } else {
+      auto Q_mag = u.DeNormal().mag(h_u);
+      ret = (Q_mag*Q_mag - m)/(m*(m - 1.));
+    }
+    return ret;
   };
 }
 } /// TwoParticle
@@ -80,18 +88,24 @@ inline auto xxy(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
 
 inline auto Cumulant(unsigned int h_u) {
   return [h_u](const Qn::QVector &u) {
+    float ret = 0.;
     auto Q = u.DeNormal();
     auto M = u.sumweights();
-    auto x = Q.x(h_u);
-    auto y = Q.y(h_u);
-    auto x2 = Q.x(2*h_u);
-    auto y2 = Q.y(2*h_u);
-    auto Q_mag = std::sqrt(x*x + y*y);
-    auto Q_2n_mag = std::sqrt(x2*x2 + y2*y2);
-    auto real = x2*x*x - x2*y*y + y2*y*x + y2*x*y;
-    auto term_1 = (Q_mag*Q_mag*Q_mag*Q_mag + Q_2n_mag*Q_2n_mag - 2*real)/(M*(M - 1)*(M - 2)*(M - 3));
-    auto term_2 = (2*(M - 2)*Q_mag*Q_mag - M*(M - 3))/(M*(M - 1)*(M - 2)*(M - 3));
-    return term_1 - 2*term_2;
+    if ( M < 4.) {
+      ret = NAN;
+    } else {
+      auto x = Q.x(h_u);
+      auto y = Q.y(h_u);
+      auto x2 = Q.x(2*h_u);
+      auto y2 = Q.y(2*h_u);
+      auto Q_mag = std::sqrt(x*x + y*y);
+      auto Q_2n_mag = std::sqrt(x2*x2 + y2*y2);
+      auto real = x2*x*x - x2*y*y + y2*y*x + y2*x*y;
+      auto term_1 = (Q_mag*Q_mag*Q_mag*Q_mag + Q_2n_mag*Q_2n_mag - 2*real)/(M*(M - 1)*(M - 2)*(M - 3));
+      auto term_2 = (2*(M - 2)*Q_mag*Q_mag - M*(M - 3))/(M*(M - 1)*(M - 2)*(M - 3));
+      ret = term_1 - 2*term_2;
+    }
+    return ret;
   };
 }
 } /// FourParticle
