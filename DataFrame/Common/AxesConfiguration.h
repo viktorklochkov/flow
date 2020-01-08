@@ -81,6 +81,10 @@ class AxesConfiguration {
   std::vector<AxisType> GetVector() const { return TemplateMagic::ToVector(axes_); }
 
   /**
+   * Get the total size
+   */
+   std::size_t GetSize() const {return stride_[0];}
+  /**
    * Returns the linear bin offset for the axes configuration from passed coordinates.
    * @tparam Coordinates type of the coordinates
    * @param coordinates coordinates for which the corresponding bin is searched.
