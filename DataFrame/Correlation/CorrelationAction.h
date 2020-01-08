@@ -117,13 +117,13 @@ class CorrelationAction<Function, std::tuple<InputDataContainers...>, AxesConfig
     std::transform(std::begin(input_names_),std::end(input_names_),std::back_inserter(input_data),
                    [&reader](const std::string &name){return TTreeReaderValue<DataContainerQVector>(reader,name.data());});
     reader.Next();
+    correlation_.AddAxes(event_axes_.GetVector());
     for (std::size_t i = 0; i < input_data.size(); ++i) {
       auto &i_data = input_data[i];
       if (i_data.GetSetupStatus() < 0) throw std::runtime_error("Q-Vector branch "s + i_data.GetBranchName() + " not found.");
       if (!i_data->IsIntegrated()) AddAxes(input_data, i);
     }
-    stride_ = correlation_.size();
-    correlation_.AddAxes(event_axes_.GetVector());
+    stride_ = correlation_.size() / event_axes_.GetSize();
     for (auto &bin : correlation_) {
       bin.SetNumberOfReSamples(n_samples_);
       if (IsObservable()) bin.SetWeights(Qn::Stats::Weights::OBSERVABLE);
