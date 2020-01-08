@@ -178,6 +178,7 @@ class Stats {
   friend Stats operator*(double, const Stats &);
   friend Stats operator/(const Stats &, const Stats &);
   friend Stats Sqrt(const Stats &);
+  friend Stats Abs(const Stats &);
   friend Stats PowSqrt(const Stats &, unsigned int);
 
   inline void Fill(const CorrelationResult &product, const std::vector<size_type> &samples) {
@@ -247,6 +248,7 @@ Stats operator*(const Stats &, double);
 Stats operator/(const Stats &, double);
 Stats operator*(double, const Stats &);
 Stats operator/(const Stats &, const Stats &);
+Stats Abs(const Stats &);
 Stats Sqrt(const Stats &);
 Stats PowSqrt(const Stats &, unsigned int);
 }

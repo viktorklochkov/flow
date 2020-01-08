@@ -188,6 +188,15 @@ Stats operator/(const Stats &num, const Stats &den) {
   return result;
 }
 
+Stats Abs(const Stats &stat) {
+  Stats result = stat;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  auto temp_mean = result.mean_;
+  result.mean_ = std::fabs(temp_mean);
+  result.resamples_ = ReSamples::Abs(result.resamples_);
+  return result;
+}
+
 Stats Sqrt(const Stats &stat) {
   Stats result = stat;
   if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
