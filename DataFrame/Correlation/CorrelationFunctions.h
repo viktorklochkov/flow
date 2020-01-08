@@ -44,11 +44,11 @@ inline auto Cumulant(unsigned int h_u) {
   return [h_u](const Qn::QVector &u) {
     double ret = 0.;
     auto m = u.sumweights();
-    if ( m < 2.) {
+    if (m < 2.) {
       ret = NAN;
     } else {
-      auto Q_mag = u.DeNormal().mag(h_u);
-      ret = (Q_mag*Q_mag - m)/(m*(m - 1.));
+      auto Q = u.DeNormal();
+      ret = (ScalarProduct(Q, Q, h_u) - m)/(m*(m - 1.));
     }
     return ret;
   };
@@ -61,37 +61,52 @@ inline auto Cumulant(unsigned int h_u) {
 namespace FourParticle {
 
 inline auto xxx(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.x(h_a)*Qb.x(h_b)*Qc.x(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.x(h_a)*Qb.x(h_b)*Qc.x(h_c);
+  };
 }
 inline auto xyy(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.x(h_a)*Qb.y(h_b)*Qc.y(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.x(h_a)*Qb.y(h_b)*Qc.y(h_c);
+  };
 }
 inline auto yxy(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.y(h_a)*Qb.x(h_b)*Qc.y(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.y(h_a)*Qb.x(h_b)*Qc.y(h_c);
+  };
 }
 inline auto yyx(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.y(h_a)*Qb.y(h_b)*Qc.x(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.y(h_a)*Qb.y(h_b)*Qc.x(h_c);
+  };
 }
 inline auto yyy(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.y(h_a)*Qb.y(h_b)*Qc.y(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.y(h_a)*Qb.y(h_b)*Qc.y(h_c);
+  };
 }
 inline auto xyx(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.x(h_a)*Qb.y(h_b)*Qc.x(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.x(h_a)*Qb.y(h_b)*Qc.x(h_c);
+  };
 }
 inline auto yxx(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.y(h_a)*Qb.x(h_b)*Qc.x(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.y(h_a)*Qb.x(h_b)*Qc.x(h_c);
+  };
 }
 inline auto xxy(unsigned int h_a, unsigned int h_b, unsigned int h_c) {
-  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc){ return u.x(h_a)*Qb.x(h_b)*Qc.y(h_c); };
+  return [h_a, h_b, h_c](const Qn::QVector &u, const Qn::QVector &Qb, const Qn::QVector &Qc) {
+    return u.x(h_a)*Qb.x(h_b)*Qc.y(h_c);
+  };
 }
-
 
 inline auto Cumulant(unsigned int h_u) {
   return [h_u](const Qn::QVector &u) {
     float ret = 0.;
     auto Q = u.DeNormal();
     auto M = u.sumweights();
-    if ( M < 4.) {
+    if (M < 4.) {
       ret = NAN;
     } else {
       auto x = Q.x(h_u);
