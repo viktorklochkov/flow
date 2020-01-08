@@ -95,6 +95,14 @@ ReSamples ReSamples::Sqrt(const ReSamples &a) {
   return result;
 }
 
+ReSamples ReSamples::Abs(const ReSamples &a) {
+  ReSamples result(a);
+  for (size_t i = 0; i < result.means_.size(); ++i) {
+    result.means_[i] = fabs(a.means_[i]);
+  }
+  return result;
+}
+
 ReSamples ReSamples::PowSqrt(const ReSamples &a, unsigned int k) {
   ReSamples result(a);
   for (size_t i = 0; i < result.means_.size(); ++i) {

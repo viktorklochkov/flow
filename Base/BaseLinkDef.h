@@ -59,5 +59,6 @@
 #pragma link C++ function Qn::ToErrorComparisionGraph;
 #pragma link C++ function Qn::ToTMultiGraph;
 #pragma link C++ function Qn::Sqrt<DataContainer<Qn::Stats>>;
+#pragma link C++ function Qn::Abs<DataContainer<Qn::Stats>>;
 
 #endif
