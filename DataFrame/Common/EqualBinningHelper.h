@@ -45,30 +45,24 @@ class EqualBinningHelper {
 
   /**
    * Constructor
-   * @param axes_config AxesConfiguration which is supposed to be optimized.
    * @param df RDataFrame containing the input information
    * @param to_equalize Vector of names of the event axes which are supposed to be optimized.
    */
-  EqualBinningHelper(AxesConfig axes_config, DataFrame df, const std::vector<std::string> &to_equalize) :
-      dataframe_(df),
-      axis_tuple_(axes_config.GetAxes()) {
-    for (const auto &name : to_equalize) {
-      value_map_.emplace(name, df.template Take<double>(name));
-    }
+  EqualBinningHelper(DataFrame df, const std::vector<std::string> &to_equalize) :
+      dataframe_(df) {
+    for (const auto &name : to_equalize) value_map_.emplace(name, df.template Take<double>(name));
   }
 
   /**
    * Performs the optimization and returns the AxesConfiguration with the optimized binning.
    * @return AxesConfiguration with the optimized binning.
    */
-  AxesConfig operator()() {
-    Equalize();
-    return TemplateMagic::Call([](auto ...axes) { return Qn::EventAxes(axes...); }, axis_tuple_);
+  void operator()(AxesConfig &config) {
+    Equalize(config.GetAxes());
   }
 
  private:
   DataFrame dataframe_; /// Input data
-  AxisTuple axis_tuple_; /// tuple of the axes
   std::map<std::string, ROOT::RDF::RResultPtr<std::vector<double>>> value_map_; /// map of vectors of event parameters
 
   /**
@@ -76,7 +70,7 @@ class EqualBinningHelper {
    */
   template<std::size_t I = 0>
   inline typename std::enable_if<I==std::tuple_size<AxisTuple>{}, void>::type
-  Equalize() {}
+  Equalize(AxisTuple &axis_tuple) {}
 
   /**
    * Recursion.
@@ -86,12 +80,12 @@ class EqualBinningHelper {
    */
   template<std::size_t I = 0>
   inline typename std::enable_if<I < std::tuple_size<AxisTuple>{}, void>::type
-  Equalize() {
-    auto &axis = std::get<I>(axis_tuple_);
+  Equalize(AxisTuple &axis_tuple) {
+    auto &axis = std::get<I>(axis_tuple);
     if (value_map_.find(axis.Name())!=value_map_.end()) {
       axis = OptimizeBins(value_map_[axis.Name()].GetValue(), axis);
     }
-    Equalize<I + 1>();
+    Equalize<I + 1>(axis_tuple);
   }
 
   /**
@@ -153,8 +147,8 @@ class EqualBinningHelper {
  * @return Axis configuration with optimized axes.
  */
 template<typename AxesConfig, typename DataFrame>
-auto EqualizeBinning(AxesConfig config, DataFrame dataframe, const std::vector<std::string> &to_equalize) {
-  return Qn::EqualBinningHelper<AxesConfig, DataFrame>(config, dataframe, to_equalize)();
+auto EqualizeBinning(AxesConfig &config, DataFrame dataframe, const std::vector<std::string> &to_equalize) {
+  Qn::EqualBinningHelper<AxesConfig, DataFrame>(dataframe, to_equalize)(config);
 }
 
 } /// Qn

@@ -112,7 +112,13 @@ class AxesConfiguration {
    * Returns the Tuple of axes. Used to optimize the binning.
    * @return the tuple of axes.
    */
-  std::tuple<Axes...> GetAxes() const {return axes_;}
+  const std::tuple<Axes...> &GetAxes() const {return axes_;}
+
+  /**
+ * Returns the Tuple of axes. Used to optimize the binning.
+ * @return the tuple of axes.
+ */
+  std::tuple<Axes...> &GetAxes() {return axes_;}
 
  private:
   /**

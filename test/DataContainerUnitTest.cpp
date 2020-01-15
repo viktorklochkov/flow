@@ -26,11 +26,11 @@ TEST(DataContainerTest, TestHelper) {
                                                     "ZNA_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
   corrections.push_back(Qn::Correction::Recentering("test",
-                                                    "ZNC_PLAIN",
+                                                    "V0C_PLAIN",
                                                     Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-//  corrections.push_back(Qn::Correction::Recentering("test",
-//                                                    "TPCPT_PLAIN",
-//                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
+  corrections.push_back(Qn::Correction::Recentering("test",
+                                                    "TPCPT_PLAIN",
+                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
   std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
   std::vector<std::string> names_;
   for (auto &correction : corrections) {
@@ -66,8 +66,8 @@ TEST(DataContainerTest, TestHelper) {
   auto dfsamples = Qn::Correlation::Resample(*dfcorrected, 100);
   std::vector<ROOT::RDF::RResultPtr<Qn::Correlation::CorrelationActionBase>> vecs;
       vecs.push_back(Qn::EventAverage(Qn::Correlation::Correlation("test",
-                                                         Qn::Correlation::TwoParticle::xx(1, 1),
-                                                         {"ZNA_PLAIN_test", "ZNC_PLAIN_test"},
+                                                         Qn::Correlation::TwoParticle::ScalarProduct(2, 2),
+                                                         {"TPCPT_PLAIN_test", "V0C_PLAIN_test"},
                                                          {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
                                                          Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
                                                          100)).BookMe(dfsamples));
@@ -101,8 +101,7 @@ TEST(DataContainerTest, equalbinning) {
     }
     values.push_back(x);
   }, {"t1"});
-  auto equalized = Qn::EqualizeBinning(axes, df1, {"t1", "t2"});
-  axes = std::move(equalized);
+  Qn::EqualizeBinning(axes, df1, {"t1", "t2"});
 //  Qn::EqualEntriesBinner binner;
 //  auto bins = binner.CalculateBins(values, nbins, -2., 2.);
 //  Qn::AxisD axis2("t2", bins);
@@ -129,6 +128,25 @@ TEST(DataContainerTest, equalbinning) {
 
 //
 //
+}
+
+TEST(DataContainerTest, Strides) {
+  Qn::DataContainerStats stats;
+  Qn::AxisD foo("foo",10,0,10);
+  Qn::AxisD bar("bar",5,0,5);
+  stats.AddAxis(bar);
+  stats.AddAxis(foo);
+  auto stride = foo.size();
+  auto axesconfig = Qn::EventAxes(bar);
+  auto lin = axesconfig.GetLinearIndex(1.5);
+  for (int i = 0; i < 10; ++i) {
+    std::cout << lin*stride + i << std::endl;
+    stats.At(lin*stride + i).Fill(-1,1,std::vector<int>{});
+  }
+  for (unsigned long i = 0; i < 10; ++i) {
+    std::cout << stats[std::vector<double>{1.5,i*1.}].Mean() << std::endl;
+  }
+  auto x = Qn::Abs(stats);
 }
 
 TEST(DataContainerTest, AddAxes) {

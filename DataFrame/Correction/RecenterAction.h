@@ -106,10 +106,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   Qn::DataContainerQVector operator()(const Qn::DataContainerQVector &input_q, EventParameters ...coordinates) {
     Qn::DataContainerQVector corrected_q(input_q);
-    auto event_bin = event_axes_.GetLinearIndex(coordinates...) * stride_;
+    const auto event_bin = event_axes_.GetLinearIndex(coordinates...) * stride_;
     if (event_bin < 0) return corrected_q;
     for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
-      auto correction_bin = event_bin+ibin;
+      const auto correction_bin = event_bin + ibin;
       if (x_[0].At(correction_bin).Entries() < min_entries_) continue;
       auto x_width = 1.;
       auto y_width = 1.;
@@ -119,7 +119,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
           x_width = x_[i_harmonic][correction_bin].Sigma();
           y_width = y_[i_harmonic][correction_bin].Sigma();
         }
-        auto harmonic = harmonics_vector_[i_harmonic];
+        const auto harmonic = harmonics_vector_[i_harmonic];
         corrected_q[ibin].SetQ(harmonic, (input_q[ibin].x(harmonic) - x_[i_harmonic][correction_bin].Mean())/x_width,
                                          (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
       }
@@ -264,9 +264,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param event_parameters event parameters determining the correction histogram bin.
    */
   void CalculateAction(const Qn::DataContainerQVector &input, EventParameters ...event_parameters) {
-    auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
+    const auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
     if (event_bin < 0) return;
-    for (std::size_t i = 0u; i < harmonics_vector_.size(); ++i) {
+    for (std::size_t i = 0; i < harmonics_vector_.size(); ++i) {
       for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
         const auto output_bin = event_bin+ibin;
         if (input[ibin].sumweights() > 0.) {
@@ -370,6 +370,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     auto difference = (max_entries - min_entries) * 0.05;
     max_entries = max_entries + difference;
     min_entries = min_entries - difference;
+    if (min_entries < 1.) min_entries = 1.;
     TH1D histo_bin_occupancy("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, min_entries, max_entries);
     for (auto &bin : x_[0]) {
       auto n = bin.Entries();
