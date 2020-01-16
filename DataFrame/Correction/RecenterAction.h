@@ -67,10 +67,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param previous_q_name name of the input Q vector in the input TTree.
    * @param axes_configuration Qn::AxesConfiguration determining the sub samples used for corrections.
    */
-  RecenterAction(std::string correction_name, std::string previous_q_name, AxesConfig axes_configuration) :
+  RecenterAction(std::string correction_name, AxesConfig axes_configuration, std::string base_q_name, std::string previous_correction_name) :
       correction_name_(std::move(correction_name)),
-      previous_q_name_(std::move(previous_q_name)),
-      base_q_name_(previous_q_name_),
+      previous_q_name_(std::move(previous_correction_name)),
+      base_q_name_(std::move(base_q_name)),
       event_axes_(axes_configuration) {}
 
   /**
@@ -91,16 +91,11 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     return *this;
   }
 
-  RecenterAction SetBaseQVector(const std::string &name) {
-    base_q_name_ = name;
-    return *this;
-  }
-
   /**
    * Returns the name of the output Q-vector.
    * @return name of the output Q-vector
    */
-  std::string GetName() const { return previous_q_name_ + "_" + correction_name_; }
+  std::string GetName() const { return MakeName(correction_name_); }
 
   /**
    * Applies the correction on the input Q-vector and returns a corrected Q-vector.
@@ -141,10 +136,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   template<typename DataFrame>
   auto ApplyCorrection(DataFrame &df) const {
-    std::vector<std::string> columns;
-    columns.push_back(previous_q_name_);
-    const auto event_axes_names = event_axes_.GetNames();
-    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
+    auto columns = GetColumnNames();
     return df.Define(GetName(), *this, columns);
   }
 
@@ -328,6 +320,11 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     y_ = other.y_;
   }
 
+  std::string MakeName(std::string extension) const {
+    if (extension.empty()) return base_q_name_;
+    else                   return base_q_name_ + "_" + extension;
+  }
+
   /**
    * Returns the name of the columns used in the correction step. This includes both the input Q-vector and
    * the name of the axes parameters. This function is required by the AverageHelper.
@@ -335,7 +332,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   std::vector<std::string> GetColumnNames() const {
     std::vector<std::string> columns;
-    columns.emplace_back(previous_q_name_);
+    columns.emplace_back(MakeName(previous_q_name_));
     const auto event_axes_names = event_axes_.GetNames();
     std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
     return columns;
@@ -393,9 +390,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
  * @return RecenterAction
  */
 template<typename EventAxes>
-auto Recentering(const std::string &correction_name, const std::string &sub_event_name, EventAxes axes_configuration) {
-  return RecenterAction<EventAxes, typename EventAxes::AxisValueTypeTuple>{correction_name, sub_event_name,
-                                                                           axes_configuration};
+auto Recentering(const std::string &correction_name, EventAxes axes_configuration, const std::string &base_q_name, const std::string &previous_correction="") {
+  return RecenterAction<EventAxes, typename EventAxes::AxisValueTypeTuple>{correction_name,axes_configuration, base_q_name, previous_correction};
 }
 
 /**
