@@ -17,10 +17,10 @@ TEST(DataContainerTest, TestHelper) {
 
 //  ROOT::EnableImplicitMT(24);
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
-  auto df = df0.Filter("Trigger==0", "minbias");
+  auto df = df0.Cache({"CentralityV0M","VtxZ","ZNA_PLAIN","Trigger"}).Filter("Trigger==0", "minbias");
   auto axes1 = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
 
-  auto file = TFile::Open("~/testhelper/tt.root","READ");
+//  auto file = TFile::Open("~/testhelper/tt.root","READ");
   auto treef = TFile::Open("~/testhelper/mergedtree.root","READ");
   TTreeReader reader("tree",treef);
   using RecenterStep1 = Qn::Correction::RecenterAction<decltype(axes1), decltype(axes1)::AxisValueTypeTuple>;
@@ -29,11 +29,11 @@ TEST(DataContainerTest, TestHelper) {
   std::vector<ROOT::RDF::RResultPtr<RecenterStep1>> resultptrstep1;
   std::vector<std::string> names_;
   for (auto &correction : correctionstep1) {
-    resultptrstep1.push_back(Qn::EventAverage(correction).BookMe(df));
-    correction.LoadCorrectionFromFile(file, reader);
+    resultptrstep1.push_back(Qn::EventAverage(correction).SetExternalTTreeReader(&reader).BookMe(df));
+//    correction.LoadCorrectionFromFile(file, reader);
     names_.push_back(correction.GetName());
   }
-  auto correctedstep1 = Qn::Correction::ApplyCorrectionsVector(df, correctionstep1);
+  auto correctedstep1 = Qn::Correction::ApplyCorrectionsVector(df, resultptrstep1);
   for (auto & name : correctedstep1.GetColumnNames()) {
     std::cout << name << " ";
   }
@@ -44,11 +44,11 @@ TEST(DataContainerTest, TestHelper) {
   correctionstep2.push_back(Qn::Correction::Recentering("z", axes2, "ZNA_PLAIN", "cent"));
   std::vector<ROOT::RDF::RResultPtr<RecenterStep2>> resultptrstep2;
   for (auto &correction : correctionstep2) {
-    resultptrstep2.push_back(Qn::EventAverage(correction).BookMe(correctedstep1));
-    correction.LoadCorrectionFromFile(file, reader);
+    resultptrstep2.push_back(Qn::EventAverage(correction).SetExternalTTreeReader(&reader).BookMe(correctedstep1));
+//    correction.LoadCorrectionFromFile(file, reader);
     names_.push_back(correction.GetName());
   }
-  auto correctedstep2 = Qn::Correction::ApplyCorrectionsVector(correctedstep1, correctionstep2);
+  auto correctedstep2 = Qn::Correction::ApplyCorrectionsVector(correctedstep1, resultptrstep2);
   for (auto & name : correctedstep2.GetColumnNames()) {
     std::cout << name << " ";
   }
@@ -66,17 +66,17 @@ TEST(DataContainerTest, TestHelper) {
 //                                                         100)).BookMe(dfsamples));
 //
 //  auto &ttr = vecs.front()->GetDataContainer();
-//  auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
-//  file->cd();
+  auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
+  file->cd();
 ////  ttr.Write("test");
-//  resultptrstep1[0]->Write(file);
-//  resultptrstep2[0]->Write(file);
-//  file->Close();
-//  delete file;
+  resultptrstep1[0]->Write(file);
+  resultptrstep2[0]->Write(file);
+  file->Close();
+  delete file;
 //  using Weights = Qn::Stats::Weights;
 //  using Qn::Correlation::Correlation;
- file->Close();
- delete file;
+// file->Close();
+// delete file;
  treef->Close();
  delete treef;
 }

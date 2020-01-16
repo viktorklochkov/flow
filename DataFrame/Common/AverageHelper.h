@@ -45,6 +45,7 @@ class AverageHelper : public RActionImpl<AverageHelper<Action>> {
  private:
   std::vector<bool> is_configured_; /// flag for tracking if the helper has been configured using the input data.
   std::vector<std::shared_ptr<Action>> results_; /// vector of results.
+  TTreeReader *external_reader_; /// non-owning pointer to external TTreeReader needed in case of cached dataframe.
 
  public:
   /**
@@ -59,6 +60,14 @@ class AverageHelper : public RActionImpl<AverageHelper<Action>> {
       results_.emplace_back(std::make_shared<Action>(action));
     }
   }
+
+  /**
+   * Set External TTreeReader
+   */
+   auto SetExternalTTreeReader(TTreeReader *reader) {
+     external_reader_ = reader;
+     return *this;
+   }
 
   /**
    * Adds the helper to the datacontainer using the Book function.
@@ -106,8 +115,12 @@ class AverageHelper : public RActionImpl<AverageHelper<Action>> {
    */
   void InitTask(TTreeReader *reader, unsigned int slot) {
     if (!is_configured_[slot]) {
-      TTreeReader local_reader(reader->GetTree());
-      results_[slot]->Initialize(local_reader);
+      if (reader) {
+        TTreeReader local_reader(reader->GetTree());
+        results_[slot]->Initialize(local_reader);
+      } else {
+        results_[slot]->Initialize(*external_reader_);
+      }
       is_configured_[slot] = true;
     }
   }
