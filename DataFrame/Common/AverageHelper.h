@@ -119,7 +119,8 @@ class AverageHelper : public RActionImpl<AverageHelper<Action>> {
         TTreeReader local_reader(reader->GetTree());
         results_[slot]->Initialize(local_reader);
       } else {
-        results_[slot]->Initialize(*external_reader_);
+        TTreeReader local_reader(external_reader_->GetTree());
+        results_[slot]->Initialize(local_reader);
       }
       is_configured_[slot] = true;
     }
