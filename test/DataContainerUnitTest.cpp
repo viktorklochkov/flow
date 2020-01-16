@@ -18,69 +18,58 @@ TEST(DataContainerTest, TestHelper) {
 //  ROOT::EnableImplicitMT(24);
   ROOT::RDataFrame df0("tree", "~/testhelper/mergedtree.root");
   auto df = df0.Filter("Trigger==0", "minbias");
-  auto axes = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
+  auto axes1 = Qn::EventAxes(Qn::AxisD{"CentralityV0M", 100, 0, 100});
 
-  using RecenterCorrection = Qn::Correction::RecenterAction<decltype(axes), decltype(axes)::AxisValueTypeTuple>;
-  std::vector<RecenterCorrection> corrections{};
-  corrections.push_back(Qn::Correction::Recentering("test",
-                                                    "ZNA_PLAIN",
-                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-  corrections.push_back(Qn::Correction::Recentering("test",
-                                                    "V0C_PLAIN",
-                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-  corrections.push_back(Qn::Correction::Recentering("test",
-                                                    "TPCPT_PLAIN",
-                                                    Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0, 100})));
-  std::vector<ROOT::RDF::RResultPtr<RecenterCorrection>> resultptrs;
+  using RecenterStep1 = Qn::Correction::RecenterAction<decltype(axes1), decltype(axes1)::AxisValueTypeTuple>;
+  std::vector<RecenterStep1> correctionstep1{};
+  correctionstep1.push_back(Qn::Correction::Recentering("cent", "ZNA_PLAIN", axes1));
+  std::vector<ROOT::RDF::RResultPtr<RecenterStep1>> resultptrstep1;
   std::vector<std::string> names_;
-  for (auto &correction : corrections) {
-    resultptrs.push_back(Qn::EventAverage(correction).BookMe(df));
+  for (auto &correction : correctionstep1) {
+    resultptrstep1.push_back(Qn::EventAverage(correction).BookMe(df));
     names_.push_back(correction.GetName());
   }
-//  auto res = Qn::EventAverage(corrections[0]).BookMe(df);
-//  auto in_tree_file = TFile::Open("~/testhelper/mergedtree.root", "READ");
-//  auto in_correction_file = TFile::Open("~/testhelper/tt.root","READ");
-//  TTreeReader reader("tree", in_tree_file);
-//
-//  std::vector<std::string> qvector_names;
-//  corrections.erase(std::remove_if(std::begin(corrections),std::end(corrections),
-//                                   [&resultptrs, &in_correction_file, &reader, &df, &qvector_names](auto &correction){
-//                                     qvector_names.push_back(correction.GetName());
-//                                     if(!correction.LoadCorrectionFromFile(in_correction_file, reader)) {
-//                                       resultptrs.push_back(Qn::EventAverage(correction).BookMe(df));
-//                                       return true;
-//                                     } else {
-//                                       return false;
-//                                     }
-//                                   }),
-//                    corrections.end());
-//  auto value = *res;
-
-//  auto corrected = Qn::Correction::ApplyCorrections(df, value);
-//  auto corrected = df.Define("ZNA_PLAIN_test",value,{"ZNA_PLAIN","CentralityV0M"});
-//  auto corrected = value.ApplyCorrection(df);
-  auto corrected = Qn::Correction::ApplyCorrectionsVector(df, resultptrs);
-  auto other_branches = {"CentralityV0M", "VtxX"};
+  auto correctedstep1 = Qn::Correction::ApplyCorrectionsVector(df, resultptrstep1);
+  for (auto & name : correctedstep1.GetColumnNames()) {
+    std::cout << name << " ";
+  }
+  std::cout << std::endl;
+  auto axes2 = Qn::EventAxes(Qn::AxisD{"VtxZ", 5, -10, 10});
+  using RecenterStep2 = Qn::Correction::RecenterAction<decltype(axes2), decltype(axes2)::AxisValueTypeTuple>;
+  std::vector<RecenterStep2> correctionstep2{};
+  correctionstep2.push_back(Qn::Correction::Recentering("z", "ZNA_PLAIN_cent", axes2).SetBaseQVector("ZNA_PLAIN"));
+  std::vector<ROOT::RDF::RResultPtr<RecenterStep2>> resultptrstep2;
+  for (auto &correction : correctionstep2) {
+    resultptrstep2.push_back(Qn::EventAverage(correction).BookMe(correctedstep1));
+    names_.push_back(correction.GetName());
+  }
+  auto correctedstep2 = Qn::Correction::ApplyCorrectionsVector(correctedstep1, resultptrstep2);
+  for (auto & name : correctedstep2.GetColumnNames()) {
+    std::cout << name << " ";
+  }
+  std::cout << std::endl;
+  auto other_branches = {"CentralityV0M", "VtxZ"};
   names_.insert(std::end(names_), std::begin(other_branches), std::end(other_branches));
-  auto dfcorrected = corrected.Snapshot("tree", "~/testhelper/rectree.root", names_);
-  auto dfsamples = Qn::Correlation::Resample(*dfcorrected, 100);
-  std::vector<ROOT::RDF::RResultPtr<Qn::Correlation::CorrelationActionBase>> vecs;
-      vecs.push_back(Qn::EventAverage(Qn::Correlation::Correlation("test",
-                                                         Qn::Correlation::TwoParticle::ScalarProduct(2, 2),
-                                                         {"TPCPT_PLAIN_test", "V0C_PLAIN_test"},
-                                                         {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
-                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
-                                                         100)).BookMe(dfsamples));
-  
-  auto &ttr = vecs.front()->GetDataContainer();
+  auto dfcorrected = correctedstep2.Snapshot("tree", "~/testhelper/rectree.root", names_);
+//  auto dfsamples = Qn::Correlation::Resample(*dfcorrected, 100);
+//  std::vector<ROOT::RDF::RResultPtr<Qn::Correlation::CorrelationActionBase>> vecs;
+//      vecs.push_back(Qn::EventAverage(Qn::Correlation::Correlation("test",
+//                                                         Qn::Correlation::TwoParticle::ScalarProduct(2, 2),
+//                                                         {"TPCPT_PLAIN_test", "V0C_PLAIN_test"},
+//                                                         {Qn::Stats::Weights::REFERENCE, Qn::Stats::Weights::REFERENCE},
+//                                                         Qn::EventAxes(Qn::AxisD{"CentralityV0M", 10, 0., 100.}),
+//                                                         100)).BookMe(dfsamples));
+//
+//  auto &ttr = vecs.front()->GetDataContainer();
   auto file = TFile::Open("~/testhelper/tt.root", "RECREATE");
   file->cd();
-  ttr.Write("test");
-  resultptrs[0]->Write(file);
+//  ttr.Write("test");
+  resultptrstep1[0]->Write(file);
+  resultptrstep2[0]->Write(file);
   file->Close();
-  delete file;
-  using Weights = Qn::Stats::Weights;
-  using Qn::Correlation::Correlation;
+//  delete file;
+//  using Weights = Qn::Stats::Weights;
+//  using Qn::Correlation::Correlation;
 }
 
 TEST(DataContainerTest, equalbinning) {
@@ -128,6 +117,16 @@ TEST(DataContainerTest, equalbinning) {
 
 //
 //
+}
+
+TEST(DataContainerTest, function) {
+  Qn::DataContainerStats stats({{"foo",10,0,10}});
+  auto scale = new TF1("scale","x*x",0,10);
+  for (auto &bin : stats) { bin.Fill(1,1,std::vector<int>{}); }
+  auto stats_scaled = stats.ApplyTF1(scale);
+  for (const auto& bin : stats_scaled) {
+    std::cout << bin.Mean() << std::endl;
+  }
 }
 
 TEST(DataContainerTest, Strides) {

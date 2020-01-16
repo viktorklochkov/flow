@@ -64,12 +64,13 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   /**
    * Constructor
    * @param correction_name name of the correction step
-   * @param sub_event_name name of the input Q vector in the input TTree.
+   * @param previous_q_name name of the input Q vector in the input TTree.
    * @param axes_configuration Qn::AxesConfiguration determining the sub samples used for corrections.
    */
-  RecenterAction(std::string correction_name, std::string sub_event_name, AxesConfig axes_configuration) :
+  RecenterAction(std::string correction_name, std::string previous_q_name, AxesConfig axes_configuration) :
       correction_name_(std::move(correction_name)),
-      sub_event_name_(std::move(sub_event_name)),
+      previous_q_name_(std::move(previous_q_name)),
+      base_q_name_(previous_q_name_),
       event_axes_(axes_configuration) {}
 
   /**
@@ -90,11 +91,16 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     return *this;
   }
 
+  RecenterAction SetBaseQVector(const std::string &name) {
+    base_q_name_ = name;
+    return *this;
+  }
+
   /**
    * Returns the name of the output Q-vector.
    * @return name of the output Q-vector
    */
-  std::string GetName() const { return sub_event_name_ + "_" + correction_name_; }
+  std::string GetName() const { return previous_q_name_ + "_" + correction_name_; }
 
   /**
    * Applies the correction on the input Q-vector and returns a corrected Q-vector.
@@ -136,7 +142,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   template<typename DataFrame>
   auto ApplyCorrection(DataFrame &df) const {
     std::vector<std::string> columns;
-    columns.push_back(sub_event_name_);
+    columns.push_back(previous_q_name_);
     const auto event_axes_names = event_axes_.GetNames();
     std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
     return df.Define(GetName(), *this, columns);
@@ -219,7 +225,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   unsigned int stride_ = 1.; /// stride of the differential Q-vector.
   std::vector<unsigned int> harmonics_vector_; /// vector of enabled harmonics.
   std::string correction_name_; /// name of the correction step.
-  std::string sub_event_name_; /// name of the input Q-vector.
+  std::string previous_q_name_; /// name of the input Q-vector.
+  std::string base_q_name_; /// name of the input Q-vector used for Initialization.
   AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms.
@@ -231,11 +238,11 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   void Initialize(TTreeReader &reader) {
     using namespace std::literals::string_literals;
     reader.Restart();
-    TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
+    TTreeReaderValue<DataContainerQVector> input_data(reader, base_q_name_.data());
     reader.Next();
     if (input_data.GetSetupStatus() < 0) {
       throw std::runtime_error("The Q-Vector entry "s + input_data.GetBranchName() +
-      " in the tree is not valid. Cannot setup the recentering");
+                               " in the tree is not valid. Cannot setup the recentering");
     }
     auto input_q = input_data->At(0);
     input_q.InitializeHarmonics();
@@ -314,12 +321,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param other another state.
    */
   void CopyInitializedState(const RecenterAction &other) {
-    use_width_equalization_ = other.use_width_equalization_;
-    min_entries_ = other.min_entries_;
     stride_ = other.stride_;
     harmonics_vector_ = other.harmonics_vector_;
-    correction_name_ = other.correction_name_;
-    sub_event_name_ = other.sub_event_name_;
     event_axes_ = other.event_axes_;
     x_ = other.x_;
     y_ = other.y_;
@@ -332,7 +335,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   std::vector<std::string> GetColumnNames() const {
     std::vector<std::string> columns;
-    columns.emplace_back(sub_event_name_);
+    columns.emplace_back(previous_q_name_);
     const auto event_axes_names = event_axes_.GetNames();
     std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
     return columns;

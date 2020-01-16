@@ -70,7 +70,9 @@ class EqualBinningHelper {
    */
   template<std::size_t I = 0>
   inline typename std::enable_if<I==std::tuple_size<AxisTuple>{}, void>::type
-  Equalize(AxisTuple &axis_tuple) {}
+  Equalize(AxisTuple &axis_tuple) {
+    (void) axis_tuple;
+  }
 
   /**
    * Recursion.
