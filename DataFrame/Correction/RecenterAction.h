@@ -240,6 +240,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     input_q.InitializeHarmonics();
     int i_harmonic = 0;
     int harmonic = input_q.GetFirstHarmonic();
+    Reset();
     while (harmonic!=-1) {
       x_.emplace_back();
       y_.emplace_back();
@@ -251,7 +252,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       }
       harmonics_vector_.push_back(harmonic);
       harmonic = input_q.GetNextHarmonic(harmonic);
-      i_harmonic++;
+      ++i_harmonic;
     }
     stride_ = input_data->size();
   }
