@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <utility>
 
 #include "TEnv.h"
 #include "TClass.h"
@@ -29,6 +30,7 @@
 #include "Rtypes.h"
 #include "TH1F.h"
 #include "TF1.h"
+#include "TGraphErrors.h"
 #include "TBrowser.h"
 #include "TCollection.h"
 
@@ -845,6 +847,11 @@ class DataContainer : public TObject {
     (void) function;
   }
 
+  DataContainer<T, AxisType> ScaleWithTGraphErrors(TGraphErrors *graph) const {
+    (void) graph;
+  }
+
+
 /// \cond CLASSIMP
  ClassDef(DataContainer, 13);
 /// \endcond
@@ -898,6 +905,19 @@ inline DataContainer<Stats, AxisD> DataContainer<Stats, AxisD>::ApplyTF1(TF1 *fu
   for (std::size_t i = 0; i < data_.size(); ++i) {
     const auto value = function->Eval(axes_[0].GetBinCenter(i));
     result[i] = result[i] * value;
+  }
+  return result;
+}
+
+template<>
+inline DataContainer<Stats, AxisD> DataContainer<Stats, AxisD>::ScaleWithTGraphErrors(TGraphErrors *graph) const {
+  if (dimension_!=1 || integrated_) return *this;
+  if ((unsigned long) graph->GetN() != data_.size()) return *this;
+  DataContainer<Stats, AxisD> result(*this);
+  for (std::size_t i = 0; i < data_.size(); ++i) {
+    const auto value = graph->GetY()[i];
+    const auto error = graph->GetErrorYhigh(i);
+    result[i] = result[i] * std::make_pair(value, error);
   }
   return result;
 }
