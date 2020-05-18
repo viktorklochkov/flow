@@ -233,10 +233,14 @@ namespace CallBacks {
 
 template<std::size_t N, typename FUNCTION>
 CorrectionCut::CallBack MakeCut(const char *const (&names)[N], FUNCTION lambda, const std::string &cut_description) {
-  return CorrectionCut::CallBack{[names, lambda, cut_description](const Qn::InputVariableManager &var) {
+  std::array<std::string, N> variable_names;
+  for (auto i = 0u; i < N; ++i) {
+    variable_names.at(i) = std::string(names[i]);
+  }
+  return CorrectionCut::CallBack{[variable_names, lambda, cut_description](const Qn::InputVariableManager &var) {
     InputVariable arr[N];
     int i = 0;
-    for (auto &name : names) {
+    for (auto &name : variable_names) {
       arr[i] = var.FindVariable(name);
       ++i;
     }
