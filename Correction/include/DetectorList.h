@@ -26,9 +26,9 @@ class DetectorList {
   virtual ~DetectorList() = default;
   void AddDetector(std::string name,
                    Qn::DetectorType type,
-                   InputVariable phi,
-                   InputVariable weight,
-                   InputVariable radial_offset,
+                   const InputVariable& phi,
+                   const InputVariable& weight,
+                   const InputVariable& radial_offset,
                    const std::vector<Qn::AxisD> &axes,
                    std::bitset<Qn::QVector::kmaxharmonics> harmonics,
                    QVector::Normalization norm) {
@@ -45,9 +45,9 @@ class DetectorList {
     }
   }
 
-  void AddCut(const std::string &name, CorrectionCut::CallBack cut, bool is_channel_wise) {
+  void AddCut(const std::string &name, const CorrectionCut::CallBack& cut, bool is_channel_wise) {
     auto &det = FindDetector(name);
-    det.AddCut(std::move(cut), is_channel_wise);
+    det.AddCut(cut, is_channel_wise);
   }
 
   Detector &FindDetector(const std::string name) {
