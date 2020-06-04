@@ -37,6 +37,8 @@ Detector::Detector(const Detector &other) :
     output_tree_q_vectors_(other.output_tree_q_vectors_),
     histograms_(other.histograms_),
     axes_(other.axes_),
+    cuts_(other.cuts_),
+    int_cuts_(other.int_cuts_),
     correction_on_q_vector(other.correction_on_q_vector),
     correction_on_input_data(other.correction_on_input_data) {
 }

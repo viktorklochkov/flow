@@ -64,12 +64,13 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   /**
    * Constructor
    * @param correction_name name of the correction step
-   * @param sub_event_name name of the input Q vector in the input TTree.
+   * @param previous_q_name name of the input Q vector in the input TTree.
    * @param axes_configuration Qn::AxesConfiguration determining the sub samples used for corrections.
    */
-  RecenterAction(std::string correction_name, std::string sub_event_name, AxesConfig axes_configuration) :
+  RecenterAction(std::string correction_name, AxesConfig axes_configuration, std::string base_q_name, std::string previous_correction_name) :
       correction_name_(std::move(correction_name)),
-      sub_event_name_(std::move(sub_event_name)),
+      previous_q_name_(std::move(previous_correction_name)),
+      base_q_name_(std::move(base_q_name)),
       event_axes_(axes_configuration) {}
 
   /**
@@ -94,7 +95,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * Returns the name of the output Q-vector.
    * @return name of the output Q-vector
    */
-  std::string GetName() const { return sub_event_name_ + "_" + correction_name_; }
+  std::string GetName() const { return MakeName(correction_name_); }
 
   /**
    * Applies the correction on the input Q-vector and returns a corrected Q-vector.
@@ -106,10 +107,10 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   Qn::DataContainerQVector operator()(const Qn::DataContainerQVector &input_q, EventParameters ...coordinates) {
     Qn::DataContainerQVector corrected_q(input_q);
-    auto event_bin = event_axes_.GetLinearIndex(coordinates...) * stride_;
+    const auto event_bin = event_axes_.GetLinearIndex(coordinates...) * stride_;
     if (event_bin < 0) return corrected_q;
     for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
-      auto correction_bin = event_bin+ibin;
+      const auto correction_bin = event_bin + ibin;
       if (x_[0].At(correction_bin).Entries() < min_entries_) continue;
       auto x_width = 1.;
       auto y_width = 1.;
@@ -119,7 +120,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
           x_width = x_[i_harmonic][correction_bin].Sigma();
           y_width = y_[i_harmonic][correction_bin].Sigma();
         }
-        auto harmonic = harmonics_vector_[i_harmonic];
+        const auto harmonic = harmonics_vector_[i_harmonic];
         corrected_q[ibin].SetQ(harmonic, (input_q[ibin].x(harmonic) - x_[i_harmonic][correction_bin].Mean())/x_width,
                                          (input_q[ibin].y(harmonic) - y_[i_harmonic][correction_bin].Mean())/y_width);
       }
@@ -135,10 +136,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   template<typename DataFrame>
   auto ApplyCorrection(DataFrame &df) const {
-    std::vector<std::string> columns;
-    columns.push_back(sub_event_name_);
-    const auto event_axes_names = event_axes_.GetNames();
-    std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
+    auto columns = GetColumnNames();
     return df.Define(GetName(), *this, columns);
   }
 
@@ -219,7 +217,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   unsigned int stride_ = 1.; /// stride of the differential Q-vector.
   std::vector<unsigned int> harmonics_vector_; /// vector of enabled harmonics.
   std::string correction_name_; /// name of the correction step.
-  std::string sub_event_name_; /// name of the input Q-vector.
+  std::string previous_q_name_; /// name of the input Q-vector.
+  std::string base_q_name_; /// name of the input Q-vector used for Initialization.
   AxesConfig event_axes_; /// event axes used to classify the events in classes for the correction step.
   std::vector<Qn::DataContainerStatistic> x_; /// x component of correction histograms.
   std::vector<Qn::DataContainerStatistic> y_; /// y component correction histograms.
@@ -231,16 +230,17 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
   void Initialize(TTreeReader &reader) {
     using namespace std::literals::string_literals;
     reader.Restart();
-    TTreeReaderValue<DataContainerQVector> input_data(reader, sub_event_name_.data());
+    TTreeReaderValue<DataContainerQVector> input_data(reader, base_q_name_.data());
     reader.Next();
     if (input_data.GetSetupStatus() < 0) {
       throw std::runtime_error("The Q-Vector entry "s + input_data.GetBranchName() +
-      " in the tree is not valid. Cannot setup the recentering");
+                               " in the tree is not valid. Cannot setup the recentering");
     }
     auto input_q = input_data->At(0);
     input_q.InitializeHarmonics();
     int i_harmonic = 0;
     int harmonic = input_q.GetFirstHarmonic();
+    Reset();
     while (harmonic!=-1) {
       x_.emplace_back();
       y_.emplace_back();
@@ -252,7 +252,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
       }
       harmonics_vector_.push_back(harmonic);
       harmonic = input_q.GetNextHarmonic(harmonic);
-      i_harmonic++;
+      ++i_harmonic;
     }
     stride_ = input_data->size();
   }
@@ -264,9 +264,9 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param event_parameters event parameters determining the correction histogram bin.
    */
   void CalculateAction(const Qn::DataContainerQVector &input, EventParameters ...event_parameters) {
-    auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
+    const auto event_bin = event_axes_.GetLinearIndex(event_parameters...) * stride_;
     if (event_bin < 0) return;
-    for (std::size_t i = 0u; i < harmonics_vector_.size(); ++i) {
+    for (std::size_t i = 0; i < harmonics_vector_.size(); ++i) {
       for (std::size_t ibin = 0; ibin < stride_; ++ibin) {
         const auto output_bin = event_bin+ibin;
         if (input[ibin].sumweights() > 0.) {
@@ -314,15 +314,16 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    * @param other another state.
    */
   void CopyInitializedState(const RecenterAction &other) {
-    use_width_equalization_ = other.use_width_equalization_;
-    min_entries_ = other.min_entries_;
     stride_ = other.stride_;
     harmonics_vector_ = other.harmonics_vector_;
-    correction_name_ = other.correction_name_;
-    sub_event_name_ = other.sub_event_name_;
     event_axes_ = other.event_axes_;
     x_ = other.x_;
     y_ = other.y_;
+  }
+
+  std::string MakeName(std::string extension) const {
+    if (extension.empty()) return base_q_name_;
+    else                   return base_q_name_ + "_" + extension;
   }
 
   /**
@@ -332,7 +333,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
    */
   std::vector<std::string> GetColumnNames() const {
     std::vector<std::string> columns;
-    columns.emplace_back(sub_event_name_);
+    columns.emplace_back(MakeName(previous_q_name_));
     const auto event_axes_names = event_axes_.GetNames();
     std::copy(std::begin(event_axes_names), std::end(event_axes_names), std::back_inserter(columns));
     return columns;
@@ -370,6 +371,7 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
     auto difference = (max_entries - min_entries) * 0.05;
     max_entries = max_entries + difference;
     min_entries = min_entries - difference;
+    if (min_entries < 1.) min_entries = 1.;
     TH1D histo_bin_occupancy("bin_occupancy", "occupancy per bin; Counts; Entries in a bin", 100, min_entries, max_entries);
     for (auto &bin : x_[0]) {
       auto n = bin.Entries();
@@ -389,9 +391,8 @@ class RecenterAction<AxesConfig, std::tuple<EventParameters...>> {
  * @return RecenterAction
  */
 template<typename EventAxes>
-auto Recentering(const std::string &correction_name, const std::string &sub_event_name, EventAxes axes_configuration) {
-  return RecenterAction<EventAxes, typename EventAxes::AxisValueTypeTuple>{correction_name, sub_event_name,
-                                                                           axes_configuration};
+auto Recentering(const std::string &correction_name, EventAxes axes_configuration, const std::string &base_q_name, const std::string &previous_correction="") {
+  return RecenterAction<EventAxes, typename EventAxes::AxisValueTypeTuple>{correction_name,axes_configuration, base_q_name, previous_correction};
 }
 
 /**

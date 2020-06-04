@@ -42,6 +42,8 @@ struct QAHistoBase {
   virtual void Fill() = 0;
   virtual void AddToList(TList *) = 0;
   static inline void FillHistogram(std::unique_ptr<QAHistoBase> &histo) { histo->Fill(); }
+  virtual std::string GetName() const = 0;
+
 };
 /**
  * Wrapper for a ROOT histogram, which allows it to be filled by the correction manager.
@@ -114,6 +116,8 @@ class QAHisto : public QAHistoBase {
       }
     }
   }
+
+  std::string GetName() const override { return name_; }
  private:
   std::array<VAR, N> vars_; /// Array of variables to be filled in the histogram.
   std::vector<HISTO> histo_; /// Histogram (e.g. TH1, TH2) which support the filling with FillN(...).
@@ -149,6 +153,7 @@ class QAHistogram {
   void Initialize(InputVariableManager &var);
   void Fill() { histogram_->Fill(); }
   void AddToList(TList *list) { histogram_->AddToList(list); }
+  std::string GetName() const {return name_;}
  private:
   std::unique_ptr<Impl::QAHistoBase> histogram_; //!<! pointer to the QAHisto<>
   std::string name_; // name of the histogram

@@ -36,7 +36,7 @@ namespace Qn {
 class CorrectionCut {
  public:
   using CallBack = std::function<std::unique_ptr<Qn::CutBase>(const Qn::InputVariableManager &)>;
-  CorrectionCut(CallBack callback) : callback_(std::move(callback)) {}
+  explicit CorrectionCut(CallBack callback) : callback_(std::move(callback)) {}
   ~CorrectionCut() = default;
   CorrectionCut(CorrectionCut &&) = default;
   void Initialize(const Qn::InputVariableManager &var) {
@@ -51,6 +51,7 @@ class CorrectionCut {
   bool Check() const {
     return cut_->Check();
   }
+  CorrectionCut::CallBack GetCallBack() const { return callback_; }
  private:
   std::unique_ptr<CutBase> cut_;
   CorrectionCut::CallBack callback_;
@@ -62,14 +63,47 @@ class CorrectionCut {
 class CorrectionCuts {
  public:
   CorrectionCuts() = default;
-  CorrectionCuts(CorrectionCuts &&cuts) = default;
-  CorrectionCuts &operator=(CorrectionCuts &&cuts) = default;
+
+  CorrectionCuts(const CorrectionCuts &cuts) {
+    n_channels_ = cuts.n_channels_;
+    var_values_ = cuts.var_values_;
+    cut_number = cuts.cut_number;
+    cut_weight_ = cuts.cut_weight_;
+    cut_channel_ = cuts.cut_channel_;
+    for (auto &cut : cuts.cuts_) {
+      cuts_.emplace_back(cut.GetCallBack());
+    }
+    if (cuts.report_) {
+      CreateCutReport(cuts.report_->GetName(), n_channels_);
+    }
+  }
+
+  CorrectionCuts(CorrectionCuts &&cuts) {
+    n_channels_ = cuts.n_channels_;
+    var_values_ = cuts.var_values_;
+    cut_number = cuts.cut_number;
+    cut_weight_ = cuts.cut_weight_;
+    cut_channel_ = cuts.cut_channel_;
+    cuts_ = std::move(cuts.cuts_);
+    report_ = std::move(cuts.report_);
+  }
+  CorrectionCuts &operator=(CorrectionCuts &&cuts)  noexcept {
+    n_channels_ = cuts.n_channels_;
+    var_values_ = cuts.var_values_;
+    cut_number = cuts.cut_number;
+    cut_weight_ = cuts.cut_weight_;
+    cut_channel_ = cuts.cut_channel_;
+    cuts_ = std::move(cuts.cuts_);
+    report_ = std::move(cuts.report_);
+    return *this;
+  };
+  
   virtual ~CorrectionCuts() { delete[] var_values_; }
 //  /**
 //   * @brief Adds a cut to the manager.
 //   * @param cut pointer to the cut.
 //   */
-  void AddCut(const CorrectionCut::CallBack& callback) {
+  void AddCut(const CorrectionCut::CallBack &callback) {
     cuts_.emplace_back(callback);
   }
 

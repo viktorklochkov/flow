@@ -130,13 +130,23 @@ Stats operator*(const Stats &lhs, const Stats &rhs) {
   return result;
 }
 
-//
 Stats operator*(const Stats &stat, const double scale) {
   Stats result = stat;
   if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
   result.mean_ *= scale;
   result.error_ *= scale;
   result.resamples_ = ReSamples::Scaling(result.resamples_, scale);
+  return result;
+}
+
+Stats operator*(const Stats &stat, const std::pair<double, double> scale_error) {
+  Stats result = stat;
+  if (result.state_!=STAT::MEAN_ERROR) result.CalculateMeanAndError();
+  result.mean_ *= scale_error.first;
+  auto t1 = scale_error.first*stat.error_;
+  auto t2 = stat.mean_*scale_error.second;
+  result.error_ = std::sqrt(t1*t1 + t2*t2);
+  result.resamples_ = ReSamples::Scaling(result.resamples_, scale_error.first);
   return result;
 }
 

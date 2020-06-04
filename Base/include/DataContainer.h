@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <utility>
 
 #include "TEnv.h"
 #include "TClass.h"
@@ -28,6 +29,8 @@
 #include "TMath.h"
 #include "Rtypes.h"
 #include "TH1F.h"
+#include "TF1.h"
+#include "TGraphErrors.h"
 #include "TBrowser.h"
 #include "TCollection.h"
 
@@ -123,7 +126,7 @@ class DataContainer : public TObject {
                      axes_.end(),
                      [axis](const AxisType &axisc) { return axisc.Name()==axis.Name(); })
         !=axes_.end())
-      throw std::logic_error("Axis already defined in vector.");
+      throw std::logic_error(axis.Name() + " Axis already defined in vector.");
     axes_.push_back(axis);
     dimension_++;
     size_type totalbins = 1;
@@ -840,6 +843,15 @@ class DataContainer : public TObject {
     (void) coordinates;
   }
 
+  DataContainer<T, AxisType> ApplyTF1(TF1 *function) const {
+    (void) function;
+  }
+
+  DataContainer<T, AxisType> ScaleWithTGraphErrors(TGraphErrors *graph) const {
+    (void) graph;
+  }
+
+
 /// \cond CLASSIMP
  ClassDef(DataContainer, 13);
 /// \endcond
@@ -884,6 +896,30 @@ inline void DataContainer<Statistic, AxisD>::Fill(const double value, const doub
   if (i_bin != -1) {
     data_.at(i_bin).Fill(value, weight);
   }
+}
+
+template<>
+inline DataContainer<Stats, AxisD> DataContainer<Stats, AxisD>::ApplyTF1(TF1 *function) const {
+  if (dimension_!=1 || integrated_) return *this;
+  DataContainer<Stats, AxisD> result(*this);
+  for (std::size_t i = 0; i < data_.size(); ++i) {
+    const auto value = function->Eval(axes_[0].GetBinCenter(i));
+    result[i] = result[i] * value;
+  }
+  return result;
+}
+
+template<>
+inline DataContainer<Stats, AxisD> DataContainer<Stats, AxisD>::ScaleWithTGraphErrors(TGraphErrors *graph) const {
+  if (dimension_!=1 || integrated_) return *this;
+  if ((unsigned long) graph->GetN() != data_.size()) return *this;
+  DataContainer<Stats, AxisD> result(*this);
+  for (std::size_t i = 0; i < data_.size(); ++i) {
+    const auto value = graph->GetY()[i];
+    const auto error = graph->GetErrorYhigh(i);
+    result[i] = result[i] * std::make_pair(value, error);
+  }
+  return result;
 }
 
 //-----------------------------------//

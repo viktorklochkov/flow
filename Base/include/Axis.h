@@ -169,6 +169,12 @@ class Axis {
    */
   inline T GetUpperBinEdge(const unsigned long bin) const { return bin_edges_.at(bin + 1); }
   /**
+   * Gets bin center
+   * @param bin Index of bin of interest
+   * @return upper edge of bin of interest
+   */
+  inline T GetBinCenter(const unsigned long bin) const { return (bin_edges_.at(bin + 1) + bin_edges_.at(bin))/2.; }
+  /**
    * Gets lower bin edge
    * @param bin Index of bin of interest
    * @return lower edge of bin of interest

@@ -55,6 +55,12 @@ class Stats {
   using size_type = std::size_t;
 
   Stats() = default;
+  Stats(double mean, double error, double weight) :
+  state_(State::MEAN_ERROR),
+  mean_(mean),
+  error_(error),
+  weight_(weight) {
+  }
   virtual ~Stats() = default;
 
   double N() const { return statistic_.N(); }
@@ -174,6 +180,7 @@ class Stats {
   friend Stats operator-(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, const Stats &);
   friend Stats operator*(const Stats &, double);
+  friend Stats operator*(const Stats &, std::pair<double, double>);
   friend Stats operator/(const Stats &, double);
   friend Stats operator*(double, const Stats &);
   friend Stats operator/(const Stats &, const Stats &);
@@ -245,6 +252,7 @@ Stats operator+(const Stats &, const Stats &);
 Stats operator-(const Stats &, const Stats &);
 Stats operator*(const Stats &, const Stats &);
 Stats operator*(const Stats &, double);
+Stats operator*(const Stats &, std::pair<double, double>);
 Stats operator/(const Stats &, double);
 Stats operator*(double, const Stats &);
 Stats operator/(const Stats &, const Stats &);
