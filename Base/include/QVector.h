@@ -21,6 +21,7 @@
 #include <array>
 #include <bitset>
 #include <cmath>
+#include <stdexcept>
 
 #include "Rtypes.h"
 
