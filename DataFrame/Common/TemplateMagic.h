@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include "ROOT/RIntegerSequence.hxx"
+#include "ROOT/RResultPtr.hxx"
 
 namespace Qn {
 
